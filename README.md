@@ -2,14 +2,19 @@
 
 by Con Kolivas
 
-Planetary multi-frame atmospheric reconstruction for high-frame-rate
-monochrome planetary SER/AVI sequences.
+Planetary multi-frame atmospheric reconstruction. The current prototype uses
+synthetic monochrome sequences; the planned desktop application processes
+monochrome, RGB and raw Bayer planetary captures.
 
 This is MOMFBD / short-exposure inverse imaging in an amateur-planetary
 regime, tested against lucky-imaging architectures.
 
-The Gate-1 implementation specification is frozen at revision R9 in
-`planetary_multi_frame_reconstruction_proposal.md`. Prompt 1 is the
+The [R10 evidence review and implementation roadmap](planetary_multi_frame_reconstruction_proposal.md)
+retains the frozen R9 Gate-1 experiment and plans the remaining application work
+in sections 21–26: CPU/optional GPU execution, Qt6 live preview and progress,
+raw-CFA SER reconstruction, field/surface rotation, Saturn's globe and rings,
+16-bit PNG and 16/32-bit TIFF export, and standalone Windows/Linux/macOS builds.
+These application features are planned, not implemented yet. Prompt 1 is the
 synthetic simulator and its validation tests (Python, NumPy/SciPy, HDF5).
 Prompt 2 is the known-transfer estimators, Laplacian ranking, and G1/G2/G3
 tables. Q2 is E2b plus all-frame blind D / D-tail and the 40% closure gate.
@@ -51,6 +56,10 @@ change \(E_H\) only weakly. Bland \(C\) can exceed 1 because that crop is
 high-band ill-conditioned. A two-initialization held-out-frame diagnostic on
 development seed 1001 (feature, 90/10 split) selects the `subset` start and has
 holdout/train residual 1.0103; the all-frame closure remains 0.5244.
+
+The next planned implementation is W00/W01: versioned evidence and numerical
+correctness/certification tests, followed by the CPU-first desktop vertical slice.
+The documentation revision does not relabel existing R9 truth files or results.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.

@@ -1,14 +1,27 @@
 # Planetary Multi-Frame Atmospheric Reconstruction
-## Implementation specification — revision R9
+## Evidence review and implementation roadmap — revision R10
 
-**Status:** Gate-1 implementation freeze  
-**Revision:** R9 — 2026-09-04
-**Intended outcome:** Prompt 1 and Prompt 2 can now be handed to Codex without reopening the research tree  
-**Primary application:** High-frame-rate monochrome planetary SER/AVI sequences
+**Status:** Synthetic prototype implemented; scientific qualification incomplete; desktop application planned
+
+**Revision:** R10 — 2026-09-05
+
+**Code evidence baseline:** `d1b600a` — `Fix Q2 held-out initialization selection`
+
+**Intended outcome:** A sequenced, testable plan for all remaining scientific and application work
+
+**Final application:** CPU- or GPU-operated Qt6 desktop reconstruction of monochrome, RGB and raw Bayer planetary captures, including field rotation, surface rotation and Saturn's rings; standalone Windows, Linux and macOS releases
 
 This is MOMFBD / short-exposure inverse imaging in an amateur-planetary regime, tested against lucky-imaging architectures. It is not a new inverse problem.
 
-R9 accepts the R8 science tree and stop rules. It adds **no new research branch**. It corrects the bland-crop geometry contradiction exposed by Prompt 1 and retains the R8 implementation clarifications:
+R10 retains the R9 synthetic experiment as a reproducible historical baseline.
+Sections 0–20 specify that experiment, not a claim that the current code passes
+every requirement. Sections 21–26 are the current evidence review, product
+contracts, implementation sequence and release criteria; start there for the
+next code changes. The user's expanded application requirements explicitly
+supersede R9's restriction against planning further product work. They do not
+relax the scientific stop rules or turn a failed Q2 evaluation into a pass.
+
+The R9 changes retained from the earlier specification are:
 
 1. pooled 24-seed thresholds are expressed as fractions, not stale 12-seed counts;
 2. the no-wrap screen length includes the final exposure interval;
@@ -22,7 +35,11 @@ R9 accepts the R8 science tree and stop rules. It adds **no new research branch*
 10. Prompt 1 is included verbatim;
 11. Oval 2 and Oval 3 are repositioned so the locked bland-crop requirements are simultaneously satisfiable.
 
-No future revision should add a research branch unless implementation exposes a contradiction in the locked physics or mathematics.
+Documentation revision R10 does **not** change the existing HDF5 `revision="R9"`,
+schema version, frozen physics, seed lists or committed result values. Corrected
+operators and new colour/geometry experiments require separately versioned
+configurations and results, with explicit comparisons to the historical baseline.
+Do not relabel old files as newly validated data.
 
 ---
 
@@ -57,6 +74,13 @@ The synthetic gate asks whether a recoverable opportunity exists. It does not cl
 - **Q1-C:** fixed atmospheric transfer with undersampled detector phases, versus drizzle.
 
 A clean two-regime negative on G1 and G2 terminates the primary atmospheric-transfer programme. B and C remain logically distinct, but are not started merely to avoid a negative primary result.
+
+R10 product scope is separate: usable capture ingestion, registration/stacking,
+Qt6 interaction, rotation handling, export and distribution remain required even
+if blind atmospheric reconstruction fails its gate. A validated stacking path is
+the product fallback, not evidence for the primary atmospheric-transfer claim.
+Raw-CFA sampling and full-disc geometry need their own matched controls; do not
+pool their outcomes into the original monochrome gate.
 
 ---
 
@@ -1285,9 +1309,11 @@ The following is the R9 implementation prompt.
 
 ---
 
-# 17. Prompt 2 scope — frozen but not yet full text
+# 17. Prompt 2 — historical implementation scope
 
-Prompt 2 may begin only after Prompt 1 passes.
+Prompt 2's estimators and committed tables now exist. The following preserves
+its original scope and prerequisites; the remaining qualification work is in
+§21 and W01–W03, not a request to restart Prompt 2 from scratch.
 
 It implements:
 
@@ -1374,11 +1400,17 @@ Q3 starts only after Q2 reaches the 40% closure target:
 N=10^3,\ 5\times10^3,\ 2\times10^4
 \]
 
-before tiles or spherical rotation.
+before scaling the primary MFBD research programme to tiles or spherical
+rotation. This dependency does not block independently validated product
+geometry and baseline stacking work in §24.
 
-Primary engineering metric:
+Engineering reporting must include:
 
-> practical reconstruction gain per GPU-hour.
+> practical reconstruction gain per CPU-hour and, where supported, GPU-hour,
+> together with wall time, peak RAM/VRAM, device, precision and thread count.
+
+A GPU is optional; no scientific gate or core application function may require
+one. Q3 remains blocked by the current evaluation result described in §21.
 
 ---
 
@@ -1442,34 +1474,706 @@ Do not generalise that negative to anisoplanatic fields, detector-sampling diver
 
 ---
 
-# 21. Convergence status
+# 21. Current code evidence and implications
 
-R9 freezes:
+This review uses the source tree and committed results at `d1b600a`. It does not
+claim to have rerun the expensive seed families. Ignored local captures and
+`out/` artifacts are useful development inputs, not reproducible release evidence.
+Implementation presence, unit-test coverage and scientific qualification are
+different statuses.
 
-- the primary claim;
-- two mandatory seeing regimes;
-- timing;
-- source flux scaling;
-- object generator;
-- crop geometry requirements;
-- practical ranking;
-- decision percentile;
-- primary metric;
-- gap definitions;
-- seed logic;
-- pooled-seed thresholds;
-- oracle controls;
-- simulator convergence criteria;
-- truth-file schema;
-- Prompt 1.
+## 21.1 Implemented, but not a finished application
 
-There are **no open research-branch questions before Prompt 1**.
+| Area | Evidence in the tree | Consequence |
+|---|---|---|
+| Synthetic mono simulator | `simulate.py`, `atmosphere.py`, `optics.py`, `object.py`, `hdf5io.py`, `validate.py` under `planetrecon/` | Reuse physics and deterministic fixtures; audit operator consistency before extending them. |
+| Known-transfer estimators and Gate 1 | `planetrecon/estimators.py`, `evaluate.py`, `gate.py`, `metric.py`, `rank.py`; `results/prompt2/` | Preserve E1/E2a0 controls and both seeing regimes. Tables are not proof of real-data performance. |
+| E2b and blind D / D-tail | `planetrecon/mfbd.py`, `kl.py`, `q2.py`; `results/q2/` | Prototype exists; it still uses synthetic known translations, a snapshot phase model and small fixed iteration budgets. |
+| Held-out diagnostic correction | `q2.py`, `tests/test_q2.py`, `results/q2/holdout_dev_seed-01001_feature.json` | Both object starts use training frames only; held-out residual chooses the reported start. One development crop/seed is not a completed family-wide diagnostic. |
+| Runtime | `pyproject.toml`, `planetrecon/cli.py` | Python with NumPy/SciPy/h5py, CPU CLI. No device abstraction, Qt6 interface, SER reader, image exporter or standalone release pipeline exists. |
+| Tests | `tests/test_prompt1.py`, `test_prompt2.py`, `test_q2.py` | Small synthetic tests are valuable but do not cover real input, geometry, colour, GPU parity, GUI lifecycle or installed binaries. |
 
-The next useful action is implementation.
+All unqualified source filenames in this section refer to `planetrecon/`.
 
-A future revision is justified only if:
+## 21.2 What the committed results actually establish
 
-1. Prompt 1 exposes a numerical/physical contradiction in R9; or
-2. a reviewer identifies a concrete flaw that would systematically bias G1/G2.
+At fixed practical top-10% selection, evaluation seeds 2001–2012:
 
-Otherwise revisions should stop and the programme should move to code.
+| Experiment | Recorded result | Interpretation |
+|---|---|---|
+| Gate 1, feature crop, D/r0=4 | G1 strong, median about 10.3%; G2 negative, about 0.95%; G3 strong | Opportunity is conditional: E2a0 makes G1 inconclusive, so the result is oracle-sensitive. |
+| Gate 1, feature crop, D/r0=8 | G1/G2/G3 negative | Report alongside the moderate-seeing result; not a two-regime clean negative while the other regime is unresolved. |
+| Bland crop | High-band truth energy ratio below the validity threshold | Diagnostic only; cannot override the feature decision. |
+| E2b prior freeze | TV weight μ=0; E2b=E2a | No demonstrated production-prior benefit or prior limitation for these runs. |
+| Q2 development, feature, n=3 | Median C about 0.466 | Numerical target met on development data only. |
+| Q2 evaluation, feature, n=12 | Median C=0.3638845774; 3/12 seeds at or above 0.40 | Evaluation gate fails. Q3 must not start on this evidence. |
+| Q2 evaluation, bland | Median C about 0.88 | Ill-conditioned diagnostic, not a pass. |
+| Corrected held-out development diagnostic | Seed 1001 feature, 450 train / 50 held out; subset start; residual ratio 1.0103; all-frame C=0.5244 | Limited consistency evidence. The held-out object's phase is fitted on held-out images, so this is conditional phase-fit prediction, not a fully untouched predictive test. |
+
+Sources: `results/prompt2/classification_eval_feature.json`,
+`classification_eval_bland.json`, `frozen_regularisation.json`, and
+`results/q2/frozen_prior.json`, `closure_dev_feature.json`,
+`closure_eval_feature.json`, `closure_eval_bland.json`,
+`holdout_dev_seed-01001_feature.json`. The family tables and the single corrected
+held-out run have different protocols; do not silently combine them.
+
+Observed weak improvement from 15→35→60 modes does not by itself prove a physical
+information limit. Forward-model mismatch, imperfect constraints, optimizer
+stopping and phase identifiability must first be separated. Neither a clean
+negative nor a successful practical MFBD product is established.
+
+## 21.3 Code-evidenced deficits to resolve before further claims
+
+These are either directly visible implementation gaps or explicitly labelled
+audit questions. Fixes must be tested, not presumed to improve closure.
+
+1. **Constraint enforcement:** `estimators._project_e2a` clips positive, applies
+   spectral support, then clips again. The final clipping can restore power
+   outside support; this is not an exact projection onto the intersection. Use
+   a converged constrained method with feasibility and optimality diagnostics,
+   equally for E2a, E2b and A1o. Reassess oracle sensitivity after the correction.
+   A bounded CPU diagnostic during this review confirms the mechanism: a 32×32
+   unit impulse projected with circular support below 0.12 cycles/pixel remains
+   nonnegative but has out-of-support Fourier norm / total Fourier norm ≈0.187657.
+   This is a regression example, not a measurement of error in the seed tables.
+2. **Forward/adjoint consistency audit:** the simulator convolves a padded scene
+   before detector integration/cropping, whereas estimator and MFBD paths use
+   crop-sized FFT products and circular Fourier registration. Quantify the
+   resulting boundary, sampling and noise-covariance mismatch with noiseless
+   fixtures; share the correct forward/adjoint or explicitly validate an interior
+   approximation. A scalar spatial-average variance is a frozen approximation,
+   not the exact heteroscedastic detector likelihood.
+3. **Phase fitting and shifts:** `fit_frame_alpha` drops optimizer termination
+   status; its freeze-tip/tilt branch does not cover vectors with only two modes.
+   Preserve frozen coefficients in every dimension, expose gradient norms and
+   iteration limits, and test nonzero phases as well as near-zero ones.
+   `tip_tilt_from_shifts` uses a centroid Jacobian calibrated at a single step;
+   validate accuracy across actual shifts and high-mode perturbations. Do not
+   confuse measured image motion with independently known physical pupil tilt.
+4. **Exposure and identifiability:** `PupilForward` fits snapshot PSFs to
+   finite-exposure simulation. Measure this approximation's ceiling before adding
+   modes or compute time. Control piston, object/PSF flux, global shift and colour
+   gains so interchangeable parameters cannot drift. Keep truth-derived shifts,
+   variances and transfers out of the real-data solver interface.
+5. **Frozen model selection:** `run_q2_family` reads a frozen E2-star name without
+   using it; per-file oracle-gap selection can affect the blind fit's prior when
+   μ is nonzero. Freeze the blind architecture and prior using development data
+   only. The §18 per-case E2-star rule may label the reporting denominator, but
+   must never feed evaluation truth back into D. At the current μ=0 this does
+   not imply that the recorded numerical table changed.
+6. **Invalid results and provenance:** `closure_C` admits negative oracle gaps;
+   `aggregate_q2` drops non-finite closures and can declare a pass on an incomplete
+   finite subset. Require positive, well-conditioned opportunity, complete unique
+   seed/crop/regime coverage and valid fits before certification. Record invalid
+   cases and reasons instead of discarding them. `_to_jsonable` must preserve
+   booleans rather than serialize them through the integer branch; use explicit
+   nulls/status for undefined quantities rather than non-standard JSON NaN.
+7. **Method certification:** `certify_development_validations` checks the seed
+   family and pass flags but needs a complete compatibility fingerprint before
+   copying method-level certification to other files. Bind certificates to
+   physics, grid, exposure integration, padding, augmentation, operator version
+   and source/config hashes; retain local diagnostics independently.
+8. **Unfinished evidence:** complete the §3 practical-ranking/G1/G2 low-frequency
+   augmentation check, required held-out coverage and optimizer diagnostics;
+   turn the existing resource CSVs into the §12 plots. Recheck what each stored
+   pass flag actually certifies. A test passing against its own simplified model
+   is not independent validation of that model.
+
+---
+
+# 22. Final application contracts
+
+## 22.1 Scope and honest operating modes
+
+The final application must open real captures, reconstruct on a CPU without a
+discrete GPU, optionally accelerate on supported GPUs, display a progressively
+updated output in Qt6, and save scientific-depth images. Field rotation and
+planetary rotation must work together; Saturn must not use a single spherical
+warp for its globe and rings.
+
+Expose two reconstruction families with the same input/output contract:
+
+- **Validated baseline:** calibrated, quality-weighted registration and stacking,
+  with detector-aware colour reconstruction and geometry-aware accumulation.
+  Conventional debayer-then-stack remains a labelled comparison/quick-look path.
+- **Physical reconstruction:** joint object/PSF inference using the validated
+  detector and scene operators. Label experimental until the applicable
+  scientific and real-data checks pass. A baseline-only milestone is useful but
+  is not completion of this roadmap's raw-CFA and rotation requirements.
+
+No algorithm may invent detail beyond optical support, infer trustworthy
+orientation from an uninformative disc, or quietly fall back to a different
+scientific objective. Unsupported or ambiguous inputs require a clear choice or
+diagnostic. The source files are read-only.
+
+## 22.2 Architecture and ownership
+
+Retain the headless Python engine and CLI. Add PySide6/Qt6 Widgets as a thin
+front end, with a raster image canvas so even the GUI does not require hardware
+OpenGL. PySide6 provides Qt6 Python bindings; deployment is a separate build
+step, not something the end user runs. See the [official Qt for Python overview](https://www.qt.io/development/qt-framework/python-bindings).
+
+Proposed package boundaries (new unless explicitly marked existing):
+
+| Boundary | Responsibility and contract |
+|---|---|
+| `io/ser.py`, `io/video.py`, `io/source.py` | `FrameSource`: metadata, indexed raw reads, bounded batch iteration, timestamps and close/context-manager lifecycle. Wrap existing synthetic HDF5 input behind a separate adapter. |
+| `calibration.py`, `detector.py` | Raw ADU interpretation, calibration/masks, detector integration, CFA/RGB response and noise likelihood; matched forward and adjoint. |
+| `geometry/` | `SceneModel` implementations for flat reference, oblate rotating globe and Saturn layers; per-frame pose, visibility and confidence. |
+| `operators/` | Composable render, blur, integration, sampling, crop and adjoint operations; explicit coordinate frames, units, padding and precision. |
+| Existing `estimators.py`, `mfbd.py`, `kl.py` | Scientific algorithms refactored to consume operators/backend without GUI dependencies; retain historical R9 execution for comparison. |
+| `backends/` | CPU reference and optional accelerator adapters; capability probes, memory planning and explicit fallback. |
+| `pipeline/`, `jobs.py` | Immutable job configuration, stage scheduling, cancellation, checkpoints, bounded preview/progress events and worker ownership. |
+| `result.py`, `io/export.py` | Floating linear result, coverage/variance/masks, reference time/orientation and provenance; scientific export separate from display mapping. |
+| `gui/` | Source setup, controls, image/progress view and error recovery; Qt objects and painting remain on the GUI thread. |
+| `packaging/`, `.github/workflows/` | Native standalone build recipes, dependency locks, licenses, artifact smoke tests and release manifests. |
+
+`ObservationMetadata` must distinguish measured, header-supplied, inferred and
+user-overridden values. `ReconstructionConfig` is serializable and immutable for
+a running job. `ReconstructionResult` carries units, channel order, validity mask,
+reference epoch, transforms, processing history and actual backend/precision.
+Progress and preview events have a job ID and monotonically increasing sequence
+number so cancelled jobs cannot overwrite a new view. Truth arrays are available
+only to simulation/evaluation, never through the production `FrameSource`.
+
+Version document, experiment, input schema, result schema and operator contract
+separately. Checkpoints/cache entries include input identity, configuration,
+operator version, precision and software version; incompatible entries are
+rejected rather than reused. Large captures are streamed/memory-mapped and
+revisited in bounded batches; neither all frames nor all per-frame OTFs may be
+required in RAM or VRAM.
+
+## 22.3 CPU and optional GPU execution
+
+The NumPy/SciPy float64 implementation is the numerical reference and the default
+on the current development machine. Implement an explicit `CPU / Auto / GPU`
+choice, CPU thread limit and RAM/VRAM budgets. Start with one controlled level of
+parallelism; do not multiply process pools by unrestricted BLAS/FFT threads.
+
+Planned accelerator adapter: PyTorch for supported CUDA devices on Windows/Linux
+and MPS/Metal on macOS. This is a backend choice to qualify, not an assertion that
+every required dtype, complex FFT, interpolation or gradient is supported on
+every device. MPS is the documented macOS GPU backend; check build/device
+availability and run the actual operator probes before selecting it. See
+[PyTorch's MPS documentation](https://docs.pytorch.org/docs/stable/notes/mps.html).
+
+Probe forward, adjoint, FFT, reductions, indexing, gradient and allocation at the
+chosen dtype. Prefer a consistent whole-stage CPU fallback to repeated hidden
+device transfers. `Auto` must recover to CPU after an unsupported operation,
+driver failure or out-of-memory event, starting from the last valid checkpoint.
+An explicit GPU request must show the failure and offer CPU continuation, not
+crash or quietly claim GPU processing. Never silently drop frames, shrink the
+requested output or change regularization to fit device memory.
+
+Use float64 reference tests; qualify float32/mixed precision against them with
+development-frozen tolerances on objective, flux, gradients and reconstruction
+metrics. Record CPU/GPU differences and all fallbacks. GPU CI may be skipped on
+ordinary CPU runners, but a GPU release requires real-device end-to-end evidence.
+No CUDA/Metal import or availability check may prevent CPU-only startup.
+
+## 22.4 SER and one-shot-colour special handling
+
+Implement metadata-first raw SER ingestion. The v3 format has a 178-byte header,
+unsigned 1–8-bit samples in bytes or 9–16-bit samples in words, and an optional
+per-frame timestamp trailer. `ColorID` identifies mono (0), RGGB (8), GRBG (9),
+GBRG (10), BGGR (11), RGB (100) or BGR (101); other colour IDs must not be
+misclassified as Bayer RGB. Preserve the file's top-left sample origin, declared
+bit depth and channel order. Header integers are little-endian; image byte order
+is a separate field. See the [SER v3 specification](https://free-astro.org/images/5/51/SER_Doc_V3b.pdf).
+
+The specification and common writers interpret the image-endianness flag in
+opposite ways. Default to the documented ecosystem convention (0 means
+little-endian), record the interpretation, provide an explicit override and
+test both conventions with golden files. Do not silently byte-swap based only
+on a plausibility heuristic. See [Siril's interoperability explanation](https://siril.readthedocs.io/en/latest/file-formats/SER.html#specification-issue-with-endianness).
+
+Validate dimensions/counts against actual file length before allocation; support
+large offsets, reject incomplete payloads by default and offer explicitly
+labelled recovery of complete frames. Preserve significant bits without
+per-frame stretching. Treat corrupt timestamps, duplicates, nonmonotonic timing
+and unknown exposure duration separately. SER does not supply all telescope,
+gain, mount or planet-pose parameters needed by the physical model; request
+missing values or use clearly labelled estimates. Record cadence separately from
+exposure, and never substitute local clock time for an unknown UTC epoch.
+
+The original discussion's special handling is **joint reconstruction of R/G/B
+latent images directly from the undebayered samples**, with CFA sampling inside
+the observation model. It is not a request to demosaic every frame first. See
+the original [Planetary Image Reconstruction discussion](https://chatgpt.com/c/6a9a4c5d-619c-83a8-964f-036c1e771523)
+(account access may be required).
+
+Required behaviour:
+
+1. Use a valid Bayer `ColorID` automatically. If a writer labels raw CFA as mono,
+   let the user choose mono or the four Bayer patterns with colour previews.
+   An optional statistical suggestion may carry confidence, but texture and
+   narrowband data cannot uniquely identify a pattern; never force a guess.
+2. Track CFA parity through integer crops, flips and rotations. The physical CFA
+   stays fixed in **detector coordinates**; subpixel alignment/field derotation
+   acts on the rendered latent scene, not by interpolating a raw mosaic and then
+   pretending it has the original independent Bayer samples.
+3. Keep both green sublattices as distinct measurements of one green radiance
+   field. Joint RGB inference uses channel-specific response/optical support,
+   noise and calibration. Share atmospheric optical path difference, scaling
+   phase by wavelength; do not blindly share a numerical phase or PSF across
+   wavelengths. Start with declared effective bandpasses and qualify their
+   approximation before adding spectral quadrature.
+4. Apply bias/dark/flat, bad-pixel and saturation masks in detector/CFA space.
+   Model gain/offset and exposure explicitly. Missing calibration yields a
+   labelled approximate-noise mode, not invented electron counts. Avoid free
+   per-channel gains that can absorb arbitrary changes in the latent object.
+5. Use natural subpixel diversity without claiming optical super-resolution.
+   A green-derived proxy may help alignment/ranking, but the reconstruction must
+   retain red and blue measurements. Compare with a conventional demosaiced
+   baseline on identical frames, geometry, support and photon budgets.
+6. Include mosaics of all four patterns, odd crop origins, flips, subpixel shifts,
+   simultaneous rotation, saturated pixels and narrowband scenes in tests.
+   Measure channel flux, false colour, edge artifacts and held-out raw residuals,
+   not only the apparent sharpness of an RGB display.
+
+RGB/BGR SER bypasses CFA sampling but still needs linearity and channel-order
+checks. Legacy AVI support remains a separate adapter with a declared tested
+codec/pixel-format list; bundle its decoder rather than requiring external
+FFmpeg. Compressed/nonlinear video is labelled unsuitable for the calibrated
+physical likelihood unless its transformations are known.
+
+## 22.5 Field rotation and planetary surface rotation
+
+These are distinct operators and may both be present in an alt/az capture.
+Field rotation changes the sky's orientation on the detector; surface rotation
+changes visible planetary longitude with foreshortening and occlusion. A single
+2-D image rotation does not correct both.
+
+Use an explicit reference epoch and coordinate conventions: body-fixed surface,
+projected sky and detector. Render a time-dependent oblate globe into the sky,
+apply sky-to-detector attitude/translation, blur in the appropriate detector
+optical frame, integrate over pixel area/exposure, then apply CFA sampling and
+noise. An asymmetric pupil or instrument feature must have its own orientation
+convention; do not rotate the atmospheric PSF merely because the sky rotates.
+Compose geometry before resampling, avoiding repeated lossy image warps.
+
+For expected raw data, the extended model is schematically
+
+\[
+\mu_k = b_k + g_k\,\mathcal C_{\rm CFA}\mathcal P
+\int_{t_k}^{t_k+T_k}
+\left[h_{k,t,\lambda} *
+\mathcal A_{k,t}\mathcal V_{t,\lambda}(S)\right]dt,
+\]
+
+where \(S\) is the latent scene, \(\mathcal V\) renders surface/ring visibility,
+\(\mathcal A\) is sky-to-detector pose, \(\mathcal P\) integrates detector pixels,
+and \(\mathcal C_{\rm CFA}\) selects calibrated colour responses (identity/channel
+selection for mono/RGB). Units must distinguish source rate, integration duration
+and detector gain. The quadrature and adjoints must account for both atmospheric
+and geometric motion; freeze-mid-exposure geometry only after measuring its
+error. This is a new operator, not a retroactive change to the R9 fixture.
+
+Estimate disc/ellipse centre, scale, pole angle and frame poses from the sequence,
+with manual adjustment and confidence. Field-angle estimates can combine image
+features with an optional mount/location/UTC model; metadata is initialization,
+not infallible truth. Near-circular featureless discs cannot constrain roll.
+Handle angle unwrapping, changing rotation centres, missing frames and fast
+rotation near the zenith. Do not require online ephemeris access: support manual
+pose/time parameters and bundled offline ephemeris data with documented coverage
+if that initializer is provided.
+
+Map globe radiance in body coordinates with visibility masks and limb weighting;
+back-project only observed surface areas into the reference view. Do not fill
+unseen longitudes with inferred detail or treat black warp borders as data.
+Start with a declared rigid rotation rate and oblate geometry; longer Jupiter
+clips require a separately qualified latitude-dependent rate/evolution model or
+a warned duration limit. Rates, pole direction and apparent diameter must be
+adjustable when absent from the file. Show common coverage and uncertainty.
+
+Test field-only, spin-only and combined motion against independently rendered
+truth, including zero motion, limbs entering/leaving, angle wrap and insufficient
+texture. Controls must use the same geometry. Full-disc spatially varying seeing
+requires validated local/tile PSFs and seam-free overlap, or a clearly bounded
+single-PSF mode; the existing 128-pixel crop result does not establish this.
+
+## 22.6 Saturn: globe and rings are separate scene layers
+
+Provide a Saturn scene model, not an ellipse fed into Jupiter's disc warp.
+Represent an oblate rotating globe plus a projected equatorial annulus with
+inner/outer radii, ring opening angle, pole orientation and independent radiance.
+Use a depth/visibility model for the near ring in front of the globe and the far
+ring behind it. Include ring transmission/opacity at overlaps, plus globe/ring
+shadow masks or a qualified illumination
+model; uncertain regions can be masked rather than forced into the PSF fit.
+Instrumental blur acts on the correctly composited sky scene, not on independently
+stacked cutouts pasted together after deconvolution.
+
+Field rotation acts on the entire composite. Globe surface rotation must **not**
+drag rings with it. Initially treat rings as a static, axisymmetric radiance
+profile over a qualified short interval; do not claim that physical ring
+particles are stationary: ring orbital speeds vary with radius, as described in
+[NASA's ring-plane discussion](https://science.nasa.gov/missions/hubble/hubble-views-saturn-ring-plane-crossing/).
+Resolved azimuthal features require an independent
+radius-dependent orbital/evolution model or masking/shorter intervals, not the
+globe's spin rate. Rings, globe and background retain separate coverage and
+regularization so a sharp ring edge cannot masquerade as globe detail.
+
+Use ring-aware pose fitting and quality masks; do not let bright ansae dominate
+every quality score or shrink the ROI until rings disappear. Handle low-opening
+and edge-on rings as poorly conditioned geometry, with manual override and
+conservative masking. Moving moons are separate tracked/masked sources and must
+not become stationary surface features. Validate open, nearly closed and edge-on
+rings, both signs of opening, globe occlusion, shadows and simultaneous field/
+surface rotation. Assess globe and ring-region residuals independently.
+
+## 22.7 Qt6 interaction, continuous image and progress
+
+Minimum workflow: open capture → inspect metadata/CFA and calibration → choose
+target/geometry and reference time → choose CPU/Auto/GPU and resource limits →
+run/cancel → inspect and save. Include input-frame, progressive-output and
+coverage views; zoom/pan, histogram, channel/display stretch and before/after
+comparison must not mutate the scientific result.
+
+Display the latest actual accumulated/reconstructed output while processing,
+not only source thumbnails or an animation of the final image. Publish a first
+baseline image after the first usable batch, refresh as batches accumulate, then
+publish solver iterates at bounded intervals (target 2–5 Hz when new states are
+available). Each snapshot is immutable or safely copied; throttle/downsample
+preview transport, not science processing. Label baseline, intermediate and final
+states. Keep the reference view and display mapping stable unless the user
+changes them; a changing stretch must not mimic improving detail.
+
+The progress bar reports actual stage work: scan/calibration, pose estimation,
+accumulation, reconstruction passes and finalization. Show frame/batch counts,
+iteration/limit, elapsed time, estimated remaining time when meaningful, backend
+and warnings. Multiple passes over all frames are not 100% completion after the
+first pass. Use an indeterminate stage only when its work count is genuinely
+unknown; 100% means a final result has been published, not numerical convergence.
+
+Run numerical work in an owned worker process; keep Qt widgets and painting on
+the GUI thread and transfer events through a bounded channel. Coalesce old
+previews without dropping errors or final/cancellation events. Cancellation is
+checked between bounded work units; on cancel, error, window close or parent
+exit, close frame sources and release shared buffers/device allocations, then
+join owned workers. After a bounded grace period terminate only this job's
+identified children. Never kill unrelated Python processes. Resume from a
+compatible checkpoint; a new job cannot inherit an old job's result messages.
+
+## 22.8 Scientific export
+
+Required choices: **16-bit unsigned PNG**, **16-bit unsigned TIFF**, and **32-bit
+IEEE floating-point TIFF**, each supporting mono or RGB. Here “16/32-bit TIFF”
+means these two explicit encodings, not an ambiguous 16-bit-float default.
+
+Export from the floating linear reconstruction, never the Qt preview or an
+8-bit screenshot. For integer output, show and record a fixed black/white mapping,
+rounding and clipping counts; do not rescale each channel/frame independently.
+Default to preserving linear scientific intensity. Offer a separately labelled
+display-rendered export with explicit transfer function/colour metadata; avoid
+accidental double gamma. Float TIFF preserves scale and dynamic range without
+normalizing to 0–1. Document validity masks/NaN policy and any resampling.
+
+Use bundled, tested encoders (plan: a dedicated 16-bit PNG writer and `tifffile`
+for TIFF; any chosen compression codec must also be bundled). The
+[PNG specification](https://www.w3.org/TR/png-3/) defines 16-bit grayscale and
+truecolour samples; [tifffile's documentation](https://github.com/cgohlke/tifffile)
+covers integer/floating-point and multi-sample TIFF output. Validate actual
+PNG bit depth and TIFF BitsPerSample/SampleFormat, channel order, endianness and
+pixel values with an independent reader. Test values on both sides of 255,
+ramps to 65535, RGB channels, finite float values above 1 and negative values
+where the selected result permits them. Read-back equality must hold for
+lossless integer output after the declared mapping, and float32 within its
+representational precision.
+
+Write atomically, ask before overwrite, handle full disks/permissions, and keep
+the in-memory result on export failure. Save reference epoch, input fingerprints,
+CFA interpretation, calibration, geometry, device/precision and algorithm settings
+in appropriate metadata plus a JSON sidecar. Coverage/uncertainty can be separate
+TIFF pages/files with explicit descriptions. Saving an intermediate snapshot is
+allowed, but must be labelled incomplete and must not stop processing.
+
+## 22.9 Standalone Windows, Linux and macOS delivery
+
+“Without external dependencies” means **no user-installed Python, Qt, numerical
+libraries, image/video codecs, pip environment or command-line tools**. Bundle
+the application runtime and needed redistributable libraries. Supported OS system
+libraries and vendor GPU drivers remain platform prerequisites; the CPU build
+must work without GPU drivers/toolkits. Do not promise a binary that works on
+every historical OS or GPU.
+
+Start with PyInstaller native per-platform builds and checked-in specifications;
+keep an early PySide6 packaging spike to catch plugin/runtime issues. Qt's own
+`pyside6-deploy`/Nuitka path is a documented alternative if measured build issues
+justify switching, not a second mandatory release system. PyInstaller is not a
+cross-compiler: build/test on each target OS. See the [PyInstaller manual](https://www.pyinstaller.org/en/stable/)
+and [Qt deployment tool documentation](https://doc.qt.io/qtforpython-6/deployment/deployment-pyside6-deploy.html).
+
+Planned artifacts: Windows x86-64 portable folder/installer; Linux x86-64
+AppImage or bundled archive with a declared glibc baseline; macOS arm64 `.app`
+in a disk image, with a separately tested x86-64 build if offered. Freeze minimum
+OS versions and exact Python/Qt/backend versions after the packaging spike.
+Do not claim universal macOS support from an arm64-only build. Test Linux Qt
+platform plugins on supported X11/Wayland environments and use software rendering
+where needed.
+
+Ship an offline CPU-capable build for every supported platform. Optional larger
+accelerated builds may bundle qualified accelerator runtimes; they must still
+start and process on CPU when no compatible GPU exists. No first-run downloads.
+Pin dependencies with hashes, audit redistributability and Qt/backend/codec
+license obligations, include notices/SBOM, sign Windows artifacts and sign/
+notarize macOS releases where credentials are available. Missing signing
+credentials are a release action item, not a reason to bypass OS security.
+Test on clean machines without development environments or network access.
+
+---
+
+# 23. Scientific controls for the expanded application
+
+Keep the R9 monochrome oracle gate distinct from product acceptance:
+
+1. Preserve the original seeds, thresholds and old results. Correct demonstrable
+   numerical defects on development fixtures, freeze a new operator/configuration,
+   then report paired old/new results and the reason for changes. Already viewed
+   evaluation seeds are regression data for later redesigns, not fresh holdouts.
+   Declare an additional untouched validation family before claiming generalization.
+2. Never spend the predeclared Gate-1 inconclusive extension as a way to rescue a
+   failed Q2 result. Apply §11 only to the unresolved Gate-1 classification after
+   the oracle/validity audit. A clean negative stops the primary MFBD claim; it
+   does not cancel the requested desktop product.
+3. For real data, estimate shifts, seeing, noise and pose from measurements or
+   declared calibration only. Synthetic truth stays in an evaluation-only module.
+   Split training, model-selection and final assessment data before fitting;
+   phase fitting on held-out frames must be labelled conditional. Use a separate
+   pixel/time holdout when claiming predictive performance without refitting.
+4. Compare baseline and physical solver on the same valid samples, colour model,
+   geometry, reference time, support and calibration. Report frames rejected and
+   why. Do not reward one method for different sharpening, clipping or coverage.
+5. Add independently generated colour/rotation/Saturn fixtures and real capture
+   split-half comparisons. Check photometry, raw-domain residuals, repeatable
+   features, ringing, false colour, limb/ring seams and sensitivity to calibration.
+   No real-data claim rests on a single attractive image.
+6. Declare acceptable clip durations, field sizes, sampling and geometry limits
+   empirically. Reject or warn outside them. Differential rotation, appearance
+   evolution, rolling shutter and spatially varying atmosphere are model issues,
+   not problems to hide with stronger sharpening. Add explicit models only where
+   qualified, otherwise expose the limitation and use shorter intervals/masks.
+
+---
+
+# 24. Remaining code changes in dependency order
+
+Each work package ends with focused tests, a source/results commit and an update
+to the evidence table. These are **planned**, not implemented by this document.
+Keep numerical corrections separate from GUI/packaging commits. Development on
+the current machine uses CPU-sized fixtures; long jobs need bounded resource
+settings, progress, an owned lifecycle and a reason to retain their results.
+
+| ID | Work package | Depends on | Completion evidence |
+|---|---|---|---|
+| W00 | Versioned evidence/provenance and reproducible test tiers | Existing tree | Historical results preserved; manifests and short CPU test command documented. |
+| W01 | Estimator/operator correctness and certification audit | W00 | Constraint, forward/adjoint, noise and certificate regression tests pass. |
+| W02 | Q2 optimizer, selection, validity and diagnostics | W01 | No truth-driven blind selection; complete typed diagnostics and held-out suite. |
+| W03 | Scientific requalification and decision report | W02 | Corrected controls and scoped Gate-1/Q2 outcomes, including failures, published. |
+| W04 | Headless source/config/result/operator contracts | W00 | Synthetic adapter and existing CLI work through bounded interfaces. |
+| W05 | Owned jobs, CPU resource budgets and checkpoints | W04 | Cancellation/close/error leave no owned workers; memory bounded. |
+| W06 | Raw SER reader and calibration | W04 | Golden-format matrix and real header/sample tests pass without changing inputs. |
+| W07 | CPU baseline and raw-CFA RGB reconstruction | W01, W05, W06 | Progressive mono/RGB/CFA results and matched baseline controls. |
+| W08 | Qt6 shell and early native packaging spike | W04, W05 | GUI opens on CPU-only systems; a tiny synthetic job updates/cancels. |
+| W09 | Field rotation and rigid globe surface model | W07 | Separate and combined rotation recovery with masks and confidence. |
+| W10 | Saturn layered scene model | W09 | Globe/ring occlusion, independent motion and degenerate poses validated. |
+| W11 | Production physical solver and full-disc qualification | W02, W07, W09, W10 | Raw-data operator, exposure, local PSFs and scientific limitations tested. |
+| W12 | Optional accelerator backend | W01, W04, W05, W07 | Real-device parity, memory limits and CPU fallback verified. |
+| W13 | Scientific PNG/TIFF export | W04, W07 | Exact depth/type read-back, atomic writes and provenance. |
+| W14 | Complete Qt6 workflow | W08–W10, W13 | Real progressive image, truthful progress, controls and recovery end to end. |
+| W15 | Legacy video adapter and large-capture hardening | W05–W07 | Declared AVI formats plus long/offline/low-memory tests. |
+| W16 | Real-data comparisons and performance qualification | W03, W10–W15 | CPU and supported GPU benchmarks; independent captures and comparisons. |
+| W17 | Standalone releases and final acceptance | W08, W16 | Clean-system, offline Windows/Linux/macOS acceptance matrix passes. |
+
+W04–W10, W13–W15 and the packaging spike need not wait for a positive MFBD
+result. W11's advanced atmospheric claims and any Q3 scale-up remain gated by
+W03. W12 may start with the baseline and operator tests, but its full qualification
+must include the later colour, geometry and Saturn paths. Dependencies indicate
+code readiness, not authorization to spend unbounded compute in parallel.
+
+## 24.1 W00–W03: repair the evidence before scaling
+
+**W00:** add an experiment manifest and typed result schema with source hash,
+config hash, input identities, seed coverage, protocol, tolerances and statuses.
+Distinguish `diagnostic`, `valid`, `incomplete`, `invalid` and `gate_passed`.
+Archive the current tables unchanged. Split fast CPU unit tests, bounded
+integration tests, expensive scientific families and hardware/release tests.
+Do not put expensive simulations in the default test suite.
+
+**W01:** address §21.3 items 1, 2 and 7 in `estimators.py`, `optics.py`,
+`evaluate.py`, `validate.py`, `hdf5io.py` and corresponding tests. Use a proper
+intersection-constrained method (for example converged Dykstra projection within
+a qualified solver, or a primal-dual formulation), not an extra arbitrary clip.
+Measure positivity violation, out-of-support energy and a projected-gradient/KKT
+residual. Preserve the E1/E2a0 identical-objective control. Test padded convolution,
+crop/bin phase, flux and registration against an independent spatial calculation,
+with dot-product adjoint tests and finite-difference gradients. Quantify the
+constant-noise approximation before changing the frozen statistical model.
+Bind method certificates to compatible configurations and test stale/mismatched
+certificates explicitly. Complete low-frequency ranking/gap convergence checks.
+
+**W02:** fix and test the small-mode frozen-tip/tilt case, report optimizer status,
+gradient norm, objective trace, feasibility and actual iterations. Benchmark the
+shift-to-pupil mapping over recorded displacement ranges without launching whole
+seed families. Separate known-shift, estimated-shift and no-shift controls.
+Measure snapshot-versus-exposure model error and phase-basis residual. Freeze
+blind prior/model choice independently of evaluation truth; reject non-positive
+or ill-conditioned closure denominators and incomplete seed families. Complete
+two-start held-out diagnostics on all three development seeds, both crops, all
+declared mode stages, with separate model-selection and assessment labels.
+Add tests for non-finite fits, duplicate/missing seeds, all-invalid crops and
+boolean/null JSON round trips.
+
+**W03:** first run bounded development ablations that separate operator error,
+constraints, optimization budget and phase model; do not simply raise M or N.
+Freeze corrections, then regenerate only affected results into a new experiment
+directory. Publish E1/E2a0 agreement, E2a oracle sensitivity, both seeing regimes,
+metric validity, prior limitation and closure dispersion. Add the resource plots
+with captured/used frames, photons, wall time and memory. Apply original stop and
+extension rules honestly. Q3's 1k/5k/20k runs require a qualified Q2 pass and a
+CPU/GPU resource forecast; otherwise leave the advanced solver experimental or
+stop its primary claim and ship the validated baseline.
+
+## 24.2 W04–W08: usable CPU-first vertical slice
+
+**W04:** introduce the §22.2 contracts, unit/coordinate conventions and synthetic
+adapter. Refactor incremental reads and accumulations without retaining the full
+capture. Keep CLI and GUI clients of the same engine, and make synthetic truth
+impossible to pass accidentally through a real source. Add schema migration/
+rejection tests and deterministic cache keys.
+
+**W05:** implement job states `queued → running → completed/failed/cancelled`,
+cooperative cancellation, bounded event queues, checkpoint validation and exact
+worker ownership. Cap CPU processes/threads and memory from explicit settings.
+Test cancel during decode, registration, fitting and export; failed worker and
+parent exit; immediate rerun; and Windows/macOS spawn semantics. No job may
+continue consuming CPU after its results have been abandoned.
+
+**W06:** build the SER parser and calibration path described in §22.4. Commit tiny
+generated golden files or their deterministic generator, not private multi-GB
+captures. Test mono/CFA/RGB/BGR, 8/16-bit storage and sub-word depths, both endian
+conventions, absent/truncated trailers, large offsets, corrupt headers, Unicode
+paths and odd ROI parity. Validate selected local raw frames against a trusted
+reader without modifying the recordings. Supply explicit pattern/byte-order/
+timing overrides with provenance.
+
+**W07:** implement calibrated registration/quality estimation without truth,
+robust rejection of saturation/corruption, incremental weighted accumulation and
+coverage maps. Add a CPU raw-CFA joint RGB solve with fixed/estimated transfers
+before coupling it to blind phase fitting. Matched adjoints handle sampling and
+subpixel movement; confidence masks avoid unsupported colour fill-in. Compare
+against demosaic-first stacking on synthetic and real subsets. Emit actual
+baseline and iterative result snapshots through W05.
+
+**W08:** add PySide6 Widgets entry point and source/config/result panes using a
+raster display. Run a tiny synthetic source through the owned worker and show
+an evolving image plus progress. Exercise cancel/close/restart. Build minimal
+native packages on all three OS families now, including Qt platform plugins,
+before adding large accelerator runtimes. Record support floors and build locks.
+
+## 24.3 W09–W12: geometry and physical inference
+
+**W09:** implement pose fitting, angle unwrapping, reference epoch, field rotation
+and oblate-globe visibility/rotation as composable operators with tested adjoints.
+Add manual geometry controls and degeneracy reporting. Implement geometry-aware
+baseline accumulation first, then connect the raw-data likelihood. Validate
+motion during exposure, long-clip limits and joint CFA/rotation sampling.
+
+**W10:** implement globe/ring layers, depth ordering, radiance profiles and
+illumination masks. Fit ring geometry jointly with field attitude, not through a
+disc-only estimator. Test near/far occlusion, ansae, edge-on degeneracy, moving
+moons and independent globe rotation. Publish region-separated metrics and
+coverage. Add more detailed ring motion only if the static-short-clip validity
+test fails on otherwise supported data.
+
+**W11:** integrate colour, geometry, detector noise and exposure into MFBD with
+shared physical wavefront variables and explicit gauges. Generalize from the
+small synthetic crop to full discs using validated padding and, where needed,
+local PSFs/overlap blending. Fit/use temporal exposure models with held-out checks;
+do not assume independent snapshots reproduce long exposures. Compare local
+baselines with the same geometry and assess seams at limbs and rings. Keep
+geometry-only reconstruction available regardless of the MFBD science outcome.
+Qualify differential surface rotation/evolution or enforce reported duration
+limits; do not label a single-PSF rigid model universally applicable.
+
+**W12:** port the dominant measured costs behind backend interfaces, not all code
+indiscriminately. Batch/cache transfers within a VRAM budget; preserve CPU
+implementations and deterministic test inputs. Qualify complex FFTs, warps,
+adjoints and gradients on each supported device/dtype. Test forced CPU on a
+GPU host, GPU unavailable at startup, unsupported operation and mid-job OOM.
+Publish end-to-end speedup including I/O/transfers, not only a kernel benchmark.
+
+## 24.4 W13–W17: complete workflow and release
+
+**W13:** implement §22.8 encoders, integer mapping, float preservation, metadata
+and atomic output. Use independent format inspection/read-back tests, including
+RGB16 PNG (not only grayscale), float TIFF, save-while-running and interrupted
+write recovery. Bundle all selected codecs in the packaging smoke test.
+
+**W14:** connect real sources, device/resource selection, calibration/CFA overrides,
+planet/Saturn geometry, live scientific preview, stage progress and save controls.
+Show confidence, clipped pixels, current reference time and incomplete coverage.
+Test UI responsiveness under full CPU load, stale events, worker errors, cancel
+latency and source/result memory ownership. A processing error must leave the
+last valid image inspectable/saveable and make the failure visible.
+
+**W15:** add the separately qualified AVI adapter with bundled decoders and
+linearity/pixel-format warnings. Stress captures larger than RAM, uneven timing,
+low disk space, file disappearance, corrupted frames and process interruption.
+Stream frame statistics and checkpoint sufficient state without rewriting input.
+Bound preview/queue/cache growth and prevent nested-thread oversubscription.
+
+**W16:** maintain a consented, documented real-data corpus covering mono,
+one-shot colour, alt/az field rotation, significant surface rotation and Saturn.
+Use independent nights/cameras and predeclared comparisons; anonymize observer
+metadata when distributing fixtures. Publish split-half/raw-residual checks and
+baseline comparisons without undocumented sharpening. Record CPU/GPU hardware,
+frame dimensions/counts, precision, wall time, peak memory, first-preview latency,
+cancel latency and reconstruction quality. Establish supported limits from those
+measurements rather than promising real-time reconstruction on the current CPU.
+
+**W17:** lock build dependencies, produce signed/notarized artifacts as applicable,
+bundle licenses/SBOM and verify checksums. On clean offline target systems, open
+mono and Bayer SER, reconstruct on CPU, view continuous progress, process the
+rotation/Saturn fixtures, save all required formats, cancel/restart and exit with
+no owned workers. Repeat supported accelerator cases on real hardware and test
+fallback. Ship a quick-start guide, support matrix, known limitations and a
+reproducible release manifest. No development Python/Qt/FFmpeg installation may
+be part of the acceptance environment.
+
+---
+
+# 25. Release acceptance matrix
+
+Freeze numerical tolerances and fixture sizes during development before using
+the final acceptance corpus. Unit correctness and product acceptance are both
+required; an attractive preview is not a substitute for either.
+
+| Requirement | Required acceptance test |
+|---|---|
+| CPU optionality in practice | All core input, reconstruction, geometry, preview and export cases complete on a supported CPU-only machine with a bounded memory budget. |
+| GPU optionality in practice | Qualified GPU backend performs reconstruction, agrees with CPU within frozen tolerances, and unavailable/failed GPU cases offer or perform explicit CPU fallback. |
+| Qt6 GUI | Clean packaged startup, responsive zoom/controls, evolving output, truthful progress, cancel/save/restart and window-close cleanup. |
+| Raw one-shot colour | Every Bayer ID/parity fixture reconstructs the correct channel orientation and flux; unknown pattern can be overridden; raw likelihood never consumes a prewarped/debayered mosaic. |
+| Scientific export | Independent read-back confirms PNG uint16, TIFF uint16 and TIFF float32 for mono/RGB, correct mapping/metadata and safe failure on interrupted writes. |
+| Alt/az plus surface rotation | Joint-motion fixtures recover a common reference view without limb fill-in or CFA-phase corruption; ambiguous orientation is reported. |
+| Saturn | Ring and globe motion are separate; near/far occlusion and low-opening cases pass region-specific checks with honest coverage. |
+| Large inputs and process lifetime | Capture exceeds RAM but memory stays bounded; cancellation/error/exit leaves no job-owned processes, files or buffers in use. |
+| Standalone distribution | Windows, Linux and macOS artifacts pass offline clean-system tests without separately installed language/GUI/numerical/codec dependencies. |
+| Scientific honesty | Old and corrected results remain distinguishable; invalid cases are not filtered into passes; MFBD claims match the actual gates and real-data evidence. |
+
+The roadmap is complete only when the requested features pass this matrix, not
+when Qt starts or Q2 exceeds one threshold. A baseline release may precede the
+advanced solver, but must state exactly which planned features remain unfinished.
+
+# 26. Immediate next implementation handoff
+
+Implement **W00 and W01 first**, beginning with failing regression tests for the
+positivity/support intersection and certification compatibility, then the
+forward/adjoint consistency audit. Keep R9 result files unchanged. Add small CPU
+fixtures and record operator/version changes. Do not launch Q3 or full family
+reruns until those diagnostics establish what must be regenerated. The next
+vertical slice is W04–W08: open a real Bayer SER, process a bounded CPU batch,
+and display the progressively built result in an owned, cancellable Qt6 job.
+
+This revision plans those changes; it does not implement or certify them.
