@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy.fft import fft2, ifft2
+from scipy.optimize import minimize
 
 from planetrecon import constants as C
 from planetrecon.config import SimConfig
@@ -26,6 +27,7 @@ from planetrecon.kl import KLBasis
 from planetrecon.optics import (
     bin_box,
     center_crop,
+    centroid_px,
     make_pupil,
     otf_from_centered_psf,
 )
@@ -162,6 +164,24 @@ def frame_loss_and_grad(
     return loss, np.asarray(grad, dtype=np.float64)
 
 
+def tip_tilt_jacobian(fwd: PupilForward) -> tuple[np.ndarray, np.ndarray]:
+    """Linear map α_tip/tilt → PSF centroid, evaluated at zero."""
+    c0 = np.array(centroid_px(fwd.psf_det(np.zeros(2))), dtype=np.float64)
+    cx = np.array(centroid_px(fwd.psf_det(np.array([1.0, 0.0]))), dtype=np.float64)
+    cy = np.array(centroid_px(fwd.psf_det(np.array([0.0, 1.0]))), dtype=np.float64)
+    jac = np.column_stack([cx - c0, cy - c0])
+    return jac, c0
+
+
+def tip_tilt_from_shifts(fwd: PupilForward, shifts: np.ndarray) -> np.ndarray:
+    """Known detector-pixel translations as first-two KL coefficients."""
+    jac, c0 = tip_tilt_jacobian(fwd)
+    out = np.zeros((shifts.shape[0], 2), dtype=np.float64)
+    for k in range(shifts.shape[0]):
+        out[k] = np.linalg.lstsq(jac, np.asarray(shifts[k], dtype=np.float64) - c0, rcond=None)[0]
+    return out
+
+
 def fit_frame_alpha(
     alpha: np.ndarray,
     fwd: PupilForward,
@@ -169,39 +189,39 @@ def fit_frame_alpha(
     image: np.ndarray,
     sigma2: float,
     n_iter: int = C.Q2_ALPHA_ITERS,
+    freeze_tip_tilt: bool = False,
 ) -> tuple[np.ndarray, float]:
-    """Backtracking steepest descent with a Barzilai–Borwein step length."""
+    """L-BFGS-B on KL coefficients. Known translations may freeze tip/tilt."""
     a = np.asarray(alpha, dtype=np.float64).reshape(-1).copy()
-    loss, grad = frame_loss_and_grad(a, fwd, obj_f, image, sigma2)
-    step = 0.05
-    gnorm0 = float(np.dot(grad, grad))
-    if gnorm0 <= 0.0:
-        return a, loss
-    for _ in range(int(n_iter)):
-        g2 = float(np.dot(grad, grad))
-        if g2 <= 1e-18 * max(gnorm0, 1.0):
-            break
-        accepted = False
-        trial_step = step
-        for _bt in range(16):
-            trial = a - trial_step * grad
-            loss_t, grad_t = frame_loss_and_grad(trial, fwd, obj_f, image, sigma2)
-            if loss_t <= loss - 1e-4 * trial_step * g2:
-                s = trial - a
-                y = grad_t - grad
-                sy = float(np.dot(s, y))
-                yy = float(np.dot(y, y))
-                if yy > 1e-18 and sy > 0.0:
-                    step = float(np.clip(sy / yy, 1e-6, 20.0))
-                else:
-                    step = trial_step
-                a, loss, grad = trial, loss_t, grad_t
-                accepted = True
-                break
-            trial_step *= 0.5
-        if not accepted:
-            break
-    return a, loss
+    if freeze_tip_tilt and a.size > 2:
+        tt = a[:2].copy()
+
+        def fun_ho(ho):
+            full = np.concatenate([tt, np.asarray(ho, dtype=np.float64)])
+            loss, grad = frame_loss_and_grad(full, fwd, obj_f, image, sigma2)
+            return loss, grad[2:]
+
+        res = minimize(
+            fun_ho,
+            a[2:],
+            method="L-BFGS-B",
+            jac=True,
+            options={"maxiter": int(n_iter), "ftol": 1e-10, "gtol": 1e-8},
+        )
+        a[2:] = res.x
+        return a, float(res.fun)
+
+    def fun(x):
+        return frame_loss_and_grad(x, fwd, obj_f, image, sigma2)
+
+    res = minimize(
+        fun,
+        a,
+        method="L-BFGS-B",
+        jac=True,
+        options={"maxiter": int(n_iter), "ftol": 1e-10, "gtol": 1e-8},
+    )
+    return np.asarray(res.x, dtype=np.float64), float(res.fun)
 
 
 def data_residual(
@@ -225,21 +245,23 @@ def initial_object(
     support: np.ndarray,
     idx: np.ndarray,
     tv_mu: float,
+    alphas: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Blind start: selected-stack Wiener with a diffraction-limited OTF."""
-    stack = np.mean(images[idx], axis=0, dtype=np.float64)
-    h_dl = fwd.otf(np.zeros(1))
-    sig = float(np.mean(sigma2[idx]) / max(idx.size, 1))
-    recon, _info = e2b(
-        h_dl[None, ...],
-        stack[None, ...],
-        np.array([sig]),
+    """Object start from selected frames. ``alphas`` are snapshot KL coefficients."""
+    idx = np.asarray(idx, dtype=np.int64)
+    if alphas is None:
+        otfs = fwd.otfs(np.zeros((idx.size, 1)))
+    else:
+        otfs = fwd.otfs(np.asarray(alphas, dtype=np.float64)[idx])
+    return reconstruct_object(
+        otfs,
+        images[idx],
+        sigma2[idx],
         lam_f,
         support,
-        mu=tv_mu,
-        x0=np.clip(stack, 0.0, None),
-    )
-    return recon
+        tv_mu,
+        x0=np.clip(np.mean(images[idx], axis=0), 0.0, None),
+    )[0]
 
 
 def reconstruct_object(
@@ -266,6 +288,7 @@ def _fit_frames(
     idx: np.ndarray,
     alpha_iters: int,
     frame_workers: int,
+    freeze_tip_tilt: bool = False,
 ) -> None:
     idx = np.asarray(idx, dtype=np.int64)
     if idx.size == 0:
@@ -279,6 +302,7 @@ def _fit_frames(
             images[k],
             float(sigma2[k]),
             n_iter=alpha_iters,
+            freeze_tip_tilt=freeze_tip_tilt,
         )
         return int(k), a
 
@@ -308,6 +332,7 @@ def d_tail(
     alpha_iters: int = C.Q2_ALPHA_ITERS,
     alpha0: np.ndarray | None = None,
     frame_workers: int = C.Q2_FRAME_WORKERS,
+    freeze_tip_tilt: bool = False,
 ) -> dict:
     """Mode-continuation MFBD: D at the first M, then D-tail through ``m_grid``.
 
@@ -341,7 +366,10 @@ def d_tail(
                 x0=obj,
             )
             obj_f = fft2(obj, workers=1)
-            _fit_frames(fwd, alphas, m, obj_f, images, sigma2, train_idx, alpha_iters, frame_workers)
+            _fit_frames(
+                fwd, alphas, m, obj_f, images, sigma2, train_idx, alpha_iters, frame_workers,
+                freeze_tip_tilt=freeze_tip_tilt,
+            )
         otfs = fwd.otfs(alphas[:, :m], frame_workers=frame_workers)
         obj, last_info = reconstruct_object(
             otfs[train_idx],
@@ -355,7 +383,10 @@ def d_tail(
         obj_f = fft2(obj, workers=1)
         holdout_loss = None
         if holdout_idx.size:
-            _fit_frames(fwd, alphas, m, obj_f, images, sigma2, holdout_idx, alpha_iters, frame_workers)
+            _fit_frames(
+                fwd, alphas, m, obj_f, images, sigma2, holdout_idx, alpha_iters, frame_workers,
+                freeze_tip_tilt=freeze_tip_tilt,
+            )
             otfs[holdout_idx] = fwd.otfs(alphas[holdout_idx, :m])
             holdout_loss = data_residual(
                 otfs[holdout_idx], obj, images[holdout_idx], sigma2[holdout_idx]

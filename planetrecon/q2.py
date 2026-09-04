@@ -33,6 +33,7 @@ from planetrecon.mfbd import (
     holdout_split,
     initial_object,
     select_init,
+    tip_tilt_from_shifts,
 )
 from planetrecon.rank import ranking_config_hash, score_sequence, top_fraction_indices
 
@@ -287,6 +288,10 @@ def evaluate_q2_crop(
     tv_d = float(known["tv_mu_D"])
     lam_d = reg.field_e2b(cfg, cfg.eval_size) if tv_d > 0 else reg.field_e2a(cfg, cfg.eval_size)
     fwd = PupilForward.from_config(cfg)
+    tt = tip_tilt_from_shifts(fwd, crop.shifts)
+    m_max = int(m_grid[-1])
+    alpha_tt = np.zeros((n, m_max), dtype=np.float64)
+    alpha_tt[:, :2] = tt
     inits_out = {}
     for name in inits:
         if name == "zero":
@@ -296,11 +301,18 @@ def evaluate_q2_crop(
         else:
             raise ValueError(f"unknown init {name}")
         obj0 = initial_object(
-            fwd, registered, sigma2, lam_d, crop.support, start_idx, tv_d
+            fwd,
+            crop.observed,
+            sigma2,
+            lam_d,
+            crop.support,
+            start_idx,
+            tv_d,
+            alphas=alpha_tt,
         )
         fit = d_tail(
             fwd,
-            registered,
+            crop.observed,
             sigma2,
             lam_d,
             crop.support,
@@ -311,7 +323,9 @@ def evaluate_q2_crop(
             m_grid=m_grid,
             outer_iters=outer_iters,
             alpha_iters=alpha_iters,
+            alpha0=alpha_tt,
             frame_workers=frame_workers,
+            freeze_tip_tilt=True,
         )
         inits_out[name] = {
             "stages": [
@@ -337,11 +351,18 @@ def evaluate_q2_crop(
     if holdout:
         train, ho = holdout_split(n, C.Q2_HOLDOUT_FRAC, extras["seed"])
         obj0 = initial_object(
-            fwd, registered, sigma2, lam_d, crop.support, train, tv_d
+            fwd,
+            crop.observed,
+            sigma2,
+            lam_d,
+            crop.support,
+            train,
+            tv_d,
+            alphas=alpha_tt,
         )
         ho_fit = d_tail(
             fwd,
-            registered,
+            crop.observed,
             sigma2,
             lam_d,
             crop.support,
@@ -352,7 +373,9 @@ def evaluate_q2_crop(
             m_grid=m_grid,
             outer_iters=outer_iters,
             alpha_iters=alpha_iters,
+            alpha0=alpha_tt,
             frame_workers=frame_workers,
+            freeze_tip_tilt=True,
         )
         last = ho_fit["stages"][-1]
         holdout_block = {
@@ -453,6 +476,14 @@ def evaluate_q2_file(
             outer_iters=outer_iters,
             alpha_iters=alpha_iters,
             frame_workers=frame_workers,
+        )
+        block = result["crops"][crop_name]
+        print(
+            f"    C={block['C']}  E_H(D)={block['E_H_D']:.4f}"
+            f"  E_H(A1o)={block['E_H_A1o']:.4f}"
+            f"  E_H(E2*)={block['E_H_E2_star']:.4f}"
+            f"  init={block['chosen_init']}  E2*={block['E2_star']}",
+            flush=True,
         )
     if out_dir is not None:
         out_dir = Path(out_dir)

@@ -135,13 +135,14 @@ regimes if they are missing, then writes classification tables under
   and the result is labelled prior-limited. Gate-1 stop logic still uses E2a.
 - **D / D-tail.** Snapshot MFBD on the first \(M\in\{15,35,60\}\) QR-Noll
   modes of the obstructed pupil, continuing from 15 to 35 to 60. Object step
-  uses E2\* assumptions. Known Gate-1 translations register the frames;
-  residual tip/tilt stay in the fitted basis. Finite-exposure averaging is
-  not modelled.
-- **Initialisations.** `zero`: diffraction-limited deconvolution of the
-  all-frame mean. `subset`: the same using \(\mathcal S_{10}\). The reported
-  D is the better of the two by held-out residual if present, otherwise by
-  training residual. Truth \(E_H\) is not used to pick an init.
+  uses E2\* assumptions. Observations stay unregistered: known Gate-1
+  translations initialise (and freeze) tip/tilt in the pupil basis so the
+  model PSF carries the shift. Higher-order modes are fitted by L-BFGS-B.
+  Finite-exposure averaging is not modelled.
+- **Initialisations.** Both put known translations into tip/tilt. `zero`
+  starts the object from all frames; `subset` starts it from \(\mathcal S_{10}\).
+  The reported D is the better of the two by held-out residual if present,
+  otherwise by training residual. Truth \(E_H\) is not used to pick an init.
 - **Held-out prediction.** Development family fits a disjoint 10% of frames
   phase-only against an object estimated on the complementary 90%. Evaluation
   closure uses all-frame D.

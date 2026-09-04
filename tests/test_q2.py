@@ -13,7 +13,9 @@ from planetrecon.mfbd import (
     frame_loss_and_grad,
     holdout_split,
     select_init,
+    tip_tilt_from_shifts,
 )
+from planetrecon.optics import centroid_px
 from planetrecon.optics import otf_from_centered_psf
 from planetrecon.q2 import closure_C, e2_star_name, prior_limited
 
@@ -209,6 +211,18 @@ def test_select_init_prefers_holdout():
         },
     }
     assert select_init(results) == "subset"
+
+
+def test_tip_tilt_from_shifts_matches_centroid():
+    fwd, _cfg = _tiny_fwd()
+    shifts = np.array([[0.15, -0.10], [0.0, 0.0], [-0.12, 0.08]])
+    tt = tip_tilt_from_shifts(fwd, shifts)
+    assert tt.shape == (3, 2)
+    assert np.all(np.isfinite(tt))
+    tt2 = tip_tilt_from_shifts(fwd, shifts)
+    assert np.allclose(tt, tt2)
+    # Larger requested x-shift maps to a different first coefficient.
+    assert tt[0, 0] != tt[2, 0]
 
 
 def test_data_residual_zero_on_perfect_prediction():
