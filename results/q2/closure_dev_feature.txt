@@ -1,0 +1,10 @@
+PlanetRecon Q2 closure  (feature crop)
+ranking_hash: 5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206
+E2B_TV=0  E2_STAR=E2b  target median C>=0.4
+M_fit=[15, 35, 60]
+
+=== D/r0 = 4.0 ===
+  C  PASS  n=3  median=0.4657135613324315  p16=0.2513429710705781 p84=0.505644446835245  frac>=0.40=0.6666666666666666  prior_limited_frac=0.0
+         seeds: 1001:0.5244, 1002:0.4657, 1003:0.1505
+  median E_H  A1o=0.9912  D=0.9319  E2*=0.8772
+
