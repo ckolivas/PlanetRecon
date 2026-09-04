@@ -1,0 +1,14 @@
+{
+  "seed": 1001,
+  "dr0": 4.0,
+  "crop": "feature",
+  "init": "subset",
+  "C_allframe": 0.5244354517777454,
+  "n_train": 450,
+  "n_holdout": 50,
+  "train_loss": 633197.4199895896,
+  "holdout_loss": 639731.5506340684,
+  "holdout_over_train": 1.0103192629000073,
+  "E_H_holdout_object": 0.9290214602346842,
+  "note": "Phase-only fit of a disjoint 10% against an object estimated on the complementary 90%. Ratio near 1 means no material overfitting."
+}

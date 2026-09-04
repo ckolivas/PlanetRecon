@@ -48,7 +48,8 @@ The evaluation feature-rich median is short of the 40% gate, so Q3
 (\(N=10^3,5\times10^3,2\times10^4\)) does not start. D recovers most of its
 gain from known translations placed in pupil tip/tilt; D-tail modes 15→60
 change \(E_H\) only weakly. Bland \(C\) can exceed 1 because that crop is
-high-band ill-conditioned.
+high-band ill-conditioned. Held-out-frame prediction on development seed
+1001 (feature, 90/10 split) has holdout/train residual 1.01.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
