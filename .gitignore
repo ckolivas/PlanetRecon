@@ -27,10 +27,17 @@ env/
 # Generated scientific products
 *.h5
 *.hdf5
-*.ser
-*.avi
 *.npy
 *.npz
 
+# Local planetary captures (OSC RGGB SER test data; do not commit)
+*.ser
+*.SER
+*.avi
+*.AVI
+
 # Environment
 .env
+
+# Simulator output
+out/

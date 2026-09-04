@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "planetrecon"
+version = "0.1.0"
+description = "Planetary multi-frame atmospheric reconstruction — Gate-1 simulator (R8)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "h5py",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+planetrecon = "planetrecon.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["planetrecon*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: full development-seed simulations and convergence checks",
+]
