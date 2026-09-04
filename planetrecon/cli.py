@@ -1,4 +1,4 @@
-"""Command-line entry points for Prompts 1 and 2."""
+"""Command-line entry points for Prompts 1–2 and Q2."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from planetrecon.validate import run_development_suite
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="planetrecon",
-        description="PlanetRecon Gate-1 simulator and known-transfer estimators (R9)",
+        description="PlanetRecon Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -75,6 +75,51 @@ def main(argv: list[str] | None = None) -> int:
     rec.add_argument("--path", type=Path, required=True)
     rec.add_argument("--out", type=Path, default=Path("out/prompt2"))
 
+    fp = sub.add_parser(
+        "freeze-prior",
+        help="choose E2b TV μ on development seeds and lock E2*",
+    )
+    fp.add_argument("--out", type=Path, default=Path("out"))
+
+    q2 = sub.add_parser(
+        "q2",
+        help="Q2 all-frame D/D-tail reconstructions and closure tables",
+    )
+    q2.add_argument("--out", type=Path, default=Path("out"))
+    q2.add_argument(
+        "--family",
+        choices=("dev", "eval", "ext"),
+        default="dev",
+        help="seed family; development also runs held-out prediction by default",
+    )
+    q2.add_argument(
+        "--dr0",
+        type=float,
+        nargs="+",
+        default=list(C.Q2_SCOPE_DR0),
+        help="seeing regimes (default: 4, the strong-G1 moderate-seeing scope)",
+    )
+    q2.add_argument("--no-generate", action="store_true")
+    q2.add_argument("--workers", type=int, default=1)
+    q2.add_argument("--eval-workers", type=int, default=1)
+    q2.add_argument(
+        "--frame-workers",
+        type=int,
+        default=C.Q2_FRAME_WORKERS,
+        help="threads for per-frame PSF/phase updates inside one reconstruction",
+    )
+    hold = q2.add_mutually_exclusive_group()
+    hold.add_argument(
+        "--holdout",
+        action="store_true",
+        help="fit a 90/10 held-out diagnostic in addition to all-frame D",
+    )
+    hold.add_argument(
+        "--no-holdout",
+        action="store_true",
+        help="skip the held-out diagnostic (default for eval/ext)",
+    )
+
     args = parser.parse_args(argv)
     if args.cmd == "generate":
         generate_one(
@@ -115,6 +160,37 @@ def main(argv: list[str] | None = None) -> int:
 
         result = evaluate_file(args.path, out_dir=args.out)
         print(result.get("metrics_path", "ok"))
+        return 0
+    if args.cmd == "freeze-prior":
+        from planetrecon.q2 import run_freeze_prior
+
+        run_freeze_prior(args.out)
+        return 0
+    if args.cmd == "q2":
+        from planetrecon.q2 import run_q2_family
+
+        seeds = {
+            "dev": C.DEV_SEEDS,
+            "eval": C.EVAL_SEEDS,
+            "ext": C.EXT_SEEDS,
+        }[args.family]
+        if args.no_holdout:
+            holdout = False
+        elif args.holdout:
+            holdout = True
+        else:
+            holdout = args.family == "dev"
+        run_q2_family(
+            args.out,
+            seeds,
+            family_name=args.family,
+            dr0s=tuple(float(v) for v in args.dr0),
+            generate=not args.no_generate,
+            workers=args.workers,
+            eval_workers=args.eval_workers,
+            holdout=holdout,
+            frame_workers=args.frame_workers,
+        )
         return 0
     parser.error("unknown command")
     return 2

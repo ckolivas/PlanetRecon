@@ -83,6 +83,17 @@ class KLBasis:
         self.modes = q[:, 1 : n_modes + 1]
         self.mask = mask
         self.n_modes = n_modes
+        self.shape = mask.shape
+
+    def expand(self, coeff: np.ndarray) -> np.ndarray:
+        """Synthesize a 2-D piston-removed phase from the first len(coeff) modes."""
+        a = np.asarray(coeff, dtype=np.float64).reshape(-1)
+        if a.size > self.n_modes:
+            raise ValueError(f"need {a.size} modes, basis has {self.n_modes}")
+        phase = np.zeros(self.shape, dtype=np.float64)
+        if a.size:
+            phase[self.mask] = self.modes[:, : a.size] @ a
+        return phase
 
     def project(self, phase: np.ndarray) -> tuple[np.ndarray, float]:
         v = phase[self.mask]

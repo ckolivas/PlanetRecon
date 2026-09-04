@@ -12,12 +12,13 @@ The Gate-1 implementation specification is frozen at revision R9 in
 `planetary_multi_frame_reconstruction_proposal.md`. Prompt 1 is the
 synthetic simulator and its validation tests (Python, NumPy/SciPy, HDF5).
 Prompt 2 is the known-transfer estimators, Laplacian ranking, and G1/G2/G3
-tables. Prompt 2 does not implement MFBD.
+tables. Q2 is E2b plus all-frame blind D / D-tail and the 40% closure gate.
 
 ## Status
 
 Prompt 1 simulator is implemented. Prompt 2 estimators, Laplacian ranking,
-and G1/G2/G3 tables are implemented. MFBD is not.
+and G1/G2/G3 tables are implemented. E2b and Q2 all-frame MFBD (D / D-tail)
+are implemented.
 
 On the 12 evaluation seeds, feature-rich crop, fixed \(p=10\):
 
@@ -45,6 +46,9 @@ python3 -m planetrecon validate-dev --out out
 python3 -m planetrecon freeze-reg --out out
 python3 -m planetrecon evaluate --family dev --out out --no-generate
 python3 -m planetrecon evaluate --family eval --out out --workers 4 --eval-workers 2
+python3 -m planetrecon freeze-prior --out out
+python3 -m planetrecon q2 --family dev --out out --no-generate
+python3 -m planetrecon q2 --family eval --out out --no-generate --eval-workers 2
 python3 -m pytest tests -q
 ```
 
@@ -116,3 +120,31 @@ regimes if they are missing, then writes classification tables under
   \(\mathcal H\). Planted contrast uses the stored 2-σ aperture / 3–5-σ
   annulus on the untapered image. Bland \(R_H<10^{-5}\) is high-band
   ill-conditioned and cannot overturn the feature-rich stop decision.
+
+## Numerical conventions (Q2)
+
+- **E2b.** Same quadratic, positivity, and \(|f|\le f_c\) support as E2a, plus
+  a Charbonnier isotropic total-variation prior. The TV weight \(\mu\) is
+  frozen on development seeds 1001–1003, both regimes, feature-rich
+  `E2b(S_100)`, as the smallest value whose median \(E_H\) is within 2% of
+  the scan minimum. Frozen value: `E2B_TV = 0` (TV does not improve \(E_H\)
+  enough to pay for an extra prior). A1o does not receive this prior.
+- **E2\*.** \(\mathrm{E2b}\) unless the matching oracle gap
+  \(E_H(\mathrm{A1o}(\mathcal S_{10}))-E_H(\mathrm{E2}(\mathcal S_{100}))\)
+  for E2b is less than half the E2a gap, in which case \(\mathrm{E2}^*=\mathrm{E2a}\)
+  and the result is labelled prior-limited. Gate-1 stop logic still uses E2a.
+- **D / D-tail.** Snapshot MFBD on the first \(M\in\{15,35,60\}\) QR-Noll
+  modes of the obstructed pupil, continuing from 15 to 35 to 60. Object step
+  uses E2\* assumptions. Known Gate-1 translations register the frames;
+  residual tip/tilt stay in the fitted basis. Finite-exposure averaging is
+  not modelled.
+- **Initialisations.** `zero`: diffraction-limited deconvolution of the
+  all-frame mean. `subset`: the same using \(\mathcal S_{10}\). The reported
+  D is the better of the two by held-out residual if present, otherwise by
+  training residual. Truth \(E_H\) is not used to pick an init.
+- **Held-out prediction.** Development family fits a disjoint 10% of frames
+  phase-only against an object estimated on the complementary 90%. Evaluation
+  closure uses all-frame D.
+- **Closure.** \(C=(E_H(\mathrm{A1o})-E_H(D))/(E_H(\mathrm{A1o})-E_H(\mathrm{E2}^*))\).
+  Target: median \(C\ge 0.40\) on the feature-rich crop at \(D/r_0=4\)
+  (strong G1, moderate seeing). Crops are never shrunk to fit more modes.

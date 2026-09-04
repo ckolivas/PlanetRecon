@@ -1,4 +1,4 @@
-"""Gate-1 known-transfer estimators: E1, E2a0, E2a, A1o."""
+"""Gate-1 known-transfer estimators: E1, E2a0, E2a, E2b, A1o."""
 
 from __future__ import annotations
 
@@ -124,6 +124,34 @@ def _project_e2a(image: np.ndarray, support: np.ndarray) -> np.ndarray:
     return np.maximum(o, 0.0)
 
 
+def isotropic_tv(image: np.ndarray, eps: float = C.E2B_TV_EPS) -> float:
+    """Charbonnier isotropic TV with forward differences and replicate edges."""
+    o = np.asarray(image, dtype=np.float64)
+    dx = np.zeros_like(o)
+    dy = np.zeros_like(o)
+    dx[:, :-1] = o[:, 1:] - o[:, :-1]
+    dy[:-1, :] = o[1:, :] - o[:-1, :]
+    return float(np.sum(np.sqrt(dx * dx + dy * dy + eps * eps)))
+
+
+def isotropic_tv_grad(image: np.ndarray, eps: float = C.E2B_TV_EPS) -> np.ndarray:
+    """Gradient of :func:`isotropic_tv`."""
+    o = np.asarray(image, dtype=np.float64)
+    dx = np.zeros_like(o)
+    dy = np.zeros_like(o)
+    dx[:, :-1] = o[:, 1:] - o[:, :-1]
+    dy[:-1, :] = o[1:, :] - o[:-1, :]
+    nrm = np.sqrt(dx * dx + dy * dy + eps * eps)
+    px = dx / nrm
+    py = dy / nrm
+    grad = np.zeros_like(o)
+    grad[:, 1:] += px[:, :-1]
+    grad[:, :-1] -= px[:, :-1]
+    grad[1:, :] += py[:-1, :]
+    grad[:-1, :] -= py[:-1, :]
+    return grad
+
+
 def e2a(
     otfs: np.ndarray,
     images: np.ndarray,
@@ -132,14 +160,24 @@ def e2a(
     support: np.ndarray,
     maxiter: int = C.E2A_FISTA_MAXITER,
     tol: float = C.E2A_FISTA_TOL,
+    x0: np.ndarray | None = None,
+    tv_mu: float = 0.0,
+    tv_eps: float = C.E2B_TV_EPS,
 ) -> tuple[np.ndarray, dict]:
-    """Positivity + spectral-support reconstruction of the E1 quadratic (§8.3)."""
+    """Positivity + spectral-support reconstruction of the E1 quadratic (§8.3).
+
+    Optional Charbonnier TV (``tv_mu``) is the E2b production prior. A1o must
+    call this with ``tv_mu=0`` so it keeps E2a object assumptions (§8.6).
+    """
     num, den = wiener_num_den(otfs, images, sigma2, lam_f)
     support = np.asarray(support, dtype=np.float64)
     den = np.where(support > 0.5, den, 1.0)
     num = num * support
-    o = _project_e2a(np.fft.ifft2(num / den).real, support)
+    start = np.fft.ifft2(num / den).real if x0 is None else np.asarray(x0, dtype=np.float64)
+    o = _project_e2a(start, support)
     lip = float(np.max(den * support))
+    if tv_mu > 0.0:
+        lip = lip + 8.0 * float(tv_mu) / max(float(tv_eps), 1e-12)
     step = 1.0 / max(lip, C.DEN_FLOOR)
     y = o.copy()
     t = 1.0
@@ -148,6 +186,8 @@ def e2a(
     for n_iter in range(1, maxiter + 1):
         of = np.fft.fft2(y)
         grad = np.fft.ifft2((den * of - num) * support).real
+        if tv_mu > 0.0:
+            grad = grad + float(tv_mu) * isotropic_tv_grad(y, tv_eps)
         o_next = _project_e2a(y - step * grad, support)
         t_next = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
         y = o_next + ((t - 1.0) / t_next) * (o_next - o)
@@ -161,7 +201,40 @@ def e2a(
         "rel_delta": last_delta,
         "step": step,
         "converged": bool(last_delta < tol),
+        "tv_mu": float(tv_mu),
     }
+
+
+def e2b(
+    otfs: np.ndarray,
+    images: np.ndarray,
+    sigma2: np.ndarray,
+    lam_f: np.ndarray,
+    support: np.ndarray,
+    mu: float | None = None,
+    tv_eps: float = C.E2B_TV_EPS,
+    maxiter: int = C.E2A_FISTA_MAXITER,
+    tol: float = C.E2A_FISTA_TOL,
+    x0: np.ndarray | None = None,
+) -> tuple[np.ndarray, dict]:
+    """E2a plus the locked production object prior (R9 §8.5)."""
+    tv_mu = C.E2B_TV if mu is None else float(mu)
+    recon, info = e2a(
+        otfs,
+        images,
+        sigma2,
+        lam_f,
+        support,
+        maxiter=maxiter,
+        tol=tol,
+        x0=x0,
+        tv_mu=tv_mu,
+        tv_eps=tv_eps,
+    )
+    info = dict(info)
+    info["prior"] = "charbonnier_isotropic_tv"
+    info["tv_eps"] = float(tv_eps)
+    return recon, info
 
 
 def a1o(
@@ -206,9 +279,15 @@ class Regularisation:
     e1_lambda_rel: float = C.E1_LAMBDA_REL
     e2a_lambda_rel: float = C.E2A_LAMBDA_REL
     e1_lambda_grad: float = C.E1_LAMBDA_GRAD
+    e2b_lambda_rel: float = C.E2B_LAMBDA_REL
+    e2b_tv: float = C.E2B_TV
+    e2b_tv_eps: float = C.E2B_TV_EPS
 
     def field_e1(self, cfg: SimConfig, n: int) -> np.ndarray:
         return lambda_field(cfg, n, self.e1_lambda_rel, self.e1_lambda_grad)
 
     def field_e2a(self, cfg: SimConfig, n: int) -> np.ndarray:
         return lambda_field(cfg, n, self.e2a_lambda_rel, self.e1_lambda_grad)
+
+    def field_e2b(self, cfg: SimConfig, n: int) -> np.ndarray:
+        return lambda_field(cfg, n, self.e2b_lambda_rel, self.e1_lambda_grad)

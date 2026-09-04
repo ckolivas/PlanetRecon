@@ -80,6 +80,26 @@ E2A0_CG_MAXITER = 200
 E2A_FISTA_TOL = 1e-6
 SUPPORT_RHO_MAX = 1.0
 
+# Prompt Q2 — E2b production prior and blind D / D-tail (R9 §8.5, §18)
+# Quadratic stabilisation stays at the Prompt-2 freeze. Charbonnier TV μ was
+# scanned on development seeds 1001–1003, both regimes, feature-rich E2b(S_100).
+# Smallest μ within 2% of the grid minimum is 0 (the grid min at 0.03 improves
+# median E_H by ≪ 2%). E2* remains E2b; the matching G3-like gap is not
+# prior-limited.
+E2B_LAMBDA_REL = E2A_LAMBDA_REL
+E2B_TV = 0.0
+E2B_TV_EPS = 1.0
+E2_STAR = "E2b"
+M_FIT_GRID = (15, 35, 60)
+Q2_OUTER_ITERS = (3, 2, 2)
+Q2_ALPHA_ITERS = 4
+Q2_FRAME_WORKERS = 1
+Q2_HOLDOUT_FRAC = 0.10
+Q2_CLOSURE_TARGET = 0.40
+Q2_PRIOR_LIMITED_RATIO = 0.5
+Q2_SCOPE_DR0 = (4.0,)
+Q2_INITS = ("zero", "subset")
+
 OVALS = (
     {
         "name": "oval1",
