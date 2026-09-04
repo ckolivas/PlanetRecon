@@ -28,6 +28,13 @@ from planetrecon.hdf5io import (
     schema_errors,
     validation_is_gate_eligible,
 )
+from planetrecon.provenance import (
+    current_method_fingerprint,
+    fingerprint_from_h5,
+    fingerprint_mismatch,
+    physics_compatible,
+    write_certificate_dataset,
+)
 from planetrecon.kl import KLBasis, noll_nm
 from planetrecon.metric import (
     eval_window,
@@ -468,6 +475,82 @@ def check_lowfreq_tilt(cfg: SimConfig | None = None) -> list[Check]:
     ]
 
 
+def ranking_jaccard(a: np.ndarray, b: np.ndarray) -> float:
+    sa, sb = set(int(v) for v in a), set(int(v) for v in b)
+    if not sa and not sb:
+        return 1.0
+    return float(len(sa & sb) / max(len(sa | sb), 1))
+
+
+def check_lowfreq_ranking(cfg: SimConfig | None = None) -> list[Check]:
+    """Practical-ranking S_10 overlap when subharmonic augmentation increases.
+
+    Bounded CPU fixture: not a full Gate-1 family and not a G1/G2 rerun.
+    If membership is unstable the official G1/G2 <2% follow-up is W03.
+    """
+    from planetrecon.estimators import fourier_shift_image
+    from planetrecon.optics import center_crop
+    from planetrecon.rank import score_sequence, top_fraction_indices
+
+    cfg = cfg or make_config(1001, 8.0, n_diam=16, pupil_pad_factor=8.0, n_frames=1)
+    pupil = make_pupil(cfg)
+    n_scr = pupil.grid_size
+    dx = cfg.pupil_dx_m
+    xc = yc = 0.5 * (n_scr - 1) * dx
+    n_frames = 80
+    eval_n = 32
+    yy, xx = np.indices((eval_n, eval_n))
+    obj = np.exp(
+        -0.5
+        * (
+            (xx - eval_n / 2.0) ** 2 / 7.0**2
+            + (yy - eval_n / 2.0) ** 2 / 5.5**2
+        )
+    )
+    obj = obj + 0.2 * np.exp(
+        -0.5 * ((xx - eval_n / 2.0 - 4) ** 2 + (yy - eval_n / 2.0 + 3) ** 2) / 2.2**2
+    )
+
+    def frames_for(levels: int) -> np.ndarray:
+        images = np.empty((n_frames, eval_n, eval_n), dtype=np.float64)
+        for k in range(n_frames):
+            rng = np.random.default_rng(int(cfg.seed) * 1000 + 17 * k)
+            phi = generate_square_screen(cfg.r0_m, n_scr, dx, levels, rng)
+            screen = PhaseScreen(phi, dx, xc, yc, levels, cfg.r0_m)
+            phase = extract_phase(pupil, screen, 0.0, 0.0)
+            psf = instantaneous_psf(pupil.amplitude, phase)
+            psf_det = center_crop(bin_box(psf, cfg.bin_factor), eval_n)
+            psf_det = psf_det / psf_det.sum()
+            img = np.fft.ifft2(
+                np.fft.fft2(np.fft.ifftshift(psf_det)) * np.fft.fft2(obj)
+            ).real
+            sx, sy = centroid_px(psf_det)
+            images[k] = fourier_shift_image(img, (-sx, -sy))
+        return images
+
+    levels = cfg.subharmonic_levels
+    img_lo = frames_for(levels)
+    img_hi = frames_for(levels + 1)
+    scores_lo = score_sequence(img_lo)
+    scores_hi = score_sequence(img_hi)
+    top_lo = top_fraction_indices(scores_lo, C.DECISION_P)
+    top_hi = top_fraction_indices(scores_hi, C.DECISION_P)
+    jac = ranking_jaccard(top_lo, top_hi)
+    from scipy.stats import spearmanr
+
+    spear = float(spearmanr(scores_lo, scores_hi).correlation)
+    passed = (spear >= C.RANK_LOFREQ_SPEARMAN_MIN) or (jac >= C.RANK_LOFREQ_JACCARD_MIN)
+    return [
+        _ok(
+            "lowfreq_ranking_subharmonics",
+            passed,
+            f"S_10 Jaccard={jac:.3f} Spearman={spear:.3f} levels {levels}/{levels + 1} "
+            f"lo={sorted(int(v) for v in top_lo)} hi={sorted(int(v) for v in top_hi)}",
+            spear if np.isfinite(spear) else jac,
+        )
+    ]
+
+
 def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
     cfg = cfg or make_config(1001, 8.0)
     checks = []
@@ -675,9 +758,11 @@ def certify_development_validations(
     """Freeze development-only validation outcomes onto compatible truth files."""
     ratios_by_seed: dict[int, np.ndarray] = {}
     method_passes: dict[tuple[int, float], dict[str, bool]] = {}
+    fingerprints: dict[Path, dict] = {}
     for path in development_paths:
         if not path.exists() or schema_errors(path):
             continue
+        fingerprints[Path(path)] = fingerprint_from_h5(path)
         with h5py.File(path, "r") as f:
             seed = int(f.attrs["seed"])
             dr0 = float(f["/config"].attrs["Dr0"])
@@ -705,6 +790,16 @@ def certify_development_validations(
             f"expected={sorted(expected_pairs)}",
         )
 
+    ref_fp = next(iter(fingerprints.values()))
+    for path, fp in fingerprints.items():
+        if not physics_compatible(ref_fp, fp):
+            diffs = fingerprint_mismatch(ref_fp, fp)
+            return _ok(
+                "development_validation_certification",
+                False,
+                f"incompatible development fingerprint {path.name}: " + "; ".join(diffs),
+            )
+
     mean_ratio = np.mean(np.stack(list(ratios_by_seed.values())), axis=0)
     rel_error = float(np.median(np.abs(mean_ratio - 1.0)))
     structure_passed = rel_error < C.STRUCTURE_FUNCTION_REL_TOL
@@ -713,12 +808,30 @@ def certify_development_validations(
         for key in _DEVELOPMENT_METHOD_PASS_KEYS
     }
     passed = structure_passed and all(certified_passes.values())
+    certificate = current_method_fingerprint()
+    certificate.update({k: ref_fp[k] for k in (
+        "n_diam",
+        "pupil_pad_factor",
+        "pupil_grid_size",
+        "exposure_samples_J",
+        "padding_detector_px",
+        "subharmonic_levels",
+        "eval_size",
+    ) if k in ref_fp})
 
     from planetrecon.simulate import write_summary
 
     targets = development_paths if target_paths is None else target_paths
+    mismatched = []
     for path in targets:
+        path = Path(path)
         if not path.exists() or schema_errors(path):
+            continue
+        target_fp = fingerprint_from_h5(path)
+        if not physics_compatible(ref_fp, target_fp):
+            mismatched.append(
+                f"{path.name}: " + "; ".join(fingerprint_mismatch(ref_fp, target_fp))
+            )
             continue
         with h5py.File(path, "r+") as f:
             gv = f["/validation"]
@@ -732,7 +845,8 @@ def certify_development_validations(
                 if local_key not in gv:
                     gv.create_dataset(local_key, data=bool(gv[key][()]))
                 gv[key][...] = certified
-            values = {name: ds[...] for name, ds in gv.items()}
+            write_certificate_dataset(gv, certificate)
+            values = {name: ds[...] for name, ds in gv.items() if name != "method_certificate_json"}
             values["gate_eligible"] = validation_is_gate_eligible(values)
             gv["gate_eligible"][...] = values["gate_eligible"]
             cfg = make_config(
@@ -752,6 +866,14 @@ def certify_development_validations(
                 eval_size=int(f["/object/feature_truth"].shape[0]),
             )
         write_summary(path, cfg, values)
+
+    if mismatched:
+        return _ok(
+            "development_validation_certification",
+            False,
+            "incompatible method certificate targets: " + " | ".join(mismatched),
+            rel_error,
+        )
 
     return _ok(
         "development_validation_certification",

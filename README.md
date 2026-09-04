@@ -57,18 +57,29 @@ high-band ill-conditioned. A two-initialization held-out-frame diagnostic on
 development seed 1001 (feature, 90/10 split) selects the `subset` start and has
 holdout/train residual 1.0103; the all-frame closure remains 0.5244.
 
-The next planned implementation is W00/W01: versioned evidence and numerical
-correctness/certification tests, followed by the CPU-first desktop vertical slice.
-The documentation revision does not relabel existing R9 truth files or results.
+W00 (versioned evidence, test tiers, CPU thread policy) and W01 (Dykstra
+positivity/support projection, forward/adjoint audit, method certificates)
+are implemented. Historical R9 tables in `results/prompt2/` and `results/q2/`
+are archived in place and are not regenerated. Q3 still does not start.
+The next planned slice is W04–W08: open a real Bayer SER, process a bounded
+CPU batch, and display the result in an owned, cancellable Qt6 job. Advanced
+atmospheric claims remain gated by W03.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 
 ## Run
 
-From the repository root (Python 3 with numpy, scipy, h5py, pytest):
+From the repository root (Python 3 with numpy, scipy, h5py, pytest). Default
+execution is CPU-only with 8 BLAS/FFT threads:
 
 ```bash
+export PLANETRECON_THREADS=8
+export OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=8 MKL_NUM_THREADS=8
+export CUDA_VISIBLE_DEVICES=
+python3 -m planetrecon evidence --results results
+python3 -m pytest tests -q
+python3 -m pytest tests -q --run-slow
 python3 -m planetrecon generate --seed 1001 --dr0 8 --out out
 python3 -m planetrecon validate-dev --out out
 python3 -m planetrecon freeze-reg --out out
@@ -77,8 +88,15 @@ python3 -m planetrecon evaluate --family eval --out out --workers 4 --eval-worke
 python3 -m planetrecon freeze-prior --out out
 python3 -m planetrecon q2 --family dev --out out --no-generate
 python3 -m planetrecon q2 --family eval --out out --no-generate --eval-workers 2
-python3 -m pytest tests -q
 ```
+
+`pytest tests -q` is the default CPU suite: unit tests and bounded integration.
+It does not run `@pytest.mark.slow` convergence jobs, scientific seed families,
+or hardware/GPU tests. Pass `--run-slow` / `--run-scientific` / `--run-hardware`
+to opt in. Do not put expensive simulations in the default suite.
+
+`python3 -m planetrecon evidence` writes `results/manifests/` without modifying
+archived R9 tables.
 
 `validate-dev` runs the mandatory physics checks and, unless `--no-generate`
 is given, writes development-seed HDF5 files for `D/r0 = 8` and `4` at
@@ -137,10 +155,15 @@ regimes if they are missing, then writes classification tables under
   started without the analytical E1 solution. No positivity. Relative \(E_H\)
   must match E1 to \(<10^{-4}\) and the image norm to \(<10^{-6}\).
 - **E2a / A1o.** Same quadratic as E1 with positivity and \(|f|\le f_c\)
-  spectral support, solved by FISTA. A1o registers with the known Fourier
-  shift, forms the uniform mean stack, uses \(H_{\rm eff}=\mathrm{mean}(H_k)\)
-  of the registered OTFs, and the exact stacked white-noise variance
-  \(\mathrm{mean}(\sigma_k^2)/|S|\).
+  spectral support, solved by FISTA. The feasible set is the intersection of
+  those two convex constraints; W01 projects onto it with Dykstra rather than
+  clip-then-support-then-clip. A1o registers with the known Fourier shift,
+  forms the uniform mean stack, uses \(H_{\rm eff}=\mathrm{mean}(H_k)\) of the
+  registered OTFs, and the exact stacked white-noise variance
+  \(\mathrm{mean}(\sigma_k^2)/|S|\). Estimator operator version: `1.1`.
+  Simulator convolution remains the padded linear operator (version `1.0`);
+  crop-FFT circular convolution is the frozen estimator model, audited as an
+  interior approximation.
 - **Ranking.** Exact Fourier registration, sky-median subtraction if a sky
   mask is present, 4-neighbour Laplacian energy, 2-pixel border ignored.
   Decision subset \(p=10\). Diagnostic grid \(\{5,10,25,50,100\}\).

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "planetrecon"
 version = "0.1.0"
-description = "Planetary multi-frame atmospheric reconstruction — Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)"
+description = "Planetary multi-frame atmospheric reconstruction — Gate-1 simulator, known-transfer estimators, Q2 MFBD, and W00/W01 operator audit (R10 roadmap)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -27,4 +27,6 @@ include = ["planetrecon*"]
 testpaths = ["tests"]
 markers = [
     "slow: full development-seed simulations and convergence checks",
+    "scientific: expensive scientific seed families (not in the default suite)",
+    "hardware: GPU or release-hardware tests (not in the default suite)",
 ]

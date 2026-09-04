@@ -122,3 +122,21 @@ def test_generate_schema(tmp_path):
         assert not bool(validation["lowfreq_convergence_local_pass"][()])
         assert bool(validation["lowfreq_convergence_pass"][()])
         assert bool(validation["gate_eligible"][()])
+        assert "method_certificate_json" in validation
+
+    mismatched = tmp_path / filename(2011, 8.0)
+    shutil.copy2(paths[0], mismatched)
+    with h5py.File(mismatched, "r+") as f:
+        f.attrs["seed"] = 2011
+        f["config"].attrs["exposure_samples_J"] = 99
+        f["validation"]["gate_eligible"][...] = False
+        f["validation"]["lowfreq_convergence_pass"][...] = False
+        if "method_certificate_json" in f["validation"]:
+            del f["validation"]["method_certificate_json"]
+    check = certify_development_validations(paths, [mismatched])
+    assert not check.passed
+    assert "incompatible" in check.message
+    with h5py.File(mismatched, "r") as f:
+        assert not bool(f["validation"]["gate_eligible"][()])
+        assert not bool(f["validation"]["lowfreq_convergence_pass"][()])
+        assert "method_certificate_json" not in f["validation"]

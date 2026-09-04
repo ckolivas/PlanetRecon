@@ -1,0 +1,42 @@
+{
+  "archived": false,
+  "config_hash": "e71f6bb1d6ddf78abbf3dc834fa8ac3e8ca858623b55e3ec4b074f3345eaa4e5",
+  "cpu_threads": 8,
+  "created_utc": "2026-09-04T23:47:33Z",
+  "device": "cpu",
+  "document_revision": "R9",
+  "estimator_operator_version": "1.1",
+  "experiment_id": "w00-w01-operator-audit",
+  "inputs": [],
+  "notes": "Estimator operator version is 1.1 (Dykstra). Simulator operator version remains 1.0. Historical R9 result files are unchanged.",
+  "protocol": "W00 versioned evidence and test tiers; W01 Dykstra positivity/support projection, forward/adjoint audit, noise-approximation quantification, and method-certificate fingerprints. CPU-only, 8 threads. No Q3 and no full seed-family rerun.",
+  "results": [
+    {
+      "kind": "unit",
+      "path": "tests/test_w00.py",
+      "status": "diagnostic"
+    },
+    {
+      "kind": "unit",
+      "path": "tests/test_w01.py",
+      "status": "diagnostic"
+    }
+  ],
+  "roadmap_revision": "R10",
+  "schema_name": "planetrecon-evidence-manifest",
+  "schema_version": "1.0",
+  "seed_coverage": {
+    "scientific_families": false,
+    "unit_fixtures": true
+  },
+  "simulator_operator_version": "1.0",
+  "source_hash": "3f4adda808d1c221c47765a1da61f9f28ed2a2673e566ee075bbd0ef092b157b",
+  "status": "diagnostic",
+  "tolerances": {
+    "DYKSTRA_TOL": 1e-12,
+    "FEASIBLE_POS_TOL": 1e-08,
+    "FEASIBLE_SUPPORT_TOL": 1e-10,
+    "RANK_LOFREQ_JACCARD_MIN": 0.5,
+    "RANK_LOFREQ_SPEARMAN_MIN": 0.85
+  }
+}

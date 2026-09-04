@@ -1,0 +1,137 @@
+{
+  "archived": true,
+  "code_baseline": "d1b600a",
+  "config_hash": "e71f6bb1d6ddf78abbf3dc834fa8ac3e8ca858623b55e3ec4b074f3345eaa4e5",
+  "created_utc": "2026-09-04T23:47:33Z",
+  "document_revision": "R9",
+  "estimator_operator_version": "1.1",
+  "experiment_id": "r9-historical-bundle",
+  "hdf5_revision": "R9",
+  "inputs": [
+    {
+      "kind": "hdf5-truth",
+      "revision": "R9",
+      "schema": "planetary-mfbd-gate1"
+    }
+  ],
+  "notes": "Gate-1 feature G1 is strong only at D/r0=4 and is oracle-sensitive. Q2 evaluation feature-rich median C=0.36388457737905266 < 0.40, so Q3 does not start. Bland tables are high-band ill-conditioned diagnostics.",
+  "protocol": "Frozen R9 Gate-1 and Q2 tables. Archived in place by W00; files are not regenerated and must not be relabelled as newly validated data.",
+  "ranking_hash": "5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206",
+  "results": [
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/classification_eval_feature.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/classification_eval_bland.json",
+      "status": "diagnostic"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/classification_dev_feature.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/classification_dev_bland.json",
+      "status": "diagnostic"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/frozen_regularisation.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/summary_eval.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/summary_dev.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/prompt2/ranking_hash.txt",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/closure_eval_feature.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/closure_eval_bland.json",
+      "status": "diagnostic"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/closure_dev_feature.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/closure_dev_bland.json",
+      "status": "diagnostic"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/frozen_prior.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/holdout_dev_seed-01001_feature.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/summary_eval.json",
+      "status": "valid"
+    },
+    {
+      "gate_passed": false,
+      "path": "results/q2/summary_dev.json",
+      "status": "valid"
+    }
+  ],
+  "roadmap_revision": "R10",
+  "schema_name": "planetrecon-evidence-manifest",
+  "schema_version": "1.0",
+  "seed_coverage": {
+    "development": [
+      1001,
+      1002,
+      1003
+    ],
+    "evaluation": [
+      2001,
+      2002,
+      2003,
+      2004,
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012
+    ],
+    "q2_scope_dr0": [
+      4.0
+    ]
+  },
+  "simulator_operator_version": "1.0",
+  "source_hash": "3f4adda808d1c221c47765a1da61f9f28ed2a2673e566ee075bbd0ef092b157b",
+  "status": "valid",
+  "tolerances": {
+    "E1_E2A0_EH_REL_TOL": 0.0001,
+    "Q2_CLOSURE_TARGET": 0.4,
+    "RH_ILLCONDITIONED": 1e-05
+  }
+}

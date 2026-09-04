@@ -1,9 +1,13 @@
-"""Command-line entry points for Prompts 1–2 and Q2."""
+"""Command-line entry points for Prompts 1–2, Q2, and W00 evidence."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
+
+from planetrecon.runtime import apply_thread_limits, default_thread_count
+
+apply_thread_limits(default_thread_count())
 
 from planetrecon import constants as C
 from planetrecon.simulate import generate_one
@@ -14,6 +18,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="planetrecon",
         description="PlanetRecon Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)",
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=None,
+        help=(
+            "CPU BLAS/FFT thread cap (default: PLANETRECON_THREADS or 8). "
+            "Must also be set in the environment to affect OpenBLAS if NumPy "
+            "is already loaded. GPU devices are not used."
+        ),
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -120,7 +134,15 @@ def main(argv: list[str] | None = None) -> int:
         help="skip the held-out diagnostic (default for eval/ext)",
     )
 
+    evd = sub.add_parser(
+        "evidence",
+        help="write W00/W01 evidence manifests without regenerating R9 tables",
+    )
+    evd.add_argument("--results", type=Path, default=Path("results"))
+
     args = parser.parse_args(argv)
+    if args.threads is not None:
+        apply_thread_limits(args.threads)
     if args.cmd == "generate":
         generate_one(
             args.seed,
@@ -191,6 +213,13 @@ def main(argv: list[str] | None = None) -> int:
             holdout=holdout,
             frame_workers=args.frame_workers,
         )
+        return 0
+    if args.cmd == "evidence":
+        from planetrecon.evidence import write_evidence_manifests
+
+        written = write_evidence_manifests(args.results)
+        for path in written:
+            print(path)
         return 0
     parser.error("unknown command")
     return 2

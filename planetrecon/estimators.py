@@ -117,11 +117,94 @@ def e2a0(
     return recon, {"cg_info": int(info), "n_iter_cap": int(maxiter)}
 
 
+def _apply_spectral_support(image: np.ndarray, support: np.ndarray) -> np.ndarray:
+    of = np.fft.fft2(np.asarray(image, dtype=np.float64)) * support
+    return np.fft.ifft2(of).real
+
+
+def positivity_violation(image: np.ndarray) -> float:
+    return float(max(0.0, -np.min(np.asarray(image, dtype=np.float64))))
+
+
+def out_of_support_fraction(image: np.ndarray, support: np.ndarray) -> float:
+    """Out-of-support Fourier norm / total Fourier norm."""
+    freq = np.fft.fft2(np.asarray(image, dtype=np.float64))
+    total = float(np.linalg.norm(freq))
+    if total <= 0.0:
+        return 0.0
+    leaked = freq[np.asarray(support) < 0.5]
+    return float(np.linalg.norm(leaked) / total)
+
+
+def project_positivity_support(
+    image: np.ndarray,
+    support: np.ndarray,
+    maxiter: int = C.DYKSTRA_MAXITER,
+    tol: float = C.DYKSTRA_TOL,
+    p: np.ndarray | None = None,
+    q: np.ndarray | None = None,
+) -> tuple[np.ndarray, dict]:
+    """Euclidean projection onto {x ≥ 0} ∩ bandlimited(support) via Dykstra.
+
+    Sequential clip-then-support-then-clip is not a projection onto the
+    intersection: the final positivity clip restores out-of-support power.
+    """
+    x = np.asarray(image, dtype=np.float64).copy()
+    support = np.asarray(support, dtype=np.float64)
+    if p is None:
+        p = np.zeros_like(x)
+    else:
+        p = np.asarray(p, dtype=np.float64).copy()
+    if q is None:
+        q = np.zeros_like(x)
+    else:
+        q = np.asarray(q, dtype=np.float64).copy()
+    last = 0.0
+    n_iter = 0
+    pos = positivity_violation(x)
+    leak = out_of_support_fraction(x, support)
+    for n_iter in range(1, int(maxiter) + 1):
+        y = np.maximum(x + p, 0.0)
+        p = x + p - y
+        z = _apply_spectral_support(y + q, support)
+        q = y + q - z
+        denom = max(float(np.linalg.norm(z)), 1e-12)
+        last = float(np.linalg.norm(z - x) / denom)
+        x = z
+        pos = positivity_violation(x)
+        leak = out_of_support_fraction(x, support)
+        if pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL:
+            break
+        if last < tol:
+            break
+    info = {
+        "n_iter": int(n_iter),
+        "rel_delta": last,
+        "converged": bool(
+            last < tol or (pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL)
+        ),
+        "method": "dykstra",
+        "positivity_violation": pos,
+        "out_of_support": leak,
+        "p": p,
+        "q": q,
+    }
+    return x, info
+
+
 def _project_e2a(image: np.ndarray, support: np.ndarray) -> np.ndarray:
-    o = np.maximum(np.asarray(image, dtype=np.float64), 0.0)
-    of = np.fft.fft2(o) * support
-    o = np.fft.ifft2(of).real
-    return np.maximum(o, 0.0)
+    projected, _info = project_positivity_support(image, support)
+    return projected
+
+
+def constraint_diagnostics(image: np.ndarray, support: np.ndarray) -> dict:
+    pos = positivity_violation(image)
+    leak = out_of_support_fraction(image, support)
+    return {
+        "positivity_violation": pos,
+        "out_of_support": leak,
+        "feasible": bool(pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL),
+    }
 
 
 def isotropic_tv(image: np.ndarray, eps: float = C.E2B_TV_EPS) -> float:
@@ -174,7 +257,9 @@ def e2a(
     den = np.where(support > 0.5, den, 1.0)
     num = num * support
     start = np.fft.ifft2(num / den).real if x0 is None else np.asarray(x0, dtype=np.float64)
-    o = _project_e2a(start, support)
+    o, proj_info = project_positivity_support(start, support, maxiter=max(C.DYKSTRA_MAXITER, 128))
+    dual_p = proj_info["p"]
+    dual_q = proj_info["q"]
     lip = float(np.max(den * support))
     if tv_mu > 0.0:
         lip = lip + 8.0 * float(tv_mu) / max(float(tv_eps), 1e-12)
@@ -183,12 +268,22 @@ def e2a(
     t = 1.0
     last_delta = 0.0
     n_iter = 0
+    last_grad_norm = 0.0
     for n_iter in range(1, maxiter + 1):
         of = np.fft.fft2(y)
         grad = np.fft.ifft2((den * of - num) * support).real
         if tv_mu > 0.0:
             grad = grad + float(tv_mu) * isotropic_tv_grad(y, tv_eps)
-        o_next = _project_e2a(y - step * grad, support)
+        last_grad_norm = float(np.linalg.norm(grad))
+        o_next, proj_info = project_positivity_support(
+            y - step * grad,
+            support,
+            maxiter=C.DYKSTRA_WARM_MAXITER,
+            p=dual_p,
+            q=dual_q,
+        )
+        dual_p = proj_info["p"]
+        dual_q = proj_info["q"]
         t_next = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
         y = o_next + ((t - 1.0) / t_next) * (o_next - o)
         last_delta = float(np.linalg.norm(o_next - o) / max(np.linalg.norm(o_next), 1e-12))
@@ -196,12 +291,34 @@ def e2a(
         t = t_next
         if last_delta < tol:
             break
+    o, proj_info = project_positivity_support(o, support, maxiter=400)
+    of = np.fft.fft2(o)
+    grad_o = np.fft.ifft2((den * of - num) * support).real
+    if tv_mu > 0.0:
+        grad_o = grad_o + float(tv_mu) * isotropic_tv_grad(o, tv_eps)
+    projected, _kkt = project_positivity_support(
+        o - step * grad_o,
+        support,
+        maxiter=max(C.DYKSTRA_MAXITER, 128),
+        p=dual_p,
+        q=dual_q,
+    )
+    kkt = float(np.linalg.norm(projected - o) / max(np.linalg.norm(o), 1e-12))
+    feas = constraint_diagnostics(o, support)
     return o, {
         "n_iter": n_iter,
         "rel_delta": last_delta,
         "step": step,
         "converged": bool(last_delta < tol),
         "tv_mu": float(tv_mu),
+        "positivity_violation": feas["positivity_violation"],
+        "out_of_support": feas["out_of_support"],
+        "feasible": feas["feasible"],
+        "kkt_residual": kkt,
+        "grad_norm": last_grad_norm,
+        "projection_iters": int(proj_info["n_iter"]),
+        "projection_method": "dykstra",
+        "estimator_operator_version": C.ESTIMATOR_OPERATOR_VERSION,
     }
 
 

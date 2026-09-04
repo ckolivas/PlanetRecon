@@ -26,6 +26,12 @@ HIGH_BAND_MTF_MIN = 0.05
 SCHEMA_NAME = "planetary-mfbd-gate1"
 SCHEMA_VERSION = "1.0"
 REVISION = "R9"
+ROADMAP_REVISION = "R10"
+# Simulator convolution/bin/crop contract. Bump only when that operator changes.
+SIMULATOR_OPERATOR_VERSION = "1.0"
+# Estimator projection/quadratic contract. W01 replaces clip-then-support with
+# Dykstra projection onto positivity ∩ spectral support.
+ESTIMATOR_OPERATOR_VERSION = "1.1"
 DEV_SEEDS = (1001, 1002, 1003)
 EVAL_SEEDS = tuple(range(2001, 2013))
 EXT_SEEDS = tuple(range(2013, 2025))
@@ -79,6 +85,14 @@ E2A_FISTA_MAXITER = 300
 E2A0_CG_MAXITER = 200
 E2A_FISTA_TOL = 1e-6
 SUPPORT_RHO_MAX = 1.0
+DYKSTRA_MAXITER = 64
+DYKSTRA_WARM_MAXITER = 32
+DYKSTRA_TOL = 1e-12
+FEASIBLE_POS_TOL = 1e-8
+FEASIBLE_SUPPORT_TOL = 1e-10
+RANK_LOFREQ_JACCARD_MIN = 0.50
+RANK_LOFREQ_SPEARMAN_MIN = 0.85
+DEFAULT_CPU_THREADS = 8
 
 # Prompt Q2 — E2b production prior and blind D / D-tail (R9 §8.5, §18)
 # Quadratic stabilisation stays at the Prompt-2 freeze. Charbonnier TV μ was
