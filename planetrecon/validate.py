@@ -661,42 +661,77 @@ def check_schema_file(path: Path, require_gate_eligible: bool = False) -> list[C
     ]
 
 
-def certify_development_structure_function(paths: list[Path]) -> Check:
-    """Pool independent development screens and certify every paired file."""
+_DEVELOPMENT_METHOD_PASS_KEYS = (
+    "grid_convergence_pass",
+    "exposure_convergence_pass",
+    "padding_convergence_pass",
+    "lowfreq_convergence_pass",
+)
+
+
+def certify_development_validations(
+    development_paths: list[Path], target_paths: list[Path] | None = None
+) -> Check:
+    """Freeze development-only validation outcomes onto compatible truth files."""
     ratios_by_seed: dict[int, np.ndarray] = {}
-    valid_paths = []
-    for path in paths:
+    method_passes: dict[tuple[int, float], dict[str, bool]] = {}
+    for path in development_paths:
         if not path.exists() or schema_errors(path):
             continue
         with h5py.File(path, "r") as f:
             seed = int(f.attrs["seed"])
+            dr0 = float(f["/config"].attrs["Dr0"])
             measured = f["/validation/structure_function_measured"][...]
             target = f["/validation/structure_function_target"][...]
             ratios_by_seed.setdefault(seed, measured / target)
-        valid_paths.append(path)
+            gv = f["/validation"]
+            method_passes[(seed, dr0)] = {
+                key: bool(gv[key.replace("_pass", "_local_pass")][()])
+                if key.replace("_pass", "_local_pass") in gv
+                else bool(gv[key][()])
+                for key in _DEVELOPMENT_METHOD_PASS_KEYS
+            }
 
     expected_seeds = set(C.DEV_SEEDS)
-    if set(ratios_by_seed) != expected_seeds:
+    expected_pairs = {
+        (seed, float(dr0)) for seed in C.DEV_SEEDS for dr0 in C.MANDATORY_DR0
+    }
+    if set(ratios_by_seed) != expected_seeds or set(method_passes) != expected_pairs:
         return _ok(
-            "development_structure_function_ensemble",
+            "development_validation_certification",
             False,
-            f"available seeds={sorted(ratios_by_seed)}, expected={sorted(expected_seeds)}",
+            f"available seeds={sorted(ratios_by_seed)}, "
+            f"available seed/regimes={sorted(method_passes)}, "
+            f"expected={sorted(expected_pairs)}",
         )
 
     mean_ratio = np.mean(np.stack(list(ratios_by_seed.values())), axis=0)
     rel_error = float(np.median(np.abs(mean_ratio - 1.0)))
-    passed = rel_error < C.STRUCTURE_FUNCTION_REL_TOL
+    structure_passed = rel_error < C.STRUCTURE_FUNCTION_REL_TOL
+    certified_passes = {
+        key: all(values[key] for values in method_passes.values())
+        for key in _DEVELOPMENT_METHOD_PASS_KEYS
+    }
+    passed = structure_passed and all(certified_passes.values())
 
     from planetrecon.simulate import write_summary
 
-    for path in valid_paths:
+    targets = development_paths if target_paths is None else target_paths
+    for path in targets:
+        if not path.exists() or schema_errors(path):
+            continue
         with h5py.File(path, "r+") as f:
             gv = f["/validation"]
-            gv["structure_function_pass"][...] = passed
+            gv["structure_function_pass"][...] = structure_passed
             if "structure_function_ensemble_rel_error" in gv:
                 gv["structure_function_ensemble_rel_error"][...] = rel_error
             else:
                 gv.create_dataset("structure_function_ensemble_rel_error", data=rel_error)
+            for key, certified in certified_passes.items():
+                local_key = key.replace("_pass", "_local_pass")
+                if local_key not in gv:
+                    gv.create_dataset(local_key, data=bool(gv[key][()]))
+                gv[key][...] = certified
             values = {name: ds[...] for name, ds in gv.items()}
             values["gate_eligible"] = validation_is_gate_eligible(values)
             gv["gate_eligible"][...] = values["gate_eligible"]
@@ -719,11 +754,17 @@ def certify_development_structure_function(paths: list[Path]) -> Check:
         write_summary(path, cfg, values)
 
     return _ok(
-        "development_structure_function_ensemble",
+        "development_validation_certification",
         passed,
-        f"pooled median |ratio-1|={rel_error:.3f}",
+        f"pooled median |ratio-1|={rel_error:.3f}; "
+        + ", ".join(f"{key}={value}" for key, value in certified_passes.items()),
         rel_error,
     )
+
+
+def certify_development_structure_function(paths: list[Path]) -> Check:
+    """Compatibility wrapper for development-suite certification."""
+    return certify_development_validations(paths, paths)
 
 
 def check_noll() -> list[Check]:

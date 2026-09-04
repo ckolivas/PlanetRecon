@@ -50,7 +50,9 @@ python3 -m pytest tests -q
 
 `validate-dev` runs the mandatory physics checks and, unless `--no-generate`
 is given, writes development-seed HDF5 files for `D/r0 = 8` and `4` at
-seeds 1001–1003.
+seeds 1001–1003. Structure-function and numerical-method convergence outcomes
+are frozen from those six files; evaluation files retain their own convergence
+numbers as diagnostics but inherit only the development pass/fail decisions.
 
 `evaluate --family eval` generates the 12 evaluation seeds in both seeing
 regimes if they are missing, then writes classification tables under
@@ -99,8 +101,9 @@ regimes if they are missing, then writes classification tables under
   development seeds 1001–1003, both regimes, feature-rich `E1(S_100)`, as the
   smallest value whose median \(E_H\) is within 2% of the scan minimum.
   Frozen value: `E1_LAMBDA_REL = E2A_LAMBDA_REL = 0.03`.
-- **E2a0.** Conjugate-gradient solve of the same quadratic as E1. No
-  positivity. Relative \(E_H\) must match E1 to \(<10^{-4}\) on a matched test.
+- **E2a0.** Independent conjugate-gradient solve of the same quadratic as E1,
+  started without the analytical E1 solution. No positivity. Relative \(E_H\)
+  must match E1 to \(<10^{-4}\) and the image norm to \(<10^{-6}\).
 - **E2a / A1o.** Same quadratic as E1 with positivity and \(|f|\le f_c\)
   spectral support, solved by FISTA. A1o registers with the known Fourier
   shift, forms the uniform mean stack, uses \(H_{\rm eff}=\mathrm{mean}(H_k)\)

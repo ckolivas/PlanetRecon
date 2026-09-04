@@ -18,7 +18,7 @@ from planetrecon.evaluate import (
     write_hash_file,
     write_resource_csv,
 )
-from planetrecon.hdf5io import schema_errors
+from planetrecon.hdf5io import gate_errors, schema_errors
 from planetrecon.rank import ranking_config_hash
 from planetrecon.simulate import generate_one
 
@@ -66,6 +66,23 @@ def ensure_truth_files(
                 futs = [pool.submit(_generate_one, job) for job in jobs]
                 for fut in as_completed(futs):
                     print(f"  wrote {fut.result()}", flush=True)
+    # Method-convergence acceptance and the pooled structure-function result
+    # are frozen on the development seeds. Generated files are deliberately
+    # provisional until that certification is applied.
+    from planetrecon.validate import certify_development_validations
+
+    development_paths = family_paths(out_dir, C.DEV_SEEDS)
+    check = certify_development_validations(development_paths, wanted)
+    if not check.passed:
+        raise RuntimeError(f"cannot certify Gate truth files: {check.message}")
+    invalid = {}
+    for path in wanted:
+        errs = gate_errors(path)
+        if errs:
+            invalid[path] = errs
+    if invalid:
+        detail = "; ".join(f"{path.name}: {errs}" for path, errs in invalid.items())
+        raise RuntimeError(f"truth files are not Gate-eligible: {detail}")
     return wanted
 
 
@@ -138,11 +155,16 @@ def run_freeze(out_dir: Path) -> dict:
     prompt2_dir.mkdir(parents=True, exist_ok=True)
     write_hash_file(prompt2_dir)
     paths = family_paths(out_dir, C.DEV_SEEDS)
-    missing = [p for p in paths if not p.exists()]
-    if missing:
+    invalid = {}
+    for path in paths:
+        errs = ["file is missing"] if not path.exists() else gate_errors(path)
+        if errs:
+            invalid[path] = errs
+    if invalid:
         raise FileNotFoundError(
-            "development truth files missing; run `planetrecon validate-dev` first: "
-            + ", ".join(p.name for p in missing)
+            "development truth files missing or not Gate-eligible; run "
+            "`planetrecon validate-dev` first: "
+            + "; ".join(f"{p.name}: {errs}" for p, errs in invalid.items())
         )
     result = freeze_regularisation(paths)
     dest = prompt2_dir / "frozen_regularisation.json"

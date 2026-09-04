@@ -31,6 +31,18 @@
       ],
       "worst_seed_g": 0.059588224597308385
     },
+    "G1_E2a0": {
+      "frac_ge10": 1.0,
+      "frac_gt0": 1.0,
+      "label": "strong",
+      "median": 0.13185013251486288,
+      "n": 3,
+      "oval1_consistency": true,
+      "p16": 0.11916580366560582,
+      "p84": 0.13413974494731348,
+      "pathological_frac": 0.0,
+      "worst_seed_g": 0.11319670773654368
+    },
     "G2": {
       "frac_ge10": 0.0,
       "frac_gt0": 0.6666666666666666,
@@ -52,6 +64,18 @@
         1003
       ],
       "worst_seed_g": -0.010325428792826717
+    },
+    "G2_E2a0": {
+      "frac_ge10": 0.0,
+      "frac_gt0": 0.6666666666666666,
+      "label": "negative",
+      "median": 0.0009199296492019003,
+      "n": 3,
+      "oval1_consistency": true,
+      "p16": -0.006726540355591389,
+      "p84": 0.01136950664240375,
+      "pathological_frac": 0.0,
+      "worst_seed_g": -0.010324879181376466
     },
     "G3_m": {
       "frac_ge10": 0.0,
@@ -92,7 +116,13 @@
         "G2": false,
         "seed": 1003
       }
-    ]
+    ],
+    "oracle_sensitive_family": {
+      "G1": true,
+      "G1_E2a0_label": "strong",
+      "G2": false,
+      "G2_E2a0_label": "negative"
+    }
   },
   "8.0": {
     "E_H_median": {
@@ -126,6 +156,18 @@
       ],
       "worst_seed_g": 0.04832786781862006
     },
+    "G1_E2a0": {
+      "frac_ge10": 0.0,
+      "frac_gt0": 1.0,
+      "label": "negative",
+      "median": 0.044711592947003824,
+      "n": 3,
+      "oval1_consistency": true,
+      "p16": 0.02933509239644405,
+      "p84": 0.0600702275991003,
+      "pathological_frac": 0.0,
+      "worst_seed_g": 0.0220990921373571
+    },
     "G2": {
       "frac_ge10": 0.0,
       "frac_gt0": 1.0,
@@ -147,6 +189,18 @@
         1003
       ],
       "worst_seed_g": 0.00023284914078299334
+    },
+    "G2_E2a0": {
+      "frac_ge10": 0.0,
+      "frac_gt0": 0.6666666666666666,
+      "label": "negative",
+      "median": 0.009357751215874708,
+      "n": 3,
+      "oval1_consistency": true,
+      "p16": 0.0026505985475120597,
+      "p84": 0.010944585050112525,
+      "pathological_frac": 0.0,
+      "worst_seed_g": -0.0005057085905409511
     },
     "G3_m": {
       "frac_ge10": 0.0,
@@ -187,6 +241,12 @@
         "G2": false,
         "seed": 1003
       }
-    ]
+    ],
+    "oracle_sensitive_family": {
+      "G1": true,
+      "G1_E2a0_label": "negative",
+      "G2": false,
+      "G2_E2a0_label": "negative"
+    }
   }
 }

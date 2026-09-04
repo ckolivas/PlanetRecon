@@ -10,15 +10,15 @@ E1_LAMBDA_REL=0.03  E2A_LAMBDA_REL=0.03
          seeds: 1001:0.0125, 1002:0.0136, 1003:0.0119
   G3_m    strong         n=3  median g=0.11257387430921656  p16=0.10572815643005122 p84=0.1234215012017932  frac>0=1.0  frac>=10%=1.0  worst=0.10250664213397341  oval1_ok=True
          seeds: 1001:0.1126, 1002:0.1285, 1003:0.1025
-  oracle-sensitive seeds: 1/3
+  oracle-sensitive seeds: 1/3  family G1 strong vs E2a0 inconclusive  G2 negative vs E2a0 negative  family-sensitive=True
 
 === D/r0 = 8.0 ===
   E2a_S10=0.9855  E2a_S100=0.9501  A1o_S10=0.9924  E1_S10=0.9869  E1_S100=0.9664  R_H=1.9408e-05  illconditioned_frac=0.0000e+00
-  G1      negative       n=3  median g=0.034879420242981844  p16=0.01970701391696522 p84=0.0708975047086273  frac>0=1.0  frac>=10%=0.0  worst=0.01256705799883975  oval1_ok=True
-         seeds: 1001:0.0349, 1002:0.0126, 1003:0.0878
+  G1      negative       n=3  median g=0.034942037088004155  p16=0.01978978408512093 p84=0.07091754209903443  frac>0=1.0  frac>=10%=0.0  worst=0.012659312083764116  oval1_ok=True
+         seeds: 1001:0.0349, 1002:0.0127, 1003:0.0878
   G2      negative       n=3  median g=0.006209790683084055  p16=0.0060963524961786765 p84=0.0074191414857156645  frac>0=1.0  frac>=10%=0.0  worst=0.00604296981998791  oval1_ok=True
          seeds: 1001:0.0080, 1002:0.0060, 1003:0.0062
-  G3_m    negative       n=3  median g=0.04258904253862941  p16=0.026231671729659366 p84=0.07721629289117213  frac>0=1.0  frac>=10%=0.0  worst=0.018534085466614635  oval1_ok=True
-         seeds: 1001:0.0426, 1002:0.0185, 1003:0.0935
-  oracle-sensitive seeds: 1/3
+  G3_m    negative       n=3  median g=0.04265115918478062  p16=0.02631390274189366 p84=0.07723617021794052  frac>0=1.0  frac>=10%=0.0  worst=0.018625782062888032  oval1_ok=True
+         seeds: 1001:0.0427, 1002:0.0186, 1003:0.0935
+  oracle-sensitive seeds: 1/3  family G1 negative vs E2a0 negative  G2 negative vs E2a0 negative  family-sensitive=False
 

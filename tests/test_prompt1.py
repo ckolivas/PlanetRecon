@@ -65,6 +65,7 @@ def test_generate_schema(tmp_path):
     from planetrecon.hdf5io import filename
     from planetrecon.simulate import generate_one
     from planetrecon.validate import (
+        certify_development_validations,
         certify_development_structure_function,
         check_schema_file,
     )
@@ -106,3 +107,18 @@ def test_generate_schema(tmp_path):
         assert "Gate-eligible: YES" in target.with_suffix(
             ".validation.txt"
         ).read_text()
+
+    evaluation_target = tmp_path / filename(2010, 8.0)
+    shutil.copy2(paths[0], evaluation_target)
+    with h5py.File(evaluation_target, "r+") as f:
+        f.attrs["seed"] = 2010
+        validation = f["validation"]
+        validation["lowfreq_convergence_local_pass"][...] = False
+        validation["lowfreq_convergence_pass"][...] = False
+        validation["gate_eligible"][...] = False
+    assert certify_development_validations(paths, [evaluation_target]).passed
+    with h5py.File(evaluation_target, "r") as f:
+        validation = f["validation"]
+        assert not bool(validation["lowfreq_convergence_local_pass"][()])
+        assert bool(validation["lowfreq_convergence_pass"][()])
+        assert bool(validation["gate_eligible"][()])

@@ -156,7 +156,12 @@ def e2a(
         t = t_next
         if last_delta < tol:
             break
-    return o, {"n_iter": n_iter, "rel_delta": last_delta, "step": step}
+    return o, {
+        "n_iter": n_iter,
+        "rel_delta": last_delta,
+        "step": step,
+        "converged": bool(last_delta < tol),
+    }
 
 
 def a1o(

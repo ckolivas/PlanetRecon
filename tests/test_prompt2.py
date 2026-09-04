@@ -13,7 +13,12 @@ from planetrecon.estimators import (
     register_otfs,
     shift_otf,
 )
-from planetrecon.evaluate import classify_gap, oracle_sensitive
+from planetrecon.evaluate import (
+    _oval1_pathology,
+    classify_gap,
+    evaluate_file,
+    oracle_sensitive,
+)
 from planetrecon.metric import (
     eh_metric,
     high_band_truth_fraction,
@@ -135,10 +140,13 @@ def test_e1_matches_e2a0():
         otfs[i] = otf_from_centered_psf(psf)
         img = np.fft.ifft2(otfs[i] * np.fft.fft2(obj)).real
         images[i] = img + rng.normal(scale=0.01, size=img.shape)
-    lam = np.full((n, n), 1e-3)
-    sigma2 = np.full(k, 0.01**2)
+    # Use the frozen regularisation and a representative normal-equation scale;
+    # this checks an independent solve without manufacturing an extreme
+    # condition number unrelated to the simulated Gate data.
+    lam = np.full((n, n), C.E1_LAMBDA_REL)
+    sigma2 = np.full(k, 0.1)
     o1 = e1(otfs, images, sigma2, lam)
-    o0, info = e2a0(otfs, images, sigma2, lam, x0=o1)
+    o0, info = e2a0(otfs, images, sigma2, lam)
     assert info["cg_info"] == 0
     img_rel = np.linalg.norm(o0 - o1) / np.linalg.norm(o1)
     window = np.ones((n, n))
@@ -148,7 +156,7 @@ def test_e1_matches_e2a0():
     eh1 = eh_metric(o1, obj, window, mtf, mask)
     eh0 = eh_metric(o0, obj, window, mtf, mask)
     rel_eh = abs(eh0 - eh1) / max(eh1, 1e-12)
-    assert img_rel < 1e-6
+    assert img_rel < C.E1_E2A0_IMAGE_REL_TOL
     assert rel_eh < C.E1_E2A0_EH_REL_TOL
 
 
@@ -211,6 +219,15 @@ def test_oracle_sensitivity_rule():
     assert oracle_sensitive(0.50, 0.04) is False
 
 
+def test_evaluate_file_rejects_non_gate_input(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "planetrecon.evaluate.gate_errors",
+        lambda _path: ["validation failed: gate_eligible"],
+    )
+    with pytest.raises(RuntimeError, match="not Gate-eligible"):
+        evaluate_file(tmp_path / "provisional.h5")
+
+
 def test_e2a_positivity_and_support():
     n = 32
     obj = np.clip(_blob_object(n), 0, None)
@@ -224,13 +241,14 @@ def test_e2a_positivity_and_support():
     fx = np.fft.fftfreq(n)
     FX, FY = np.meshgrid(fx, fy, indexing="xy")
     support[np.hypot(FX, FY) > 0.45] = 0.0
-    recon, info = e2a(otf, img, np.array([0.02**2]), np.full((n, n), 1e-3), support)
+    recon, info = e2a(otf, img, np.array([0.1]), np.full((n, n), 0.03), support)
     assert recon.min() >= -1e-12
     rf = np.fft.fft2(recon)
     energy = np.abs(rf) ** 2
     leaked = float(energy[support < 0.5].sum() / max(energy.sum(), 1e-12))
     assert leaked < 1e-3
     assert info["n_iter"] >= 1
+    assert info["converged"]
 
 
 def test_signed_contrast_recovers_dip():
@@ -244,6 +262,25 @@ def test_signed_contrast_recovers_dip():
     img[ap] = 0.8
     c = signed_contrast(img, ap, an)
     assert c == pytest.approx(-0.2, abs=1e-12)
+
+
+def test_e2a0_pathology_is_evaluated_from_e2a0_contrasts():
+    def block(e2a, e2a0, a1o):
+        return {
+            "E2a": {"contrast": {"oval1": {"rel_error": e2a}}},
+            "E2a0": {"contrast": {"oval1": {"rel_error": e2a0}}},
+            "A1o": {"contrast": {"oval1": {"rel_error": a1o}}},
+        }
+
+    metrics = {
+        C.DECISION_P: block(0.01, 0.20, 0.10),
+        100: block(0.20, 0.01, 0.10),
+    }
+    pathology = _oval1_pathology(metrics)
+    assert pathology["G1_pathological"]
+    assert not pathology["G1_E2a0_pathological"]
+    assert not pathology["G2_pathological"]
+    assert pathology["G2_E2a0_pathological"]
 
 
 def test_support_mask_excludes_corners():
@@ -281,7 +318,7 @@ def test_e1_e2a0_on_development_file():
     lam = lambda_field(cfg, cfg.eval_size, C.E1_LAMBDA_REL)
     o1 = e1(crop.otf[idx], crop.observed[idx], sigma2[idx], lam)
     o0, info = e2a0(
-        crop.otf[idx], crop.observed[idx], sigma2[idx], lam, x0=o1, maxiter=80
+        crop.otf[idx], crop.observed[idx], sigma2[idx], lam, maxiter=80
     )
     eh1 = eh_metric(o1, crop.truth_e, crop.window, crop.mtf, crop.hmask)
     eh0 = eh_metric(o0, crop.truth_e, crop.window, crop.mtf, crop.hmask)

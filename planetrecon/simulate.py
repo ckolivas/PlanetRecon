@@ -171,9 +171,10 @@ def simulate(cfg: SimConfig, out_dir: Path, progress=None) -> Path:
         "gate_eligible": False,
     }
 
-    # These are deliberately computed for the same seed/regime as the file.
-    # Keeping provisional failures above ensures an interrupted validation can
-    # never be mistaken for a Gate-eligible product.
+    # Retain same-seed/regime convergence values as local diagnostics. The
+    # development suite later freezes the method-level pass/fail outcomes and
+    # applies them to every evaluation file. Provisional failures ensure an
+    # interrupted validation can never be mistaken for a Gate-eligible product.
     from planetrecon.validate import convergence_values
 
     validation.update(convergence_values(cfg))
@@ -247,6 +248,7 @@ def write_summary(h5_path: Path, cfg: SimConfig, validation: dict) -> Path:
         f"no_wrap_pass: {validation['no_wrap_pass']}",
         f"kl60_residual_median: {validation['kl60_residual_summary']:.6e}",
         f"exposure_convergence: {validation['exposure_convergence']}",
+        f"exposure_convergence_pass: {validation['exposure_convergence_pass']}",
         "",
         "structure function rho, measured, target, ratio:",
     ]
@@ -267,6 +269,17 @@ def write_summary(h5_path: Path, cfg: SimConfig, validation: dict) -> Path:
             f"lowfreq_convergence_pass: {validation['lowfreq_convergence_pass']}",
         ]
     )
+    local_keys = (
+        "grid_convergence_local_pass",
+        "exposure_convergence_local_pass",
+        "padding_convergence_local_pass",
+        "lowfreq_convergence_local_pass",
+    )
+    if any(key in validation for key in local_keys):
+        lines.append("development-certified pass flags; local diagnostics:")
+        lines.extend(
+            f"{key}: {validation[key]}" for key in local_keys if key in validation
+        )
     eligible = bool(validation["gate_eligible"])
     lines.append("")
     lines.append(f"Gate-eligible: {'YES' if eligible else 'NO'}")

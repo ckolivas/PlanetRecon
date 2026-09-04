@@ -10,7 +10,7 @@ E1_LAMBDA_REL=0.03  E2A_LAMBDA_REL=0.03
          seeds: 1001:0.0009, 1002:0.0163, 1003:-0.0103
   G3_m    inconclusive   n=3  median g=0.09448813991957956  p16=0.06415329222089292 p84=0.09594646828476601  frac>0=1.0  frac>=10%=0.0  worst=0.04987806977445214  oval1_ok=True
          seeds: 1001:0.0945, 1002:0.0966, 1003:0.0499
-  oracle-sensitive seeds: 0/3
+  oracle-sensitive seeds: 0/3  family G1 inconclusive vs E2a0 strong  G2 negative vs E2a0 negative  family-sensitive=True
 
 === D/r0 = 8.0 ===
   E2a_S10=0.9574  E2a_S100=0.9058  A1o_S10=0.9655  E1_S10=0.9564  E1_S100=0.9137  R_H=5.7425e-06  illconditioned_frac=1.0000
@@ -20,5 +20,5 @@ E1_LAMBDA_REL=0.03  E2A_LAMBDA_REL=0.03
          seeds: 1001:0.0084, 1002:0.0139, 1003:0.0002
   G3_m    inconclusive   n=3  median g=0.06152647569237048  p16=0.05950035747324191 p84=0.07925789692755512  frac>0=1.0  frac>=10%=0.0  worst=0.05854689007600493  oval1_ok=True
          seeds: 1001:0.0585, 1002:0.0615, 1003:0.0876
-  oracle-sensitive seeds: 0/3
+  oracle-sensitive seeds: 0/3  family G1 inconclusive vs E2a0 negative  G2 negative vs E2a0 negative  family-sensitive=True
 

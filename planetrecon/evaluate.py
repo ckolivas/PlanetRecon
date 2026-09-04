@@ -21,7 +21,7 @@ from planetrecon.estimators import (
     register_images,
     register_otfs,
 )
-from planetrecon.hdf5io import filename, schema_errors
+from planetrecon.hdf5io import filename, gate_errors
 from planetrecon.metric import (
     contrast_relative_error,
     eh_metric,
@@ -213,6 +213,11 @@ def evaluate_crop(
         a1_img, a1_info = a1o(
             otf_s, obs_s, sig_s, lam_e2, crop.support, shifts=crop.shifts[idx]
         )
+        if not e2_info["converged"] or not a1_info["converged"]:
+            raise RuntimeError(
+                f"{crop.name} p={p} constrained estimator did not converge: "
+                f"E2a={e2_info['rel_delta']:.3g}, A1o={a1_info['rel_delta']:.3g}"
+            )
         recs = {
             "E1": e1_img,
             "E2a": e2_img,
@@ -232,7 +237,9 @@ def evaluate_crop(
             np.allclose(a1_info["H_eff"], h_mean_reg, rtol=1e-8, atol=1e-8)
         )
         if p in (DECISION_P, 100):
-            e20_img, e20_info = e2a0(otf_s, obs_s, sig_s, lam_e1, x0=e1_img)
+            # This must be an independent numerical solve, not a CG solve seeded
+            # at the analytical answer it is intended to verify.
+            e20_img, e20_info = e2a0(otf_s, obs_s, sig_s, lam_e1)
             recs["E2a0"] = e20_img
             infos["E2a0"] = e20_info
             eh_e1 = eh_metric(e1_img, crop.truth_e, crop.window, crop.mtf, crop.hmask)
@@ -243,7 +250,18 @@ def evaluate_crop(
             )
             infos["E2a0"]["eh_rel_diff"] = float(rel)
             infos["E2a0"]["image_rel_diff"] = img_rel
-            infos["E2a0"]["match_pass"] = bool(rel < C.E1_E2A0_EH_REL_TOL)
+            match_pass = bool(
+                e20_info["cg_info"] == 0
+                and rel < C.E1_E2A0_EH_REL_TOL
+                and img_rel < C.E1_E2A0_IMAGE_REL_TOL
+            )
+            infos["E2a0"]["match_pass"] = match_pass
+            if not match_pass:
+                raise RuntimeError(
+                    f"{crop.name} p={p} E2a0 failed to match E1: "
+                    f"cg_info={e20_info['cg_info']}, E_H rel={rel:.3g}, "
+                    f"image rel={img_rel:.3g}"
+                )
         recon[int(p)] = recs
         metrics[int(p)] = {
             name: _metrics(img, crop) for name, img in recs.items()
@@ -354,15 +372,21 @@ def _oval1_pathology(metrics: dict) -> dict:
     r_e2_10 = rel(DECISION_P, "E2a")
     r_e2_100 = rel(100, "E2a")
     r_a1_10 = rel(DECISION_P, "A1o")
+    r_e20_10 = rel(DECISION_P, "E2a0")
+    r_e20_100 = rel(100, "E2a0")
     out = {
         "E2a_S10_rel_error": r_e2_10,
         "E2a_S100_rel_error": r_e2_100,
         "A1o_S10_rel_error": r_a1_10,
+        "E2a0_S10_rel_error": r_e20_10,
+        "E2a0_S100_rel_error": r_e20_100,
     }
     # G1: all-frame E2a must not worsen Oval-1 relative error by >5% vs S10.
     # G2: per-frame E2a(S10) must not worsen it vs A1o(S10).
     out["G1_pathological"] = _worsens(r_e2_100, r_e2_10)
     out["G2_pathological"] = _worsens(r_e2_10, r_a1_10)
+    out["G1_E2a0_pathological"] = _worsens(r_e20_100, r_e20_10)
+    out["G2_E2a0_pathological"] = _worsens(r_e20_10, r_a1_10)
     return out
 
 
@@ -389,9 +413,9 @@ def evaluate_file(
     reg: Regularisation = REG,
 ) -> dict:
     path = Path(path)
-    errs = schema_errors(path)
+    errs = gate_errors(path)
     if errs:
-        raise RuntimeError(f"{path} schema errors: {errs}")
+        raise RuntimeError(f"{path} is not Gate-eligible: {errs}")
     result = {
         "path": str(path),
         "ranking_hash": ranking_config_hash(),
@@ -521,12 +545,16 @@ def aggregate_family(results: list[dict], crop: str = "feature") -> dict:
         oracle = []
         g1_0 = []
         g2_0 = []
+        p1_0 = []
+        p2_0 = []
         for r in items:
             block = r["crops"][crop]
             if block.get("G1_E2a0") is None:
                 continue
             g1_0.append(block["G1_E2a0"]["g"])
             g2_0.append(block["G2_E2a0"]["g"])
+            p1_0.append(block["oval1"]["G1_E2a0_pathological"])
+            p2_0.append(block["oval1"]["G2_E2a0_pathological"])
             oracle.append(
                 {
                     "seed": r["seed"],
@@ -534,8 +562,8 @@ def aggregate_family(results: list[dict], crop: str = "feature") -> dict:
                     "G2": oracle_sensitive(block["G2"]["g"], block["G2_E2a0"]["g"]),
                 }
             )
-        c1_0 = classify_gap(g1_0, p1) if g1_0 else None
-        c2_0 = classify_gap(g2_0, p2) if g2_0 else None
+        c1_0 = classify_gap(g1_0, p1_0) if g1_0 else None
+        c2_0 = classify_gap(g2_0, p2_0) if g2_0 else None
         family_oracle = {
             "G1": bool(
                 c1_0 is not None and _qualitative(c1["label"]) != _qualitative(c1_0["label"])
