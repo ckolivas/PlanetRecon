@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import h5py
 import numpy as np
 from scipy.signal import fftconvolve
 
@@ -21,7 +22,12 @@ from planetrecon.atmosphere import (
     structure_function,
 )
 from planetrecon.config import SimConfig, make_config
-from planetrecon.hdf5io import filename, schema_errors
+from planetrecon.hdf5io import (
+    filename,
+    gate_errors,
+    schema_errors,
+    validation_is_gate_eligible,
+)
 from planetrecon.kl import KLBasis, noll_nm
 from planetrecon.metric import (
     eval_window,
@@ -34,6 +40,7 @@ from planetrecon.object import (
     latent_object_4x,
     make_object_scene,
     ovals_inside_disk,
+    source_rate_scale,
 )
 from planetrecon.optics import (
     annular_airy_psf,
@@ -45,7 +52,6 @@ from planetrecon.optics import (
     make_pupil,
 )
 from planetrecon.rng import screen_rng
-from planetrecon.simulate import generate_one, source_rate_scale
 
 
 @dataclass
@@ -216,16 +222,20 @@ def check_object_geometry() -> list[Check]:
             float(r.max()),
         )
     )
-    o1x = cx + C.OVALS[0]["x_px"]
-    o1y = cy + C.OVALS[0]["y_px"]
-    in_central = (oxb + 16 <= o1x < oxb + 112) and (oyb + 16 <= o1y < oyb + 112)
-    checks.append(
-        _ok(
-            "bland_excludes_oval1_centre",
-            not in_central,
-            f"oval1 in bland central 96={in_central}",
+    for oval in C.OVALS:
+        oval_x = cx + oval["x_px"]
+        oval_y = cy + oval["y_px"]
+        in_central = (
+            oxb + 16 <= oval_x < oxb + 112
+            and oyb + 16 <= oval_y < oyb + 112
         )
-    )
+        checks.append(
+            _ok(
+                f"bland_excludes_{oval['name']}_centre",
+                not in_central,
+                f"{oval['name']} in bland central 96={in_central}",
+            )
+        )
     return checks
 
 
@@ -360,13 +370,17 @@ def check_screen_and_exposure() -> list[Check]:
     h_j_d /= h_j_d.sum()
     h_2j_d /= h_2j_d.sum()
     window = eval_window(h_j_d.shape[0])
-    mtf = ideal_mtf_from_dl_psf(h_2j_d)
+    psf_dl_d = center_crop(
+        bin_box(diffraction_limited_psf(pupil), cfg.bin_factor), cfg.eval_size
+    )
+    psf_dl_d /= psf_dl_d.sum()
+    mtf = ideal_mtf_from_dl_psf(psf_dl_d)
     mask = high_band_mask(cfg, mtf)
     eh = relative_high_band(h_j_d, h_2j_d, window, mtf, mask)
     checks.append(
         _ok(
             "exposure_J_doubling",
-            eh < C.EH_EXPOSURE_TOL or eh < 0.02,
+            eh < C.EH_EXPOSURE_TOL,
             f"E_H(J=8 vs 16)={eh:.4e}",
             eh,
         )
@@ -409,9 +423,9 @@ def check_screen_and_exposure() -> list[Check]:
     return checks
 
 
-def check_lowfreq_tilt() -> list[Check]:
+def check_lowfreq_tilt(cfg: SimConfig | None = None) -> list[Check]:
     """Ensemble centroid 2nd moment vs subharmonic level on independent screens."""
-    cfg = make_config(1001, 8.0)
+    cfg = cfg or make_config(1001, 8.0)
     pupil = make_pupil(cfg)
     n = 512
     dx = cfg.pupil_dx_m
@@ -432,63 +446,75 @@ def check_lowfreq_tilt() -> list[Check]:
             tilt.append(sx * sx + sy * sy)
         return float(np.mean(strehl)), float(np.mean(tilt))
 
-    seeds = 8000 + np.arange(16)
-    s3, t3 = stats(3, seeds)
-    s4, t4 = stats(4, seeds)
-    rel_s = abs(s4 - s3) / max(s3, s4, 1e-12)
-    rel_t = abs(t4 - t3) / max(t3, t4, 1e-12)
+    seeds = cfg.seed * 100 + np.arange(16)
+    levels = cfg.subharmonic_levels
+    s_lo, t_lo = stats(levels, seeds)
+    s_hi, t_hi = stats(levels + 1, seeds)
+    rel_s = abs(s_hi - s_lo) / max(s_lo, s_hi, 1e-12)
+    rel_t = abs(t_hi - t_lo) / max(t_lo, t_hi, 1e-12)
     return [
         _ok(
-            "lowfreq_tilt_subharmonics",
-            rel_s < 0.05,
-            f"Strehl 3/4={s3:.4f}/{s4:.4f} rel={rel_s:.3f}; tilt-2nd {t3:.2f}/{t4:.2f} rel={rel_t:.3f}",
+            "lowfreq_strehl_subharmonics",
+            rel_s < C.STREHL_LOFREQ_TOL,
+            f"Strehl levels {levels}/{levels + 1}={s_lo:.4f}/{s_hi:.4f} rel={rel_s:.3f}",
             rel_s,
-        )
+        ),
+        _ok(
+            "lowfreq_tilt_subharmonics",
+            rel_t < C.TILT_LOFREQ_TOL,
+            f"tilt-2nd levels {levels}/{levels + 1}={t_lo:.2f}/{t_hi:.2f} rel={rel_t:.3f}",
+            rel_t,
+        ),
     ]
 
 
-def check_padding_and_grid() -> list[Check]:
+def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
+    cfg = cfg or make_config(1001, 8.0)
     checks = []
-    window = eval_window()
+    window = eval_window(cfg.eval_size)
 
-    def feature_expected(n_diam: int, pad: int, j: int, seed: int = 1001):
-        cfg = make_config(
-            seed,
-            8.0,
+    def feature_expected(n_diam: int, pad: int, j: int):
+        local_cfg = make_config(
+            cfg.seed,
+            cfg.dr0,
             n_frames=1,
             n_diam=n_diam,
             padding_detector_px=pad,
             exposure_samples_j=j,
+            subharmonic_levels=cfg.subharmonic_levels,
+            eval_size=cfg.eval_size,
         )
-        pupil = make_pupil(cfg)
-        scene = make_object_scene(cfg)
+        pupil = make_pupil(local_cfg)
+        scene = make_object_scene(local_cfg)
         psf_dl = diffraction_limited_psf(pupil)
-        scale = source_rate_scale(cfg, scene, psf_dl)
-        rng = screen_rng(seed)
-        screen = generate_screen(cfg, rng)
+        scale = source_rate_scale(local_cfg, scene, psf_dl)
+        rng = screen_rng(local_cfg.seed)
+        screen = generate_screen(local_cfg, rng)
         psf4 = finite_exposure_psf(
-            pupil, screen, 0.0, cfg.texp_s, j, cfg.wind_m_s
+            pupil, screen, 0.0, local_cfg.texp_s, j, local_cfg.wind_m_s
         )
         img4 = fftconvolve(scene.latent_4x, psf4, mode="same")
-        img = scale * (cfg.texp_s / C.T0_S) * bin_box(img4, cfg.bin_factor)
+        img = scale * (local_cfg.texp_s / C.T0_S) * bin_box(
+            img4, local_cfg.bin_factor
+        )
         ox, oy = scene.feature_origin
-        crop = img[oy : oy + cfg.eval_size, ox : ox + cfg.eval_size]
+        crop = img[oy : oy + local_cfg.eval_size, ox : ox + local_cfg.eval_size]
         psf_det = center_crop(
-            bin_box(diffraction_limited_psf(pupil), cfg.bin_factor),
-            cfg.eval_size,
+            bin_box(diffraction_limited_psf(pupil), local_cfg.bin_factor),
+            local_cfg.eval_size,
         )
         psf_det /= psf_det.sum()
         mtf = ideal_mtf_from_dl_psf(psf_det)
-        mask = high_band_mask(cfg, mtf)
-        return crop, mtf, mask, cfg
+        mask = high_band_mask(local_cfg, mtf)
+        return crop, mtf, mask, local_cfg
 
-    c64, mtf, mask, _ = feature_expected(64, 64, 8)
-    c128, _, _, _ = feature_expected(64, 128, 8)
+    c64, mtf, mask, _ = feature_expected(64, 64, cfg.exposure_samples_j)
+    c128, _, _, _ = feature_expected(64, 128, cfg.exposure_samples_j)
     eh_pad = relative_high_band(c64, c128, window, mtf, mask)
     checks.append(
         _ok(
             "padding_doubling",
-            eh_pad < C.EH_PADDING_TOL or eh_pad < 0.02,
+            eh_pad < C.EH_PADDING_TOL,
             f"E_H(pad 64 vs 128)={eh_pad:.4e}",
             eh_pad,
         )
@@ -496,12 +522,26 @@ def check_padding_and_grid() -> list[Check]:
 
     # Same random field: fine screen downsampled by 2, same physical extraction.
     cfg_fine = make_config(
-        1001, 8.0, n_frames=1, n_diam=128, padding_detector_px=64, exposure_samples_j=8
+        cfg.seed,
+        cfg.dr0,
+        n_frames=1,
+        n_diam=128,
+        padding_detector_px=cfg.padding_detector_px,
+        exposure_samples_j=cfg.exposure_samples_j,
+        subharmonic_levels=cfg.subharmonic_levels,
+        eval_size=cfg.eval_size,
     )
     cfg_coarse = make_config(
-        1001, 8.0, n_frames=1, n_diam=64, padding_detector_px=64, exposure_samples_j=8
+        cfg.seed,
+        cfg.dr0,
+        n_frames=1,
+        n_diam=64,
+        padding_detector_px=cfg.padding_detector_px,
+        exposure_samples_j=cfg.exposure_samples_j,
+        subharmonic_levels=cfg.subharmonic_levels,
+        eval_size=cfg.eval_size,
     )
-    rng = screen_rng(1001)
+    rng = screen_rng(cfg.seed)
     screen_fine = generate_screen(cfg_fine, rng)
     phi_c = screen_fine.phi.reshape(
         screen_fine.phi.shape[0] // 2,
@@ -522,10 +562,20 @@ def check_padding_and_grid() -> list[Check]:
     scene_f = make_object_scene(cfg_fine)
     scene_c = make_object_scene(cfg_coarse)
     psf_f = finite_exposure_psf(
-        pupil_f, screen_fine, 0.0, cfg_fine.texp_s, 8, cfg_fine.wind_m_s
+        pupil_f,
+        screen_fine,
+        0.0,
+        cfg_fine.texp_s,
+        cfg_fine.exposure_samples_j,
+        cfg_fine.wind_m_s,
     )
     psf_c = finite_exposure_psf(
-        pupil_c, screen_coarse, 0.0, cfg_coarse.texp_s, 8, cfg_coarse.wind_m_s
+        pupil_c,
+        screen_coarse,
+        0.0,
+        cfg_coarse.texp_s,
+        cfg_coarse.exposure_samples_j,
+        cfg_coarse.wind_m_s,
     )
     scale_f = source_rate_scale(cfg_fine, scene_f, diffraction_limited_psf(pupil_f))
     scale_c = source_rate_scale(cfg_coarse, scene_c, diffraction_limited_psf(pupil_c))
@@ -549,16 +599,59 @@ def check_padding_and_grid() -> list[Check]:
     checks.append(
         _ok(
             "grid_doubling",
-            eh_grid < C.EH_GRID_TOL or eh_grid < 0.05,
+            eh_grid < C.EH_GRID_TOL,
             f"E_H(n_diam 64 vs 128, same field)={eh_grid:.4e}",
             eh_grid,
+        )
+    )
+    shift_f = np.asarray(centroid_px(psf_f)) / cfg_fine.bin_factor
+    shift_c = np.asarray(centroid_px(psf_c)) / cfg_coarse.bin_factor
+    shift_rel = float(
+        np.linalg.norm(shift_f - shift_c)
+        / max(np.linalg.norm(shift_f), np.linalg.norm(shift_c), 1e-12)
+    )
+    checks.append(
+        _ok(
+            "tilt_grid_doubling",
+            shift_rel < C.TILT_GRID_TOL,
+            f"centroid relative change={shift_rel:.4e}",
+            shift_rel,
         )
     )
     return checks
 
 
-def check_schema_file(path: Path) -> list[Check]:
-    errs = schema_errors(path)
+def convergence_values(cfg: SimConfig) -> dict:
+    """Return finite, seed/regime-specific convergence values for HDF5."""
+    checks = check_lowfreq_tilt(cfg) + check_padding_and_grid(cfg)
+    by_name = {check.name: check for check in checks}
+    lowfreq = np.array(
+        [
+            by_name["lowfreq_strehl_subharmonics"].value,
+            by_name["lowfreq_tilt_subharmonics"].value,
+            by_name["tilt_grid_doubling"].value,
+        ],
+        dtype=np.float64,
+    )
+    return {
+        "grid_convergence": by_name["grid_doubling"].value,
+        "grid_convergence_pass": (
+            by_name["grid_doubling"].passed
+            and by_name["tilt_grid_doubling"].passed
+        ),
+        "padding_convergence": by_name["padding_doubling"].value,
+        "padding_convergence_pass": by_name["padding_doubling"].passed,
+        "lowfreq_convergence": lowfreq,
+        "lowfreq_convergence_pass": (
+            by_name["lowfreq_strehl_subharmonics"].passed
+            and by_name["lowfreq_tilt_subharmonics"].passed
+            and by_name["tilt_grid_doubling"].passed
+        ),
+    }
+
+
+def check_schema_file(path: Path, require_gate_eligible: bool = False) -> list[Check]:
+    errs = gate_errors(path) if require_gate_eligible else schema_errors(path)
     return [
         _ok(
             f"schema_{path.name}",
@@ -566,6 +659,71 @@ def check_schema_file(path: Path) -> list[Check]:
             "ok" if not errs else "; ".join(errs),
         )
     ]
+
+
+def certify_development_structure_function(paths: list[Path]) -> Check:
+    """Pool independent development screens and certify every paired file."""
+    ratios_by_seed: dict[int, np.ndarray] = {}
+    valid_paths = []
+    for path in paths:
+        if not path.exists() or schema_errors(path):
+            continue
+        with h5py.File(path, "r") as f:
+            seed = int(f.attrs["seed"])
+            measured = f["/validation/structure_function_measured"][...]
+            target = f["/validation/structure_function_target"][...]
+            ratios_by_seed.setdefault(seed, measured / target)
+        valid_paths.append(path)
+
+    expected_seeds = set(C.DEV_SEEDS)
+    if set(ratios_by_seed) != expected_seeds:
+        return _ok(
+            "development_structure_function_ensemble",
+            False,
+            f"available seeds={sorted(ratios_by_seed)}, expected={sorted(expected_seeds)}",
+        )
+
+    mean_ratio = np.mean(np.stack(list(ratios_by_seed.values())), axis=0)
+    rel_error = float(np.median(np.abs(mean_ratio - 1.0)))
+    passed = rel_error < C.STRUCTURE_FUNCTION_REL_TOL
+
+    from planetrecon.simulate import write_summary
+
+    for path in valid_paths:
+        with h5py.File(path, "r+") as f:
+            gv = f["/validation"]
+            gv["structure_function_pass"][...] = passed
+            if "structure_function_ensemble_rel_error" in gv:
+                gv["structure_function_ensemble_rel_error"][...] = rel_error
+            else:
+                gv.create_dataset("structure_function_ensemble_rel_error", data=rel_error)
+            values = {name: ds[...] for name, ds in gv.items()}
+            values["gate_eligible"] = validation_is_gate_eligible(values)
+            gv["gate_eligible"][...] = values["gate_eligible"]
+            cfg = make_config(
+                int(f.attrs["seed"]),
+                float(f["/config"].attrs["Dr0"]),
+                n_frames=int(f["/config"].attrs["N_frames"]),
+                n_diam=int(
+                    round(C.D_M / float(f["/config"].attrs["screen_dx_m"]))
+                ),
+                pupil_pad_factor=(
+                    float(f["/config"].attrs["pupil_grid_size"])
+                    / int(round(C.D_M / float(f["/config"].attrs["screen_dx_m"])))
+                ),
+                subharmonic_levels=int(f["/config"].attrs["subharmonic_levels"]),
+                exposure_samples_j=int(f["/config"].attrs["exposure_samples_J"]),
+                padding_detector_px=int(f["/config"].attrs["padding_detector_px"]),
+                eval_size=int(f["/object/feature_truth"].shape[0]),
+            )
+        write_summary(path, cfg, values)
+
+    return _ok(
+        "development_structure_function_ensemble",
+        passed,
+        f"pooled median |ratio-1|={rel_error:.3f}",
+        rel_error,
+    )
 
 
 def check_noll() -> list[Check]:
@@ -622,14 +780,25 @@ def run_development_suite(out_dir: Path, generate: bool = True) -> int:
     conv = run_convergence_suite()
     print(format_report(conv))
     checks.extend(conv)
-    if generate:
-        print("=== development seeds ===")
-        for seed in C.DEV_SEEDS:
-            for dr0 in C.MANDATORY_DR0:
-                path = out_dir / filename(seed, dr0)
-                if not path.exists():
-                    generate_one(seed, dr0, out_dir)
-                checks.extend(check_schema_file(path))
+    print("=== development seeds ===")
+    from planetrecon.simulate import generate_one
+
+    paths = []
+    for seed in C.DEV_SEEDS:
+        for dr0 in C.MANDATORY_DR0:
+            path = out_dir / filename(seed, dr0)
+            paths.append(path)
+            stale = path.exists() and bool(schema_errors(path))
+            if generate and (not path.exists() or stale):
+                generate_one(seed, dr0, out_dir)
+    structure_check = certify_development_structure_function(paths)
+    checks.append(structure_check)
+    print(format_report([structure_check]))
+    for path in paths:
+        if not path.exists():
+            checks.append(_ok(f"schema_{path.name}", False, "file is missing"))
+        else:
+            checks.extend(check_schema_file(path, require_gate_eligible=True))
     print("=== summary ===")
     print(format_report(checks))
     failed = [c for c in checks if not c.passed]

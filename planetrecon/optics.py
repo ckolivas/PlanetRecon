@@ -103,7 +103,7 @@ def annular_airy_psf(cfg: SimConfig, n: int, pixel_scale_rad: float) -> np.ndarr
     eps = cfg.obstruction_ratio
     with np.errstate(divide="ignore", invalid="ignore"):
         term = 2.0 * j1(k) / k - eps * 2.0 * j1(eps * k) / k
-        term = np.where(k == 0.0, 1.0 - eps, term)
+        term = np.where(k == 0.0, 1.0 - eps**2, term)
     i = (term / (1.0 - eps**2)) ** 2
     return i / i.sum()
 

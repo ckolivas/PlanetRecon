@@ -1,4 +1,4 @@
-"""Locked R8 physical constants and object geometry."""
+"""Locked R9 physical constants and object geometry."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ HIGH_BAND_RHO_MIN = 0.5
 HIGH_BAND_MTF_MIN = 0.05
 SCHEMA_NAME = "planetary-mfbd-gate1"
 SCHEMA_VERSION = "1.0"
-REVISION = "R8"
+REVISION = "R9"
 DEV_SEEDS = (1001, 1002, 1003)
 EVAL_SEEDS = tuple(range(2001, 2013))
 EXT_SEEDS = tuple(range(2013, 2025))
@@ -33,7 +33,7 @@ MANDATORY_DR0 = (8.0, 4.0)
 R0_REF_M = 1.0
 DEFAULT_N_DIAM = 64
 DEFAULT_PUPIL_PAD_FACTOR = 8.0
-DEFAULT_SUBHARMONICS = 3
+DEFAULT_SUBHARMONICS = 4
 DEFAULT_J = 8
 DEFAULT_PADDING_DET_PX = 64
 SCREEN_MARGIN_PUPIL_PX = 8
@@ -45,6 +45,11 @@ EH_EXPOSURE_TOL = 0.005
 EH_PADDING_TOL = 0.005
 EH_GRID_TOL = 0.02
 STREHL_LOFREQ_TOL = 0.02
+TILT_LOFREQ_TOL = 0.10
+TILT_GRID_TOL = 0.05
+MEASUREMENT_APERTURE_SIGMA = 2.0
+MEASUREMENT_ANNULUS_INNER_SIGMA = 3.0
+MEASUREMENT_ANNULUS_OUTER_SIGMA = 5.0
 
 OVALS = (
     {
@@ -58,7 +63,7 @@ OVALS = (
     },
     {
         "name": "oval2",
-        "x_px": 20.0,
+        "x_px": 40.0,
         "y_px": 18.0,
         "sigma_x_px": 2.5,
         "sigma_y_px": 4.0,
@@ -68,7 +73,7 @@ OVALS = (
     {
         "name": "oval3",
         "x_px": -25.0,
-        "y_px": -24.0,
+        "y_px": -40.0,
         "sigma_x_px": 1.8,
         "sigma_y_px": 3.0,
         "angle_deg": 35.0,

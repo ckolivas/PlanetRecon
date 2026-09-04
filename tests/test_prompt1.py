@@ -1,3 +1,6 @@
+import shutil
+
+import h5py
 import numpy as np
 import pytest
 
@@ -58,11 +61,48 @@ def test_lowfreq_and_grid():
 
 
 def test_generate_schema(tmp_path):
+    from planetrecon import constants as C
+    from planetrecon.hdf5io import filename
     from planetrecon.simulate import generate_one
-    from planetrecon.validate import check_schema_file
+    from planetrecon.validate import (
+        certify_development_structure_function,
+        check_schema_file,
+    )
 
     path = generate_one(
         1001, 8.0, tmp_path, n_frames=2, exposure_samples_j=4
     )
     _assert_all(check_schema_file(path))
     assert path.with_suffix(".validation.txt").exists()
+    with h5py.File(path, "r") as f:
+        validation = f["validation"]
+        for name in (
+            "grid_convergence",
+            "exposure_convergence",
+            "padding_convergence",
+            "lowfreq_convergence",
+        ):
+            assert np.all(np.isfinite(validation[name][...])), name
+        assert not bool(validation["gate_eligible"][()])
+        for oval in ("oval1", "oval2", "oval3"):
+            group = f[f"object/features/{oval}"]
+            assert group["feature_crop_aperture_mask"].shape == (128, 128)
+            assert group["feature_crop_annulus_mask"].shape == (128, 128)
+    assert "Gate-eligible: NO" in path.with_suffix(".validation.txt").read_text()
+
+    paths = []
+    for seed in C.DEV_SEEDS:
+        for dr0 in C.MANDATORY_DR0:
+            target = tmp_path / filename(seed, dr0)
+            if target != path:
+                shutil.copy2(path, target)
+                with h5py.File(target, "r+") as f:
+                    f.attrs["seed"] = seed
+                    f["config"].attrs["Dr0"] = dr0
+            paths.append(target)
+    assert certify_development_structure_function(paths).passed
+    for target in paths:
+        _assert_all(check_schema_file(target, require_gate_eligible=True))
+        assert "Gate-eligible: YES" in target.with_suffix(
+            ".validation.txt"
+        ).read_text()

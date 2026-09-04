@@ -1,4 +1,4 @@
-"""R8 HDF5 truth-file schema v1."""
+"""R9 HDF5 truth-file schema v1."""
 
 from __future__ import annotations
 
@@ -12,6 +12,14 @@ from planetrecon.config import SimConfig
 
 
 REQUIRED_ROOT_ATTRS = ("schema_name", "schema_version", "revision", "seed")
+VALIDATION_PASS_KEYS = (
+    "structure_function_pass",
+    "grid_convergence_pass",
+    "exposure_convergence_pass",
+    "padding_convergence_pass",
+    "lowfreq_convergence_pass",
+    "no_wrap_pass",
+)
 REQUIRED_DATASETS = (
     "/config/json_utf8",
     "/object/full_latent_4x",
@@ -27,6 +35,12 @@ REQUIRED_DATASETS = (
     "/object/features/oval1",
     "/object/features/oval2",
     "/object/features/oval3",
+    "/object/features/oval1/feature_crop_aperture_mask",
+    "/object/features/oval1/feature_crop_annulus_mask",
+    "/object/features/oval2/feature_crop_aperture_mask",
+    "/object/features/oval2/feature_crop_annulus_mask",
+    "/object/features/oval3/feature_crop_aperture_mask",
+    "/object/features/oval3/feature_crop_annulus_mask",
     "/pupil/amplitude",
     "/pupil/frequency_x",
     "/pupil/frequency_y",
@@ -44,11 +58,34 @@ REQUIRED_DATASETS = (
     "/frames/shift_xy_detector_px",
     "/validation/no_wrap_pass",
     "/validation/psf_energy_error",
+    "/validation/structure_function_rho",
+    "/validation/structure_function_measured",
+    "/validation/structure_function_target",
+    "/validation/structure_function_rel_error",
+    "/validation/grid_convergence",
+    "/validation/exposure_convergence",
+    "/validation/padding_convergence",
+    "/validation/lowfreq_convergence",
+    "/validation/kl60_residual_summary",
+    "/validation/structure_function_pass",
+    "/validation/grid_convergence_pass",
+    "/validation/exposure_convergence_pass",
+    "/validation/padding_convergence_pass",
+    "/validation/lowfreq_convergence_pass",
+    "/validation/gate_eligible",
 )
 
 
 def filename(seed: int, dr0: float) -> str:
     return f"gate1_Dr0-{int(dr0)}_seed-{int(seed):05d}.h5"
+
+
+def validation_is_gate_eligible(validation) -> bool:
+    return bool(
+        all(bool(np.asarray(validation[key])) for key in VALIDATION_PASS_KEYS)
+        and float(np.asarray(validation["psf_energy_error"])) < C.PSF_ENERGY_TOL
+        and float(np.asarray(validation["kl60_residual_summary"])) > 0.0
+    )
 
 
 def write_truth(path: Path, cfg: SimConfig, arrays: dict) -> None:
@@ -135,6 +172,16 @@ def write_truth(path: Path, cfg: SimConfig, arrays: dict) -> None:
                 if k == "name":
                     continue
                 go.attrs[k] = v
+            go.attrs["aperture_sigma"] = C.MEASUREMENT_APERTURE_SIGMA
+            go.attrs["annulus_inner_sigma"] = C.MEASUREMENT_ANNULUS_INNER_SIGMA
+            go.attrs["annulus_outer_sigma"] = C.MEASUREMENT_ANNULUS_OUTER_SIGMA
+            aperture, annulus = arrays["feature_measurement_masks"][oval["name"]]
+            go.create_dataset(
+                "feature_crop_aperture_mask", data=aperture.astype(np.uint8)
+            )
+            go.create_dataset(
+                "feature_crop_annulus_mask", data=annulus.astype(np.uint8)
+            )
 
         gp = f.create_group("pupil")
         gp.create_dataset(
@@ -231,4 +278,103 @@ def schema_errors(path: Path) -> list[str]:
             n = f["/frames/feature_expected_e"].shape[0]
             if n < 1:
                 errors.append("no frames")
+            eval_size = int(f["/object/feature_truth"].shape[0])
+            frame_shape = (n, eval_size, eval_size)
+            for ds in (
+                "/frames/feature_expected_e",
+                "/frames/feature_observed_e",
+                "/frames/bland_expected_e",
+                "/frames/bland_observed_e",
+                "/truth_transfer/feature/psf_bar",
+                "/truth_transfer/feature/otf_bar",
+                "/truth_transfer/bland/psf_bar",
+                "/truth_transfer/bland/otf_bar",
+            ):
+                if ds in f and f[ds].shape != frame_shape:
+                    errors.append(f"wrong shape {ds}: {f[ds].shape}, expected {frame_shape}")
+            for ds in (
+                "/atmosphere/frame_time_s",
+                "/atmosphere/phase_rms_rad",
+                "/atmosphere/strehl_proxy",
+                "/atmosphere/kl60_residual_rms",
+            ):
+                if ds in f and f[ds].shape != (n,):
+                    errors.append(f"wrong shape {ds}: {f[ds].shape}, expected {(n,)}")
+            if (
+                "/atmosphere/kl60_coeff" in f
+                and f["/atmosphere/kl60_coeff"].shape != (n, C.KL_MODES)
+            ):
+                errors.append("wrong shape /atmosphere/kl60_coeff")
+            if (
+                "/frames/shift_xy_detector_px" in f
+                and f["/frames/shift_xy_detector_px"].shape != (n, 2)
+            ):
+                errors.append("wrong shape /frames/shift_xy_detector_px")
+            for ds in (
+                "/object/feature_truth",
+                "/object/bland_truth",
+                "/object/reference_disk_mask",
+                "/object/eval_window",
+                "/object/ideal_mtf",
+                "/object/high_band_mask",
+            ):
+                if ds in f and f[ds].shape != (eval_size, eval_size):
+                    errors.append(f"wrong shape {ds}")
+            for oval in C.OVALS:
+                for name in ("feature_crop_aperture_mask", "feature_crop_annulus_mask"):
+                    ds = f"/object/features/{oval['name']}/{name}"
+                    if ds in f and f[ds].shape != (eval_size, eval_size):
+                        errors.append(f"wrong shape {ds}")
+        if (
+            "/truth_transfer/feature/psf_bar" in f
+            and "/truth_transfer/bland/psf_bar" in f
+            and f["/truth_transfer/feature/psf_bar"].id
+            != f["/truth_transfer/bland/psf_bar"].id
+        ):
+            errors.append("feature/bland PSF datasets are not hard-linked")
+        expected_dtypes = {
+            "/object/full_latent_4x": np.dtype("float32"),
+            "/object/full_latent_detector": np.dtype("float32"),
+            "/object/reference_disk_mask": np.dtype("uint8"),
+            "/object/feature_truth": np.dtype("float32"),
+            "/object/bland_truth": np.dtype("float32"),
+            "/object/eval_window": np.dtype("float32"),
+            "/object/ideal_mtf": np.dtype("float32"),
+            "/object/high_band_mask": np.dtype("uint8"),
+            "/truth_transfer/feature/psf_bar": np.dtype("float32"),
+            "/truth_transfer/feature/otf_bar": np.dtype("complex64"),
+            "/frames/feature_expected_e": np.dtype("float32"),
+            "/frames/feature_observed_e": np.dtype("float32"),
+            "/frames/bland_expected_e": np.dtype("float32"),
+            "/frames/bland_observed_e": np.dtype("float32"),
+            "/frames/shift_xy_detector_px": np.dtype("float32"),
+        }
+        for ds, dtype in expected_dtypes.items():
+            if ds in f and f[ds].dtype != dtype:
+                errors.append(f"wrong dtype {ds}: {f[ds].dtype}, expected {dtype}")
+        for ds in (
+            "/validation/psf_energy_error",
+            "/validation/grid_convergence",
+            "/validation/exposure_convergence",
+            "/validation/padding_convergence",
+            "/validation/lowfreq_convergence",
+            "/validation/kl60_residual_summary",
+        ):
+            if ds in f and not np.all(np.isfinite(f[ds][...])):
+                errors.append(f"non-finite {ds}")
+    return errors
+
+
+def gate_errors(path: Path) -> list[str]:
+    errors = schema_errors(path)
+    if errors:
+        return errors
+    with h5py.File(path, "r") as f:
+        for name in (*VALIDATION_PASS_KEYS, "gate_eligible"):
+            if not bool(f[f"/validation/{name}"][()]):
+                errors.append(f"validation failed: {name}")
+        if float(f["/validation/psf_energy_error"][()]) >= C.PSF_ENERGY_TOL:
+            errors.append("validation failed: psf_energy_error")
+        if float(f["/validation/kl60_residual_summary"][()]) <= 0.0:
+            errors.append("validation failed: kl60_residual_summary")
     return errors

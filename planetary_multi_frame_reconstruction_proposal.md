@@ -1,14 +1,14 @@
 # Planetary Multi-Frame Atmospheric Reconstruction
-## Implementation specification — revision R8
+## Implementation specification — revision R9
 
 **Status:** Gate-1 implementation freeze  
-**Revision:** R8 — 2026-09-04  
+**Revision:** R9 — 2026-09-04
 **Intended outcome:** Prompt 1 and Prompt 2 can now be handed to Codex without reopening the research tree  
 **Primary application:** High-frame-rate monochrome planetary SER/AVI sequences
 
 This is MOMFBD / short-exposure inverse imaging in an amateur-planetary regime, tested against lucky-imaging architectures. It is not a new inverse problem.
 
-R8 accepts the R7 science tree and stop rules. It adds **no new research branch**. It resolves only implementation ambiguities that could change Gate-1 results:
+R9 accepts the R8 science tree and stop rules. It adds **no new research branch**. It corrects the bland-crop geometry contradiction exposed by Prompt 1 and retains the R8 implementation clarifications:
 
 1. pooled 24-seed thresholds are expressed as fractions, not stale 12-seed counts;
 2. the no-wrap screen length includes the final exposure interval;
@@ -19,9 +19,10 @@ R8 accepts the R7 science tree and stop rules. It adds **no new research branch*
 7. the practical Laplacian ranking is now fully specified;
 8. the synthetic Jupiter test object is specified sufficiently for Prompt 1;
 9. the HDF5 truth schema is frozen;
-10. Prompt 1 is included verbatim.
+10. Prompt 1 is included verbatim;
+11. Oval 2 and Oval 3 are repositioned so the locked bland-crop requirements are simultaneously satisfiable.
 
-No R9 should add a research branch unless implementation exposes a contradiction in the locked physics or mathematics.
+No future revision should add a research branch unless implementation exposes a contradiction in the locked physics or mathematics.
 
 ---
 
@@ -238,14 +239,20 @@ Compare the measured structure function with the intended Kolmogorov law over a 
 - sub-pixel separations dominated by discretisation;
 - separations approaching the finite screen dimension.
 
+Because \(r_0\) defines an ensemble statistic, the mandatory pass/fail comparison
+uses the mean structure-function ratio across the three independent development
+seed screens. Paired \(D/r_0\) regimes are not double-counted. Each HDF5 file
+retains its individual curve and local diagnostic, then receives the pooled
+suite result before it may be marked Gate-eligible.
+
 ### Aperture tilt / centroid statistics
 
 The implementation must not systematically lose low-frequency tip/tilt.
 
 Record the ensemble centroid variance of instantaneous PSFs and verify convergence when:
 
-- base screen sampling is doubled;
-- the number of subharmonic levels is increased.
+- base screen sampling is doubled (relative centroid change below 5%);
+- the number of subharmonic levels is increased (relative centroid-variance change below 10%).
 
 ### Gate-metric convergence
 
@@ -413,14 +420,18 @@ Locked detector-pixel-scale parameters:
 | Oval | Centre \((x,y)\) relative to disk centre | \(\sigma_x\) | \(\sigma_y\) | angle | peak contrast \(c_i\) |
 |---|---|---:|---:|---:|---:|
 | 1 | \((+45,-12)\) px | 2.0 px | 3.5 px | +20° | -0.16 |
-| 2 | \((+20,+18)\) px | 2.5 px | 4.0 px | -15° | +0.12 |
-| 3 | \((-25,-24)\) px | 1.8 px | 3.0 px | +35° | -0.12 |
+| 2 | \((+40,+18)\) px | 2.5 px | 4.0 px | -15° | +0.12 |
+| 3 | \((-25,-40)\) px | 1.8 px | 3.0 px | +35° | -0.12 |
 
 All features must remain inside the disk.
 
 Before evaluation, automatically verify that Oval 1 and at least one other oval contribute non-zero truth power to the conditioned high band \(\mathcal H\).
 
 If they do not, Prompt 1 fails rather than silently changing the ovals.
+
+R9 changes only the centres of Oval 2 and Oval 3 from R8. The R8 centres made
+the bland-crop constraints mathematically incompatible with an 80-pixel-radius
+disk and a central 96×96 interior region; no axis-aligned crop origin existed.
 
 ## 5.5 Evaluation crops
 
@@ -445,6 +456,10 @@ Choose a fixed interior crop:
 - broad belt/zone structure only.
 
 Record the exact crop origins in the HDF5 metadata.
+
+The locked R9 bland-crop origin relative to the disk-centred detector canvas is
+\((-72,-54)\) detector pixels. Its central 96×96 region contains no planted
+oval centre and no planetary limb.
 
 ## 5.6 Padding
 
@@ -976,7 +991,7 @@ Root attributes:
 ```text
 schema_name = "planetary-mfbd-gate1"
 schema_version = "1.0"
-revision = "R8"
+revision = "R9"
 seed = int
 ```
 
@@ -1035,6 +1050,15 @@ Store planted-feature table under:
 ```
 
 including centres, sigmas, angle, contrast, and measurement apertures.
+
+The locked measurement aperture is the elliptical two-sigma region of each
+oval. The local-background annulus spans elliptical radii from three to five
+sigma. Store the clipped feature-crop aperture and annulus masks for every oval.
+
+```text
+/object/features/<oval>/feature_crop_aperture_mask  uint8[128,128]
+/object/features/<oval>/feature_crop_annulus_mask   uint8[128,128]
+```
 
 ## 13.3 `/pupil`
 
@@ -1107,9 +1131,14 @@ Prompt 1 writes simulator checks:
 /validation/lowfreq_convergence
 /validation/no_wrap_pass
 /validation/kl60_residual_summary
+/validation/padding_convergence
+/validation/*_pass
+/validation/gate_eligible
 ```
 
-A file is **Gate-eligible** only if every mandatory validation flag passes.
+A newly generated file is provisional. The development-suite command applies
+the pooled structure-function result, and a file is **Gate-eligible** only if
+every mandatory validation value is finite and every mandatory flag passes.
 
 ---
 
@@ -1131,7 +1160,7 @@ extension if inconclusive:
 
 The same seed ID in \(D/r_0=8\) and \(D/r_0=4\) may use the same underlying unit random stream rescaled to the requested \(r_0\), but the implementation must document whether regimes are paired or independent.
 
-**R8 default:** use paired base random streams across the two mandatory seeing regimes. This reduces irrelevant Monte-Carlo differences when comparing regime dependence.
+**R9 default:** use paired base random streams across the two mandatory seeing regimes. This reduces irrelevant Monte-Carlo differences when comparing regime dependence.
 
 Noise draws remain deterministic functions of `(seed, regime, frame_index)` and are independent between regimes after signal scaling.
 
@@ -1190,21 +1219,23 @@ Noise draws remain deterministic functions of `(seed, regime, frame_index)` and 
 - development and evaluation seeds disjoint.
 - ranking code/config hash stored before evaluation metrics.
 - E2a regularisation frozen from development seeds before evaluation.
+- all file-local checks pass on every development seed and regime;
+- pooled ensemble checks pass across the three independent development seeds;
 - all Gate-eligible HDF5 files contain the same schema version.
 
 ---
 
 # 16. Prompt 1 — frozen Codex handoff
 
-The following is the R8 implementation prompt.
+The following is the R9 implementation prompt.
 
-> **Project:** Planetary Multi-Frame Atmospheric Reconstruction — Gate-1 Simulator, R8.
+> **Project:** Planetary Multi-Frame Atmospheric Reconstruction — Gate-1 Simulator, R9.
 >
 > Implement only the synthetic simulator and its validation tests. Do not implement blind deconvolution, MFBD, ranking, G1/G2/G3, tiling, planetary rotation, Bayer reconstruction, or a user interface.
 >
 > Use Python with NumPy/SciPy and HDF5 (`h5py`) for the reference implementation. GPU support is not required in Prompt 1. Structure the optics code so a later PyTorch/CUDA implementation can reproduce the same arrays and conventions.
 >
-> Implement the R8 locked physics:
+> Implement the R9 locked physics:
 >
 > 1. 250 mm circular pupil, 0.30 central obstruction, no spiders, 610 nm monochromatic.
 > 2. Single-layer frozen-flow Kolmogorov turbulence with \(v=5\) m/s.
@@ -1212,14 +1243,14 @@ The following is the R8 implementation prompt.
 > 4. \(T_{\rm exp}=0.30\tau_0\), \(\Delta t=\tau_0\), \(N=500\).
 > 5. A finite exposure is the average of instantaneous **intensity PSFs** sampled along the same moving phase screen; never average independent phase screens.
 > 6. The phase screen must not wrap during the 500-frame sequence. Required along-wind extent includes \((N-1)\Delta t+T_{\rm exp}\).
-> 7. Use Kolmogorov screen generation with low-frequency fidelity sufficient to pass the R8 structure-function and tilt/centroid convergence tests. Fourier synthesis plus subharmonics is acceptable.
-> 8. Generate the deterministic R8 synthetic Jupiter-like latent object, including limb darkening, belts, and the three planted ovals.
-> 9. Simulate on a padded scene and crop only after optical convolution and detector integration. Determine padding by the R8 convergence rule.
+> 7. Use Kolmogorov screen generation with low-frequency fidelity sufficient to pass the R9 structure-function and tilt/centroid convergence tests. Fourier synthesis plus subharmonics is acceptable.
+> 8. Generate the deterministic R9 synthetic Jupiter-like latent object, including limb darkening, belts, and the three planted ovals.
+> 9. Simulate on a padded scene and crop only after optical convolution and detector integration. Determine padding by the R9 convergence rule.
 > 10. Detector sampling is \(0.5\lambda/D\) radians per pixel. Detector pixels integrate irradiance over their area.
-> 11. Set the source electron rate using the R8 reference-mask rule so the poor-seeing core exposure has 800 e⁻/pixel mean before atmospheric blur/noise. The moderate-seeing run must therefore receive 1600 e⁻/pixel at twice the exposure.
+> 11. Set the source electron rate using the R9 reference-mask rule so the poor-seeing core exposure has 800 e⁻/pixel mean before atmospheric blur/noise. The moderate-seeing run must therefore receive 1600 e⁻/pixel at twice the exposure.
 > 12. Add Poisson shot noise and 2 e⁻ rms Gaussian read noise.
 > 13. Generate feature-rich and bland 128×128 crops from the same deterministic latent planet.
-> 14. Store true finite-exposure PSFs/OTFs, timestamps, expected electron images, observed electron images, exact shifts, relevant atmospheric summaries, object truth, pupil, MTF/high-band mask, and validation results in the R8 HDF5 schema.
+> 14. Store true finite-exposure PSFs/OTFs, timestamps, expected electron images, observed electron images, exact shifts, relevant atmospheric summaries, object truth, pupil, MTF/high-band mask, and validation results in the R9 HDF5 schema.
 > 15. Use development seeds 1001–1003 initially. Add evaluation seed generation capability but do not generate Gate tables.
 >
 > Implement automated tests for:
@@ -1413,7 +1444,7 @@ Do not generalise that negative to anisoplanatic fields, detector-sampling diver
 
 # 21. Convergence status
 
-R8 freezes:
+R9 freezes:
 
 - the primary claim;
 - two mandatory seeing regimes;
@@ -1436,9 +1467,9 @@ There are **no open research-branch questions before Prompt 1**.
 
 The next useful action is implementation.
 
-A future R9 is justified only if:
+A future revision is justified only if:
 
-1. Prompt 1 exposes a numerical/physical contradiction in R8; or
+1. Prompt 1 exposes a numerical/physical contradiction in R9; or
 2. a reviewer identifies a concrete flaw that would systematically bias G1/G2.
 
 Otherwise revisions should stop and the programme should move to code.

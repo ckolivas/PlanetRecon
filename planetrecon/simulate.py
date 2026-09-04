@@ -17,7 +17,7 @@ from planetrecon.atmosphere import (
     structure_function,
 )
 from planetrecon.config import SimConfig, make_config
-from planetrecon.hdf5io import filename, write_truth
+from planetrecon.hdf5io import filename, validation_is_gate_eligible, write_truth
 from planetrecon.kl import KLBasis
 from planetrecon.metric import (
     eval_window,
@@ -25,7 +25,11 @@ from planetrecon.metric import (
     ideal_mtf_from_dl_psf,
     relative_high_band,
 )
-from planetrecon.object import make_object_scene
+from planetrecon.object import (
+    feature_measurement_masks,
+    make_object_scene,
+    source_rate_scale,
+)
 from planetrecon.optics import (
     bin_box,
     center_crop,
@@ -35,19 +39,6 @@ from planetrecon.optics import (
     otf_from_centered_psf,
 )
 from planetrecon.rng import frame_noise, noise_rng, screen_rng
-
-
-def source_rate_scale(cfg: SimConfig, scene, psf_dl_4x: np.ndarray) -> float:
-    img4 = fftconvolve(scene.latent_4x, psf_dl_4x, mode="same")
-    img = bin_box(img4, C.OBJECT_OVERSAMPLE)
-    ox, oy = scene.feature_origin
-    n = cfg.eval_size
-    crop = img[oy : oy + n, ox : ox + n]
-    mask = scene.reference_disk_mask.astype(bool)
-    mean = float(crop[mask].mean())
-    if mean <= 0:
-        raise RuntimeError("reference-mask mean is zero")
-    return C.REF_MEAN_E_AT_T0 / mean
 
 
 def simulate(cfg: SimConfig, out_dir: Path, progress=None) -> Path:
@@ -156,17 +147,47 @@ def simulate(cfg: SimConfig, out_dir: Path, progress=None) -> Path:
     sf_m = structure_function(screen.phi, screen.dx_m, rho)
     sf_t = kolmogorov_structure_function(rho, cfg.r0_m)
 
+    sf_rel_error = float(np.median(np.abs(sf_m / sf_t - 1.0)))
     validation = {
         "structure_function_rho": rho,
         "structure_function_measured": sf_m,
         "structure_function_target": sf_t,
+        "structure_function_rel_error": sf_rel_error,
+        "structure_function_local_pass": sf_rel_error < C.STRUCTURE_FUNCTION_REL_TOL,
+        # Kolmogorov r0 is an ensemble statistic. The development suite
+        # certifies this flag after pooling the three independent seed fields.
+        "structure_function_pass": False,
         "psf_energy_error": float(np.max(energy_err)),
         "no_wrap_pass": bool(no_wrap_ok(cfg, screen)),
         "kl60_residual_summary": float(np.median(kl_resid)),
-        "grid_convergence": np.nan,
+        "grid_convergence": np.inf,
+        "grid_convergence_pass": False,
         "exposure_convergence": float(exposure_eh),
-        "lowfreq_convergence": np.nan,
+        "exposure_convergence_pass": exposure_eh < C.EH_EXPOSURE_TOL,
+        "padding_convergence": np.inf,
+        "padding_convergence_pass": False,
+        "lowfreq_convergence": np.full(3, np.inf),
+        "lowfreq_convergence_pass": False,
+        "gate_eligible": False,
     }
+
+    # These are deliberately computed for the same seed/regime as the file.
+    # Keeping provisional failures above ensures an interrupted validation can
+    # never be mistaken for a Gate-eligible product.
+    from planetrecon.validate import convergence_values
+
+    validation.update(convergence_values(cfg))
+    validation["gate_eligible"] = validation_is_gate_eligible(validation)
+
+    feature_masks = {}
+    for oval in C.OVALS:
+        feature_masks[oval["name"]] = feature_measurement_masks(
+            scene.feature_origin,
+            scene.disk_cx_det,
+            scene.disk_cy_det,
+            oval,
+            cfg.eval_size,
+        )
 
     arrays = {
         "source_rate_scale": scale,
@@ -181,6 +202,7 @@ def simulate(cfg: SimConfig, out_dir: Path, progress=None) -> Path:
         "eval_window": window,
         "ideal_mtf": mtf,
         "high_band_mask": hmask,
+        "feature_measurement_masks": feature_masks,
         "pupil_amplitude": pupil.amplitude,
         "pupil_frequency_x": pupil.frequency_x,
         "pupil_frequency_y": pupil.frequency_y,
@@ -234,14 +256,31 @@ def write_summary(h5_path: Path, cfg: SimConfig, validation: dict) -> Path:
     for r, m, t in zip(rho, meas, tgt):
         ratio = m / t if t else float("nan")
         lines.append(f"  {r:.5f}  {m:.5e}  {t:.5e}  {ratio:.3f}")
-    eligible = bool(validation["no_wrap_pass"]) and validation["psf_energy_error"] < C.PSF_ENERGY_TOL
+    lines.extend(
+        [
+            f"structure_function_pass: {validation['structure_function_pass']}",
+            f"grid_convergence: {validation['grid_convergence']}",
+            f"grid_convergence_pass: {validation['grid_convergence_pass']}",
+            f"padding_convergence: {validation['padding_convergence']}",
+            f"padding_convergence_pass: {validation['padding_convergence_pass']}",
+            f"lowfreq_convergence: {np.asarray(validation['lowfreq_convergence']).tolist()}",
+            f"lowfreq_convergence_pass: {validation['lowfreq_convergence_pass']}",
+        ]
+    )
+    eligible = bool(validation["gate_eligible"])
     lines.append("")
-    lines.append(f"Gate-eligible (file-local checks): {'YES' if eligible else 'NO'}")
+    lines.append(f"Gate-eligible: {'YES' if eligible else 'NO'}")
     txt.write_text("\n".join(lines) + "\n")
     return txt
 
 
-def generate_one(seed: int, dr0: float, out_dir: Path, n_frames: int | None = None, **kwargs) -> Path:
+def generate_one(
+    seed: int,
+    dr0: float,
+    out_dir: Path,
+    n_frames: int | None = None,
+    **kwargs,
+) -> Path:
     kw = dict(kwargs)
     if n_frames is not None:
         kw["n_frames"] = n_frames

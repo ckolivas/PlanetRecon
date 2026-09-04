@@ -1,4 +1,4 @@
-"""Simulation configuration derived from locked R8 parameters."""
+"""Simulation configuration derived from locked R9 parameters."""
 
 from __future__ import annotations
 

@@ -13,7 +13,7 @@ from planetrecon.validate import run_development_suite
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="planetrecon",
-        description="PlanetRecon Gate-1 simulator (R8 Prompt 1)",
+        description="PlanetRecon Gate-1 simulator (R9 Prompt 1)",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 

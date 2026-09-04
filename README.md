@@ -8,7 +8,7 @@ monochrome planetary SER/AVI sequences.
 This is MOMFBD / short-exposure inverse imaging in an amateur-planetary
 regime, tested against lucky-imaging architectures.
 
-The Gate-1 implementation specification is frozen at revision R8 in
+The Gate-1 implementation specification is frozen at revision R9 in
 `planetary_multi_frame_reconstruction_proposal.md`. Prompt 1 is the
 synthetic simulator and its validation tests (Python, NumPy/SciPy, HDF5).
 Prompt 2 may begin only after Prompt 1 passes.
@@ -45,7 +45,7 @@ seeds 1001–1003.
   with `Δθ = 0.5 λ/D`. Detector Nyquist equals `f_c = D/λ`.
 - **OTF storage.** `fft2(ifftshift(psf))` so DC is at `[0, 0]`.
 - **Phase screen.** Kolmogorov PSD `0.023 r0^{-5/3} f^{-11/3}` (DC zeroed),
-  Fourier synthesis plus three Johansson–Gavel / Schmidt subharmonic
+  Fourier synthesis plus four Johansson–Gavel / Schmidt subharmonic
   levels. No finite outer scale. Bilinear extraction, no wrap.
 - **Frozen flow.** Wind `v = 5 m/s` along +x. Finite-exposure PSF is the
   average of `J=8` instantaneous **intensity** PSFs at bin midpoints of

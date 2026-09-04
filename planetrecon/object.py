@@ -1,10 +1,11 @@
-"""Deterministic R8 synthetic Jupiter-like object, crops, and masks."""
+"""Deterministic R9 synthetic Jupiter-like object, crops, and masks."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.signal import fftconvolve
 
 from planetrecon import constants as C
 from planetrecon.config import SimConfig
@@ -103,11 +104,53 @@ def feature_crop_origin(disk_cx: float, disk_cy: float) -> tuple[int, int]:
 
 
 def bland_crop_origin(disk_cx: float, disk_cy: float) -> tuple[int, int]:
-    # Shift 16 px toward -x so Oval 1 leaves the central 96×96. The disk
-    # radius forbids excluding Oval 2 from that region (R8 geometry).
-    ox = int(round(disk_cx - 64.0 - 16.0))
-    oy = int(round(disk_cy - 64.0))
+    # R9 positions the central 96×96 wholly inside the disk and between
+    # all three planted oval centres.
+    ox = int(round(disk_cx - 72.0))
+    oy = int(round(disk_cy - 54.0))
     return ox, oy
+
+
+def feature_measurement_masks(
+    origin: tuple[int, int],
+    disk_cx: float,
+    disk_cy: float,
+    oval: dict,
+    size: int = C.EVAL_SIZE,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the locked 2-sigma aperture and 3--5-sigma annulus masks."""
+    ox, oy = origin
+    yy, xx = np.indices((size, size), dtype=np.float64)
+    x = ox + xx + 0.5 - disk_cx
+    y = oy + yy + 0.5 - disk_cy
+    th = np.deg2rad(oval["angle_deg"])
+    dx = x - oval["x_px"]
+    dy = y - oval["y_px"]
+    xp = dx * np.cos(th) + dy * np.sin(th)
+    yp = -dx * np.sin(th) + dy * np.cos(th)
+    radius = np.sqrt(
+        (xp / oval["sigma_x_px"]) ** 2
+        + (yp / oval["sigma_y_px"]) ** 2
+    )
+    aperture = radius <= C.MEASUREMENT_APERTURE_SIGMA
+    annulus = (
+        (radius >= C.MEASUREMENT_ANNULUS_INNER_SIGMA)
+        & (radius <= C.MEASUREMENT_ANNULUS_OUTER_SIGMA)
+    )
+    return aperture.astype(np.uint8), annulus.astype(np.uint8)
+
+
+def source_rate_scale(
+    cfg: SimConfig, scene: ObjectScene, psf_dl_4x: np.ndarray
+) -> float:
+    """Scale the fixed source rate to 800 e-/px at the reference exposure."""
+    img4 = fftconvolve(scene.latent_4x, psf_dl_4x, mode="same")
+    img = bin_box(img4, C.OBJECT_OVERSAMPLE)
+    crop = _crop(img, scene.feature_origin, cfg.eval_size)
+    mean = float(crop[scene.reference_disk_mask.astype(bool)].mean())
+    if mean <= 0:
+        raise RuntimeError("reference-mask mean is zero")
+    return C.REF_MEAN_E_AT_T0 / mean
 
 
 def reference_disk_mask(
@@ -141,7 +184,7 @@ def sky_mask(
 def make_object_scene(cfg: SimConfig) -> ObjectScene:
     n4 = cfg.object_n4
     over = C.OBJECT_OVERSAMPLE
-    if n4 // over != cfg.object_n4 // over:
+    if n4 % over:
         raise ValueError("object grid is not aligned to detector pixels")
     latent_4x = latent_object_4x(n4, over)
     latent_det = bin_box(latent_4x, over)
