@@ -6,9 +6,8 @@ low-order subspace with the Kolmogorov screen: residual phase beyond 60 modes
 is documented by Prompt 1. Finite-exposure averaging is *not* modelled; that
 mismatch is part of the Q2 test.
 
-Known Gate-1 translations are applied to the observations before fitting so
-registration does not contaminate the transfer estimate. Tip/tilt remain in
-the fitted basis as residual wavefront.
+Observations remain unregistered. Known Gate-1 translations initialise and
+freeze pupil tip/tilt, while higher modes remain fitted variables.
 """
 
 from __future__ import annotations

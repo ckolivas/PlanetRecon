@@ -263,6 +263,17 @@ def _stage_metrics(stage: dict, crop: CropArrays) -> dict:
     return mets
 
 
+def select_reported_init(
+    all_frame_results: dict[str, dict],
+    holdout_results: dict[str, dict] | None = None,
+) -> str:
+    """Select with held-out loss when available, otherwise training loss."""
+    source = holdout_results if holdout_results is not None else all_frame_results
+    return select_init(
+        {name: {"stages": block["stages"]} for name, block in source.items()}
+    )
+
+
 def evaluate_q2_crop(
     cfg,
     crop: CropArrays,
@@ -292,12 +303,17 @@ def evaluate_q2_crop(
     m_max = int(m_grid[-1])
     alpha_tt = np.zeros((n, m_max), dtype=np.float64)
     alpha_tt[:, :2] = tt
-    inits_out = {}
-    for name in inits:
+
+    def fit_initialisation(
+        name: str, train_idx: np.ndarray, holdout_idx: np.ndarray
+    ) -> dict:
         if name == "zero":
-            start_idx = idx_all
+            start_idx = train_idx
         elif name == "subset":
-            start_idx = idx10
+            # Rank only the training partition. Consulting scores from held-out
+            # frames would leak validation data into the object initialisation.
+            local = top_fraction_indices(scores[train_idx], C.DECISION_P)
+            start_idx = train_idx[local]
         else:
             raise ValueError(f"unknown init {name}")
         obj0 = initial_object(
@@ -318,8 +334,8 @@ def evaluate_q2_crop(
             crop.support,
             tv_mu=tv_d,
             obj0=obj0,
-            train_idx=idx_all,
-            holdout_idx=np.zeros(0, dtype=np.int64),
+            train_idx=train_idx,
+            holdout_idx=holdout_idx,
             m_grid=m_grid,
             outer_iters=outer_iters,
             alpha_iters=alpha_iters,
@@ -327,6 +343,11 @@ def evaluate_q2_crop(
             frame_workers=frame_workers,
             freeze_tip_tilt=True,
         )
+        return fit
+
+    inits_out = {}
+    for name in inits:
+        fit = fit_initialisation(name, idx_all, np.zeros(0, dtype=np.int64))
         inits_out[name] = {
             "stages": [
                 {**{k: v for k, v in st.items() if k not in ("object", "alphas", "otfs")},
@@ -338,50 +359,48 @@ def evaluate_q2_crop(
             "object": fit["object"],
             "alphas": fit["alphas"],
         }
-    chosen = select_init(
-        {k: {"stages": v["stages"]} for k, v in inits_out.items()}
-    )
-    d_metrics = inits_out[chosen]["final_metrics"]
-    eh_d = d_metrics["E_H"]
-    eh_a1 = known["A1o_S10"]["E_H"]
-    eh_star = known["E_H_E2_star"]
-    c_val = closure_C(eh_a1, eh_d, eh_star)
 
     holdout_block = None
+    holdout_fits = None
     if holdout:
         train, ho = holdout_split(n, C.Q2_HOLDOUT_FRAC, extras["seed"])
-        obj0 = initial_object(
-            fwd,
-            crop.observed,
-            sigma2,
-            lam_d,
-            crop.support,
-            train,
-            tv_d,
-            alphas=alpha_tt,
-        )
-        ho_fit = d_tail(
-            fwd,
-            crop.observed,
-            sigma2,
-            lam_d,
-            crop.support,
-            tv_mu=tv_d,
-            obj0=obj0,
-            train_idx=train,
-            holdout_idx=ho,
-            m_grid=m_grid,
-            outer_iters=outer_iters,
-            alpha_iters=alpha_iters,
-            alpha0=alpha_tt,
-            frame_workers=frame_workers,
-            freeze_tip_tilt=True,
-        )
-        last = ho_fit["stages"][-1]
+        holdout_fits = {
+            name: fit_initialisation(name, train, ho) for name in inits
+        }
+        holdout_chosen = select_init(holdout_fits)
+        chosen_fit = holdout_fits[holdout_chosen]
+        last = chosen_fit["stages"][-1]
+        per_init = {}
+        for name, fit in holdout_fits.items():
+            stages = []
+            for stage in fit["stages"]:
+                stages.append(
+                    {
+                        "M": int(stage["M"]),
+                        "train_loss": float(stage["train_loss"]),
+                        "holdout_loss": float(stage["holdout_loss"]),
+                        "n_outer": int(stage["n_outer"]),
+                    }
+                )
+            final = stages[-1]
+            per_init[name] = {
+                "stages": stages,
+                "train_loss": final["train_loss"],
+                "holdout_loss": final["holdout_loss"],
+                "holdout_over_train": (
+                    None
+                    if final["train_loss"] <= 0
+                    else final["holdout_loss"] / final["train_loss"]
+                ),
+                "metrics": _metrics(fit["object"], crop),
+            }
         holdout_block = {
             "n_train": int(train.size),
             "n_holdout": int(ho.size),
             "indices": ho.tolist(),
+            "chosen_init": holdout_chosen,
+            "selection_metric": "minimum final holdout_loss",
+            "inits": per_init,
             "train_loss": float(last["train_loss"]),
             "holdout_loss": None if last["holdout_loss"] is None else float(last["holdout_loss"]),
             "holdout_over_train": (
@@ -389,8 +408,17 @@ def evaluate_q2_crop(
                 if last["holdout_loss"] is None or last["train_loss"] <= 0
                 else float(last["holdout_loss"] / last["train_loss"])
             ),
-            "metrics": _metrics(ho_fit["object"], crop),
+            "metrics": _metrics(chosen_fit["object"], crop),
         }
+
+    # The held-out comparison selects the initialization, but closure is
+    # always measured on the corresponding all-frame reconstruction.
+    chosen = select_reported_init(inits_out, holdout_fits)
+    d_metrics = inits_out[chosen]["final_metrics"]
+    eh_d = d_metrics["E_H"]
+    eh_a1 = known["A1o_S10"]["E_H"]
+    eh_star = known["E_H_E2_star"]
+    c_val = closure_C(eh_a1, eh_d, eh_star)
 
     init_public = {}
     for name, block in inits_out.items():
@@ -508,6 +536,12 @@ def aggregate_q2(results: list[dict], crop: str = "feature") -> dict:
         stars = [r["crops"][crop]["E2_star"] for r in items]
         limited = [r["crops"][crop]["prior_limited"] for r in items]
         inits = [r["crops"][crop]["chosen_init"] for r in items]
+        holdouts = [r["crops"][crop].get("holdout") for r in items]
+        holdout_ratios = [
+            block["holdout_over_train"]
+            for block in holdouts
+            if block is not None and block.get("holdout_over_train") is not None
+        ]
         arr = np.asarray(cvals, dtype=np.float64)
         finite = arr[np.isfinite(arr)]
         med = float(np.median(finite)) if finite.size else float("nan")
@@ -533,6 +567,14 @@ def aggregate_q2(results: list[dict], crop: str = "feature") -> dict:
             "E2_star": stars,
             "prior_limited_frac": float(np.mean(limited)),
             "chosen_inits": inits,
+            "holdout_n": len(holdout_ratios),
+            "holdout_over_train": holdout_ratios,
+            "median_holdout_over_train": (
+                float(np.median(holdout_ratios)) if holdout_ratios else None
+            ),
+            "holdout_chosen_inits": [
+                block["chosen_init"] for block in holdouts if block is not None
+            ],
         }
     return out
 
@@ -564,6 +606,12 @@ def format_q2(agg: dict, crop: str) -> str:
             f"  D={np.median(block['E_H_D']):.4f}"
             f"  E2*={np.median(block['E_H_E2_star']):.4f}"
         )
+        if block.get("holdout_n"):
+            lines.append(
+                f"  held-out/train residual median="
+                f"{block['median_holdout_over_train']:.4f}"
+                f"  n={block['holdout_n']}"
+            )
         lines.append("")
     return "\n".join(lines) + "\n"
 

@@ -2,13 +2,142 @@
   "seed": 1001,
   "dr0": 4.0,
   "crop": "feature",
-  "init": "subset",
-  "C_allframe": 0.5244354517777454,
-  "n_train": 450,
-  "n_holdout": 50,
-  "train_loss": 633197.4199895896,
-  "holdout_loss": 639731.5506340684,
-  "holdout_over_train": 1.0103192629000073,
-  "E_H_holdout_object": 0.9290214602346842,
-  "note": "Phase-only fit of a disjoint 10% against an object estimated on the complementary 90%. Ratio near 1 means no material overfitting."
+  "ranking_hash": "5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206",
+  "all_frame": {
+    "chosen_init": "subset",
+    "C": 0.5244354517777454,
+    "E_H_A1o": 0.9885141229650339,
+    "E_H_D": 0.9301544924477683,
+    "E_H_E2_star": 0.8772332583334828,
+    "E2_star": "E2b"
+  },
+  "holdout": {
+    "fraction": 0.1,
+    "n_train": 450,
+    "n_holdout": 50,
+    "indices": [
+      5,
+      9,
+      12,
+      14,
+      15,
+      18,
+      23,
+      24,
+      39,
+      48,
+      55,
+      58,
+      67,
+      69,
+      78,
+      81,
+      83,
+      85,
+      104,
+      106,
+      107,
+      122,
+      130,
+      134,
+      145,
+      161,
+      168,
+      171,
+      173,
+      183,
+      188,
+      230,
+      254,
+      275,
+      277,
+      295,
+      308,
+      328,
+      361,
+      375,
+      378,
+      388,
+      396,
+      401,
+      407,
+      451,
+      457,
+      470,
+      479,
+      493
+    ],
+    "chosen_init": "subset",
+    "selection_metric": "minimum final holdout_loss",
+    "inits": {
+      "zero": {
+        "stages": [
+          {
+            "M": 15,
+            "n_outer": 3,
+            "train_loss": 633242.7649426872,
+            "holdout_loss": 639781.3599710749
+          },
+          {
+            "M": 35,
+            "n_outer": 2,
+            "train_loss": 633199.1595745699,
+            "holdout_loss": 639733.4349869139
+          },
+          {
+            "M": 60,
+            "n_outer": 2,
+            "train_loss": 633197.4199895896,
+            "holdout_loss": 639731.5506340684
+          }
+        ],
+        "train_loss": 633197.4199895896,
+        "holdout_loss": 639731.5506340684,
+        "holdout_over_train": 1.0103192629000073,
+        "E_H": 0.9290214602346842
+      },
+      "subset": {
+        "stages": [
+          {
+            "M": 15,
+            "n_outer": 3,
+            "train_loss": 633187.5470599628,
+            "holdout_loss": 639747.8089937334
+          },
+          {
+            "M": 35,
+            "n_outer": 2,
+            "train_loss": 633144.421665833,
+            "holdout_loss": 639699.7866404575
+          },
+          {
+            "M": 60,
+            "n_outer": 2,
+            "train_loss": 632708.9334523493,
+            "holdout_loss": 639226.6654084664
+          }
+        ],
+        "train_loss": 632708.9334523493,
+        "holdout_loss": 639226.6654084664,
+        "holdout_over_train": 1.0103013117272635,
+        "E_H": 0.928911392995871
+      }
+    }
+  },
+  "numerical_settings": {
+    "m_grid": [
+      15,
+      35,
+      60
+    ],
+    "outer_iters": [
+      3,
+      2,
+      2
+    ],
+    "alpha_iters": 4,
+    "execution": "CPU",
+    "frame_workers": 8
+  },
+  "note": "Each initialization estimates the object on the same 90% training partition, then fits only phase on the disjoint 10%. The subset initialization ranks and selects training frames only. The reported all-frame D uses the initialization with the lower held-out residual."
 }

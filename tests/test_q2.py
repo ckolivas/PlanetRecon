@@ -17,7 +17,13 @@ from planetrecon.mfbd import (
 )
 from planetrecon.optics import centroid_px
 from planetrecon.optics import otf_from_centered_psf
-from planetrecon.q2 import closure_C, e2_star_name, prior_limited
+from planetrecon.q2 import (
+    aggregate_q2,
+    closure_C,
+    e2_star_name,
+    prior_limited,
+    select_reported_init,
+)
 
 
 def _blob(n: int) -> np.ndarray:
@@ -211,6 +217,45 @@ def test_select_init_prefers_holdout():
         },
     }
     assert select_init(results) == "subset"
+
+
+def test_reported_init_uses_holdout_selection_when_available():
+    all_frame = {
+        "zero": {"stages": [{"train_loss": 1.0, "holdout_loss": None}]},
+        "subset": {"stages": [{"train_loss": 2.0, "holdout_loss": None}]},
+    }
+    holdout = {
+        "zero": {"stages": [{"train_loss": 1.0, "holdout_loss": 3.0}]},
+        "subset": {"stages": [{"train_loss": 2.0, "holdout_loss": 1.0}]},
+    }
+    assert select_reported_init(all_frame) == "zero"
+    assert select_reported_init(all_frame, holdout) == "subset"
+
+
+def test_aggregate_q2_records_holdout_diagnostic():
+    result = {
+        "seed": 1001,
+        "dr0": 4.0,
+        "crops": {
+            "feature": {
+                "C": 0.5,
+                "E_H_D": 0.7,
+                "E_H_A1o": 1.0,
+                "E_H_E2_star": 0.4,
+                "E2_star": "E2b",
+                "prior_limited": False,
+                "chosen_init": "subset",
+                "holdout": {
+                    "chosen_init": "subset",
+                    "holdout_over_train": 1.01,
+                },
+            }
+        },
+    }
+    block = aggregate_q2([result], crop="feature")["4.0"]
+    assert block["holdout_n"] == 1
+    assert block["median_holdout_over_train"] == pytest.approx(1.01)
+    assert block["holdout_chosen_inits"] == ["subset"]
 
 
 def test_tip_tilt_from_shifts_matches_centroid():
