@@ -51,6 +51,34 @@ MEASUREMENT_APERTURE_SIGMA = 2.0
 MEASUREMENT_ANNULUS_INNER_SIGMA = 3.0
 MEASUREMENT_ANNULUS_OUTER_SIGMA = 5.0
 
+# Prompt 2 — ranking, estimators, gaps (R9)
+RANK_LAPLACIAN_KERNEL = ((0.0, 1.0, 0.0), (1.0, -4.0, 1.0), (0.0, 1.0, 0.0))
+RANK_BORDER_PX = 2
+RANK_P_GRID = (5, 10, 25, 50, 100)
+DECISION_P = 10
+RH_ILLCONDITIONED = 1e-5
+MID_BAND_RHO_MIN = 0.2
+MID_BAND_RHO_MAX = 0.5
+E1_E2A0_EH_REL_TOL = 1e-4
+G3_SUM_TOL = 1e-10
+OVAL_CONTRAST_PATHOLOGY = 0.05
+G_STRONG_MEDIAN = 0.10
+G_NEGATIVE_MEDIAN = 0.05
+G_STRONG_POSITIVE_FRAC = 2.0 / 3.0
+G_NEGATIVE_GE10_FRAC = 0.25
+DEN_FLOOR = 1e-15
+# Frozen on development seeds 1001–1003, both mandatory regimes, feature-rich
+# crop, E1(S_100). Smallest λ_rel whose median E_H is within 2% of the grid
+# minimum (grid minimum was 0.03). E2a uses the same quadratic stabilisation
+# plus positivity and |f|<=f_c support.
+E1_LAMBDA_REL = 3.0e-2
+E2A_LAMBDA_REL = 3.0e-2
+E1_LAMBDA_GRAD = 0.0
+E2A_FISTA_MAXITER = 120
+E2A0_CG_MAXITER = 200
+E2A_FISTA_TOL = 1e-6
+SUPPORT_RHO_MAX = 1.0
+
 OVALS = (
     {
         "name": "oval1",

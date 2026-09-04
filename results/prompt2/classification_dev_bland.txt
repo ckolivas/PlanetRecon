@@ -1,0 +1,24 @@
+PlanetRecon Gate-1 Prompt 2 classification  (bland crop)
+ranking_hash: 5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206
+E1_LAMBDA_REL=0.03  E2A_LAMBDA_REL=0.03
+
+=== D/r0 = 4.0 ===
+  E2a_S10=0.9683  E2a_S100=0.8776  A1o_S10=0.9692  E1_S10=0.9683  E1_S100=0.8373  R_H=5.7425e-06  illconditioned_frac=1.0000
+  G1      inconclusive   n=3  median g=0.08169121730291251  p16=0.0666611822631017 p84=0.08982615805672729  frac>0=1.0  frac>=10%=0.0  worst=0.059588224597308385  oval1_ok=True
+         seeds: 1001:0.0937, 1002:0.0817, 1003:0.0596
+  G2      negative       n=3  median g=0.0009199299003905974  p16=-0.006726914010997176 p84=0.01135845093425273  frac>0=0.6666666666666666  frac>=10%=0.0  worst=-0.010325428792826717  oval1_ok=True
+         seeds: 1001:0.0009, 1002:0.0163, 1003:-0.0103
+  G3_m    inconclusive   n=3  median g=0.09448813991957956  p16=0.06415329222089292 p84=0.09594646828476601  frac>0=1.0  frac>=10%=0.0  worst=0.04987806977445214  oval1_ok=True
+         seeds: 1001:0.0945, 1002:0.0966, 1003:0.0499
+  oracle-sensitive seeds: 0/3
+
+=== D/r0 = 8.0 ===
+  E2a_S10=0.9574  E2a_S100=0.9058  A1o_S10=0.9655  E1_S10=0.9564  E1_S100=0.9137  R_H=5.7425e-06  illconditioned_frac=1.0000
+  G1      inconclusive   n=3  median g=0.050601687879509874  p16=0.0490554902381048 p84=0.0756174644542793  frac>0=1.0  frac>=10%=0.0  worst=0.04832786781862006  oval1_ok=True
+         seeds: 1001:0.0506, 1002:0.0483, 1003:0.0874
+  G2      negative       n=3  median g=0.008368671078368962  p16=0.002836312160810503 p84=0.012108799764171646  frac>0=1.0  frac>=10%=0.0  worst=0.00023284914078299334  oval1_ok=True
+         seeds: 1001:0.0084, 1002:0.0139, 1003:0.0002
+  G3_m    inconclusive   n=3  median g=0.06152647569237048  p16=0.05950035747324191 p84=0.07925789692755512  frac>0=1.0  frac>=10%=0.0  worst=0.05854689007600493  oval1_ok=True
+         seeds: 1001:0.0585, 1002:0.0615, 1003:0.0876
+  oracle-sensitive seeds: 0/3
+

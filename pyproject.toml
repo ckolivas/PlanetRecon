@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "planetrecon"
 version = "0.1.0"
-description = "Planetary multi-frame atmospheric reconstruction — Gate-1 simulator (R8)"
+description = "Planetary multi-frame atmospheric reconstruction — Gate-1 simulator and known-transfer estimators (R9)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

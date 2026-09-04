@@ -1,3 +1,3 @@
-"""PlanetRecon Gate-1 simulator (R9)."""
+"""PlanetRecon Gate-1 simulator and known-transfer estimators (R9)."""
 
 __version__ = "0.1.0"

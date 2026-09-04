@@ -1,4 +1,4 @@
-"""Command-line entry points for Prompt 1."""
+"""Command-line entry points for Prompts 1 and 2."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from planetrecon.validate import run_development_suite
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="planetrecon",
-        description="PlanetRecon Gate-1 simulator (R9 Prompt 1)",
+        description="PlanetRecon Gate-1 simulator and known-transfer estimators (R9)",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -36,6 +36,45 @@ def main(argv: list[str] | None = None) -> int:
         help="do not generate missing development HDF5 files",
     )
 
+    fr = sub.add_parser(
+        "freeze-reg",
+        help="choose E1/E2a λ_rel on development seeds and write the scan",
+    )
+    fr.add_argument("--out", type=Path, default=Path("out"))
+
+    ev = sub.add_parser(
+        "evaluate",
+        help="Prompt 2 reconstructions, G1/G2/G3, and classification tables",
+    )
+    ev.add_argument("--out", type=Path, default=Path("out"))
+    ev.add_argument(
+        "--family",
+        choices=("dev", "eval", "ext"),
+        default="eval",
+        help="seed family: development 1001-1003, evaluation 2001-2012, or extension 2013-2024",
+    )
+    ev.add_argument(
+        "--no-generate",
+        action="store_true",
+        help="do not generate missing truth files",
+    )
+    ev.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="process workers for truth-file generation",
+    )
+    ev.add_argument(
+        "--eval-workers",
+        type=int,
+        default=1,
+        help="process workers for reconstructions",
+    )
+
+    rec = sub.add_parser("reconstruct", help="run Prompt 2 estimators on one truth file")
+    rec.add_argument("--path", type=Path, required=True)
+    rec.add_argument("--out", type=Path, default=Path("out/prompt2"))
+
     args = parser.parse_args(argv)
     if args.cmd == "generate":
         generate_one(
@@ -49,5 +88,33 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.cmd == "validate-dev":
         return run_development_suite(args.out, generate=not args.no_generate)
+    if args.cmd == "freeze-reg":
+        from planetrecon.gate import run_freeze
+
+        run_freeze(args.out)
+        return 0
+    if args.cmd == "evaluate":
+        from planetrecon.gate import run_family
+
+        seeds = {
+            "dev": C.DEV_SEEDS,
+            "eval": C.EVAL_SEEDS,
+            "ext": C.EXT_SEEDS,
+        }[args.family]
+        run_family(
+            args.out,
+            seeds,
+            family_name=args.family,
+            generate=not args.no_generate,
+            workers=args.workers,
+            eval_workers=args.eval_workers,
+        )
+        return 0
+    if args.cmd == "reconstruct":
+        from planetrecon.evaluate import evaluate_file
+
+        result = evaluate_file(args.path, out_dir=args.out)
+        print(result.get("metrics_path", "ok"))
+        return 0
     parser.error("unknown command")
     return 2
