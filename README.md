@@ -33,6 +33,23 @@ reconstruction relative to unconstrained E1/E2a0. Bland-crop \(E_H\) is
 high-band ill-conditioned (\(R_H<10^{-5}\)) and does not override the
 feature-rich decision. Full tables: `results/prompt2/` and `out/prompt2/`.
 
+Q2 is scoped to moderate seeing (\(D/r_0=4\)), all-frame D / D-tail, because
+G1 is strong only there. E2b's production TV weight froze at \(\mu=0\)
+(within 2% of the scan minimum), so \(\mathrm{E2}^*=\mathrm{E2b}=\mathrm{E2a}\)
+and the result is not prior-limited. Closure tables: `results/q2/`.
+
+| Family | Crop | median \(C\) | vs 0.40 |
+|---|---|---:|---|
+| development (n=3) | feature-rich | 0.47 | pass |
+| evaluation (n=12) | feature-rich | 0.36 | fail |
+| evaluation (n=12) | bland | 0.88 | diagnostic only |
+
+The evaluation feature-rich median is short of the 40% gate, so Q3
+(\(N=10^3,5\times10^3,2\times10^4\)) does not start. D recovers most of its
+gain from known translations placed in pupil tip/tilt; D-tail modes 15→60
+change \(E_H\) only weakly. Bland \(C\) can exceed 1 because that crop is
+high-band ill-conditioned.
+
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 
