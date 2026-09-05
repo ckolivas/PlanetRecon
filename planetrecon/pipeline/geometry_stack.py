@@ -380,6 +380,8 @@ def stack_source_geometry(
     n_used = 0
     n_rejected = 0
     warnings = list(report.warnings) + list(geo_warnings)
+    if "warnings" in meta.extras:
+        warnings.extend(meta.extras["warnings"].value)
     if report.fallback:
         warnings.append(report.reason)
     seq = 0
@@ -427,7 +429,7 @@ def stack_source_geometry(
             {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name},
         )
 
-    for indices, batch in source.iter_batches(config.batch_frames):
+    for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True
             break
@@ -535,6 +537,7 @@ def stack_source_geometry(
         if cancelled:
             break
 
+    cancelled = cancelled or bool(should_cancel is not None and should_cancel())
     image = _normalise_stack(accum, weight)
     provenance = {
         **snapshot_provenance,

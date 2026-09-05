@@ -209,10 +209,13 @@ def _write_checkpoint(
         "result": result.metadata(),
     }
     tmp = dest.with_suffix(".tmp.npz")
-    np.savez_compressed(tmp, image=result.image, coverage=result.coverage,
-                        validity=result.validity, metadata=json.dumps(meta, sort_keys=True),
-                        **{f"layer_coverage__{name}": value for name, value in result.layer_coverage.items()})
-    tmp.replace(dest)
+    try:
+        np.savez_compressed(tmp, image=result.image, coverage=result.coverage,
+                            validity=result.validity, metadata=json.dumps(meta, sort_keys=True),
+                            **{f"layer_coverage__{name}": value for name, value in result.layer_coverage.items()})
+        tmp.replace(dest)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def load_checkpoint(path: Path, config: ReconstructionConfig) -> dict:
@@ -334,7 +337,9 @@ def start_stack_job(
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
-    event_q = ctx.Queue(maxsize=max(2, int(queue_size)))
+    from planetrecon.event_transport import FileEventQueue
+
+    event_q = FileEventQueue.create(ctx, maxsize=max(2, int(queue_size)))
     cancel_event = ctx.Event()
     snapshot_request = ctx.Event()
     proc = ctx.Process(
@@ -353,6 +358,10 @@ def start_stack_job(
         daemon=True,
     )
     handle = JobHandle(job_id, proc, event_q, cancel_event, state="queued", snapshot_request=snapshot_request)
-    proc.start()
+    try:
+        proc.start()
+    except BaseException:
+        event_q.close()
+        raise
     handle.state = "running"
     return handle

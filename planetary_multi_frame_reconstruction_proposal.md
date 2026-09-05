@@ -2221,3 +2221,12 @@ large-capture/cross-platform acceptance remain unfinished. W15 is the next
 independent application step; W02/W03 and the Q3 gate remain unchanged.
 
 Implementation follow-ups record bounded progress, not complete roadmap certification.
+
+**Implementation follow-up (W15):** native AVI 1.0 DIB RGB24/gray8 decoding,
+disk-backed frame indexing, bounded raw batches, pre-read cancellation, safe SER
+reads and disk-spooled worker events are implemented. Local tests cover an 8 GiB
+sparse SER, truncation/disappearance, rejected AVI formats, exact independent
+FFmpeg read-back, bounded queue cleanup and killed worker polling. This is
+partial W15 qualification: compressed/OpenDML formats, hard working-set limits,
+resumable checkpoints and parent-crash cleanup remain unsupported. No external
+codec is needed for the declared formats.

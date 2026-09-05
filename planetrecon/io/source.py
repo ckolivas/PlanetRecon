@@ -92,15 +92,32 @@ class FrameSource(ABC):
         batch: int,
         start: int = 0,
         stop: int | None = None,
+        max_bytes: int = 64 * 1024 * 1024,
+        should_cancel=None,
     ) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         n = self.n_frames()
         stop = n if stop is None else min(stop, n)
         start = max(0, int(start))
         batch = max(1, int(batch))
-        for origin in range(start, stop, batch):
-            end = min(origin + batch, stop)
-            frames = np.stack([self.read_raw(i) for i in range(origin, end)], axis=0)
-            yield np.arange(origin, end, dtype=np.int64), frames
+        origin = start
+        while origin < stop:
+            if should_cancel is not None and should_cancel():
+                return
+            first = self.read_raw(origin)
+            # One source frame is the minimum working set. Avoid the former
+            # list-plus-stack duplicate and cap raw batches at 64 MiB by default.
+            count = min(batch, max(1, max_bytes // max(1, first.nbytes)), stop - origin)
+            frames = np.empty((count, *first.shape), dtype=first.dtype)
+            frames[0] = first
+            del first
+            actual = 1
+            for index in range(origin + 1, origin + count):
+                if should_cancel is not None and should_cancel():
+                    break
+                frames[actual] = self.read_raw(index)
+                actual += 1
+            yield np.arange(origin, origin + actual, dtype=np.int64), frames[:actual]
+            origin += actual
 
     def close(self) -> None:
         return None
@@ -179,6 +196,10 @@ class ArraySource(FrameSource):
 def open_source(path: str | Path, **kwargs) -> FrameSource:
     path = Path(path)
     suffix = path.suffix.lower()
+    if suffix == ".avi":
+        from planetrecon.io.avi import AVISource
+
+        return AVISource(path, **kwargs)
     if suffix == ".ser":
         from planetrecon.io.ser import SERSource
 

@@ -410,3 +410,22 @@ Windows or macOS releases.
 - **Closure.** \(C=(E_H(\mathrm{A1o})-E_H(D))/(E_H(\mathrm{A1o})-E_H(\mathrm{E2}^*))\).
   Target: median \(C\ge 0.40\) on the feature-rich crop at \(D/r_0=4\)
   (strong G1, moderate seeing). Crops are never shrunk to fit more modes.
+
+W15 local hardening: `stack` and the GUI accept AVI 1.0 with a single uncompressed
+BI_RGB RGB24 or identity grayscale palette8 video stream. The native decoder is
+included in the application; no installed FFmpeg is required. Compressed/YUV,
+OpenDML, audio, dropped-frame and Bayer AVI are explicitly unsupported. Row
+padding, orientation and BGR storage are decoded exactly. AVI code values have
+unknown transfer curves; nominal header cadence is reported but is not used as
+measured timing. Set cadence explicitly for geometry only when justified.
+
+AVI indexing uses a temporary disk file (8 bytes/frame). Raw batches are capped
+at 64 MiB, with one frame as the minimum working set; reconstruction arrays,
+calibration, geometry poses and exports still require additional RAM. SER uses
+bounded file reads and detects input disappearance/replacement/truncation.
+GUI worker payloads use a private bounded disk spool so killing a worker cannot
+leave a partial large pickle in the GUI pipe. Normal close removes the spool;
+a parent crash can leave `planetrecon-events-*` in the system temporary directory.
+Checkpoint write failures preserve the prior checkpoint and clean temporary
+files. Checkpoints are inspectable/exportable results, **not resumable solver
+state**. Hard RAM limits and checkpoint resume remain unqualified.

@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     evd.add_argument("--results", type=Path, default=Path("results"))
 
-    st = sub.add_parser("stack", help="W07 baseline stack of a SER or observed HDF5 crop")
+    st = sub.add_parser("stack", help="W07 baseline stack of a SER, AVI or observed HDF5 crop")
     st.add_argument("--path", type=Path, required=True)
     st.add_argument("--out", type=Path, default=Path("out/stack"))
     st.add_argument("--export", choices=("png16", "tiff16", "tiff32"), default=None,

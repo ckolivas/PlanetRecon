@@ -124,7 +124,7 @@ class MainWindow:
             buttons.addWidget(b)
         buttons.addStretch()
         layout.addLayout(buttons)
-        self.source_label = QLabel(str(self.path) if self.path else 'Open a SER or observed HDF5 capture')
+        self.source_label = QLabel(str(self.path) if self.path else 'Open a SER, AVI or observed HDF5 capture')
         self.source_label.setWordWrap(True)
         layout.addWidget(self.source_label)
         split = QSplitter()
@@ -233,7 +233,7 @@ class MainWindow:
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
 
     def _choose(self):
-        name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.h5 *.hdf5)')
+        name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
             self.path = Path(name)
             self.source_label.setText(str(self.path))

@@ -267,19 +267,11 @@ class SERSource(FrameSource):
             if extra not in (0, 8 * self._n):
                 raise ValueError("SER timestamp trailer is truncated or has unexpected extra bytes")
             self._has_trailer = self._n > 0 and extra == 8 * self._n
-        self._mmap = np.memmap(
-            self.path,
-            dtype=np.uint8,
-            mode="r",
-            offset=SER_HEADER_SIZE,
-            shape=(self._file_size - SER_HEADER_SIZE,),
-        ) if self._file_size > SER_HEADER_SIZE else np.empty(0, dtype=np.uint8)
-        self._timestamps = None
-        if self._has_trailer:
-            raw = np.frombuffer(
-                self._mmap[image_bytes : image_bytes + 8 * self._n], dtype="<i8"
-            ).copy()
-            self._timestamps = raw
+        # Buffered reads fail normally on truncation instead of SIGBUS from mmap.
+        self._file = self.path.open("rb")
+        stat = self.path.stat()
+        self._identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+        self._timestamp_offset = SER_HEADER_SIZE + image_bytes if self._has_trailer else None
 
     def metadata(self) -> ObservationMetadata:
         color = self.color_mode()
@@ -334,7 +326,19 @@ class SERSource(FrameSource):
         return 1.0e-7  # SER timestamps are unsigned 100 ns ticks.
 
     def timestamps(self) -> np.ndarray | None:
-        return None if self._timestamps is None else self._timestamps.copy()
+        if self._timestamp_offset is None:
+            return None
+        self._check_input()
+        self._file.seek(self._timestamp_offset)
+        raw = self._file.read(8 * self._n)
+        if len(raw) != 8 * self._n:
+            raise OSError("SER timestamp trailer changed while open")
+        return np.frombuffer(raw, dtype="<i8").copy()
+
+    def _check_input(self):
+        stat = self.path.stat()
+        if (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns) != self._identity:
+            raise OSError("SER input changed while open")
 
     def _little(self) -> bool:
         if self.endian_override == "little":
@@ -346,9 +350,12 @@ class SERSource(FrameSource):
     def read_raw(self, index: int) -> np.ndarray:
         if index < 0 or index >= self._n:
             raise IndexError(index)
-        start = index * self.header.frame_bytes
-        stop = start + self.header.frame_bytes
-        blob = np.frombuffer(self._mmap[start:stop].tobytes(), dtype=np.uint8)
+        self._check_input()
+        self._file.seek(SER_HEADER_SIZE + index * self.header.frame_bytes)
+        data = self._file.read(self.header.frame_bytes)
+        if len(data) != self.header.frame_bytes:
+            raise OSError("SER frame truncated while open")
+        blob = np.frombuffer(data, dtype=np.uint8)
         if self.header.bytes_per_sample == 1:
             samples = blob.astype(np.uint16, copy=False)
         else:
@@ -363,7 +370,4 @@ class SERSource(FrameSource):
         return samples.reshape(h, w)
 
     def close(self) -> None:
-        mapping = getattr(self._mmap, "_mmap", None)
-        if mapping is not None:
-            mapping.close()
-        self._mmap = None
+        self._file.close()
