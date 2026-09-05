@@ -1,7 +1,7 @@
 """CPU thread limits and device policy.
 
-The numerical reference is CPU float64. A GPU must not be selected for
-scientific tests on this development machine. Thread caps are applied through
+The numerical reference is CPU float64. Optional CUDA/MPS backends are
+selected only after a live operator probe. Thread caps are applied through
 environment variables before BLAS/FFT pools start; ``threadpoolctl`` is used
 when present.
 """
@@ -11,7 +11,8 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 
-DEFAULT_CPU_THREADS = 8
+DEFAULT_CPU_THREADS = 32
+MAX_CPU_THREADS = 32
 THREAD_ENV_KEYS = (
     "OMP_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
@@ -24,17 +25,20 @@ THREAD_ENV_KEYS = (
 
 def default_thread_count() -> int:
     raw = os.environ.get("PLANETRECON_THREADS")
+    n = DEFAULT_CPU_THREADS
     if raw:
         try:
-            return max(1, int(raw))
+            n = int(raw)
         except ValueError:
-            return DEFAULT_CPU_THREADS
-    return DEFAULT_CPU_THREADS
+            n = DEFAULT_CPU_THREADS
+    n = max(1, min(int(n), MAX_CPU_THREADS))
+    detected = os.cpu_count() or n
+    return max(1, min(n, int(detected)))
 
 
 def apply_thread_limits(n: int | None = None) -> int:
     """Cap BLAS/OpenMP/FFT worker threads. Returns the applied limit."""
-    n = default_thread_count() if n is None else max(1, int(n))
+    n = default_thread_count() if n is None else max(1, min(int(n), MAX_CPU_THREADS))
     value = str(n)
     os.environ["PLANETRECON_THREADS"] = value
     for key in THREAD_ENV_KEYS:
@@ -54,12 +58,17 @@ def thread_env(n: int | None = None) -> dict[str, str]:
     return {key: value for key in THREAD_ENV_KEYS}
 
 
-def merge_thread_env(env: Mapping[str, str] | None = None, n: int | None = None) -> dict[str, str]:
+def merge_thread_env(
+    env: Mapping[str, str] | None = None,
+    n: int | None = None,
+    *,
+    hide_gpu: bool = False,
+) -> dict[str, str]:
     out = dict(os.environ if env is None else env)
     out.update(thread_env(n))
-    out["PLANETRECON_THREADS"] = str(
-        default_thread_count() if n is None else max(1, int(n))
-    )
-    out["CUDA_VISIBLE_DEVICES"] = ""
-    out["HIP_VISIBLE_DEVICES"] = ""
+    applied = default_thread_count() if n is None else max(1, min(int(n), MAX_CPU_THREADS))
+    out["PLANETRECON_THREADS"] = str(applied)
+    if hide_gpu:
+        out["CUDA_VISIBLE_DEVICES"] = ""
+        out["HIP_VISIBLE_DEVICES"] = ""
     return out

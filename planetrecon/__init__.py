@@ -1,4 +1,4 @@
-"""PlanetRecon Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)."""
+"""PlanetRecon Gate-1 simulator, estimators, Q2 MFBD, and capture reconstruction."""
 
 from planetrecon import constants as C
 

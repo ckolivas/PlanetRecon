@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+gui = ["PySide6"]
+gpu = ["torch"]
 
 [project.scripts]
 planetrecon = "planetrecon.cli:main"

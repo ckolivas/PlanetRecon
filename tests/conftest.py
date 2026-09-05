@@ -10,9 +10,8 @@ if str(ROOT) not in sys.path:
 
 from planetrecon.runtime import apply_thread_limits
 
-# CPU-only, 8 threads unless the caller already set PLANETRECON_THREADS.
-os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
-os.environ.setdefault("HIP_VISIBLE_DEVICES", "")
+# Default suite is CPU-backed. GPU remains visible so Auto/GPU probes can
+# record architecture fallback (RTX 5070 / sm_120 on Debian torch).
 apply_thread_limits()
 
 

@@ -70,6 +70,33 @@ def w00_w01_manifest() -> dict:
     )
 
 
+def w04_w08_manifest() -> dict:
+    return experiment_manifest(
+        "w04-w08-vertical-slice",
+        status="diagnostic",
+        protocol=(
+            "W04 FrameSource/config/result contracts; W05 owned jobs and "
+            "checkpoints; W06 SER v3 reader; W07 baseline stack and joint CFA RGB; "
+            "W08 Qt6 raster shell and Linux PyInstaller spec. CPU default 32 threads. "
+            "GPU Auto/GPU paths probe live operators and fall back when the torch "
+            "build lacks the device architecture (Debian torch 2.6 / sm_120)."
+        ),
+        seed_coverage={"unit_fixtures": True, "scientific_families": False},
+        results=[
+            {"path": "tests/test_w04_w08.py", "status": "diagnostic", "kind": "unit"},
+        ],
+        notes=(
+            "Does not regenerate R9 tables or start Q3. Advanced MFBD remains gated "
+            "by W03. GPU kernels are not claimed on unsupported architectures."
+        ),
+        extra={
+            "archived": False,
+            "default_cpu_threads": C.DEFAULT_CPU_THREADS,
+            "device": "auto",
+        },
+    )
+
+
 def write_evidence_manifests(results_dir: Path) -> list[Path]:
     results_dir = Path(results_dir)
     dest = results_dir / "manifests"
@@ -77,6 +104,7 @@ def write_evidence_manifests(results_dir: Path) -> list[Path]:
     written = [
         write_manifest(dest / "r9-historical.json", r9_historical_manifest()),
         write_manifest(dest / "w00-w01.json", w00_w01_manifest()),
+        write_manifest(dest / "w04-w08.json", w04_w08_manifest()),
     ]
     for path in written:
         load_manifest(path)

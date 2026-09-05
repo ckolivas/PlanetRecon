@@ -57,17 +57,15 @@ high-band ill-conditioned. A two-initialization held-out-frame diagnostic on
 development seed 1001 (feature, 90/10 split) selects the `subset` start and has
 holdout/train residual 1.0103; the all-frame closure remains 0.5244.
 
-W00 evidence/test tiers and a bounded W01 operator audit are implemented.
-The review fixes Dykstra warm starts and convergence reporting, even-kernel
-convolution auditing, and generation/certificate provenance enforcement.
-Full W01 scientific qualification, W02 and W03 remain outstanding; unit-level
-ranking stability is not the required full development-family check.
-Historical R9 tables in `results/prompt2/` and `results/q2/`
-are archived in place and are not regenerated. Q3 still does not start.
-W02/W03 remain the next scientific work. W04–W08 can independently open a real
-Bayer SER, process a bounded CPU batch, and display the result in an owned,
-cancellable Qt6 job. Advanced
-atmospheric claims remain gated by W03.
+W00/W01 operator audit is implemented. W04–W08 open a SER or observed HDF5
+crop, run an owned cancellable baseline stack (mono / RGB / joint CFA RGB),
+and show it in a Qt6 raster shell. GPU `auto`/`gpu` probe live CUDA operators
+and fall back to CPU when the PyTorch build cannot run the device (Debian
+torch 2.6 does not support RTX 5070 / sm_120). Default CPU thread cap is 32.
+
+Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
+next scientific work; W09+ add rotation, Saturn, export and releases.
+Advanced atmospheric claims stay gated by W03.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
@@ -79,10 +77,12 @@ execution is CPU-only with a per-process thread cap of 8; some FFT stages use
 one thread. Worker counts are separate limits, not an overall eight-thread budget:
 
 ```bash
-export PLANETRECON_THREADS=8
-export OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=8 MKL_NUM_THREADS=8
-export CUDA_VISIBLE_DEVICES=
+export PLANETRECON_THREADS=32
+export OMP_NUM_THREADS=32 OPENBLAS_NUM_THREADS=32 MKL_NUM_THREADS=32
 python3 -m planetrecon evidence --results results
+python3 -m planetrecon probe-device --device auto
+python3 -m planetrecon stack --path capture.ser --device auto --out out/stack
+python3 -m planetrecon gui --path capture.ser
 python3 -m pytest tests -q
 python3 -m pytest tests -q --run-slow
 python3 -m planetrecon generate --seed 1001 --dr0 8 --out out

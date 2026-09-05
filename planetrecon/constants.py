@@ -92,7 +92,18 @@ FEASIBLE_POS_TOL = 1e-8
 FEASIBLE_SUPPORT_TOL = 1e-10
 RANK_LOFREQ_JACCARD_MIN = 0.50
 RANK_LOFREQ_SPEARMAN_MIN = 0.85
-DEFAULT_CPU_THREADS = 8
+DEFAULT_CPU_THREADS = 32
+MAX_CPU_THREADS = 32
+FRAME_SOURCE_SCHEMA = "planetrecon-frame-source"
+FRAME_SOURCE_SCHEMA_VERSION = "1.0"
+RESULT_SCHEMA = "planetrecon-reconstruction-result"
+RESULT_SCHEMA_VERSION = "1.0"
+CONFIG_SCHEMA = "planetrecon-reconstruction-config"
+CONFIG_SCHEMA_VERSION = "1.0"
+JOB_SCHEMA = "planetrecon-job"
+JOB_SCHEMA_VERSION = "1.0"
+BASELINE_OPERATOR_VERSION = "1.0"
+SER_OPERATOR_VERSION = "1.0"
 
 # Prompt Q2 — E2b production prior and blind D / D-tail (R9 §8.5, §18)
 # Quadratic stabilisation stays at the Prompt-2 freeze. Charbonnier TV μ was
