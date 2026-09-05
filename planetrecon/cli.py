@@ -152,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.threads is not None and args.threads < 1:
         parser.error("--threads must be positive")
-    apply_thread_limits(args.threads)
+    applied_threads = apply_thread_limits(args.threads)
     if args.cmd == "generate":
         from planetrecon.simulate import generate_one
 
@@ -238,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "probe-device":
         from planetrecon.backends import select_backend
 
-        backend, report = select_backend(args.device, threads=args.threads or C.DEFAULT_CPU_THREADS)
+        backend, report = select_backend(args.device, threads=applied_threads)
         print(f"requested={report.requested} selected={report.selected} name={report.name}")
         print(f"fallback={report.fallback} reason={report.reason}")
         for warning in report.warnings:
@@ -253,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
         args.out.mkdir(parents=True, exist_ok=True)
         cfg = ReconstructionConfig(
             device=args.device,
-            threads=args.threads or C.DEFAULT_CPU_THREADS,
+            threads=applied_threads,
             batch_frames=args.batch,
             crop=args.crop,
             bayer_override=args.bayer,
@@ -266,8 +266,11 @@ def main(argv: list[str] | None = None) -> int:
             result = stack_source(source, cfg)
         npz = args.out / "stack.npz"
         import numpy as np
+        import json
 
-        np.savez_compressed(npz, image=result.image, coverage=result.coverage)
+        np.savez_compressed(npz, image=result.image, coverage=result.coverage,
+                            validity=result.validity, units=result.units,
+                            provenance=json.dumps(result.provenance, sort_keys=True))
         print(
             f"wrote {npz} backend={result.backend} n_used={result.n_used} "
             f"rejected={result.n_rejected} incomplete={result.incomplete}"

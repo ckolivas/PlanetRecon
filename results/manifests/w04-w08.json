@@ -1,19 +1,26 @@
 {
   "archived": false,
+  "baseline_operator_version": "1.1",
   "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
-  "created_utc": "2026-09-05T03:09:41Z",
+  "created_utc": "2026-09-05T04:27:36Z",
   "default_cpu_threads": 32,
   "device": "auto",
   "document_revision": "R9",
   "estimator_operator_version": "1.2",
   "experiment_id": "w04-w08-vertical-slice",
   "inputs": [],
-  "notes": "Does not regenerate R9 tables or start Q3. Advanced MFBD remains gated by W03. GPU kernels are not claimed on unsupported architectures.",
-  "protocol": "W04 FrameSource/config/result contracts; W05 owned jobs and checkpoints; W06 SER v3 reader; W07 baseline stack and joint CFA RGB; W08 Qt6 raster shell and Linux PyInstaller spec. CPU default 32 threads. GPU Auto/GPU paths probe live operators and fall back when the torch build lacks the device architecture (Debian torch 2.6 / sm_120).",
+  "job_schema_version": "1.1",
+  "notes": "Does not regenerate R9 tables or start Q3. Advanced MFBD remains gated by W03. GPU kernels are not claimed on unsupported architectures. Coverage, non-finite rejection, SER validation, calibrated units, worker cancellation and Qt window-close regressions are CPU fixtures. This is a prototype: iterative CFA inversion, checkpoint resume, hard memory budgets, parent-crash recovery and clean-system release acceptance remain outstanding.",
+  "protocol": "W04 FrameSource/config/result contracts; W05 owned jobs and atomic snapshots; W06 SER v3 reader; W07 baseline stack and raw CFA RGB backprojection; W08 Qt6 raster shell and Linux PyInstaller spec. CPU default 32 threads. GPU Auto/GPU paths probe live operators and fall back when the torch build lacks the device architecture (Debian torch 2.6 / sm_120).",
   "results": [
     {
       "kind": "unit",
       "path": "tests/test_w04_w08.py",
+      "status": "diagnostic"
+    },
+    {
+      "kind": "regression",
+      "path": "tests/test_review_w04_w08.py",
       "status": "diagnostic"
     }
   ],
@@ -24,8 +31,9 @@
     "scientific_families": false,
     "unit_fixtures": true
   },
+  "ser_operator_version": "1.1",
   "simulator_operator_version": "1.0",
-  "source_hash": "ed36da6d2bb5d2d8510de6bf27b8c86e3cab55a27105c7536296d440bff205e0",
+  "source_hash": "dc99feef1c67fbce8eedc5d725e3730486d01ea2a58cf2e4477f224b1ba35304",
   "status": "diagnostic",
   "tolerances": {}
 }

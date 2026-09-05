@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
 from planetrecon.jobs import JobHandle, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
-from planetrecon.runtime import DEFAULT_CPU_THREADS, apply_thread_limits
+from planetrecon.runtime import apply_thread_limits
 
 
 def _to_qimage(image: np.ndarray):
@@ -37,7 +37,6 @@ def _to_qimage(image: np.ndarray):
 def create_app(argv=None):
     from PySide6.QtWidgets import QApplication
 
-    os.environ.setdefault("QT_QPA_PLATFORM", os.environ.get("QT_QPA_PLATFORM", "xcb"))
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv if argv is None else argv)
@@ -60,9 +59,16 @@ class MainWindow:
             QWidget,
         )
 
-        self.config = config or ReconstructionConfig(device="auto", threads=DEFAULT_CPU_THREADS)
+        self.config = config or ReconstructionConfig(device="auto")
         self.job: JobHandle | None = None
-        self.window = QMainWindow()
+        owner = self
+
+        class OwnedWindow(QMainWindow):
+            def closeEvent(self, event):
+                owner._shutdown()
+                super().closeEvent(event)
+
+        self.window = OwnedWindow()
         self.window.setWindowTitle("PlanetRecon")
         root = QWidget()
         layout = QVBoxLayout(root)
@@ -93,7 +99,6 @@ class MainWindow:
         self.open_btn.clicked.connect(self._choose)
         self.run_btn.clicked.connect(self._run)
         self.cancel_btn.clicked.connect(self._cancel)
-        self.window.destroyed.connect(self._shutdown)
         self.timer = QTimer(self.window)
         self.timer.setInterval(200)
         self.timer.timeout.connect(self._poll)
@@ -121,11 +126,7 @@ class MainWindow:
             return
         if self.job is not None:
             self.job.close()
-        cfg = ReconstructionConfig(
-            device=self.device.currentText(),
-            threads=self.config.threads,
-            batch_frames=self.config.batch_frames,
-        )
+        cfg = replace(self.config, device=self.device.currentText())
         self.job = start_stack_job(self.path, cfg)
         self.status.setText(f"running {self.job.job_id} on {cfg.device}")
         self.progress.setValue(0)
@@ -134,6 +135,8 @@ class MainWindow:
     def _cancel(self) -> None:
         if self.job is not None:
             self.job.cancel()
+            self.job.close()
+            self.job = None
             self.status.setText("cancelled")
             self.timer.stop()
 
@@ -152,7 +155,7 @@ class MainWindow:
             elif event.kind == "preview":
                 image = event.payload.get("image")
                 if image is not None:
-                    self.image_label.setPixmap(_to_qimage(image).to_qpixmap() if False else _pixmap(image))
+                    self.image_label.setPixmap(_pixmap(image))
                 warns = event.payload.get("warnings") or []
                 if warns:
                     self.status.setText("; ".join(str(w) for w in warns[:2]))
@@ -168,6 +171,12 @@ class MainWindow:
                 elif event.kind == "error":
                     self.status.setText(event.payload.get("message", "error"))
                 self.timer.stop()
+                self.job.close()
+                self.job = None
+                break
+        if self.job is not None and self.job.state == "failed":
+            self.status.setText(f"worker exited with code {self.job.process.exitcode}")
+            self._shutdown()
 
     def _shutdown(self, *_args) -> None:
         self.timer.stop()
@@ -188,5 +197,6 @@ def main(argv: list[str] | None = None) -> int:
     path = Path(args[0]) if args else None
     app = create_app(args)
     win = MainWindow(path=path)
+    app.aboutToQuit.connect(win._shutdown)
     win.show()
     return app.exec()

@@ -71,6 +71,16 @@ class SERHeader:
     datetime_utc: int
     endian_convention: str = "ecosystem"
 
+    def __post_init__(self) -> None:
+        if self.width < 1 or self.height < 1 or self.frame_count < 0:
+            raise ValueError("invalid SER dimensions or frame count")
+        if not 1 <= self.pixel_depth <= 16:
+            raise ValueError("SER pixel depth must be between 1 and 16")
+        if self.little_endian_flag not in (0, 1):
+            raise ValueError("invalid SER endian flag")
+        if self.endian_convention not in ("ecosystem", "spec"):
+            raise ValueError("unknown SER endian convention")
+
     @property
     def color_mode(self) -> str:
         return COLOR_NAMES.get(int(self.color_id), f"unknown-{self.color_id}")
@@ -193,15 +203,15 @@ def write_ser(
     if header.planes != planes:
         raise ValueError(f"color_id {color_id} expects {header.planes} planes, got {planes}")
     dtype = header.numpy_dtype()
+    ts = None if timestamps is None else np.asarray(timestamps, dtype="<i8")
+    if ts is not None and ts.size != n:
+        raise ValueError("timestamp count must match frame count")
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = np.asarray(arr, dtype=dtype)
     with path.open("wb") as fh:
         fh.write(pack_header(header))
         fh.write(payload.tobytes(order="C"))
-        if timestamps is not None:
-            ts = np.asarray(timestamps, dtype="<i8")
-            if ts.size != n:
-                raise ValueError("timestamp count must match frame count")
+        if ts is not None:
             fh.write(ts.tobytes(order="C"))
     return path
 
@@ -224,19 +234,21 @@ class SERSource(FrameSource):
         self.endian_override = endian_override
         self.bayer_override = bayer_override
         self.recover_complete_frames = bool(recover_complete_frames)
-        self._fh = self.path.open("rb")
-        header_blob = self._fh.read(SER_HEADER_SIZE)
+        if endian_override not in (None, "little", "big"):
+            raise ValueError("unknown endian override")
+        if bayer_override not in (None, "RGGB", "GRBG", "GBRG", "BGGR"):
+            raise ValueError("unknown Bayer override")
+        with self.path.open("rb") as fh:
+            header_blob = fh.read(SER_HEADER_SIZE)
         self.header = parse_header(header_blob, endian_convention=endian_convention)
         if self.header.color_id not in COLOR_NAMES:
             raise ValueError(
                 f"SER ColorID {self.header.color_id} is not a recognised mono/Bayer/RGB id"
             )
+        if bayer_override and self.header.planes != 1:
+            raise ValueError("Bayer override requires single-plane data")
         self._file_size = self.path.stat().st_size
         self._n_declared = self.header.frame_count
-        complete, remainder = divmod(
-            max(0, self._file_size - SER_HEADER_SIZE), max(self.header.frame_bytes, 1)
-        )
-        trailer_bytes = complete * 8
         # timestamps occupy 8 bytes/frame after image data if present
         image_bytes = self._n_declared * self.header.frame_bytes
         available = self._file_size - SER_HEADER_SIZE
@@ -252,14 +264,16 @@ class SERSource(FrameSource):
         else:
             self._n = int(self._n_declared)
             extra = available - image_bytes
-            self._has_trailer = extra >= 8 * self._n
+            if extra not in (0, 8 * self._n):
+                raise ValueError("SER timestamp trailer is truncated or has unexpected extra bytes")
+            self._has_trailer = self._n > 0 and extra == 8 * self._n
         self._mmap = np.memmap(
             self.path,
             dtype=np.uint8,
             mode="r",
             offset=SER_HEADER_SIZE,
             shape=(self._file_size - SER_HEADER_SIZE,),
-        )
+        ) if self._file_size > SER_HEADER_SIZE else np.empty(0, dtype=np.uint8)
         self._timestamps = None
         if self._has_trailer:
             raw = np.frombuffer(
@@ -279,6 +293,8 @@ class SERSource(FrameSource):
             "telescope": FieldValue(self.header.telescope, "header"),
             "datetime_utc_ticks": FieldValue(self.header.datetime_utc, "header"),
             "ser_operator_version": FieldValue(C.SER_OPERATOR_VERSION, "inferred"),
+            "declared_frames": FieldValue(self._n_declared, "header"),
+            "recovered_complete_frames": FieldValue(self._n != self._n_declared, "inferred"),
         }
         if self.bayer_override:
             extras["bayer_override"] = FieldValue(self.bayer_override, "user")
@@ -344,7 +360,7 @@ class SERSource(FrameSource):
         return samples.reshape(h, w)
 
     def close(self) -> None:
+        mapping = getattr(self._mmap, "_mmap", None)
+        if mapping is not None:
+            mapping.close()
         self._mmap = None
-        if getattr(self, "_fh", None) is not None:
-            self._fh.close()
-            self._fh = None

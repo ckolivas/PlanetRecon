@@ -44,7 +44,7 @@ class Backend:
 
 
 def probe_torch_cuda() -> DeviceReport:
-    warnings: list[str] = []
+    name = "cpu"
     try:
         import warnings
 
@@ -83,16 +83,19 @@ def probe_torch_cuda() -> DeviceReport:
     except Exception as exc:
         reason = f"cuda_operator_probe_failed:{type(exc).__name__}"
         return DeviceReport("gpu", "cpu", ["cpu"], True, reason, name, [reason])
-    return DeviceReport("gpu", "gpu", ["cpu", "gpu"], False, "ok", name, warnings)
+    return DeviceReport("gpu", "gpu", ["cpu", "gpu"], False, "ok", name)
 
 
 def select_backend(choice: DeviceChoice, threads: int = DEFAULT_CPU_THREADS) -> tuple[Backend, DeviceReport]:
     from planetrecon.backends.cpu import CPUBackend
 
+    if choice not in ("cpu", "auto", "gpu"):
+        raise ValueError(f"unknown device {choice!r}")
     cpu = CPUBackend(threads=threads)
     if choice == "cpu":
         return cpu, DeviceReport("cpu", "cpu", ["cpu"], False, "explicit_cpu", "cpu")
     report = probe_torch_cuda()
+    report.requested = choice
     if report.selected == "gpu":
         from planetrecon.backends.torch_accel import TorchBackend
 

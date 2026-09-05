@@ -42,8 +42,7 @@ def laplacian_score(
         if sky.any():
             work = work - float(np.median(work[sky]))
     lap = convolve(work, LAPLACIAN_KERNEL, mode="nearest")
-    n = lap.shape[0]
-    valid = np.ones((n, n), dtype=bool)
+    valid = np.ones(lap.shape, dtype=bool)
     if border > 0:
         valid[:border, :] = False
         valid[-border:, :] = False

@@ -33,14 +33,18 @@ class HDF5ObservedSource(FrameSource):
         self._file = h5py.File(self.path, "r")
         ds_name = f"/frames/{crop}_observed_e"
         if ds_name not in self._file:
+            self._file.close()
             raise KeyError(ds_name)
         self._ds = self._file[ds_name]
+        if self._ds.ndim != 3 or any(v == 0 for v in self._ds.shape):
+            self._file.close()
+            raise ValueError("observed frames must have nonempty shape (N,H,W)")
         self._n = int(self._ds.shape[0])
         self._h = int(self._ds.shape[1])
         self._w = int(self._ds.shape[2])
 
     def metadata(self) -> ObservationMetadata:
-        cfg = self._file["/config"].attrs
+        cfg = self._file["/config"].attrs if "/config" in self._file else {}
         extras = {
             "seed": FieldValue(int(self._file.attrs.get("seed", -1)), "header"),
             "Dr0": FieldValue(float(cfg.get("Dr0", float("nan"))), "header"),
@@ -55,6 +59,7 @@ class HDF5ObservedSource(FrameSource):
             color_mode="mono",
             bit_depth=32,
             endian="little",
+            units="e-",
             extras=extras,
         )
 

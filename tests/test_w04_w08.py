@@ -191,10 +191,16 @@ def test_stack_array_mono_and_cfa():
     assert result.provenance["demosaic_first"]["label"] == "comparison"
 
 
-def test_auto_device_falls_back_when_arch_unsupported():
+def test_auto_device_falls_back_when_arch_unsupported(monkeypatch):
+    from planetrecon.backends.base import DeviceReport
+
+    def unsupported():
+        return DeviceReport("gpu", "cpu", ["cpu"], True, "cuda_arch_unsupported:sm_120", "RTX 5070")
+
+    monkeypatch.setattr("planetrecon.backends.base.probe_torch_cuda", unsupported)
     backend, report = select_backend("auto", threads=2)
     assert backend.name == "cpu"
-    gpu = probe_torch_cuda()
+    gpu = unsupported()
     assert gpu.fallback
     assert "sm_120" in gpu.reason or "cuda" in gpu.reason or "torch" in gpu.reason
     backend, report = select_backend("gpu", threads=2)

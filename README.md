@@ -57,11 +57,30 @@ high-band ill-conditioned. A two-initialization held-out-frame diagnostic on
 development seed 1001 (feature, 90/10 split) selects the `subset` start and has
 holdout/train residual 1.0103; the all-frame closure remains 0.5244.
 
-W00/W01 operator audit is implemented. W04–W08 open a SER or observed HDF5
-crop, run an owned cancellable baseline stack (mono / RGB / joint CFA RGB),
-and show it in a Qt6 raster shell. GPU `auto`/`gpu` probe live CUDA operators
+W00/W01 bounded operator audit is implemented; full scientific qualification
+and development-family ranking/gap checks remain outstanding.
+The W04–W08 prototype opens a SER or observed HDF5
+crop, runs an owned cancellable baseline stack (mono / RGB / raw CFA RGB),
+and shows it in a Qt6 raster shell. GPU `auto`/`gpu` probe live CUDA operators
 and fall back to CPU when the PyTorch build cannot run the device (Debian
 torch 2.6 does not support RTX 5070 / sm_120). Default CPU thread cap is 32.
+
+Review corrections preserve shifted-edge brightness and per-channel CFA
+coverage, reject non-finite frames and unsupported colour modes, validate SER
+headers/trailers, and retain calibrated units. Progress counts processed frames,
+including rejections. Window close cancels and joins its worker; preview traffic
+cannot stall the stack. Checkpoints store arrays and metadata atomically in one
+NPZ file (schema 1.1); they are snapshots, with no resume implementation yet.
+Older split NPZ/JSON checkpoints are rejected. CLI NPZ output includes validity,
+units and provenance.
+
+This is a translation-only baseline using integer phase correlation and
+normalised CFA backprojection, with unsupported colour samples marked invalid.
+The iterative raw-CFA inverse solve, explicit RAM/VRAM budget enforcement,
+parent-crash recovery and full W04–W08 acceptance remain outstanding. Explicit
+memory-budget settings are rejected until enforcement exists. The Linux
+PyInstaller spec is a local packaging spike; clean-system and cross-platform
+release acceptance remain planned.
 
 Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
 next scientific work; W09+ add rotation, Saturn, export and releases.
@@ -73,8 +92,10 @@ later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 ## Run
 
 From the repository root (Python 3 with numpy, scipy, h5py, pytest). Default
-execution is CPU-only with a per-process thread cap of 8; some FFT stages use
-one thread. Worker counts are separate limits, not an overall eight-thread budget:
+scientific execution is CPU-only, while capture commands expose CPU/auto/GPU
+selection. The default per-process thread cap is 32, reduced by
+`PLANETRECON_THREADS` or `--threads`; some FFT stages use one thread. Worker counts
+are separate limits, not an overall 32-thread budget:
 
 ```bash
 export PLANETRECON_THREADS=32

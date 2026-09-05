@@ -31,6 +31,7 @@ class ObservationMetadata:
     color_mode: str
     bit_depth: int
     endian: str
+    units: str = "adu"
     schema_name: str = C.FRAME_SOURCE_SCHEMA
     schema_version: str = C.FRAME_SOURCE_SCHEMA_VERSION
     extras: dict[str, FieldValue] = field(default_factory=dict)
@@ -50,6 +51,7 @@ class ObservationMetadata:
             "color_mode": self.color_mode,
             "bit_depth": int(self.bit_depth),
             "endian": self.endian,
+            "units": self.units,
             "extras": extra,
         }
 

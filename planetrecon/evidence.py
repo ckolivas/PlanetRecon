@@ -76,7 +76,7 @@ def w04_w08_manifest() -> dict:
         status="diagnostic",
         protocol=(
             "W04 FrameSource/config/result contracts; W05 owned jobs and "
-            "checkpoints; W06 SER v3 reader; W07 baseline stack and joint CFA RGB; "
+            "atomic snapshots; W06 SER v3 reader; W07 baseline stack and raw CFA RGB backprojection; "
             "W08 Qt6 raster shell and Linux PyInstaller spec. CPU default 32 threads. "
             "GPU Auto/GPU paths probe live operators and fall back when the torch "
             "build lacks the device architecture (Debian torch 2.6 / sm_120)."
@@ -84,15 +84,23 @@ def w04_w08_manifest() -> dict:
         seed_coverage={"unit_fixtures": True, "scientific_families": False},
         results=[
             {"path": "tests/test_w04_w08.py", "status": "diagnostic", "kind": "unit"},
+            {"path": "tests/test_review_w04_w08.py", "status": "diagnostic", "kind": "regression"},
         ],
         notes=(
             "Does not regenerate R9 tables or start Q3. Advanced MFBD remains gated "
-            "by W03. GPU kernels are not claimed on unsupported architectures."
+            "by W03. GPU kernels are not claimed on unsupported architectures. "
+            "Coverage, non-finite rejection, SER validation, calibrated units, worker "
+            "cancellation and Qt window-close regressions are CPU fixtures. This is a "
+            "prototype: iterative CFA inversion, checkpoint resume, hard memory budgets, "
+            "parent-crash recovery and clean-system release acceptance remain outstanding."
         ),
         extra={
             "archived": False,
             "default_cpu_threads": C.DEFAULT_CPU_THREADS,
             "device": "auto",
+            "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
+            "ser_operator_version": C.SER_OPERATOR_VERSION,
+            "job_schema_version": C.JOB_SCHEMA_VERSION,
         },
     )
 

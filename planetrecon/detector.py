@@ -111,6 +111,6 @@ def cfa_accumulate(
     for name, idx in CHANNEL_INDEX.items():
         mask = channel_mask(labels, name).astype(np.float64)
         plane = raw * mask
-        rgb[..., idx] = ndshift(plane, shift=(-sy, -sx), order=1, prefilter=False)
-        weight[..., idx] = ndshift(mask * ones, shift=(-sy, -sx), order=1, prefilter=False)
+        rgb[..., idx] = ndshift(plane, shift=(-sy, -sx), order=1, prefilter=False, mode="grid-constant")
+        weight[..., idx] = ndshift(mask * ones, shift=(-sy, -sx), order=1, prefilter=False, mode="grid-constant")
     return rgb, weight

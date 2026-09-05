@@ -1,6 +1,6 @@
 """CPU thread limits and device policy.
 
-The numerical reference is CPU float64. Optional CUDA/MPS backends are
+The numerical reference is CPU float64. Optional CUDA backends are
 selected only after a live operator probe. Thread caps are applied through
 environment variables before BLAS/FFT pools start; ``threadpoolctl`` is used
 when present.
@@ -53,7 +53,7 @@ def apply_thread_limits(n: int | None = None) -> int:
 
 
 def thread_env(n: int | None = None) -> dict[str, str]:
-    n = default_thread_count() if n is None else max(1, int(n))
+    n = default_thread_count() if n is None else max(1, min(int(n), MAX_CPU_THREADS))
     value = str(n)
     return {key: value for key in THREAD_ENV_KEYS}
 

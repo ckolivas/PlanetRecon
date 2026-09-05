@@ -6,21 +6,18 @@ import json
 import multiprocessing
 import os
 import queue
-import signal
 import time
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
-
-import numpy as np
+from typing import Any, TYPE_CHECKING
 
 from planetrecon import constants as C
-from planetrecon.io.source import open_source
-from planetrecon.pipeline.baseline import stack_source
 from planetrecon.reconstruction import ReconstructionConfig
-from planetrecon.result import ReconstructionResult
 from planetrecon.runtime import apply_thread_limits
+
+if TYPE_CHECKING:
+    from planetrecon.result import ReconstructionResult
 
 
 JobState = str  # queued, running, completed, failed, cancelled
@@ -34,26 +31,21 @@ class JobEvent:
     payload: dict[str, Any] = field(default_factory=dict)
 
 
-def _put_event(q, event: JobEvent, coalesce_preview: bool = True) -> None:
-    if event.kind == "preview" and coalesce_preview:
+def _put_event(q, event: JobEvent, cancel_event=None) -> None:
+    # Optional UI updates must never stall processing or cancellation. The
+    # terminal event carries the final image even when previews were dropped.
+    if event.kind in ("preview", "progress"):
         try:
             q.put_nowait(event)
+        except queue.Full:
+            pass
+        return
+    while cancel_event is None or not cancel_event.is_set():
+        try:
+            q.put(event, timeout=0.1)
             return
         except queue.Full:
-            try:
-                dumped = q.get_nowait()
-                if dumped.kind not in ("preview", "progress"):
-                    q.put_nowait(dumped)
-                    q.put(event)
-                    return
-            except queue.Empty:
-                pass
-            try:
-                q.put_nowait(event)
-            except queue.Full:
-                return
-            return
-    q.put(event)
+            continue
 
 
 def _worker_main(
@@ -65,12 +57,18 @@ def _worker_main(
     checkpoint_dir: str | None,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
+    # Spawn imports this module before entering the worker. Keep numerical
+    # imports here so the requested thread limit precedes BLAS initialisation.
+    from planetrecon.io.source import open_source
+    from planetrecon.pipeline.baseline import stack_source
+
     seq = 0
+    source = None
 
     def emit(kind: str, payload: dict) -> None:
         nonlocal seq
         seq += 1
-        _put_event(event_q, JobEvent(job_id, seq, kind, payload))
+        _put_event(event_q, JobEvent(job_id, seq, kind, payload), cancel_event)
 
     try:
         config = ReconstructionConfig.from_dict(config_dict)
@@ -98,7 +96,7 @@ def _worker_main(
                     "coverage": preview.coverage,
                     "channel_order": result.channel_order,
                     "warnings": result.warnings,
-                    "fraction": float(info.get("n_used", 0))
+                    "fraction": float(info.get("n_processed", 0))
                     / max(float(info.get("n_total", 1)), 1.0),
                 },
             )
@@ -106,7 +104,7 @@ def _worker_main(
                 "progress",
                 {
                     "stage": result.stage,
-                    "fraction": float(info.get("n_used", 0))
+                    "fraction": float(info.get("n_processed", 0))
                     / max(float(info.get("n_total", 1)), 1.0),
                     "n_used": result.n_used,
                     "backend": result.backend,
@@ -122,6 +120,7 @@ def _worker_main(
             should_cancel=cancel_event.is_set,
         )
         source.close()
+        source = None
         if cancel_event.is_set():
             emit("cancelled", {"n_used": result.n_used})
             return
@@ -135,6 +134,10 @@ def _worker_main(
                 "channel_order": result.channel_order,
                 "image": result.image,
                 "coverage": result.coverage,
+                "validity": result.validity,
+                "units": result.units,
+                "incomplete": result.incomplete,
+                "provenance": result.provenance,
             },
         )
     except Exception as exc:
@@ -142,6 +145,12 @@ def _worker_main(
             "error",
             {"message": str(exc), "traceback": traceback.format_exc()},
         )
+    finally:
+        if source is not None:
+            source.close()
+        if cancel_event.is_set():
+            # A caller cancelling a job does not need its queued previews.
+            event_q.cancel_join_thread()
 
 
 def _write_checkpoint(
@@ -150,6 +159,8 @@ def _write_checkpoint(
     config: ReconstructionConfig,
     result: ReconstructionResult,
 ) -> None:
+    import numpy as np
+
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     dest = path / f"{job_id}.npz"
@@ -160,23 +171,35 @@ def _write_checkpoint(
         "schema": C.JOB_SCHEMA,
         "schema_version": C.JOB_SCHEMA_VERSION,
         "n_used": result.n_used,
+        "n_rejected": result.n_rejected,
+        "units": result.units,
+        "channel_order": result.channel_order,
+        "incomplete": result.incomplete,
+        "provenance": result.provenance,
     }
     tmp = dest.with_suffix(".tmp.npz")
-    np.savez_compressed(tmp, image=result.image, coverage=result.coverage)
+    np.savez_compressed(tmp, image=result.image, coverage=result.coverage,
+                        validity=result.validity, metadata=json.dumps(meta, sort_keys=True))
     tmp.replace(dest)
-    (path / f"{job_id}.json").write_text(json.dumps(meta, sort_keys=True) + "\n")
 
 
 def load_checkpoint(path: Path, config: ReconstructionConfig) -> dict:
+    import numpy as np
+
     path = Path(path)
-    data = np.load(path, allow_pickle=False)
-    meta = json.loads(path.with_suffix(".json").read_text())
+    with np.load(path, allow_pickle=False) as data:
+        if "metadata" not in data:
+            raise ValueError("legacy non-atomic checkpoint is unsupported")
+        meta = json.loads(str(data["metadata"]))
+        arrays = {key: data[key] for key in ("image", "coverage", "validity")}
+    if meta.get("schema") != C.JOB_SCHEMA or meta.get("schema_version") != C.JOB_SCHEMA_VERSION:
+        raise ValueError("unsupported checkpoint schema")
     stored = ReconstructionConfig.from_dict(meta["config"])
     if stored.to_json() != config.to_json():
         raise ValueError("checkpoint config does not match the running job")
     if meta.get("operator") != config.baseline_operator_version:
         raise ValueError("checkpoint operator version is incompatible")
-    return {"image": data["image"], "coverage": data["coverage"], "meta": meta}
+    return {**arrays, "meta": meta}
 
 
 @dataclass
@@ -192,6 +215,16 @@ class JobHandle:
     def poll(self, timeout: float = 0.0) -> list[JobEvent]:
         out = []
         deadline = time.time() + timeout
+        def accept(event):
+            if event.seq <= self.last_seq and event.kind == "preview":
+                return
+            self.last_seq = max(self.last_seq, event.seq)
+            out.append(event)
+            terminal = {"completed": "completed", "cancelled": "cancelled",
+                        "failed": "failed", "error": "failed"}
+            if event.kind in terminal:
+                self.state = terminal[event.kind]
+
         while True:
             remaining = deadline - time.time()
             if remaining < 0 and timeout > 0:
@@ -200,27 +233,32 @@ class JobHandle:
                 event = self.events.get(timeout=max(remaining, 0.0) if timeout else 0.0)
             except queue.Empty:
                 break
-            if event.seq <= self.last_seq and event.kind == "preview":
-                continue
-            self.last_seq = max(self.last_seq, event.seq)
-            out.append(event)
-            if event.kind in ("completed", "failed", "cancelled", "error"):
-                if event.kind == "completed":
-                    self.state = "completed"
-                elif event.kind == "cancelled":
-                    self.state = "cancelled"
-                else:
-                    self.state = "failed"
+            accept(event)
         if self.state == "queued" and self.process.is_alive():
             self.state = "running"
         if self.state in ("queued", "running") and not self.process.is_alive():
-            if self.process.exitcode not in (0, None) and self.state != "cancelled":
-                self.state = "failed"
+            # Recheck after observing exit: the child may have flushed its last
+            # event between the earlier queue read and is_alive().
+            while True:
+                try:
+                    accept(self.events.get_nowait())
+                except queue.Empty:
+                    break
+            if self.state in ("queued", "running") and self.process.exitcode is not None:
+                if self.cancel_event.is_set():
+                    accept(JobEvent(self.job_id, self.last_seq + 1, "cancelled"))
+                else:
+                    accept(JobEvent(self.job_id, self.last_seq + 1, "error", {
+                        "message": f"worker exited without a result (code {self.process.exitcode})"
+                    }))
         return out
 
     def cancel(self, grace_s: float = 2.0) -> None:
         self.cancel_event.set()
-        self.process.join(timeout=grace_s)
+        deadline = time.monotonic() + grace_s
+        while self.process.is_alive() and time.monotonic() < deadline:
+            self.poll()
+            self.process.join(timeout=0.02)
         if self.process.is_alive():
             self.process.terminate()
             self.process.join(timeout=1.0)
@@ -230,8 +268,12 @@ class JobHandle:
         self.state = "cancelled"
 
     def close(self) -> None:
+        if self.state in ("completed", "failed"):
+            self.process.join(timeout=1.0)
         if self.process.is_alive():
             self.cancel()
+        else:
+            self.process.join()
         try:
             self.events.close()
         except Exception:

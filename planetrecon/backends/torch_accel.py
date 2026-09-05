@@ -18,6 +18,8 @@ class TorchBackend(Backend):
     def phase_correlation(self, reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
         ref = torch.as_tensor(reference, device="cuda", dtype=torch.float32)
         img = torch.as_tensor(frame, device="cuda", dtype=torch.float32)
+        ref = ref - ref.mean()
+        img = img - img.mean()
         fa = torch.fft.fft2(ref)
         fb = torch.fft.fft2(img)
         cross = fb * torch.conj(fa)
