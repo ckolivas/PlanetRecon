@@ -24,6 +24,10 @@ import tifffile
 from planetrecon.result import ReconstructionResult
 
 
+class ExportCancelled(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class ExportConfig:
     encoding: str = "tiff32"
@@ -135,7 +139,7 @@ def _chunk(stream, kind, payload):
     stream.write(struct.pack(">I", zlib.crc32(kind + payload) & 0xffffffff))
 
 
-def _write_png(stream, pixels, metadata):
+def _write_png(stream, pixels, metadata, check_cancel=lambda: None):
     """Dedicated true 16-bit network-order PNG writer; lossless zlib/filter 0."""
     height, width = pixels.shape[:2]
     stream.write(b"\x89PNG\r\n\x1a\n")
@@ -144,6 +148,7 @@ def _write_png(stream, pixels, metadata):
     _chunk(stream, b"iTXt", b"PlanetRecon\0\0\0\0\0" + _json(metadata))
     compressor = zlib.compressobj()
     for row in pixels:
+        check_cancel()
         encoded = compressor.compress(b"\0" + row.astype(">u2").tobytes())
         if encoded:
             _chunk(stream, b"IDAT", encoded)
@@ -151,12 +156,13 @@ def _write_png(stream, pixels, metadata):
     _chunk(stream, b"IEND", b"")
 
 
-def _write_tiff(stream, pixels, valid, coverage, layers, metadata):
+def _write_tiff(stream, pixels, valid, coverage, layers, metadata, check_cancel=lambda: None):
     # Uncompressed TIFF uses no imagecodecs/FFmpeg dependency. BigTIFF when needed.
     size = valid.nbytes + coverage.nbytes + sum(a.nbytes for a in layers.values())
     size += 0 if pixels is None else pixels.nbytes
     with tifffile.TiffWriter(stream, byteorder="<", bigtiff=size > 2**32 - 2**25) as writer:
         def page(array, description):
+            check_cancel()
             writer.write(array, photometric="rgb" if array.ndim == 3 else "minisblack",
                          planarconfig="contig" if array.ndim == 3 else None,
                          compression=None, metadata=None, description=_json(description).decode("ascii"),
@@ -197,12 +203,17 @@ def _publish(staged, destination, overwrite=False):
 
 
 def export_result(result: ReconstructionResult, path: Path, config: ExportConfig = ExportConfig(),
-                  *, overwrite: bool = False) -> ExportReport:
+                  *, overwrite: bool = False, should_cancel=None) -> ExportReport:
     """Write a detached result; overwrite=True means the caller obtained consent.
 
     Call on an owned full-resolution snapshot (e.g. a pipeline callback or loaded
     checkpoint), not a concurrently mutated accumulator or copy_preview().
     """
+    def check_cancel():
+        if should_cancel is not None and should_cancel():
+            raise ExportCancelled("save cancelled")
+
+    check_cancel()
     path = Path(path)
     suffixes = (".png",) if config.encoding == "png16" else (".tif", ".tiff")
     if path.suffix.lower() not in suffixes:
@@ -210,6 +221,7 @@ def export_result(result: ReconstructionResult, path: Path, config: ExportConfig
     if not overwrite and os.path.lexists(path):
         raise FileExistsError(path)
     pixels, valid, coverage, layers, metadata = _prepare(result, config)
+    check_cancel()
     generation = uuid.uuid4().hex
     sidecar = path.with_name(f"{path.name}.{generation}.json")
     masks = path.with_name(f"{path.name}.{generation}.coverage.tif") if config.encoding == "png16" else None
@@ -222,23 +234,28 @@ def export_result(result: ReconstructionResult, path: Path, config: ExportConfig
     committed = False
     try:
         if masks:
-            temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata))
+            temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata, check_cancel))
             staged.append(temp)
+            check_cancel()
             _publish(temp, masks)
             companions.append(masks)
-        write = (lambda s: _write_png(s, pixels, metadata)) if config.encoding == "png16" else (
-            lambda s: _write_tiff(s, pixels, valid, coverage, layers, metadata))
+        write = (lambda s: _write_png(s, pixels, metadata, check_cancel)) if config.encoding == "png16" else (
+            lambda s: _write_tiff(s, pixels, valid, coverage, layers, metadata, check_cancel))
         image_temp = _staged_file(path, write)
         staged.append(image_temp)
+        check_cancel()
         digest = hashlib.sha256()
         with image_temp.open("rb") as stream:
             for block in iter(lambda: stream.read(1024 * 1024), b""):
+                check_cancel()
                 digest.update(block)
         side_metadata = metadata | {"image_sha256": digest.hexdigest()}
         temp = _staged_file(sidecar, lambda s: s.write(_json(side_metadata) + b"\n"))
         staged.append(temp)
+        check_cancel()
         _publish(temp, sidecar)
         companions.append(sidecar)
+        check_cancel()
         _publish(image_temp, path, overwrite)
         committed = True
     finally:

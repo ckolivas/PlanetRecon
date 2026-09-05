@@ -9,7 +9,7 @@ from scipy.ndimage import shift as ndshift
 
 from planetrecon import constants as C
 from planetrecon.backends.base import Backend, select_backend
-from planetrecon.calibration import Calibration, apply_calibration
+from planetrecon.calibration import Calibration, apply_calibration, load_calibration
 from planetrecon.detector import (
     bilinear_demosaic,
     cfa_accumulate,
@@ -51,6 +51,11 @@ def stack_source(
     on_event: PreviewFn | None = None,
     should_cancel: CancelFn | None = None,
 ) -> ReconstructionResult:
+    if any(getattr(config, key) is not None for key in (
+            "bias_path", "dark_path", "flat_path", "gain_e_per_adu", "read_noise_e", "saturate_adu")):
+        if calibration is not None:
+            raise ValueError("use either calibration settings or an explicit Calibration, not both")
+        calibration = load_calibration(config, source.frame_shape())
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
 

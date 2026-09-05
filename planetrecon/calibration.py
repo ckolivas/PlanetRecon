@@ -23,6 +23,26 @@ class Calibration:
         return "calibrated"
 
 
+def load_calibration(config, shape: tuple[int, ...]) -> Calibration | None:
+    """Load detector-lattice NPY tables, without broadcasting or pickle objects."""
+    values = {name: getattr(config, name) for name in ("gain_e_per_adu", "read_noise_e", "saturate_adu")}
+    for name in ("bias", "dark", "flat"):
+        path = getattr(config, name + "_path")
+        if path is None:
+            values[name] = None
+            continue
+        array = np.load(path, allow_pickle=False)
+        if not isinstance(array, np.ndarray):
+            array.close()
+            raise ValueError(f"{name} must be an NPY array")
+        if array.shape != shape or array.dtype.kind not in "fiu" or not np.all(np.isfinite(array)):
+            raise ValueError(f"{name} must be finite and match the raw detector frame shape {shape}")
+        if name == "flat" and np.any(array <= 0):
+            raise ValueError("flat values must be positive")
+        values[name] = np.asarray(array, dtype=np.float64)
+    return Calibration(**values) if any(v is not None for v in values.values()) else None
+
+
 def apply_calibration(frame: np.ndarray, cal: Calibration | None) -> tuple[np.ndarray, dict]:
     work = np.asarray(frame, dtype=np.float64)
     info = {"mode": "approximate-noise", "saturated": False}

@@ -1,0 +1,36 @@
+{
+  "archived": false,
+  "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
+  "created_utc": "2026-09-05T10:42:01Z",
+  "device": "cpu",
+  "document_revision": "R9",
+  "estimator_operator_version": "1.2",
+  "experiment_id": "w14-qt-workflow",
+  "gui_workflow_version": "1.0",
+  "inputs": [],
+  "notes": "Local offscreen Qt tests and a 32-process CPU-load heartbeat check; not universal latency or large-capture qualification. Only one unacknowledged full-resolution snapshot is requested, plus bounded preview/final events. The last result and one active export retain separate owned arrays. Export cancellation is checked between encoding/publication steps; close waits for an active encoder to return. RAM/VRAM budgets, checkpoint resume, parent-crash recovery and clean-system/cross-platform qualification remain outstanding. W02/W03 are unchanged and Q3 does not start.",
+  "protocol": "CPU Qt capture/calibration/geometry/Saturn controls, acknowledged full-resolution snapshots, stable display levels, coverage and validity views, asynchronous scientific export, stale-event rejection, cancellation, failure retention and owned shutdown.",
+  "results": [
+    {
+      "kind": "integration",
+      "path": "tests/test_w14.py",
+      "status": "diagnostic"
+    },
+    {
+      "kind": "packaging-smoke",
+      "path": "planetrecon/gui/smoke.py",
+      "status": "diagnostic"
+    }
+  ],
+  "roadmap_revision": "R10",
+  "schema_name": "planetrecon-evidence-manifest",
+  "schema_version": "1.0",
+  "seed_coverage": {
+    "scientific_families": false,
+    "unit_fixtures": true
+  },
+  "simulator_operator_version": "1.0",
+  "source_hash": "cffdaf7e1e02f7c37b844af7baa397c3101aeeb1a0a7fe843c3f53d8905db211",
+  "status": "diagnostic",
+  "tolerances": {}
+}

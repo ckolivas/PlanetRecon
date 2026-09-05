@@ -187,6 +187,26 @@ def w13_manifest() -> dict:
     )
 
 
+def w14_manifest() -> dict:
+    return experiment_manifest(
+        "w14-qt-workflow", status="diagnostic",
+        protocol=("CPU Qt capture/calibration/geometry/Saturn controls, acknowledged full-resolution "
+                  "snapshots, stable display levels, coverage and validity views, asynchronous scientific "
+                  "export, stale-event rejection, cancellation, failure retention and owned shutdown."),
+        seed_coverage={"unit_fixtures": True, "scientific_families": False},
+        results=[{"path": "tests/test_w14.py", "status": "diagnostic", "kind": "integration"},
+                 {"path": "planetrecon/gui/smoke.py", "status": "diagnostic", "kind": "packaging-smoke"}],
+        notes=("Local offscreen Qt tests and a 32-process CPU-load heartbeat check; not universal "
+               "latency or large-capture qualification. Only one unacknowledged full-resolution snapshot "
+               "is requested, plus bounded preview/final events. The last result and one active export "
+               "retain separate owned arrays. Export cancellation is checked between encoding/publication "
+               "steps; close waits for an active encoder to return. RAM/VRAM budgets, checkpoint resume, "
+               "parent-crash recovery and clean-system/cross-platform qualification remain outstanding. "
+               "W02/W03 are unchanged and Q3 does not start."),
+        extra={"archived": False, "device": "cpu", "gui_workflow_version": "1.0"},
+    )
+
+
 def write_evidence_manifests(results_dir: Path) -> list[Path]:
     results_dir = Path(results_dir)
     dest = results_dir / "manifests"
@@ -198,6 +218,7 @@ def write_evidence_manifests(results_dir: Path) -> list[Path]:
         write_manifest(dest / "w09.json", w09_manifest()),
         write_manifest(dest / "w10.json", w10_manifest()),
         write_manifest(dest / "w13.json", w13_manifest()),
+        write_manifest(dest / "w14.json", w14_manifest()),
     ]
     for path in written:
         load_manifest(path)

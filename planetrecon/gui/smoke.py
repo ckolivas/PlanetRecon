@@ -1,0 +1,74 @@
+"""Bounded GUI/worker/export smoke, also runnable from the frozen executable."""
+from pathlib import Path
+import json
+import time
+import uuid
+
+import numpy as np
+import tifffile
+from PySide6.QtCore import QTimer
+
+from planetrecon.gui.app import MainWindow, create_app
+from planetrecon.io.ser import write_ser, COLOR_RGGB
+from planetrecon.reconstruction import ReconstructionConfig
+
+
+def run_smoke(directory: Path) -> int:
+    directory = Path(directory) / ('gui-' + uuid.uuid4().hex[:12])
+    directory.mkdir(parents=True)
+    frame = (300 + np.arange(16*24).reshape(16,24)).astype(np.uint16)
+    source = write_ser(directory/'fixture.ser', np.stack([frame]*4), color_id=COLOR_RGGB)
+    app = create_app(['planetrecon-gui-smoke'])
+    win = MainWindow(source, ReconstructionConfig(device='cpu', threads=2, batch_frames=1))
+    outcome = {'status': 'running', 'directory': str(directory)}
+    phase = 'stack'
+    started = time.monotonic()
+    dest = directory/'result.tif'
+    timer = QTimer()
+    timer.setInterval(50)
+
+    def finish(error=None):
+        timer.stop()
+        outcome['elapsed_s'] = time.monotonic()-started
+        outcome['status'] = 'failed' if error else 'passed'
+        if error:
+            outcome['error'] = str(error)
+        win.window.grab().save(str(directory/'window.png'))
+        win._shutdown()
+        if win.export_worker is not None:
+            win.export_worker.wait()
+        win.window.close()
+        app.quit()
+
+    def advance():
+        nonlocal phase
+        try:
+            if time.monotonic()-started > 30:
+                raise TimeoutError('GUI smoke exceeded 30 seconds')
+            if phase == 'stack' and win.job is None:
+                if win.error.text() or win.last_result is None:
+                    raise RuntimeError(win.error.text() or 'No result')
+                assert win.last_result.n_used == 4 and not win.last_result.incomplete
+                assert win.last_result.image.shape == (16,24,3)
+                phase = 'save'
+                win.save_result(dest)
+            elif phase == 'save' and win.export_worker is None:
+                with tifffile.TiffFile(dest) as tf:
+                    actual = tf.pages[0].asarray()
+                    valid = tf.pages[1].asarray().astype(bool)
+                    np.testing.assert_array_equal(actual[valid], win.last_result.image[valid].astype(np.float32))
+                    assert np.isnan(actual[~valid]).all()
+                outcome.update(n_used=4, shape=[16,24,3], encoding='tiff32', backend='cpu',
+                               invalid_samples=int((~valid).sum()))
+                finish()
+        except Exception as exc:
+            finish(exc)
+
+    win.show()
+    win._run()
+    timer.timeout.connect(advance)
+    timer.start()
+    app.exec()
+    (directory/'smoke.json').write_text(json.dumps(outcome, indent=2)+'\n')
+    print(json.dumps(outcome, sort_keys=True))
+    return 0 if outcome['status'] == 'passed' else 1

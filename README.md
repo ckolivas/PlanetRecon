@@ -93,7 +93,8 @@ cross-platform release acceptance remain planned.
 
 Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
 next scientific work; W11 adds production MFBD. W13 scientific export is implemented;
-W14 GUI workflow and later release qualification remain planned.
+W14 connects the Qt capture/geometry/calibration workflow and scientific save controls.
+Large-input hardening and later release qualification remain planned.
 Advanced atmospheric claims stay gated by W03.
 
 Geometry currently runs on CPU float64, including when Auto/GPU is selected.
@@ -185,6 +186,70 @@ regimes if they are missing, then writes classification tables under
 `out/prompt2/`. Extension seeds `2013–2024` are only for an inconclusive
 12-seed result.
 
+## Qt capture workflow (W14)
+
+Start `python3 -m planetrecon gui --path capture.ser`, or use **Open capture**.
+**Inspect input** reads metadata and a bounded raw preview in an owned process.
+CFA inputs show a labelled green proxy; the reconstruction still uses raw samples.
+The four settings tabs expose:
+
+- **Capture:** CPU/Auto/GPU, 1–32 CPU threads, batch size, Bayer and byte-order
+  overrides, HDF5 crop, rejection, reference frame, cadence and exposure.
+- **Calibration:** bias/dark/flat `.npy` tables matching the entire raw frame shape,
+  optional gain and saturation threshold, and read-noise metadata. Dark tables
+  must already be exposure-scaled. Flat tables must be finite and positive;
+  flat correction retains the existing median normalization. No broadcasting is
+  allowed. Gain converts ADU to electrons; missing gain retains approximate noise.
+  Read noise is recorded, but does not introduce a detector-noise likelihood into
+  the baseline. CLI stack exposes `--bias`, `--dark`, `--flat`, `--gain`,
+  `--read-noise` and `--saturate` with the same engine behavior.
+- **Geometry:** motion model, field/surface rates, fixed centre, globe radius and
+  flattening, orientation and reference epoch. Angles/rates are shown in degrees;
+  radii and positions stay in pixels. Blank optional values retain engine defaults.
+- **Saturn:** ring radii/transmission, illumination and moon masks. Physical globe
+  and ring radii plus signed observer latitude remain mandatory for Saturn.
+
+Run uses an owned process. Controls lock while processing; progress distinguishes
+unknown pose-estimation work from accumulation and reaches 100% only on completion.
+The UI receives at most one unacknowledged full-resolution snapshot at a time,
+with a bounded event queue. Result, input, coverage, validity and named Saturn
+layer views support channel selection, preview zoom and scrollbar panning. The
+preview histogram reports display clipping and sample support; magenta identifies
+missing colour support. Coverage is accumulation weight, not calibrated uncertainty.
+The display stretch is fitted once at the first result and stays fixed until
+**Fit levels** or manual changes. Display operations never modify result arrays.
+
+**Save result** exports the last received full-resolution snapshot through W13,
+including while processing continues. Float TIFF is the default. Integer output
+requires fixed black/white levels; optional gamma explicitly selects a display
+rendering. Existing images require confirmation. Saving runs on a separate encoder
+thread, retains its chosen result as newer snapshots arrive, and reports actual
+clipped/invalid pixel counts. An error or cancellation preserves the last usable
+image, its source identity and save controls. Stale job identities/sequences are
+ignored. Cancel processing is nonblocking and terminates only the owned worker
+if cooperative cancellation does not finish within the grace period.
+
+Window close joins the processing worker and cancels an active save before its
+publication. A save already inside an encoder must return before the window closes;
+large or slow disk writes can delay that step. This is bounded-prototype workflow
+validation, not a promise for arbitrary capture sizes: RAM/VRAM budgets, checkpoint
+resume, parent-crash recovery and all-platform lifecycle qualification remain open.
+A bounded local check with 32 busy CPU processes recorded an 82 ms maximum Qt
+heartbeat gap; latency depends on hardware, frame size and processing stage.
+
+Run the repeatable GUI/worker/save smoke from source or a frozen executable:
+
+```bash
+QT_QPA_PLATFORM=offscreen python3 -m planetrecon gui-smoke --out /tmp/planetrecon-gui-check
+QT_QPA_PLATFORM=offscreen dist/planetrecon/planetrecon gui-smoke --out /tmp/planetrecon-gui-check
+```
+
+Each invocation uses a fresh directory containing a tiny Bayer SER, float TIFF,
+metadata, a window screenshot and `smoke.json`. The test verifies raw-CFA validity
+and preserved float values. This local Linux smoke does not certify clean target
+systems or Windows/macOS builds. W15 large-input/AVI work is the next independent
+application step; W02/W03 scientific qualification remains outstanding.
+
 ## Scientific export (W13)
 
 Export uses the floating linear result at full resolution. Choose `png16`,
@@ -238,7 +303,7 @@ can read that snapshot while stacking continues, with `incomplete` and frame
 counts recorded. New worker checkpoints are also exportable. Older NPZs without
 result metadata are rejected for export rather than assigned guessed units or
 completion state. CLI stack snapshots retain the earlier analysis array keys.
-GUI save controls are part of W14; Qt's downsampled display is not an export source.
+W14 GUI save controls retain full-resolution results; Qt's downsampled display is not an export source.
 
 PNG uses the bundled dedicated 16-bit writer and zlib. TIFF uses `tifffile`
 without compression, avoiding extra codec runtimes. Run the local Linux package

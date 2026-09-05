@@ -31,21 +31,34 @@ class JobEvent:
     payload: dict[str, Any] = field(default_factory=dict)
 
 
-def _put_event(q, event: JobEvent, cancel_event=None) -> None:
+def _put_event(q, event: JobEvent, cancel_event=None) -> bool:
     # Optional UI updates must never stall processing or cancellation. The
     # terminal event carries the final image even when previews were dropped.
-    if event.kind in ("preview", "progress"):
+    if event.kind in ("preview", "progress", "snapshot", "source"):
         try:
             q.put_nowait(event)
         except queue.Full:
-            pass
-        return
+            return False
+        return True
     while cancel_event is None or not cancel_event.is_set():
         try:
             q.put(event, timeout=0.1)
-            return
+            return True
         except queue.Full:
             continue
+    return False
+
+
+def result_payload(result):
+    return {**result.metadata(), "image": result.image, "coverage": result.coverage,
+            "validity": result.validity, "layer_coverage": result.layer_coverage}
+
+
+def result_from_payload(payload):
+    from planetrecon.result import ReconstructionResult
+
+    return ReconstructionResult(**{k: v for k, v in payload.items()
+                                   if k in ReconstructionResult.__dataclass_fields__})
 
 
 def _worker_main(
@@ -55,6 +68,8 @@ def _worker_main(
     event_q,
     cancel_event,
     checkpoint_dir: str | None,
+    snapshot_request=None,
+    inspect_only: bool = False,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -65,10 +80,10 @@ def _worker_main(
     seq = 0
     source = None
 
-    def emit(kind: str, payload: dict) -> None:
+    def emit(kind: str, payload: dict) -> bool:
         nonlocal seq
         seq += 1
-        _put_event(event_q, JobEvent(job_id, seq, kind, payload), cancel_event)
+        return _put_event(event_q, JobEvent(job_id, seq, kind, payload), cancel_event)
 
     try:
         config = ReconstructionConfig.from_dict(config_dict)
@@ -81,8 +96,31 @@ def _worker_main(
             crop=config.crop,
         )
         emit("progress", {"stage": "scan", "fraction": 0.0, "backend": config.device})
+        if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
+            import numpy as np
+            from planetrecon.pipeline.baseline import _alignment_plane
+
+            raw = source.read_raw(0)
+            color = source.color_mode()
+            if color == "BGR":
+                raw = raw[..., ::-1]
+            elif color not in ("mono", "RGB"):
+                raw = _alignment_plane(raw, color)
+            step = max(1, int(np.ceil(max(raw.shape[:2]) / 512)))
+            payload = {"source_metadata": source.metadata().as_dict(),
+                       "input_image": np.array(raw[::step, ::step], copy=True),
+                       "input_stride": step, "input_view": "green proxy" if color not in ("mono", "RGB", "BGR") else color}
+            emit("completed" if inspect_only else "source", payload)
+            if inspect_only:
+                return
+        if config.geometry_mode != "none":
+            emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu"})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
+            if snapshot_request is not None and snapshot_request.is_set() and result.n_used:
+                snapshot_request.clear()
+                if not emit("snapshot", result_payload(result)):
+                    snapshot_request.set()
             preview = result.copy_preview()
             emit(
                 "preview",
@@ -94,6 +132,8 @@ def _worker_main(
                     "incomplete": result.incomplete,
                     "image": preview.image,
                     "coverage": preview.coverage,
+                    "validity": preview.validity,
+                    "spatial_stride": preview.spatial_stride,
                     "layer_coverage": preview.layer_coverage,
                     "channel_order": result.channel_order,
                     "reference_epoch": result.reference_epoch,
@@ -126,24 +166,8 @@ def _worker_main(
         if cancel_event.is_set():
             emit("cancelled", {"n_used": result.n_used})
             return
-        emit(
-            "completed",
-            {
-                "n_used": result.n_used,
-                "n_rejected": result.n_rejected,
-                "backend": result.backend,
-                "warnings": result.warnings,
-                "channel_order": result.channel_order,
-                "reference_epoch": result.reference_epoch,
-                "image": result.image,
-                "coverage": result.coverage,
-                "layer_coverage": result.layer_coverage,
-                "validity": result.validity,
-                "units": result.units,
-                "incomplete": result.incomplete,
-                "provenance": result.provenance,
-            },
-        )
+        emit("completed", result_payload(result))
+
     except Exception as exc:
         emit(
             "error",
@@ -221,12 +245,21 @@ class JobHandle:
     state: JobState = "queued"
     started: float = field(default_factory=time.time)
     last_seq: int = 0
+    snapshot_request: Any = None
 
     def poll(self, timeout: float = 0.0) -> list[JobEvent]:
         out = []
+        # Cancellation may abandon the queue feeder halfway through a large
+        # snapshot. Never enter recv() on that pipe once cancellation is set.
+        if self.cancel_event.is_set():
+            if not self.process.is_alive() and self.state not in ("completed", "failed", "cancelled"):
+                self.state = "cancelled"
+                self.last_seq += 1
+                return [JobEvent(self.job_id, self.last_seq, "cancelled")]
+            return out
         deadline = time.time() + timeout
         def accept(event):
-            if event.seq <= self.last_seq and event.kind == "preview":
+            if event.job_id != self.job_id or event.seq <= self.last_seq:
                 return
             self.last_seq = max(self.last_seq, event.seq)
             out.append(event)
@@ -297,11 +330,13 @@ def start_stack_job(
     job_id: str | None = None,
     checkpoint_dir: str | Path | None = None,
     queue_size: int = 8,
+    inspect_only: bool = False,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
     event_q = ctx.Queue(maxsize=max(2, int(queue_size)))
     cancel_event = ctx.Event()
+    snapshot_request = ctx.Event()
     proc = ctx.Process(
         target=_worker_main,
         args=(
@@ -311,11 +346,13 @@ def start_stack_job(
             event_q,
             cancel_event,
             None if checkpoint_dir is None else str(checkpoint_dir),
+            snapshot_request,
+            inspect_only,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,
     )
-    handle = JobHandle(job_id, proc, event_q, cancel_event, state="queued")
+    handle = JobHandle(job_id, proc, event_q, cancel_event, state="queued", snapshot_request=snapshot_request)
     proc.start()
     handle.state = "running"
     return handle

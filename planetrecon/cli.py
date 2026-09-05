@@ -147,6 +147,11 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
     st.add_argument("--bayer", default=None, help="override Bayer pattern, e.g. RGGB")
+    for name in ("bias", "dark", "flat"):
+        st.add_argument(f"--{name}", default=None, help=f"detector-shape {name} NPY table")
+    st.add_argument("--gain", type=float, default=None, help="electrons per ADU")
+    st.add_argument("--read-noise", type=float, default=None, help="read noise in electrons (metadata)")
+    st.add_argument("--saturate", type=float, default=None, help="saturation threshold in raw ADU")
     st.add_argument(
         "--geometry",
         choices=("none", "field", "surface", "combined", "saturn"),
@@ -193,6 +198,8 @@ def main(argv: list[str] | None = None) -> int:
 
     gui = sub.add_parser("gui", help="Qt6 shell with progressive baseline reconstruction")
     gui.add_argument("--path", type=Path, default=None)
+    smoke = sub.add_parser("gui-smoke", help="bounded Qt/owned-worker/scientific-save packaging check")
+    smoke.add_argument("--out", type=Path, required=True)
 
     args = parser.parse_args(argv)
     if args.threads is not None and args.threads < 1:
@@ -340,6 +347,8 @@ def main(argv: list[str] | None = None) -> int:
             batch_frames=args.batch,
             crop=args.crop,
             bayer_override=args.bayer,
+            bias_path=args.bias, dark_path=args.dark, flat_path=args.flat,
+            gain_e_per_adu=args.gain, read_noise_e=args.read_noise, saturate_adu=args.saturate,
             geometry_mode=args.geometry,
             field_rate_rad_s=_rad(args.field_rate_deg_s),
             surface_rate_rad_s=_rad(args.surface_rate_deg_s),
@@ -394,5 +403,9 @@ def main(argv: list[str] | None = None) -> int:
 
         argv = [] if args.path is None else [str(args.path)]
         return gui_main(argv)
+    if args.cmd == "gui-smoke":
+        from planetrecon.gui.smoke import run_smoke
+
+        return run_smoke(args.out)
     parser.error("unknown command")
     return 2

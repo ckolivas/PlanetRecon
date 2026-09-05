@@ -1,202 +1,529 @@
-"""Qt6 raster shell: open capture, run/cancel, progressive image and progress."""
-
+"""Qt6 capture workflow with owned workers and full-resolution scientific saves."""
 from __future__ import annotations
 
-import sys
-from dataclasses import replace
+import json
 from pathlib import Path
+import sys
+import threading
+import time
 
 import numpy as np
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import (
+    QApplication, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
+    QLabel, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar,
+    QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget,
+)
 
-from planetrecon.jobs import JobHandle, start_stack_job
+from planetrecon.export import ExportCancelled, ExportConfig, export_result
+from planetrecon.gui.controls import ConfigControls
+from planetrecon.jobs import JobHandle, result_from_payload, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits
 
 
-def _to_qimage(image: np.ndarray):
-    from PySide6.QtGui import QImage
-
+def _to_qimage(image, black=None, white=None, validity=None):
     arr = np.asarray(image, dtype=np.float64)
-    if arr.ndim == 2:
-        plane = arr
-        vis = np.stack([plane, plane, plane], axis=2)
-    else:
-        vis = arr[..., :3]
-    finite = vis[np.isfinite(vis)]
-    lo = float(np.percentile(finite, 1)) if finite.size else 0.0
-    hi = float(np.percentile(finite, 99)) if finite.size else 1.0
-    if hi <= lo:
-        hi = lo + 1.0
-    scaled = np.clip((vis - lo) / (hi - lo), 0.0, 1.0)
-    rgb8 = (scaled * 255.0).astype(np.uint8)
+    valid = np.isfinite(arr)
+    if validity is not None:
+        mask = np.asarray(validity)
+        if mask.ndim == 2 and arr.ndim == 3:
+            mask = mask[..., None]
+        valid &= mask
+    finite = arr[valid]
+    if black is None:
+        black = float(np.percentile(finite, 1)) if finite.size else 0.
+    if white is None:
+        white = float(np.percentile(finite, 99)) if finite.size else 1.
+    if white <= black:
+        white = black + 1.
+    scaled = np.clip((np.where(valid, arr, black) - black) / (white - black), 0, 1)
+    rgb = np.repeat(scaled[..., None], 3, axis=2) if arr.ndim == 2 else scaled
+    rgb8 = (rgb * 255).astype(np.uint8)
+    supported = valid if arr.ndim == 2 else valid.all(axis=2)
+    # Magenta marks incomplete colour support; it never enters the science array.
+    rgb8[~supported] = [180, 40, 160]
     rgb8 = np.ascontiguousarray(rgb8)
-    h, w, _ = rgb8.shape
-    return QImage(rgb8.data, w, h, 3 * w, QImage.Format.Format_RGB888).copy()
+    h, w = rgb8.shape[:2]
+    return QImage(rgb8.data, w, h, 3*w, QImage.Format.Format_RGB888).copy()
+
+
+def _pixmap(image):
+    return QPixmap.fromImage(_to_qimage(image))
 
 
 def create_app(argv=None):
-    from PySide6.QtWidgets import QApplication
+    return QApplication.instance() or QApplication(sys.argv if argv is None else argv)
 
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv if argv is None else argv)
-    return app
+
+class ExportWorker(QThread):
+    outcome = Signal(object, object)
+
+    def __init__(self, result, path, config, overwrite):
+        super().__init__()
+        self.result, self.path, self.config, self.overwrite = result, path, config, overwrite
+        self.cancel_event = threading.Event()
+
+    def run(self):
+        try:
+            report = export_result(self.result, self.path, self.config, overwrite=self.overwrite,
+                                   should_cancel=self.cancel_event.is_set)
+            self.outcome.emit(report, None)
+        except Exception as exc:
+            self.outcome.emit(None, exc)
+        finally:
+            self.result = None
 
 
 class MainWindow:
     def __init__(self, path: Path | None = None, config: ReconstructionConfig | None = None):
-        from PySide6.QtCore import QTimer
-        from PySide6.QtWidgets import (
-            QComboBox,
-            QFileDialog,
-            QHBoxLayout,
-            QLabel,
-            QMainWindow,
-            QMessageBox,
-            QProgressBar,
-            QPushButton,
-            QVBoxLayout,
-            QWidget,
-        )
-
-        self.config = config or ReconstructionConfig(device="auto")
+        self.config = config or ReconstructionConfig(device='auto')
+        self.path = Path(path) if path else None
         self.job: JobHandle | None = None
+        self.last_result = None
+        self.preview = None
+        self.input_image = None
+        self.export_worker = None
+        self.closing = False
+        self.cancel_started = None
+        self.last_seq = 0
+        self.auto_levels = True
+        self.inspecting = False
+        self.started = None
         owner = self
 
         class OwnedWindow(QMainWindow):
             def closeEvent(self, event):
                 owner._shutdown()
-                super().closeEvent(event)
+                if owner.export_worker is not None:
+                    owner.closing = True
+                    owner.status.setText('Cancelling save; the window will close after the encoder returns.')
+                    event.ignore()
+                else:
+                    event.accept()
+
+            def resizeEvent(self, event):
+                super().resizeEvent(event)
+                if hasattr(owner, 'canvas'):
+                    owner._draw()
 
         self.window = OwnedWindow()
-        self.window.setWindowTitle("PlanetRecon")
+        self.window.setWindowTitle('PlanetRecon — capture reconstruction')
+        self.window.resize(1160, 820)
         root = QWidget()
         layout = QVBoxLayout(root)
-        self.image_label = QLabel("Open a SER or Gate-1 HDF5 capture")
-        self.image_label.setMinimumSize(256, 256)
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 100)
-        self.progress.setValue(0)
-        self.status = QLabel("idle")
         buttons = QHBoxLayout()
-        self.open_btn = QPushButton("Open")
-        self.run_btn = QPushButton("Run")
-        self.cancel_btn = QPushButton("Cancel")
-        self.device = QComboBox()
-        self.device.addItems(["auto", "cpu", "gpu"])
-        self.device.setCurrentText(self.config.device)
-        buttons.addWidget(self.open_btn)
-        buttons.addWidget(self.run_btn)
-        buttons.addWidget(self.cancel_btn)
-        buttons.addWidget(QLabel("Device"))
-        buttons.addWidget(self.device)
+        self.open_btn = QPushButton('Open capture…')
+        self.inspect_btn = QPushButton('Inspect input')
+        self.run_btn = QPushButton('Run')
+        self.cancel_btn = QPushButton('Cancel processing')
+        for b, slot in ((self.open_btn, self._choose), (self.inspect_btn, self._inspect),
+                        (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
+            b.clicked.connect(slot)
+            buttons.addWidget(b)
+        buttons.addStretch()
         layout.addLayout(buttons)
-        layout.addWidget(self.image_label, 1)
+        self.source_label = QLabel(str(self.path) if self.path else 'Open a SER or observed HDF5 capture')
+        self.source_label.setWordWrap(True)
+        layout.addWidget(self.source_label)
+        split = QSplitter()
+        self.controls = ConfigControls(self.config)
+        self.controls.setMinimumWidth(360)
+        self.device = self.controls.fields['device']
+        split.addWidget(self.controls)
+        right = QWidget()
+        body = QVBoxLayout(right)
+        toolbar = QHBoxLayout()
+        self.view = QComboBox()
+        self.view.addItems(['Result', 'Input', 'Coverage', 'Validity', 'Globe coverage', 'Ring coverage'])
+        self.channel = QComboBox()
+        self.channel.addItems(['RGB / mono', 'R', 'G', 'B'])
+        self.zoom = QComboBox()
+        self.zoom.addItems(['Fit', '25%', '50%', '100%', '200%', '400%'])
+        for widget in (self.view, self.channel, self.zoom):
+            toolbar.addWidget(widget)
+            widget.currentIndexChanged.connect(self._draw)
+        body.addLayout(toolbar)
+        self.canvas = QScrollArea()
+        self.canvas.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label = QLabel('Run a capture to build an image')
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.canvas.setWidget(self.image_label)
+        body.addWidget(self.canvas, 1)
+        levels = QHBoxLayout()
+        self.black = QDoubleSpinBox()
+        self.white = QDoubleSpinBox()
+        for edit in (self.black, self.white):
+            edit.setRange(-1e12, 1e12)
+            edit.setDecimals(5)
+            edit.valueChanged.connect(self._draw)
+        self.white.setValue(1.)
+        levels.addWidget(QLabel('Display black'))
+        levels.addWidget(self.black)
+        levels.addWidget(QLabel('white'))
+        levels.addWidget(self.white)
+        fit = QPushButton('Fit levels')
+        fit.clicked.connect(self._fit_levels)
+        levels.addWidget(fit)
+        body.addLayout(levels)
+        self.histogram = QLabel('Display is linear; magenta marks incomplete sample support.')
+        self.histogram.setWordWrap(True)
+        body.addWidget(self.histogram)
+        self.result_label = QLabel('No scientific result yet')
+        self.result_label.setWordWrap(True)
+        body.addWidget(self.result_label)
+        self.warnings = QLabel('')
+        self.warnings.setWordWrap(True)
+        body.addWidget(self.warnings)
+        self.details = QPlainTextEdit()
+        self.details.setReadOnly(True)
+        self.details.setMaximumHeight(105)
+        self.details.setPlaceholderText('Source metadata, result provenance and warnings')
+        body.addWidget(self.details)
+        save_row = QHBoxLayout()
+        self.encoding = QComboBox()
+        self.encoding.addItems(['tiff32', 'tiff16', 'png16'])
+        self.save_black = QLineEdit()
+        self.save_black.setPlaceholderText('Integer black')
+        self.save_white = QLineEdit()
+        self.save_white.setPlaceholderText('Integer white')
+        self.save_gamma = QLineEdit()
+        self.save_gamma.setPlaceholderText('Display gamma (optional)')
+        self.save_btn = QPushButton('Save result…')
+        self.save_btn.clicked.connect(self._choose_save)
+        self.cancel_save_btn = QPushButton('Cancel save')
+        self.cancel_save_btn.clicked.connect(self._cancel_save)
+        for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_btn, self.cancel_save_btn):
+            save_row.addWidget(widget)
+        body.addLayout(save_row)
+        self.save_status = QLabel('Float TIFF preserves scale. Integer output requires shared black/white levels.')
+        self.save_status.setWordWrap(True)
+        body.addWidget(self.save_status)
+        self.encoding.currentIndexChanged.connect(self._export_options)
+        split.addWidget(right)
+        split.setSizes([380, 780])
+        layout.addWidget(split, 1)
+        self.progress = QProgressBar()
         layout.addWidget(self.progress)
+        self.status = QLabel('idle')
+        self.error = QLabel('')
+        self.error.setWordWrap(True)
+        self.error.setStyleSheet('color: #bb3333; font-weight: bold')
         layout.addWidget(self.status)
+        layout.addWidget(self.error)
         self.window.setCentralWidget(root)
-        self.path = Path(path) if path else None
-        self.open_btn.clicked.connect(self._choose)
-        self.run_btn.clicked.connect(self._run)
-        self.cancel_btn.clicked.connect(self._cancel)
         self.timer = QTimer(self.window)
         self.timer.setInterval(200)
         self.timer.timeout.connect(self._poll)
-        if self.path is not None:
-            self.status.setText(str(self.path))
+        self._export_options()
+        self._buttons()
 
-    def show(self) -> None:
+    def show(self):
         self.window.show()
 
-    def _choose(self) -> None:
-        from PySide6.QtWidgets import QFileDialog
+    def _buttons(self):
+        busy = self.job is not None
+        self.open_btn.setEnabled(not busy and not self.closing)
+        self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
+        self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
+        self.controls.setEnabled(not busy and not self.closing)
+        self.cancel_btn.setEnabled(busy and self.cancel_started is None)
+        self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing)
+        self.cancel_save_btn.setEnabled(self.export_worker is not None)
 
-        name, _ = QFileDialog.getOpenFileName(
-            self.window, "Open capture", "", "Captures (*.ser *.h5 *.hdf5)"
-        )
+    def _choose(self):
+        name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.h5 *.hdf5)')
         if name:
             self.path = Path(name)
-            self.status.setText(str(self.path))
+            self.source_label.setText(str(self.path))
+            self._inspect()
 
-    def _run(self) -> None:
-        if self.path is None:
-            from PySide6.QtWidgets import QMessageBox
+    def _inspect(self):
+        self._start(inspect_only=True)
 
-            QMessageBox.information(self.window, "PlanetRecon", "Open a capture first.")
+    def _run(self):
+        self._start(inspect_only=False)
+
+    def _start(self, inspect_only):
+        if self.job is not None or self.path is None or self.closing:
             return
-        if self.job is not None:
-            self.job.close()
-        cfg = replace(self.config, device=self.device.currentText())
-        self.job = start_stack_job(self.path, cfg)
-        self.status.setText(f"running {self.job.job_id} on {cfg.device}")
-        self.progress.setValue(0)
+        try:
+            cfg = self.controls.configuration()
+            handle = (start_stack_job(self.path, cfg, inspect_only=True) if inspect_only
+                      else start_stack_job(self.path, cfg))
+        except (ValueError, TypeError, OSError) as exc:
+            self.error.setText(str(exc))
+            return
+        self.config = cfg
+        self.job = handle
+        handle.snapshot_request.set()
+        self.inspecting = inspect_only
+        self.cancel_started = None
+        self.started = time.monotonic()
+        self.last_seq = 0
+        self.auto_levels = not inspect_only
+        self.error.clear()
+        self.progress.setRange(0, 0)
+        self.status.setText(f'Opening {self.path.name} on {cfg.device}')
         self.timer.start()
+        self._buttons()
 
-    def _cancel(self) -> None:
-        if self.job is not None:
-            self.job.cancel()
-            self.job.close()
-            self.job = None
-            self.status.setText("cancelled")
-            self.timer.stop()
+    def _cancel(self):
+        if self.job is not None and self.cancel_started is None:
+            self.cancel_started = time.monotonic()
+            self.job.cancel_event.set()
+            self.status.setText('Cancelling processing; last received result remains available.')
+            self._buttons()
 
-    def _poll(self) -> None:
+    def _set_input(self, payload):
+        self.input_image = payload['input_image']
+        meta = payload['source_metadata']
+        self.source_label.setText(f"{meta['path']} · {meta['width']}×{meta['height']} · "
+                                  f"{meta['n_frames']} frames · {meta['color_mode']} · "
+                                  f"{meta['bit_depth']} bit · input view: {payload['input_view']}")
+        if self.inspecting:
+            self.view.setCurrentText('Input')
+            self.details.setPlainText(json.dumps(meta, indent=2))
+            self._fit_levels()
+        self._draw()
+
+    def _accept_result(self, payload):
+        result = result_from_payload(payload)
+        if result.n_used < 1 or result.spatial_stride != 1 or not np.any(result.validity):
+            return
+        # Received arrays are independent of the process accumulator. Export retains
+        # this particular object even as a later snapshot replaces the displayed one.
+        for arr in (result.image, result.coverage, result.validity, *result.layer_coverage.values()):
+            arr.flags.writeable = False
+        self.last_result = result
+        self.preview = result.copy_preview()
+        if self.auto_levels:
+            self.auto_levels = False
+            self.view.setCurrentText('Result')
+            self._fit_levels()
+        source = result.provenance.get('source', {}).get('path', 'unknown source')
+        epoch = result.reference_epoch if result.reference_epoch is not None else 'not specified'
+        self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {result.stage} · "
+            f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
+            f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}\nResult source: {source}")
+        self.details.setPlainText(json.dumps(result.metadata(), indent=2))
+        self.warnings.setText('; '.join(result.warnings[:2]) +
+                              (' (more in metadata)' if len(result.warnings) > 2 else ''))
+        self._draw()
+        self._buttons()
+
+    def _poll(self):
         if self.job is None:
             return
-        for event in self.job.poll(timeout=0.0):
-            if event.kind == "progress":
-                frac = float(event.payload.get("fraction", 0.0))
-                self.progress.setValue(int(round(100.0 * min(max(frac, 0.0), 1.0))))
-                self.status.setText(
-                    f"{event.payload.get('stage', '')} "
-                    f"{event.payload.get('backend', '')} "
-                    f"n={event.payload.get('n_used', '')}"
-                )
-            elif event.kind == "preview":
-                image = event.payload.get("image")
-                if image is not None:
-                    self.image_label.setPixmap(_pixmap(image))
-                warns = event.payload.get("warnings") or []
-                if warns:
-                    self.status.setText("; ".join(str(w) for w in warns[:2]))
-            elif event.kind in ("completed", "cancelled", "error"):
-                if event.kind == "completed":
+        handle = self.job
+        if self.cancel_started is not None:
+            elapsed = time.monotonic() - self.cancel_started
+            if elapsed > 3 and handle.process.is_alive():
+                handle.process.kill()
+            elif elapsed > 2 and handle.process.is_alive():
+                handle.process.terminate()
+        for event in handle.poll():
+            if event.job_id != handle.job_id or event.seq <= self.last_seq:
+                continue
+            self.last_seq = event.seq
+            if event.kind == 'source':
+                self._set_input(event.payload)
+            elif event.kind == 'snapshot':
+                self._accept_result(event.payload)
+                handle.snapshot_request.set()
+            elif event.kind == 'progress' and self.cancel_started is None:
+                frac = event.payload.get('fraction')
+                self.progress.setRange(0, 0 if frac is None else 100)
+                if frac is not None:
+                    self.progress.setValue(min(99, max(0, round(100*frac))))
+                elapsed = time.monotonic() - self.started
+                eta = f' · ~{elapsed*(1-frac)/frac:.0f}s remaining' if frac and 0 < frac < 1 else ''
+                self.status.setText(f"{event.payload.get('stage', '')} · {event.payload.get('backend', '')} "
+                    f"· {event.payload.get('n_used', 0)} used · {elapsed:.1f}s elapsed{eta}")
+            elif event.kind in ('completed', 'cancelled', 'error'):
+                if event.kind == 'completed':
+                    if 'source_metadata' in event.payload:
+                        self._set_input(event.payload)
+                        self.status.setText('Input inspected. Configure settings and run.')
+                    else:
+                        self._accept_result(event.payload)
+                        self.status.setText('Processing complete; scientific result is ready to save.')
+                    self.progress.setRange(0, 100)
                     self.progress.setValue(100)
-                    self.status.setText(
-                        f"done backend={event.payload.get('backend')} n={event.payload.get('n_used')}"
-                    )
-                    image = event.payload.get("image")
-                    if image is not None:
-                        self.image_label.setPixmap(_pixmap(image))
-                elif event.kind == "error":
-                    self.status.setText(event.payload.get("message", "error"))
-                self.timer.stop()
-                self.job.close()
-                self.job = None
+                elif event.kind == 'error':
+                    self.error.setText('Processing failed: ' + event.payload.get('message', 'unknown error'))
+                    self.status.setText('Last received result remains inspectable and saveable.')
+                else:
+                    self.status.setText('Processing cancelled. Last received result remains available.')
+                self._finish_job()
                 break
-        if self.job is not None and self.job.state == "failed":
-            self.status.setText(f"worker exited with code {self.job.process.exitcode}")
-            self._shutdown()
 
-    def _shutdown(self, *_args) -> None:
+    def _finish_job(self):
         self.timer.stop()
         if self.job is not None:
             self.job.close()
             self.job = None
+        if self.progress.maximum() == 0:
+            self.progress.setRange(0, 100)
+            self.progress.setValue(0)
+        self.cancel_started = None
+        self._buttons()
+
+    def _view_data(self):
+        mode = self.view.currentText()
+        if mode == 'Input':
+            return self.input_image, None
+        if self.preview is None:
+            return None, None
+        if mode == 'Result':
+            return self.preview.image, self.preview.validity
+        if mode == 'Validity':
+            return self.preview.validity.astype(float), None
+        if mode == 'Coverage':
+            return self.preview.coverage, None
+        return self.preview.layer_coverage.get('globe' if mode == 'Globe coverage' else 'ring'), None
+
+    def _fit_levels(self):
+        arr, mask = self._view_data()
+        if arr is None:
+            return
+        valid = np.isfinite(arr)
+        if mask is not None:
+            valid &= mask
+        values = np.asarray(arr)[valid]
+        low, high = np.percentile(values, [1, 99]) if values.size else (0, 1)
+        if high <= low:
+            high = low + 1
+        self.black.blockSignals(True)
+        self.white.blockSignals(True)
+        self.black.setValue(float(low))
+        self.white.setValue(float(high))
+        self.black.blockSignals(False)
+        self.white.blockSignals(False)
+        self._draw()
+
+    def _draw(self, *_args):
+        if not hasattr(self, 'histogram'):
+            return
+        arr, mask = self._view_data()
+        if arr is None:
+            self.image_label.setText('This view is not available for the current source/result.')
+            return
+        if arr.ndim == 3 and self.channel.currentIndex():
+            c = self.channel.currentIndex()-1
+            arr = arr[..., c]
+            mask = mask[..., c] if mask is not None and mask.ndim == 3 else mask
+        lo, hi = self.black.value(), self.white.value()
+        q = _to_qimage(arr, lo, hi, mask)
+        pixmap = QPixmap.fromImage(q)
+        if self.zoom.currentText() == 'Fit':
+            size = self.canvas.viewport().size()
+            pixmap = pixmap.scaled(size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+        else:
+            scale = float(self.zoom.currentText().rstrip('%')) / 100
+            pixmap = pixmap.scaled(max(1, int(q.width()*scale)), max(1, int(q.height()*scale)))
+        self.image_label.setPixmap(pixmap)
+        self.image_label.resize(pixmap.size())
+        valid = np.isfinite(arr)
+        if mask is not None:
+            valid &= mask
+        samples = arr[valid]
+        clipped = int(np.count_nonzero((samples < lo) | (samples > hi)))
+        bins = np.histogram(samples, bins=16, range=(lo, hi if hi > lo else lo+1))[0] if samples.size else np.zeros(16)
+        heights = np.rint(bins / max(1, bins.max()) * 7).astype(int)
+        bars = ''.join('▁▂▃▄▅▆▇█'[n] for n in heights)
+        self.histogram.setText(f'Preview histogram {bars} · valid {valid.mean():.1%} · '
+            f'{clipped} display-clipped samples · magenta = missing support.\n'
+            'Coverage shows accumulation weights, not calibrated uncertainty. Zoom refers to preview pixels.')
+
+    def _export_options(self):
+        integer = self.encoding.currentText() != 'tiff32'
+        for edit in (self.save_black, self.save_white, self.save_gamma):
+            edit.setEnabled(integer)
+
+    def _choose_save(self):
+        if self.last_result is None or self.export_worker is not None:
+            return
+        try:
+            integer = self.encoding.currentText() != 'tiff32'
+            cfg = ExportConfig(self.encoding.currentText(),
+                float(self.save_black.text()) if integer else None,
+                float(self.save_white.text()) if integer else None,
+                float(self.save_gamma.text()) if integer and self.save_gamma.text().strip() else None)
+        except ValueError as exc:
+            self.save_status.setText(f'Save settings: {exc}')
+            return
+        extension = '.png' if cfg.encoding == 'png16' else '.tif'
+        path, _ = QFileDialog.getSaveFileName(self.window, 'Save scientific result',
+                    'intermediate'+extension if self.last_result.incomplete else 'result'+extension,
+                    'PNG (*.png)' if extension == '.png' else 'TIFF (*.tif *.tiff)',
+                    options=QFileDialog.Option.DontConfirmOverwrite)
+        if not path:
+            return
+        dest = Path(path)
+        if not dest.suffix:
+            dest = dest.with_suffix(extension)
+        overwrite = False
+        if dest.exists() or dest.is_symlink():
+            overwrite = QMessageBox.question(self.window, 'Replace image?', f'Replace {dest}?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+            if not overwrite:
+                return
+        self.save_result(dest, cfg, overwrite=overwrite)
+
+    def save_result(self, path, config=ExportConfig(), *, overwrite=False):
+        if self.last_result is None or self.export_worker is not None or self.closing:
+            return False
+        self.export_worker = ExportWorker(self.last_result, Path(path), config, overwrite)
+        self.export_worker.outcome.connect(self._save_outcome)
+        self.export_worker.finished.connect(self._save_finished)
+        self.save_status.setText(f"Saving {'intermediate' if self.last_result.incomplete else 'final'} "
+                                 f"{config.encoding} from {self.last_result.n_used} frames…")
+        self.export_worker.start()
+        self._buttons()
+        return True
+
+    def _cancel_save(self):
+        if self.export_worker is not None:
+            self.export_worker.cancel_event.set()
+            self.save_status.setText('Cancelling save before publication…')
+
+    def _save_outcome(self, report, error):
+        if error is not None:
+            self.save_status.setText('Save cancelled.' if isinstance(error, ExportCancelled) else f'Save failed: {error}')
+        else:
+            counts = report.metadata['counts']
+            self.save_status.setText(f"Saved {report.path} · {counts['clipped_pixels']} clipped pixels · "
+                f"{counts['invalid_pixels']} invalid pixels · {'incomplete' if report.metadata['result']['incomplete'] else 'final'}\n"
+                f"Metadata: {report.sidecar}")
+
+    def _save_finished(self):
+        worker = self.export_worker
+        if worker is not None:
+            worker.wait()
+            worker.deleteLater()
+            self.export_worker = None
+        self._buttons()
+        if self.closing:
+            self.window.close()
+
+    def _shutdown(self, *_args):
+        self._finish_job()
+        self._cancel_save()
 
 
-def _pixmap(image: np.ndarray):
-    from PySide6.QtGui import QPixmap
-
-    return QPixmap.fromImage(_to_qimage(image))
-
-
-def main(argv: list[str] | None = None) -> int:
+def main(argv=None):
     apply_thread_limits()
     args = list(sys.argv[1:] if argv is None else argv)
-    path = Path(args[0]) if args else None
     app = create_app(args)
-    win = MainWindow(path=path)
+    win = MainWindow(Path(args[0]) if args else None)
     app.aboutToQuit.connect(win._shutdown)
     win.show()
-    return app.exec()
+    code = app.exec()
+    # An external application quit also owns any remaining encoder thread.
+    win._shutdown()
+    if win.export_worker is not None:
+        win.export_worker.wait()
+    return code

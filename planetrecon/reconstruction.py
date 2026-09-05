@@ -61,8 +61,23 @@ class ReconstructionConfig:
     moon_radius_px: float | None = None
     moon_vx_px_s: float = 0.0
     moon_vy_px_s: float = 0.0
+    bias_path: str | None = None
+    dark_path: str | None = None
+    flat_path: str | None = None
+    gain_e_per_adu: float | None = None
+    read_noise_e: float | None = None
+    saturate_adu: float | None = None
 
     def __post_init__(self) -> None:
+        for name in ("bias_path", "dark_path", "flat_path"):
+            value = getattr(self, name)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError(f"{name} must be a nonempty filename or null")
+        for name in ("gain_e_per_adu", "read_noise_e", "saturate_adu"):
+            value = getattr(self, name)
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or value < 0 or (name != "read_noise_e" and value == 0)):
+                raise ValueError(f"invalid {name}")
         if self.schema_name != C.CONFIG_SCHEMA or self.schema_version != C.CONFIG_SCHEMA_VERSION:
             raise ValueError("unsupported config schema or schema_version")
         if self.baseline_operator_version != C.BASELINE_OPERATOR_VERSION:

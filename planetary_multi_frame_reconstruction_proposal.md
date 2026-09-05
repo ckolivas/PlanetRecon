@@ -2206,8 +2206,18 @@ supports mono/RGB PNG16, TIFF16 and IEEE float32 TIFF, shared explicit integer
 mapping, optional labelled display gamma, validity/coverage, provenance and atomic
 image publication with immutable generation companions. Independent CPU read-back
 and interruption regressions plus a local Linux frozen-codec smoke are implemented.
-GUI save controls remain W14. Clean-system and cross-platform qualification remain
-W17. W11 advanced inference still requires W03; GPU qualification requires supported
+GUI save controls are implemented by the W14 follow-up below. Clean-system and
+cross-platform qualification remain W17. W11 advanced inference still requires W03; GPU qualification requires supported
 hardware. W02/W03 remain outstanding and Q3 does not start.
+
+**Implementation follow-up (W14):** Qt now exposes capture, calibration, geometry
+and Saturn settings, acknowledged full-resolution snapshots, input/result/coverage
+views, stable display mapping and scientific save controls. Save runs independently
+of processing and preserves its chosen snapshot. Stale events are rejected;
+cancellation/failure retains the last usable image and close owns its workers.
+CPU GUI integration, load-heartbeat and local frozen GUI/save smoke checks are
+available. RAM/VRAM enforcement, checkpoint resume, parent-crash handling and
+large-capture/cross-platform acceptance remain unfinished. W15 is the next
+independent application step; W02/W03 and the Q3 gate remain unchanged.
 
 Implementation follow-ups record bounded progress, not complete roadmap certification.
