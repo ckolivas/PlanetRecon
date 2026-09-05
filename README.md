@@ -63,7 +63,9 @@ The W04–W08 prototype opens a SER or observed HDF5
 crop, runs an owned cancellable baseline stack (mono / RGB / raw CFA RGB),
 and shows it in a Qt6 raster shell. W09 adds field rotation and a rigid
 oblate-globe surface model as composable operators, with geometry-aware
-accumulation, coverage masks and degeneracy warnings. GPU `auto`/`gpu` probe live CUDA operators
+accumulation, coverage masks and degeneracy warnings. W10 adds Saturn as
+separate globe and ring layers with near/far occlusion, illumination masks
+and moving-moon masking. GPU `auto`/`gpu` probe live CUDA operators
 and fall back to CPU when the PyTorch build cannot run the device (Debian
 torch 2.6 does not support RTX 5070 / sm_120). Default CPU thread cap is 32.
 
@@ -79,18 +81,19 @@ units and provenance.
 This is a translation-only baseline using integer phase correlation and
 normalised CFA backprojection, with unsupported colour samples marked invalid,
 plus a W09 geometry-aware baseline for declared field rotation and/or a rigid
-oblate globe. Field attitude and surface longitude are separate operators;
-unseen longitudes are left at zero coverage rather than filled. CFA parity
-stays in detector coordinates under rotation. Freeze-mid-exposure is the default
-and warns when limb motion during \(T_{\rm exp}\) is large. Saturn layers are
-not implemented (W10). The iterative raw-CFA inverse solve, explicit RAM/VRAM
+oblate globe, and a W10 Saturn layered scene. Field attitude and surface
+longitude are separate operators; unseen longitudes are left at zero coverage
+rather than filled. Saturn rings are a static equatorial annulus with near/far
+occlusion and do not inherit globe spin. CFA parity stays in detector
+coordinates under rotation. Freeze-mid-exposure is the default and warns when
+limb motion during \(T_{\rm exp}\) is large. The iterative raw-CFA inverse solve, explicit RAM/VRAM
 budget enforcement, parent-crash recovery and full W04–W08 acceptance remain
 outstanding. Explicit memory-budget settings are rejected until enforcement
 exists. The Linux PyInstaller spec is a local packaging spike; clean-system and
 cross-platform release acceptance remain planned.
 
 Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
-next scientific work; W10+ add Saturn, export and releases.
+next scientific work; W11+ add production MFBD, export and releases.
 Advanced atmospheric claims stay gated by W03.
 
 Geometry currently runs on CPU float64, including when Auto/GPU is selected.
@@ -126,6 +129,10 @@ python3 -m planetrecon stack --path capture.ser --device auto --out out/stack
 python3 -m planetrecon stack --path capture.ser --geometry combined \
   --field-rate-deg-s 0.2 --surface-rate-deg-s 0.03 --radius 80 --flattening 0.065 \
   --out out/stack-geo
+python3 -m planetrecon stack --path capture.ser --geometry saturn \
+  --radius 80 --flattening 0.098 --sub-obs-lat-deg 20 \
+  --ring-inner 95 --ring-outer 180 --surface-rate-deg-s 0.03 \
+  --out out/stack-saturn
 python3 -m planetrecon gui --path capture.ser
 python3 -m pytest tests -q
 python3 -m pytest tests -q --run-slow

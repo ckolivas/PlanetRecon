@@ -72,13 +72,13 @@ def _lon_lat(x: np.ndarray, y: np.ndarray, z: np.ndarray, a: float, c: float):
     return lon, lat
 
 
-def sky_to_body(
+def globe_hit(
     sx,
     sy,
     globe: GlobeParams,
     t_s: float,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Intersect the near-side spheroid. Returns lon, lat, visible, emission cosine μ."""
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Near-side spheroid hit. Returns lon, lat, visible, μ, observer-z."""
     sx = np.asarray(sx, dtype=np.float64)
     sy = np.asarray(sy, dtype=np.float64)
     a = float(globe.equatorial_radius_px)
@@ -106,11 +106,22 @@ def sky_to_body(
     n_obs_z = r[2, 0] * (xb * inv_a2) + r[2, 1] * (yb * inv_a2) + r[2, 2] * (zb * inv_c2)
     visible = visible & np.isfinite(t_hit) & (n_obs_z >= -1e-12)
     lon, lat = _lon_lat(xb, yb, zb, a, c)
-    # Normalise μ by the local normal length so the limb is ~0 and the centre ~1.
     nlen = np.sqrt((xb * inv_a2) ** 2 + (yb * inv_a2) ** 2 + (zb * inv_c2) ** 2)
     mu = np.where(visible, np.clip(n_obs_z / np.maximum(nlen, 1e-30), 0.0, None), 0.0)
     lon = np.where(visible, lon, np.nan)
     lat = np.where(visible, lat, np.nan)
+    t_hit = np.where(visible, t_hit, np.nan)
+    return lon, lat, visible, mu, t_hit
+
+
+def sky_to_body(
+    sx,
+    sy,
+    globe: GlobeParams,
+    t_s: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Intersect the near-side spheroid. Returns lon, lat, visible, emission cosine μ."""
+    lon, lat, visible, mu, _t = globe_hit(sx, sy, globe, t_s)
     return lon, lat, visible, mu
 
 

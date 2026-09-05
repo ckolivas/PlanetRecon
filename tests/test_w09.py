@@ -355,7 +355,7 @@ def test_freeze_midexposure_error_grows_with_rate():
 
 def test_config_rejects_unknown_geometry_mode():
     with pytest.raises(ValueError, match="geometry_mode"):
-        ReconstructionConfig(geometry_mode="saturn")
+        ReconstructionConfig(geometry_mode="not-a-planet")
     with pytest.raises(ValueError, match="geometry operator"):
         ReconstructionConfig(geometry_operator_version="0.0")
 

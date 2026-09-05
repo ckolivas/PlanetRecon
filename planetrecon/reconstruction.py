@@ -13,7 +13,7 @@ from planetrecon.runtime import default_thread_count
 
 
 DeviceChoice = Literal["cpu", "auto", "gpu"]
-GeometryMode = Literal["none", "field", "surface", "combined"]
+GeometryMode = Literal["none", "field", "surface", "combined", "saturn"]
 
 
 @dataclass(frozen=True)
@@ -51,6 +51,16 @@ class ReconstructionConfig:
     cadence_s: float | None = None
     geometry_duration_warn_s: float = C.GEOMETRY_DURATION_WARN_S
     freeze_mid_exposure: bool = True
+    ring_inner_radius_px: float | None = None
+    ring_outer_radius_px: float | None = None
+    ring_transmission: float = 0.35
+    sun_lon_rad: float | None = None
+    sun_lat_rad: float | None = None
+    moon_x: float | None = None
+    moon_y: float | None = None
+    moon_radius_px: float | None = None
+    moon_vx_px_s: float = 0.0
+    moon_vy_px_s: float = 0.0
 
     def __post_init__(self) -> None:
         if self.schema_name != C.CONFIG_SCHEMA or self.schema_version != C.CONFIG_SCHEMA_VERSION:
@@ -75,7 +85,7 @@ class ReconstructionConfig:
             raise ValueError("unknown endian convention")
         if self.crop not in ("feature", "bland"):
             raise ValueError("unknown crop")
-        if self.geometry_mode not in ("none", "field", "surface", "combined"):
+        if self.geometry_mode not in ("none", "field", "surface", "combined", "saturn"):
             raise ValueError("unknown geometry_mode")
         if type(self.freeze_mid_exposure) is not bool:
             raise ValueError("freeze_mid_exposure must be a bool")
@@ -113,6 +123,49 @@ class ReconstructionConfig:
             raise ValueError("equatorial_radius_px must be positive")
         if self.cadence_s is not None and float(self.cadence_s) <= 0:
             raise ValueError("cadence_s must be positive")
+        if not isinstance(self.ring_transmission, (int, float)) or isinstance(self.ring_transmission, bool):
+            raise ValueError("ring_transmission must be finite")
+        if not math.isfinite(float(self.ring_transmission)) or not (0.0 <= float(self.ring_transmission) <= 1.0):
+            raise ValueError("ring_transmission must be in [0, 1]")
+        for name in ("moon_vx_px_s", "moon_vy_px_s"):
+            value = getattr(self, name)
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+        for name in (
+            "ring_inner_radius_px",
+            "ring_outer_radius_px",
+            "sun_lon_rad",
+            "sun_lat_rad",
+            "moon_x",
+            "moon_y",
+            "moon_radius_px",
+        ):
+            value = getattr(self, name)
+            if value is None:
+                continue
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite or null")
+        if self.ring_inner_radius_px is not None and float(self.ring_inner_radius_px) <= 0:
+            raise ValueError("ring_inner_radius_px must be positive")
+        if self.ring_outer_radius_px is not None and float(self.ring_outer_radius_px) <= 0:
+            raise ValueError("ring_outer_radius_px must be positive")
+        if (
+            self.ring_inner_radius_px is not None
+            and self.ring_outer_radius_px is not None
+            and float(self.ring_outer_radius_px) <= float(self.ring_inner_radius_px)
+        ):
+            raise ValueError("ring outer radius must exceed inner radius")
+        if self.moon_radius_px is not None and float(self.moon_radius_px) <= 0:
+            raise ValueError("moon_radius_px must be positive")
+        if self.sun_lat_rad is not None and abs(float(self.sun_lat_rad)) > math.pi / 2:
+            raise ValueError("sun_lat_rad must be in [-pi/2, pi/2]")
+        moon_fields = (self.moon_x, self.moon_y, self.moon_radius_px)
+        if any(v is not None for v in moon_fields) and not all(v is not None for v in moon_fields):
+            raise ValueError("moon_x, moon_y and moon_radius_px must be set together")
+        if self.geometry_mode != "saturn" and (
+            self.ring_inner_radius_px is not None or self.ring_outer_radius_px is not None
+        ):
+            raise ValueError("ring radii require geometry_mode='saturn'")
         if abs(self.sub_obs_lat_rad) > math.pi / 2:
             raise ValueError("sub_obs_lat_rad must be in [-pi/2, pi/2]")
         if self.geometry_mode != "none" and self.exposure_s > 0 and not self.freeze_mid_exposure:

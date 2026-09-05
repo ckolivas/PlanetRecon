@@ -14,6 +14,8 @@ from planetrecon.geometry.coords import detector_xy_grids
 from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
 from planetrecon.geometry.model import SceneModel, select_scene_model
 from planetrecon.geometry.pose import FramePose, build_frame_poses, globe_for_config, source_times_s, unwrap_angles
+from planetrecon.geometry.rings import RingParams
+from planetrecon.geometry.saturn import LAYER_GLOBE, LAYER_FAR_RING, LAYER_NEAR_RING, MoonTrack, SaturnSceneModel, fit_saturn_geometry
 from planetrecon.geometry.warp import bilinear_push
 from planetrecon.io.source import FrameSource
 from planetrecon.rank import laplacian_score
@@ -82,9 +84,9 @@ def prepare_geometry(
     if times.size == 0:
         raise ValueError("geometry requires at least one frame")
     active_rates = []
-    if config.geometry_mode in ("field", "combined"):
+    if config.geometry_mode in ("field", "combined", "saturn"):
         active_rates.append(config.field_rate_rad_s)
-    if config.geometry_mode in ("surface", "combined"):
+    if config.geometry_mode in ("surface", "combined", "saturn"):
         active_rates.append(config.surface_rate_rad_s)
     if time_origin == "inferred" and (
         any(rate is not None and rate != 0 for rate in active_rates)
@@ -106,8 +108,14 @@ def prepare_geometry(
     if not all(np.all(np.isfinite(plane)) for plane in planes):
         raise ValueError("geometry sample planes must be finite")
     anchor = sample_indices.index(config.reference_index) if config.reference_index in sample_indices else 0
-    disc = fit_disc_ellipse(planes[anchor])
-    degeneracy = list(sequence_degeneracy(planes))
+    saturn_fit = None
+    if config.geometry_mode == "saturn":
+        saturn_fit = fit_saturn_geometry(planes[anchor])
+        disc = saturn_fit
+        degeneracy = list(saturn_fit.get("degeneracy") or ())
+    else:
+        disc = fit_disc_ellipse(planes[anchor])
+        degeneracy = list(sequence_degeneracy(planes))
     cx = config.field_center_x
     cy = config.field_center_y
     radius = config.equatorial_radius_px
@@ -127,7 +135,7 @@ def prepare_geometry(
     field_rate = config.field_rate_rad_s
     field_origin = "user"
     angles = None
-    if field_rate is None and config.geometry_mode in ("field", "combined"):
+    if field_rate is None and config.geometry_mode in ("field", "combined", "saturn"):
         field_origin = "inferred"
         if len(planes) >= 2:
             estimates = [estimate_field_angle(planes[0], plane, cx, cy, radius) for plane in planes]
@@ -149,7 +157,7 @@ def prepare_geometry(
         field_rate = 0.0
     surface_rate = 0.0 if config.surface_rate_rad_s is None else float(config.surface_rate_rad_s)
     surface_origin = "user" if config.surface_rate_rad_s is not None else "inferred"
-    if config.geometry_mode in ("surface", "combined") and config.surface_rate_rad_s is None:
+    if config.geometry_mode in ("surface", "combined", "saturn") and config.surface_rate_rad_s is None:
         degeneracy.append("spin_unconstrained")
         surface_origin = "inferred"
     degeneracy_t = tuple(dict.fromkeys(degeneracy))
@@ -167,7 +175,7 @@ def prepare_geometry(
         degeneracy=degeneracy_t,
     )
     globe = None
-    if config.geometry_mode in ("surface", "combined"):
+    if config.geometry_mode in ("surface", "combined", "saturn"):
         globe = globe_for_config(
             radius,
             config.flattening,
@@ -177,7 +185,36 @@ def prepare_geometry(
             surface_rate,
             config.reference_epoch_s,
         )
-    model = select_scene_model(config.geometry_mode, globe)
+    rings = None
+    moon = None
+    if config.geometry_mode == "saturn":
+        inner = config.ring_inner_radius_px
+        outer = config.ring_outer_radius_px
+        if inner is None and saturn_fit is not None:
+            inner = saturn_fit.get("ring_inner")
+        if outer is None and saturn_fit is not None:
+            outer = saturn_fit.get("ring_outer")
+        if inner is None or outer is None:
+            raise ValueError("saturn geometry requires ring inner/outer radii or a fitted ring annulus")
+        rings = RingParams(
+            inner_radius_px=float(inner),
+            outer_radius_px=float(outer),
+            transmission=float(config.ring_transmission),
+            sun_lon_rad=config.sun_lon_rad,
+            sun_lat_rad=config.sun_lat_rad,
+        )
+        if config.moon_x is not None:
+            moon = MoonTrack(
+                x=float(config.moon_x),
+                y=float(config.moon_y),
+                radius_px=float(config.moon_radius_px),
+                vx_px_s=float(config.moon_vx_px_s),
+                vy_px_s=float(config.moon_vy_px_s),
+            )
+    model = select_scene_model(
+        config.geometry_mode, globe, rings=rings, moon=moon,
+        field_angle0_rad=config.field_angle0_rad,
+    )
     diagnostics = {
         "time_origin": time_origin,
         "time_unit": "frame" if time_origin == "inferred" else "s",
@@ -198,14 +235,25 @@ def prepare_geometry(
         "estimated_angles_rad": None if angles is None else [float(a) for a in angles],
         "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
         "geometry_mode": config.geometry_mode,
+        "rings": None if rings is None else {
+            "inner_radius_px": rings.inner_radius_px,
+            "outer_radius_px": rings.outer_radius_px,
+            "transmission": rings.transmission,
+        },
+        "edge_on_rings": bool(getattr(model, "edge_on", False)),
+        "low_opening": bool(getattr(model, "low_opening", False)),
     }
     warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate)
                 if time_origin != "inferred" else [])
     if time_origin == "inferred":
         warnings.append("cadence_unknown: relative field motion uses frame indices; physical seconds are unmeasured")
-    if "roll_unconstrained" in degeneracy_t and config.geometry_mode in ("field", "combined"):
+    if "roll_unconstrained" in degeneracy_t and config.geometry_mode in ("field", "combined", "saturn"):
         warnings.append("roll_unconstrained: near-circular or featureless disc cannot constrain field angle")
-    if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined"):
+    if getattr(model, "edge_on", False):
+        warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
+    elif getattr(model, "low_opening", False):
+        warnings.append("low_opening: globe/ring overlap is conservatively masked")
+    if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if config.surface_rate_rad_s is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated")
         else:
@@ -253,6 +301,8 @@ def stack_source_geometry(
         channel_order = "mono"
     demosaic_accum = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
+    globe_weight = np.zeros((h, w), dtype=np.float64)
+    ring_weight = np.zeros((h, w), dtype=np.float64)
 
     def cancelled_before_geometry():
         result = ReconstructionResult(
@@ -343,6 +393,8 @@ def stack_source_geometry(
                 "geometry": diagnostics,
             },
             warnings=list(warnings),
+            layer_coverage={"globe": globe_weight.copy(), "ring": ring_weight.copy()}
+            if isinstance(model, SaturnSceneModel) else {},
         )
         seq += 1
         on_event(
@@ -363,11 +415,21 @@ def stack_source_geometry(
                 n_rejected += 1
                 continue
             plane = _alignment_plane(calibrated, color)
-            score = max(laplacian_score(plane), 1e-12)
+            pose = poses[int(index)]
+            layer_labels = None
+            if isinstance(model, SaturnSceneModel):
+                layer_labels = model.classify_detector(xg, yg, pose)["labels"]
+                globe_pix = layer_labels == LAYER_GLOBE
+                if np.any(globe_pix):
+                    plane_score = np.where(globe_pix, plane, float(np.median(plane)))
+                else:
+                    plane_score = plane
+                score = max(laplacian_score(plane_score), 1e-12)
+            else:
+                score = max(laplacian_score(plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
-            pose = poses[int(index)]
             xd, yd, valid = model.src_to_ref(xg, yg, pose, ref_pose)
             y_idx = yd - 0.5
             x_idx = xd - 0.5
@@ -402,6 +464,18 @@ def stack_source_geometry(
                 a, wt = bilinear_push(calibrated, y_idx, x_idx, (h, w), valid=valid)
                 accum += score * a
                 weight += score * wt
+            if layer_labels is not None:
+                ones = np.ones((h, w), dtype=np.float64)
+                _ga, gw = bilinear_push(
+                    ones, y_idx, x_idx, (h, w),
+                    valid=valid & (layer_labels == LAYER_GLOBE),
+                )
+                _ra, rw = bilinear_push(
+                    ones, y_idx, x_idx, (h, w),
+                    valid=valid & ((layer_labels == LAYER_NEAR_RING) | (layer_labels == LAYER_FAR_RING)),
+                )
+                globe_weight += score * gw
+                ring_weight += score * rw
             n_used += 1
         emit("baseline", incomplete=True)
         if cancelled:
@@ -419,6 +493,10 @@ def stack_source_geometry(
         "config": config.to_dict(),
         "calibration_mode": (calibration.mode if calibration else "approximate-noise"),
         "geometry": diagnostics,
+        "layers": {
+            "globe_coverage_mean": float(np.mean(globe_weight)),
+            "ring_coverage_mean": float(np.mean(ring_weight)),
+        },
     }
     if bayer and demosaic_accum is not None:
         provenance["demosaic_first"] = {
@@ -442,6 +520,8 @@ def stack_source_geometry(
         n_rejected=n_rejected,
         provenance=provenance,
         warnings=warnings,
+        layer_coverage={"globe": globe_weight, "ring": ring_weight}
+        if isinstance(model, SaturnSceneModel) else {},
     )
     emit(result.stage, incomplete=result.incomplete)
     return result

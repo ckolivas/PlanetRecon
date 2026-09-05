@@ -145,9 +145,9 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--bayer", default=None, help="override Bayer pattern, e.g. RGGB")
     st.add_argument(
         "--geometry",
-        choices=("none", "field", "surface", "combined"),
+        choices=("none", "field", "surface", "combined", "saturn"),
         default="none",
-        help="W09 geometry: none=translation stack; field/surface/combined use declared rates",
+        help="none=translation; field/surface/combined/saturn use declared geometry",
     )
     st.add_argument("--field-rate-deg-s", type=float, default=None)
     st.add_argument("--surface-rate-deg-s", type=float, default=None)
@@ -155,9 +155,21 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--flattening", type=float, default=0.0)
     st.add_argument("--radius", type=float, default=None, help="equatorial radius in pixels")
     st.add_argument("--pole-pa-deg", type=float, default=0.0)
+    st.add_argument("--sub-obs-lat-deg", type=float, default=0.0)
+    st.add_argument("--sub-obs-lon-deg", type=float, default=0.0)
     st.add_argument("--exposure", type=float, default=0.0, help="integration time in seconds")
     st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")
     st.add_argument("--reference-epoch", type=float, default=0.0)
+    st.add_argument("--ring-inner", type=float, default=None, help="Saturn ring inner radius in pixels")
+    st.add_argument("--ring-outer", type=float, default=None, help="Saturn ring outer radius in pixels")
+    st.add_argument("--ring-transmission", type=float, default=0.35)
+    st.add_argument("--sun-lon-deg", type=float, default=None)
+    st.add_argument("--sun-lat-deg", type=float, default=None)
+    st.add_argument("--moon-x", type=float, default=None)
+    st.add_argument("--moon-y", type=float, default=None)
+    st.add_argument("--moon-radius", type=float, default=None)
+    st.add_argument("--moon-vx", type=float, default=0.0)
+    st.add_argument("--moon-vy", type=float, default=0.0)
 
     prb = sub.add_parser("probe-device", help="probe CPU/GPU backends and print the selection")
     prb.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
@@ -283,9 +295,21 @@ def main(argv: list[str] | None = None) -> int:
             flattening=args.flattening,
             equatorial_radius_px=args.radius,
             pole_pa_rad=_rad(args.pole_pa_deg) or 0.0,
+            sub_obs_lat_rad=_rad(args.sub_obs_lat_deg) or 0.0,
+            sub_obs_lon0_rad=_rad(args.sub_obs_lon_deg) or 0.0,
             exposure_s=args.exposure,
             cadence_s=args.cadence,
             reference_epoch_s=args.reference_epoch,
+            ring_inner_radius_px=args.ring_inner,
+            ring_outer_radius_px=args.ring_outer,
+            ring_transmission=args.ring_transmission,
+            sun_lon_rad=_rad(args.sun_lon_deg),
+            sun_lat_rad=_rad(args.sun_lat_deg),
+            moon_x=args.moon_x,
+            moon_y=args.moon_y,
+            moon_radius_px=args.moon_radius,
+            moon_vx_px_s=args.moon_vx,
+            moon_vy_px_s=args.moon_vy,
         )
         with open_source(
             args.path,

@@ -26,6 +26,7 @@ class ReconstructionResult:
     n_rejected: int = 0
     provenance: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
+    layer_coverage: dict[str, np.ndarray] = field(default_factory=dict)
     schema_name: str = C.RESULT_SCHEMA
     schema_version: str = C.RESULT_SCHEMA_VERSION
 
@@ -35,12 +36,18 @@ class ReconstructionResult:
         vis = np.asarray(self.validity)
         h, w = img.shape[:2]
         scale = max(h, w) / float(max_side) if max(h, w) > max_side else 1.0
+        layers = {}
         if scale > 1.0:
             step = int(np.ceil(scale))
             sl = (slice(None, None, step), slice(None, None, step))
             img = img[sl]
             cov = cov[sl]
             vis = vis[sl]
+            for key, arr in self.layer_coverage.items():
+                layers[key] = np.array(np.asarray(arr)[sl], copy=True)
+        else:
+            for key, arr in self.layer_coverage.items():
+                layers[key] = np.array(arr, copy=True)
         return ReconstructionResult(
             image=np.array(img, copy=True),
             coverage=np.array(cov, copy=True),
@@ -56,4 +63,5 @@ class ReconstructionResult:
             n_rejected=self.n_rejected,
             provenance=dict(self.provenance),
             warnings=list(self.warnings),
+            layer_coverage=layers,
         )

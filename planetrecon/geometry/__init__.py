@@ -1,4 +1,4 @@
-"""Field rotation and rigid oblate-globe surface operators (W09).
+"""Field rotation, rigid oblate-globe and Saturn ring-layer operators (W09–W10).
 
 Coordinate frames: body-fixed surface, projected sky (x right, y up) and
 detector pixels (x column, y row, origin top-left). Field rotation is sky
@@ -17,6 +17,8 @@ from planetrecon.geometry.fit import (
     sequence_degeneracy,
 )
 from planetrecon.geometry.globe import GlobeParams, body_to_sky, render_globe_texture, sky_to_body
+from planetrecon.geometry.rings import RingParams
+from planetrecon.geometry.saturn import SaturnSceneModel, render_saturn
 from planetrecon.geometry.model import (
     SceneModel,
     compose_src_to_ref,
@@ -27,7 +29,9 @@ from planetrecon.geometry.warp import bilinear_push, bilinear_sample, bilinear_s
 
 __all__ = [
     "GlobeParams",
+    "RingParams",
     "FramePose",
+    "SaturnSceneModel",
     "SceneModel",
     "bilinear_push",
     "bilinear_sample",
@@ -41,6 +45,7 @@ __all__ = [
     "fit_disc_ellipse",
     "render_globe_texture",
     "render_observed",
+    "render_saturn",
     "rotate_sky",
     "sequence_degeneracy",
     "sky_to_body",

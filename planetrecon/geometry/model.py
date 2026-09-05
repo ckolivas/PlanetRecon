@@ -72,17 +72,28 @@ class OblateGlobeModel(SceneModel):
         return dx, dy, valid
 
 
-def select_scene_model(mode: str, globe: GlobeParams | None) -> SceneModel:
+def select_scene_model(
+    mode: str, globe: GlobeParams | None, rings=None, moon=None, field_angle0_rad: float = 0.0
+) -> SceneModel:
     if mode == "none":
         raise ValueError("scene model is not used when geometry_mode is none")
     if mode == "field":
         return FieldOnlyModel()
     if globe is None:
-        raise ValueError("surface/combined geometry requires globe parameters")
+        raise ValueError("surface/combined/saturn geometry requires globe parameters")
     if mode == "surface":
         return OblateGlobeModel(globe, apply_field=False, apply_surface=True)
     if mode == "combined":
         return OblateGlobeModel(globe, apply_field=True, apply_surface=True)
+    if mode == "saturn":
+        from planetrecon.geometry.saturn import SaturnSceneModel
+
+        if rings is None:
+            raise ValueError("saturn geometry requires ring inner/outer radii")
+        return SaturnSceneModel(
+            globe, rings, moon=moon, apply_field=True, apply_surface=True,
+            field_angle0_rad=field_angle0_rad,
+        )
     raise ValueError(f"unknown geometry_mode {mode!r}")
 
 

@@ -2193,6 +2193,12 @@ composable CPU operators with bilinear adjoints, pose unwrapping, disc/roll
 degeneracy flags and geometry-aware baseline accumulation. CFA samples stay on
 the detector lattice. Freeze-mid-exposure is the default and warns when limb
 motion during \(T_{\rm exp}\) is large. Unseen longitudes are not filled.
-Saturn layers, production MFBD with geometry, and Q3 remain out of scope here.
+
+**Implementation follow-up (W10):** Saturn is a layered scene, not a disc warp.
+An oblate globe and an equatorial ring annulus share field attitude and have
+independent radiance; globe spin does not drag the rings. Near-ring / globe /
+far-ring depth, transmission, illumination/shadow masks, edge-on degeneracy and
+moving-moon masks are implemented on CPU fixtures. Rings are static over a
+short clip. Production MFBD with geometry and Q3 remain out of scope here.
 
 This revision plans those changes; it does not implement or certify them.

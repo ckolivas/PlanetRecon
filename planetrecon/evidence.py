@@ -130,6 +130,35 @@ def w09_manifest() -> dict:
             "archived": False,
             "default_cpu_threads": C.DEFAULT_CPU_THREADS,
             "device": "cpu",
+            "geometry_operator_version": "1.1",
+            "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
+        },
+    )
+
+
+def w10_manifest() -> dict:
+    return experiment_manifest(
+        "w10-saturn-layers",
+        status="diagnostic",
+        protocol=(
+            "W10 Saturn globe/ring layers with near/far occlusion, static short-clip "
+            "rings, illumination/shadow masks, moving-moon masking, ring-aware disc "
+            "fit and region-separated coverage. CPU fixtures. No Q3 and no R9 family rerun."
+        ),
+        seed_coverage={"unit_fixtures": True, "scientific_families": False},
+        results=[
+            {"path": "tests/test_w10.py", "status": "diagnostic", "kind": "unit"},
+        ],
+        notes=(
+            "Rings are a static axisymmetric profile plus optional azimuthal clumps; "
+            "they do not inherit globe spin. Edge-on rings are masked as degenerate. "
+            "Does not regenerate R9 tables. W02/W03 remain the scientific path; W11 MFBD "
+            "with geometry stays gated by W03."
+        ),
+        extra={
+            "archived": False,
+            "default_cpu_threads": C.DEFAULT_CPU_THREADS,
+            "device": "cpu",
             "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
             "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
         },
@@ -145,6 +174,7 @@ def write_evidence_manifests(results_dir: Path) -> list[Path]:
         write_manifest(dest / "w00-w01.json", w00_w01_manifest()),
         write_manifest(dest / "w04-w08.json", w04_w08_manifest()),
         write_manifest(dest / "w09.json", w09_manifest()),
+        write_manifest(dest / "w10.json", w10_manifest()),
     ]
     for path in written:
         load_manifest(path)
