@@ -429,3 +429,13 @@ a parent crash can leave `planetrecon-events-*` in the system temporary director
 Checkpoint write failures preserve the prior checkpoint and clean temporary
 files. Checkpoints are inspectable/exportable results, **not resumable solver
 state**. Hard RAM limits and checkpoint resume remain unqualified.
+
+W02 science repairs: frozen tip/tilt includes one/two-mode fits; phase optimizers
+report status, gradient norm, actual iterations and objective traces. Blind TV
+and oracle reference choices are frozen inputs, independent of evaluation truth.
+Held-out scores are labelled model-selection data. Nonfinite starts are rejected,
+closure requires a positive well-conditioned gap, and a family cannot pass without
+its declared complete seed/regime set and valid converged crop results. JSON
+preserves booleans/nulls. New Q2 runs write only to the chosen experiment directory;
+archived R9 tables remain immutable. Full development-family qualification is
+still required; these repairs do not authorize Q3.

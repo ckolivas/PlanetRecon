@@ -2230,3 +2230,10 @@ FFmpeg read-back, bounded queue cleanup and killed worker polling. This is
 partial W15 qualification: compressed/OpenDML formats, hard working-set limits,
 resumable checkpoints and parent-crash cleanup remain unsupported. No external
 codec is needed for the declared formats.
+
+**Implementation follow-up (W02):** repaired frozen coordinates at M<=2, typed
+optimizer evidence, truth-independent frozen blind prior/reference selection,
+invalid-loss handling, closure denominator checks, complete-family gating and
+JSON boolean/null serialization. Q2 outputs no longer overwrite archived tables.
+Held-out diagnostics carry an explicit model-selection label; an independent
+assessment and full scientific qualification remain outstanding.

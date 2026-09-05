@@ -347,16 +347,16 @@ def _to_jsonable(obj):
     if isinstance(obj, (list, tuple)):
         return [_to_jsonable(v) for v in obj]
     if isinstance(obj, np.ndarray):
-        return obj.tolist()
+        return _to_jsonable(obj.tolist())
     if isinstance(obj, (np.floating, float)):
         v = float(obj)
         if not np.isfinite(v):
             return None
         return v
-    if isinstance(obj, (np.integer, int)):
-        return int(obj)
     if isinstance(obj, (np.bool_, bool)):
         return bool(obj)
+    if isinstance(obj, (np.integer, int)):
+        return int(obj)
     if obj is None:
         return None
     return obj

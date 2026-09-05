@@ -67,8 +67,11 @@ def prior_limited(gap_e2b: float, gap_e2a: float, ratio: float = C.Q2_PRIOR_LIMI
 
 
 def closure_C(eh_a1o: float, eh_d: float, eh_e2star: float) -> float:
+    if any(v is None for v in (eh_a1o, eh_d, eh_e2star)):
+        return float("nan")
     den = float(eh_a1o) - float(eh_e2star)
-    if not np.isfinite(den) or abs(den) < 1e-15:
+    scale = max(abs(float(eh_a1o)), abs(float(eh_e2star)), 1e-12)
+    if not np.isfinite(eh_d) or not np.isfinite(den) or den <= 1e-8 * scale:
         return float("nan")
     return float((float(eh_a1o) - float(eh_d)) / den)
 
@@ -196,6 +199,7 @@ def _known_transfer_block(
     idx10: np.ndarray,
     reg: Regularisation,
     tv_mu: float,
+    reference_star: str = C.E2_STAR,
 ) -> dict:
     sigma2 = frame_noise_variance(crop.expected, extras["read_noise_e"])
     lam_a = reg.field_e2a(cfg, cfg.eval_size)
@@ -225,9 +229,11 @@ def _known_transfer_block(
     g3_b = m_a1_10["E_H"] - m_e2b_100["E_H"]
     g1_a = m_e2a_10["E_H"] - m_e2a_100["E_H"]
     g1_b = m_e2b_10["E_H"] - m_e2b_100["E_H"]
-    star = e2_star_name(g3_b, g3_a)
+    if reference_star not in ("E2a", "E2b"):
+        raise ValueError("reference_star must be frozen to E2a or E2b")
+    star = reference_star
     eh_star = m_e2b_100["E_H"] if star == "E2b" else m_e2a_100["E_H"]
-    tv_for_d = tv_mu if star == "E2b" else 0.0
+    tv_for_d = tv_mu # frozen development prior; never selected from this crop truth
     return {
         "E2a_S10": m_e2a_10,
         "E2a_S100": m_e2a_100,
@@ -281,6 +287,7 @@ def evaluate_q2_crop(
     *,
     reg: Regularisation = REG,
     tv_mu: float | None = None,
+    reference_star: str = C.E2_STAR,
     holdout: bool = False,
     inits: tuple[str, ...] = C.Q2_INITS,
     m_grid: tuple[int, ...] = C.M_FIT_GRID,
@@ -295,14 +302,14 @@ def evaluate_q2_crop(
     idx10 = top_fraction_indices(scores, C.DECISION_P)
     idx_all = np.arange(n, dtype=np.int64)
     tv_mu = float(reg.e2b_tv if tv_mu is None else tv_mu)
-    known = _known_transfer_block(cfg, crop, extras, idx10, reg, tv_mu)
-    tv_d = float(known["tv_mu_D"])
+    known = _known_transfer_block(cfg, crop, extras, idx10, reg, tv_mu, reference_star)
+    tv_d = float(tv_mu)
     lam_d = reg.field_e2b(cfg, cfg.eval_size) if tv_d > 0 else reg.field_e2a(cfg, cfg.eval_size)
     fwd = PupilForward.from_config(cfg)
     tt = tip_tilt_from_shifts(fwd, crop.shifts)
     m_max = int(m_grid[-1])
     alpha_tt = np.zeros((n, m_max), dtype=np.float64)
-    alpha_tt[:, :2] = tt
+    alpha_tt[:, :min(2, m_max)] = tt[:, :min(2, m_max)]
 
     def fit_initialisation(
         name: str, train_idx: np.ndarray, holdout_idx: np.ndarray
@@ -380,6 +387,8 @@ def evaluate_q2_crop(
                         "train_loss": float(stage["train_loss"]),
                         "holdout_loss": float(stage["holdout_loss"]),
                         "n_outer": int(stage["n_outer"]),
+                        "phase_fits": stage["phase_fits"],
+                        "object_info": stage["object_info"],
                     }
                 )
             final = stages[-1]
@@ -400,6 +409,7 @@ def evaluate_q2_crop(
             "indices": ho.tolist(),
             "chosen_init": holdout_chosen,
             "selection_metric": "minimum final holdout_loss",
+            "partition_role": "model_selection (not independent assessment)",
             "inits": per_init,
             "train_loss": float(last["train_loss"]),
             "holdout_loss": None if last["holdout_loss"] is None else float(last["holdout_loss"]),
@@ -419,6 +429,13 @@ def evaluate_q2_crop(
     eh_a1 = known["A1o_S10"]["E_H"]
     eh_star = known["E_H_E2_star"]
     c_val = closure_C(eh_a1, eh_d, eh_star)
+    metric_valid = np.isfinite(c_val) and not d_metrics["high_band_illconditioned"]
+    converged = all(st.get("object_info", {}).get("converged", False)
+        and all(f["success"] for batch in st.get("phase_fits", []) for f in batch["frames"])
+        for st in inits_out[chosen]["stages"])
+    known_converged = all(known[key].get("_info", {}).get("converged", False)
+        for key in ("E2a_S10", "E2a_S100", "E2b_S10", "E2b_S100", "A1o_S10"))
+    status = "invalid" if not metric_valid else ("valid" if converged and known_converged else "incomplete")
 
     init_public = {}
     for name, block in inits_out.items():
@@ -437,6 +454,10 @@ def evaluate_q2_crop(
 
     return {
         "crop": crop.name,
+        "status": status,
+        "blind_prior_selection": "frozen development tv_mu",
+        "reference_selection": "frozen development reference_star",
+        "assessment_role": "synthetic truth metric; holdout reused for model selection",
         "ranking_hash": ranking_config_hash(),
         "n_frames": n,
         "subset_S10": idx10.tolist(),
@@ -463,6 +484,7 @@ def evaluate_q2_file(
     crops: tuple[str, ...] = ("feature", "bland"),
     reg: Regularisation = REG,
     tv_mu: float | None = None,
+    reference_star: str = C.E2_STAR,
     holdout: bool = False,
     inits: tuple[str, ...] = C.Q2_INITS,
     m_grid: tuple[int, ...] = C.M_FIT_GRID,
@@ -498,6 +520,7 @@ def evaluate_q2_file(
             extras,
             reg=reg,
             tv_mu=tv_mu,
+            reference_star=reference_star,
             holdout=holdout,
             inits=inits,
             m_grid=m_grid,
@@ -522,7 +545,14 @@ def evaluate_q2_file(
     return result
 
 
-def aggregate_q2(results: list[dict], crop: str = "feature") -> dict:
+def aggregate_q2(results: list[dict], crop: str = "feature", *, expected_seeds=None, expected_regimes=None) -> dict:
+    if not results:
+        raise ValueError("empty Q2 family")
+    identities = [(float(r["dr0"]), int(r["seed"])) for r in results]
+    if len(set(identities)) != len(identities):
+        raise ValueError("duplicate Q2 seed/regime")
+    if expected_seeds is not None and len(set(expected_seeds)) != len(expected_seeds):
+        raise ValueError("duplicate expected seeds")
     by_regime: dict[float, list[dict]] = {}
     for res in results:
         by_regime.setdefault(float(res["dr0"]), []).append(res)
@@ -551,8 +581,16 @@ def aggregate_q2(results: list[dict], crop: str = "feature") -> dict:
             else (float("nan"), float("nan"))
         )
         frac = float(np.mean(finite >= C.Q2_CLOSURE_TARGET)) if finite.size else float("nan")
-        passed = bool(finite.size and med >= C.Q2_CLOSURE_TARGET)
+        complete = (expected_seeds is not None and expected_regimes is not None
+            and {int(r["seed"]) for r in items} == set(expected_seeds)
+            and set(by_regime) == set(expected_regimes))
+        valid = finite.size == len(items) and all(r["crops"][crop].get("status") == "valid" for r in items)
+        passed = bool(complete and valid and med >= C.Q2_CLOSURE_TARGET)
         out[str(dr0)] = {
+            "status": "invalid" if finite.size != len(items) else ("incomplete" if not complete or not valid else "valid"),
+            "complete": complete,
+            "n_invalid": int(len(items) - finite.size),
+            "threshold_reached_diagnostic": bool(finite.size and med >= C.Q2_CLOSURE_TARGET),
             "n_seeds": len(items),
             "seeds": [int(r["seed"]) for r in items],
             "C": cvals,
@@ -598,7 +636,7 @@ def format_q2(agg: dict, crop: str) -> str:
             f"  prior_limited_frac={block['prior_limited_frac']}"
         )
         pairs = ", ".join(
-            f"{s}:{c:.4f}" for s, c in zip(block["seeds"], block["C"])
+            f"{s}:{c}" for s, c in zip(block["seeds"], block["C"])
         )
         lines.append(f"         seeds: {pairs}")
         lines.append(
@@ -626,6 +664,7 @@ def _eval_job(payload: dict) -> dict:
         crops=tuple(payload["crops"]),
         reg=reg,
         tv_mu=payload["tv_mu"],
+        reference_star=payload.get("reference_star", C.E2_STAR),
         holdout=payload["holdout"],
         inits=tuple(payload["inits"]),
         m_grid=tuple(payload["m_grid"]),
@@ -646,6 +685,7 @@ def run_q2_family(
     eval_workers: int = 1,
     holdout: bool = False,
     tv_mu: float | None = None,
+    reference_star: str = C.E2_STAR,
     reg: Regularisation | None = None,
     inits: tuple[str, ...] = C.Q2_INITS,
     m_grid: tuple[int, ...] = C.M_FIT_GRID,
@@ -658,6 +698,8 @@ def run_q2_family(
 
     out_dir = Path(out_dir)
     q2_dir = out_dir / "q2"
+    if q2_dir.resolve() == (Path(__file__).resolve().parents[1] / "results/q2").resolve():
+        raise ValueError("archived R9 output directory is immutable; choose a new experiment directory")
     q2_dir.mkdir(parents=True, exist_ok=True)
     wanted = [p for p in family_paths(out_dir, seeds, dr0s=dr0s)]
     ensure_truth_files(out_dir, seeds, generate=generate, workers=workers)
@@ -672,11 +714,9 @@ def run_q2_family(
         if frozen.exists():
             blob = json.loads(frozen.read_text())
             mu = float(blob["chosen_tv_mu"]) if tv_mu is None else float(tv_mu)
-            star = str(blob.get("E2_star", C.E2_STAR))
+            reference_star = str(blob["E2_star"])
             reg = replace(REG, e2b_tv=mu)
-            # E2* choice is applied per-file from the known-transfer gaps; the
-            # freeze records the development lock as documentation.
-            _ = star
+            # Carry the development lock into every evaluation crop.
         else:
             reg = REG if tv_mu is None else replace(REG, e2b_tv=float(tv_mu))
     elif tv_mu is not None:
@@ -690,6 +730,7 @@ def run_q2_family(
             "crops": list(crops),
             "reg": asdict(reg),
             "tv_mu": tv_use,
+            "reference_star": reference_star,
             "holdout": holdout,
             "inits": list(inits),
             "m_grid": list(m_grid),
@@ -713,7 +754,7 @@ def run_q2_family(
     results.sort(key=lambda r: (float(r["dr0"]), int(r["seed"])))
     tables = {}
     for crop in crops:
-        agg = aggregate_q2(results, crop=crop)
+        agg = aggregate_q2(results, crop=crop, expected_seeds=seeds, expected_regimes=dr0s)
         text = format_q2(agg, crop)
         (q2_dir / f"closure_{family_name}_{crop}.txt").write_text(text)
         (q2_dir / f"closure_{family_name}_{crop}.json").write_text(
@@ -734,24 +775,14 @@ def run_q2_family(
     (q2_dir / f"summary_{family_name}.json").write_text(
         json.dumps(_to_jsonable(summary), indent=2, sort_keys=True) + "\n"
     )
-    tracked = Path("results") / "q2"
-    tracked.mkdir(parents=True, exist_ok=True)
-    for name in (
-        f"closure_{family_name}_feature.txt",
-        f"closure_{family_name}_feature.json",
-        f"closure_{family_name}_bland.txt",
-        f"closure_{family_name}_bland.json",
-        f"summary_{family_name}.json",
-    ):
-        src = q2_dir / name
-        if src.exists():
-            (tracked / name).write_text(src.read_text())
     return summary
 
 
 def run_freeze_prior(out_dir: Path) -> dict:
     out_dir = Path(out_dir)
     q2_dir = out_dir / "q2"
+    if q2_dir.resolve() == (Path(__file__).resolve().parents[1] / "results/q2").resolve():
+        raise ValueError("archived R9 output directory is immutable; choose a new experiment directory")
     q2_dir.mkdir(parents=True, exist_ok=True)
     paths = family_paths(out_dir, C.DEV_SEEDS)
     missing = [p for p in paths if not p.exists() or gate_errors(p)]
@@ -764,11 +795,4 @@ def run_freeze_prior(out_dir: Path) -> dict:
     result = freeze_e2b_prior(paths)
     dest = q2_dir / "frozen_prior.json"
     dest.write_text(json.dumps(_to_jsonable(result), indent=2, sort_keys=True) + "\n")
-    tracked = Path("results") / "q2"
-    tracked.mkdir(parents=True, exist_ok=True)
-    (tracked / "frozen_prior.json").write_text(dest.read_text())
-    print(f"chosen TV μ = {result['chosen_tv_mu']}")
-    print(f"E2* = {result['E2_star']}  prior_limited={result['prior_limited']}")
-    print(f"grid medians: {result['candidates']}")
-    print(f"wrote {dest}")
     return result
