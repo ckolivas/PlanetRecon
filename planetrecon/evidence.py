@@ -130,7 +130,7 @@ def w09_manifest() -> dict:
             "archived": False,
             "default_cpu_threads": C.DEFAULT_CPU_THREADS,
             "device": "cpu",
-            "geometry_operator_version": "1.1",
+            "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
             "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
         },
     )
@@ -148,10 +148,13 @@ def w10_manifest() -> dict:
         seed_coverage={"unit_fixtures": True, "scientific_families": False},
         results=[
             {"path": "tests/test_w10.py", "status": "diagnostic", "kind": "unit"},
+            {"path": "tests/test_review_w10.py", "status": "diagnostic", "kind": "regression"},
         ],
         notes=(
             "Rings are a static axisymmetric profile plus optional azimuthal clumps; "
-            "they do not inherit globe spin. Edge-on rings are masked as degenerate. "
+            "they do not inherit globe spin. Edge-on projected bands and mixed transparent "
+            "foreground-ring/globe samples are masked. Physical radii and signed opening "
+            "are required; the automatic fit is diagnostic. Shadow attenuation is illustrative. "
             "Does not regenerate R9 tables. W02/W03 remain the scientific path; W11 MFBD "
             "with geometry stays gated by W03."
         ),

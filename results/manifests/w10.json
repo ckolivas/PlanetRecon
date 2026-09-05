@@ -2,20 +2,25 @@
   "archived": false,
   "baseline_operator_version": "1.1",
   "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
-  "created_utc": "2026-09-05T05:59:51Z",
+  "created_utc": "2026-09-05T06:20:34Z",
   "default_cpu_threads": 32,
   "device": "cpu",
   "document_revision": "R9",
   "estimator_operator_version": "1.2",
   "experiment_id": "w10-saturn-layers",
-  "geometry_operator_version": "1.2",
+  "geometry_operator_version": "1.3",
   "inputs": [],
-  "notes": "Rings are a static axisymmetric profile plus optional azimuthal clumps; they do not inherit globe spin. Edge-on rings are masked as degenerate. Does not regenerate R9 tables. W02/W03 remain the scientific path; W11 MFBD with geometry stays gated by W03.",
+  "notes": "Rings are a static axisymmetric profile plus optional azimuthal clumps; they do not inherit globe spin. Edge-on projected bands and mixed transparent foreground-ring/globe samples are masked. Physical radii and signed opening are required; the automatic fit is diagnostic. Shadow attenuation is illustrative. Does not regenerate R9 tables. W02/W03 remain the scientific path; W11 MFBD with geometry stays gated by W03.",
   "protocol": "W10 Saturn globe/ring layers with near/far occlusion, static short-clip rings, illumination/shadow masks, moving-moon masking, ring-aware disc fit and region-separated coverage. CPU fixtures. No Q3 and no R9 family rerun.",
   "results": [
     {
       "kind": "unit",
       "path": "tests/test_w10.py",
+      "status": "diagnostic"
+    },
+    {
+      "kind": "regression",
+      "path": "tests/test_review_w10.py",
       "status": "diagnostic"
     }
   ],
@@ -27,7 +32,7 @@
     "unit_fixtures": true
   },
   "simulator_operator_version": "1.0",
-  "source_hash": "c9da598223c87d8acce88bdfc0b548b5ad737fad89ede66aa4d863c558b22cc5",
+  "source_hash": "888cf27e3ac11ea95649808ae47dc3225ed38ba4c22e96caaf9f6f468ea48c8f",
   "status": "diagnostic",
   "tolerances": {}
 }

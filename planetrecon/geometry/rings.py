@@ -163,7 +163,9 @@ def ring_shadow_on_globe(
 
 
 def ring_transmission(globe: GlobeParams, rings: RingParams) -> float:
-    """Line-of-sight transmission, increasing toward edge-on until the degeneracy cut."""
+    """Line-of-sight transmission, decreasing toward edge-on until the degeneracy cut."""
+    if rings.transmission == 0.0:
+        return 0.0
     mu = abs(float(ring_normal_obs(globe)[2]))
     mu = max(mu, EDGE_ON_MU)
     return float(np.exp(-rings.optical_depth / mu))

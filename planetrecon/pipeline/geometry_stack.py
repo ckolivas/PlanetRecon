@@ -49,7 +49,7 @@ def _normalise_stack(accum: np.ndarray, weight: np.ndarray) -> np.ndarray:
 
 def _warn_duration_and_exposure(
     times: np.ndarray, config: ReconstructionConfig, radius: float,
-    field_rate: float, surface_rate: float,
+    field_rate: float, surface_rate: float, ring_radius: float | None = None,
 ) -> list[str]:
     warnings: list[str] = []
     if times.size:
@@ -59,12 +59,14 @@ def _warn_duration_and_exposure(
                 "rigid_rotation_duration_limit: "
                 f"clip {span:.3f}s exceeds {config.geometry_duration_warn_s:.3f}s"
             )
-    rates = 0.0
-    if config.geometry_mode in ("field", "combined"):
-        rates += abs(field_rate)
-    if config.geometry_mode in ("surface", "combined"):
-        rates += abs(surface_rate)
-    motion = rates * float(radius) * float(config.exposure_s)
+    speed = 0.0
+    if config.geometry_mode in ("field", "combined", "saturn"):
+        speed += abs(field_rate) * max(radius, ring_radius or radius)
+    if config.geometry_mode in ("surface", "combined", "saturn"):
+        speed += abs(surface_rate) * radius
+    if config.geometry_mode == "saturn" and config.moon_x is not None:
+        speed = max(speed, float(np.hypot(config.moon_vx_px_s, config.moon_vy_px_s)))
+    motion = speed * float(config.exposure_s)
     if motion > C.GEOMETRY_EXPOSURE_MOTION_PX and config.freeze_mid_exposure:
         warnings.append(
             "exposure_geometry_frozen: "
@@ -88,6 +90,8 @@ def prepare_geometry(
         active_rates.append(config.field_rate_rad_s)
     if config.geometry_mode in ("surface", "combined", "saturn"):
         active_rates.append(config.surface_rate_rad_s)
+    if config.geometry_mode == "saturn" and config.moon_x is not None:
+        active_rates.extend([config.moon_vx_px_s, config.moon_vy_px_s])
     if time_origin == "inferred" and (
         any(rate is not None and rate != 0 for rate in active_rates)
         or config.exposure_s > 0 or config.reference_epoch_s != 0
@@ -110,6 +114,12 @@ def prepare_geometry(
     anchor = sample_indices.index(config.reference_index) if config.reference_index in sample_indices else 0
     saturn_fit = None
     if config.geometry_mode == "saturn":
+        if config.sub_obs_lat_rad is None:
+            raise ValueError("Saturn requires a signed sub_obs_lat_rad; ring opening sign cannot be fitted from an ellipse")
+        if config.equatorial_radius_px is None:
+            raise ValueError("Saturn requires an explicit equatorial_radius_px; the disc/ring fit is diagnostic only")
+        if config.ring_inner_radius_px is None or config.ring_outer_radius_px is None:
+            raise ValueError("Saturn requires explicit ring inner/outer radii; annulus fitting is diagnostic only")
         saturn_fit = fit_saturn_geometry(planes[anchor])
         disc = saturn_fit
         degeneracy = list(saturn_fit.get("degeneracy") or ())
@@ -138,7 +148,17 @@ def prepare_geometry(
     if field_rate is None and config.geometry_mode in ("field", "combined", "saturn"):
         field_origin = "inferred"
         if len(planes) >= 2:
-            estimates = [estimate_field_angle(planes[0], plane, cx, cy, radius) for plane in planes]
+            angle_planes = planes
+            angle_radius = radius
+            if config.geometry_mode == "saturn":
+                # Globe texture rotates independently. Fit field attitude from
+                # the exposed ring ansae, never from the spinning inner disc.
+                xp, yp = detector_xy_grids(*planes[0].shape)
+                annulus = np.hypot(xp - cx, yp - cy) > radius + 1.0
+                angle_planes = [np.where(annulus, plane, 0.0) for plane in planes]
+                angle_radius = config.ring_outer_radius_px or radius
+            estimates = [estimate_field_angle(angle_planes[0], plane, cx, cy, angle_radius)
+                         for plane in angle_planes]
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
             angles = unwrap_angles([estimate["angle_rad"] for estimate in estimates])
@@ -180,7 +200,7 @@ def prepare_geometry(
             radius,
             config.flattening,
             config.pole_pa_rad,
-            config.sub_obs_lat_rad,
+            config.sub_obs_lat_rad if config.sub_obs_lat_rad is not None else 0.0,
             config.sub_obs_lon0_rad,
             surface_rate,
             config.reference_epoch_s,
@@ -190,12 +210,6 @@ def prepare_geometry(
     if config.geometry_mode == "saturn":
         inner = config.ring_inner_radius_px
         outer = config.ring_outer_radius_px
-        if inner is None and saturn_fit is not None:
-            inner = saturn_fit.get("ring_inner")
-        if outer is None and saturn_fit is not None:
-            outer = saturn_fit.get("ring_outer")
-        if inner is None or outer is None:
-            raise ValueError("saturn geometry requires ring inner/outer radii or a fitted ring annulus")
         rings = RingParams(
             inner_radius_px=float(inner),
             outer_radius_px=float(outer),
@@ -243,7 +257,8 @@ def prepare_geometry(
         "edge_on_rings": bool(getattr(model, "edge_on", False)),
         "low_opening": bool(getattr(model, "low_opening", False)),
     }
-    warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate)
+    warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate,
+                                           None if rings is None else rings.outer_radius_px)
                 if time_origin != "inferred" else [])
     if time_origin == "inferred":
         warnings.append("cadence_unknown: relative field motion uses frame indices; physical seconds are unmeasured")
@@ -251,7 +266,9 @@ def prepare_geometry(
         warnings.append("roll_unconstrained: near-circular or featureless disc cannot constrain field angle")
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
-    elif getattr(model, "low_opening", False):
+    if isinstance(model, SaturnSceneModel) and model.transmission > 0:
+        warnings.append("mixed_ring_globe: transparent foreground-ring overlap is excluded; a joint layer solve is not implemented")
+    if getattr(model, "low_opening", False):
         warnings.append("low_opening: globe/ring overlap is conservatively masked")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if config.surface_rate_rad_s is None:
@@ -357,6 +374,8 @@ def stack_source_geometry(
     )
     ref_pose = _reference_pose(poses, config)
     xg, yg = detector_xy_grids(h, w)
+    target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
+                      if isinstance(model, SaturnSceneModel) else None)
     n_used = 0
     n_rejected = 0
     warnings = list(report.warnings) + list(geo_warnings)
@@ -418,13 +437,20 @@ def stack_source_geometry(
             pose = poses[int(index)]
             layer_labels = None
             if isinstance(model, SaturnSceneModel):
-                layer_labels = model.classify_detector(xg, yg, pose)["labels"]
-                globe_pix = layer_labels == LAYER_GLOBE
-                if np.any(globe_pix):
-                    plane_score = np.where(globe_pix, plane, float(np.median(plane)))
-                else:
-                    plane_score = plane
-                score = max(laplacian_score(plane_score), 1e-12)
+                from scipy.ndimage import binary_erosion, convolve
+                from planetrecon.rank import LAPLACIAN_KERNEL
+
+                layer_info = model.classify_detector(xg, yg, pose)
+                layer_labels = layer_info["labels"]
+                source_regions = model.reconstruction_regions(layer_info)
+                # Evaluate real globe texture only where the whole Laplacian
+                # stencil stays in one illumination region; no artificial edge.
+                score_mask = (binary_erosion(source_regions == 1, iterations=2 if bayer else 1)
+                              | binary_erosion(source_regions == 3, iterations=2 if bayer else 1))
+                score_mask[:2] = score_mask[-2:] = False
+                score_mask[:, :2] = score_mask[:, -2:] = False
+                lap = convolve(plane, LAPLACIAN_KERNEL, mode="nearest")
+                score = max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12
             else:
                 score = max(laplacian_score(plane), 1e-12)
             if not np.isfinite(score):
@@ -433,13 +459,29 @@ def stack_source_geometry(
             xd, yd, valid = model.src_to_ref(xg, yg, pose, ref_pose)
             y_idx = yd - 0.5
             x_idx = xd - 0.5
+            def push_samples(samples, yd, xd, shape, valid):
+                if target_regions is None:
+                    return bilinear_push(samples, yd, xd, shape, valid=valid)
+                out_shape = (*shape, samples.shape[-1]) if samples.ndim == 3 else shape
+                added = np.zeros(out_shape, dtype=np.float64)
+                covered = np.zeros_like(added)
+                for region in range(5):
+                    a, wt = bilinear_push(samples, yd, xd, shape,
+                                          valid=valid & (source_regions == region))
+                    target_mask = target_regions == region
+                    if samples.ndim == 3:
+                        target_mask = target_mask[..., None]
+                    added += np.where(target_mask, a, 0.0)
+                    covered += np.where(target_mask, wt, 0.0)
+                return added, covered
+
             if bayer:
                 labels = cfa_labels(h, w, color)
                 rgb_add = np.zeros((h, w, 3), dtype=np.float64)
                 rgb_w = np.zeros((h, w, 3), dtype=np.float64)
                 for name, idx in (("R", 0), ("G", 1), ("B", 2)):
                     mask = channel_mask(labels, name)
-                    a, wt = bilinear_push(
+                    a, wt = push_samples(
                         calibrated,
                         y_idx,
                         x_idx,
@@ -450,27 +492,33 @@ def stack_source_geometry(
                     rgb_w[..., idx] = wt
                 accum += score * rgb_add
                 weight += score * rgb_w
+                frame_coverage = rgb_w
                 demo = bilinear_demosaic(calibrated, color)
-                da, dw = bilinear_push(demo, y_idx, x_idx, (h, w), valid=valid)
+                da, dw = push_samples(demo, y_idx, x_idx, (h, w), valid=valid)
                 demosaic_accum += score * da
                 demosaic_weight += score * dw
             elif rgb:
                 if calibrated.ndim == 2:
                     raise ValueError("RGB source produced a 2-D frame")
-                a, wt = bilinear_push(calibrated, y_idx, x_idx, (h, w), valid=valid)
+                a, wt = push_samples(calibrated, y_idx, x_idx, (h, w), valid=valid)
                 accum += score * a
                 weight += score * wt
+                frame_coverage = wt
             else:
-                a, wt = bilinear_push(calibrated, y_idx, x_idx, (h, w), valid=valid)
+                a, wt = push_samples(calibrated, y_idx, x_idx, (h, w), valid=valid)
                 accum += score * a
                 weight += score * wt
+                frame_coverage = wt
+            if not np.any(frame_coverage > 0):
+                n_rejected += 1
+                continue
             if layer_labels is not None:
                 ones = np.ones((h, w), dtype=np.float64)
-                _ga, gw = bilinear_push(
+                _ga, gw = push_samples(
                     ones, y_idx, x_idx, (h, w),
                     valid=valid & (layer_labels == LAYER_GLOBE),
                 )
-                _ra, rw = bilinear_push(
+                _ra, rw = push_samples(
                     ones, y_idx, x_idx, (h, w),
                     valid=valid & ((layer_labels == LAYER_NEAR_RING) | (layer_labels == LAYER_FAR_RING)),
                 )

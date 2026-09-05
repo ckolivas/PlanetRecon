@@ -109,6 +109,22 @@ estimates can alias large rotations between sampled frames; use a declared rate
 for those captures. Moment-based radius estimates are approximate for textured or
 limb-darkened discs, so use a measured radius for surface reconstruction.
 
+Saturn reconstruction requires explicit globe and ring radii and a signed
+`--sub-obs-lat-deg` opening. The automatic Saturn fit is diagnostic and can supply
+an approximate centre; `--center-x` and `--center-y` override it. Ring inclination
+sign cannot be recovered from an ellipse alone. Near-edge-on projected ring bands
+are masked, including their overlap with the globe. Transparent foreground-ring
+and globe mixtures are excluded because the baseline does not solve their separate
+radiances. Samples stay within matching globe, ring, background and shadow regions
+at the output epoch. The renderer's shadow attenuation is illustrative, not a
+calibrated photometric model.
+
+Saturn results retain `layer_coverage` in worker previews/results and checkpoints.
+CLI NPZ files contain `layer_coverage__globe` and `layer_coverage__ring` arrays;
+these are spatial sample coverage, while `validity` remains per colour for CFA.
+Moon positions and velocities use the reference detector axes (+x right, +y down)
+and then follow field rotation. A moving moon requires known cadence or timestamps.
+
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 

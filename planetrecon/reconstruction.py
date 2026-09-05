@@ -44,7 +44,7 @@ class ReconstructionConfig:
     equatorial_radius_px: float | None = None
     flattening: float = 0.0
     pole_pa_rad: float = 0.0
-    sub_obs_lat_rad: float = 0.0
+    sub_obs_lat_rad: float | None = None
     sub_obs_lon0_rad: float = 0.0
     surface_rate_rad_s: float | None = None
     exposure_s: float = 0.0
@@ -94,7 +94,6 @@ class ReconstructionConfig:
             "field_angle0_rad",
             "flattening",
             "pole_pa_rad",
-            "sub_obs_lat_rad",
             "sub_obs_lon0_rad",
             "exposure_s",
             "geometry_duration_warn_s",
@@ -107,6 +106,7 @@ class ReconstructionConfig:
         if float(self.exposure_s) < 0.0 or float(self.geometry_duration_warn_s) < 0.0:
             raise ValueError("exposure and duration warning must be non-negative")
         for name in (
+            "sub_obs_lat_rad",
             "field_rate_rad_s",
             "field_center_x",
             "field_center_y",
@@ -166,7 +166,15 @@ class ReconstructionConfig:
             self.ring_inner_radius_px is not None or self.ring_outer_radius_px is not None
         ):
             raise ValueError("ring radii require geometry_mode='saturn'")
-        if abs(self.sub_obs_lat_rad) > math.pi / 2:
+        if self.geometry_mode != "saturn" and (
+            any(v is not None for v in moon_fields) or self.sun_lon_rad is not None
+            or self.sun_lat_rad is not None or self.ring_transmission != 0.35
+            or self.moon_vx_px_s != 0 or self.moon_vy_px_s != 0
+        ):
+            raise ValueError("ring, Sun and moon settings require geometry_mode='saturn'")
+        if self.moon_x is None and (self.moon_vx_px_s != 0 or self.moon_vy_px_s != 0):
+            raise ValueError("moon velocity requires a complete moon track")
+        if self.sub_obs_lat_rad is not None and abs(self.sub_obs_lat_rad) > math.pi / 2:
             raise ValueError("sub_obs_lat_rad must be in [-pi/2, pi/2]")
         if self.geometry_mode != "none" and self.exposure_s > 0 and not self.freeze_mid_exposure:
             raise ValueError("exposure quadrature is not supported; use freeze_mid_exposure")

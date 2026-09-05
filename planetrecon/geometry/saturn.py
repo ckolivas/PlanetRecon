@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -48,13 +48,13 @@ class MoonTrack:
 def moon_mask(
     x, y, pose: FramePose, moon: MoonTrack, t_ref: float, field_ref_rad: float = 0.0
 ) -> np.ndarray:
-    """Detector mask. ``moon.x/y`` are detector coordinates at the reference epoch."""
+    """Track in reference detector axes: +x right, +y down; rotate with field attitude."""
     dt = float(pose.t_s) - float(t_ref)
-    sx0, sy0 = detector_to_sky(moon.x, moon.y, pose.cx, pose.cy)
+    sx0, sy0 = detector_to_sky(
+        moon.x + moon.vx_px_s * dt, moon.y + moon.vy_px_s * dt, pose.cx, pose.cy
+    )
     sx0, sy0 = field_rotate_sky(sx0, sy0, -float(field_ref_rad))
-    sx = sx0 + moon.vx_px_s * dt
-    sy = sy0 + moon.vy_px_s * dt
-    rx, ry = field_rotate_sky(sx, sy, pose.field_angle_rad)
+    rx, ry = field_rotate_sky(sx0, sy0, pose.field_angle_rad)
     mx, my = sky_to_detector(rx, ry, pose.cx, pose.cy)
     return np.hypot(np.asarray(x) - mx, np.asarray(y) - my) <= moon.radius_px
 
@@ -68,14 +68,15 @@ def classify_layers(
 ) -> dict:
     lon, lat, on_globe, mu, t_globe = globe_hit(sx, sy, globe, t_s)
     radius, az, t_ring, on_ring, edge_on = intersect_ring(sx, sy, globe, rings)
-    near = np.zeros(np.asarray(sx).shape, dtype=bool)
-    far = np.zeros_like(near)
-    if not edge_on:
-        both = on_globe & on_ring
-        near = on_ring & (~on_globe | (both & (t_ring >= t_globe)))
-        far = on_ring & ~near
-        if np.any(both & ~np.isfinite(t_ring)):
-            far = far | (both & ~np.isfinite(t_ring))
+    # Front/back halves are defined by observer depth, including exposed ansae.
+    near = on_ring & (t_ring >= 0.0)
+    far = on_ring & (t_ring < 0.0)
+    n = ring_normal_obs(globe)
+    # At small opening the plane intersection is unavailable. Mask the entire
+    # projected band (including its overlap with the globe), with a pixel margin.
+    projected_band = (np.abs(n[0] * sx + n[1] * sy)
+                      <= rings.outer_radius_px * abs(n[2]) + 0.5)
+    projected_band &= np.hypot(sx, sy) <= rings.outer_radius_px + 0.5
     labels = np.full(np.asarray(sx).shape, LAYER_BACKGROUND, dtype=np.int8)
     labels = np.where(far, LAYER_FAR_RING, labels)
     labels = np.where(on_globe, LAYER_GLOBE, labels)
@@ -94,6 +95,7 @@ def classify_layers(
         "near_ring": near,
         "far_ring": far,
         "edge_on": edge_on,
+        "ring_degenerate": projected_band if edge_on else np.zeros_like(on_ring),
         "globe_shadow": globe_shadow_on_ring(sx, sy, t_ring, on_ring, globe, rings),
         "ring_shadow": ring_shadow_on_globe(sx, sy, t_globe, on_globe, globe, rings),
     }
@@ -112,6 +114,8 @@ class SaturnSceneModel(SceneModel):
         apply_surface: bool = True,
         field_angle0_rad: float = 0.0,
     ):
+        if rings.inner_radius_px <= globe.equatorial_radius_px:
+            raise ValueError("ring inner radius must lie outside the equatorial globe")
         self.globe = globe
         self.rings = rings
         self.moon = moon
@@ -125,15 +129,17 @@ class SaturnSceneModel(SceneModel):
         self.low_opening = (not self.edge_on) and n_z < 0.2
         self.transmission = 0.0 if self.edge_on else ring_transmission(globe, rings)
 
-    def classify_detector(self, x, y, pose: FramePose) -> dict:
+    def classify_detector(self, x, y, pose: FramePose, *, mask_moon: bool = True) -> dict:
         sx, sy = detector_to_sky(x, y, pose.cx, pose.cy)
         if self.apply_field:
             sx, sy = field_rotate_sky(sx, sy, -pose.field_angle_rad)
         t = pose.t_s if self.apply_surface else self.globe.reference_epoch_s
         info = classify_layers(sx, sy, self.globe, self.rings, t)
-        if self.moon is not None:
+        if self.moon is not None and mask_moon:
+            moon_pose = pose if self.apply_field else replace(pose, field_angle_rad=0.0)
             moon = moon_mask(
-                x, y, pose, self.moon, self.globe.reference_epoch_s, self.field_angle0_rad
+                x, y, moon_pose, self.moon, self.globe.reference_epoch_s,
+                self.field_angle0_rad if self.apply_field else 0.0
             )
             info["labels"] = np.where(moon, LAYER_MOON, info["labels"])
             info["moon"] = moon
@@ -141,21 +147,40 @@ class SaturnSceneModel(SceneModel):
             info["moon"] = np.zeros(np.asarray(x).shape, dtype=bool)
         return info
 
+    def reconstruction_regions(self, info: dict) -> np.ndarray:
+        """Disjoint, unmixed regions suitable for a single-image backprojection.
+
+        Codes 1/3 are lit/shadowed globe, 2/4 are lit/shadowed rings, 0 is
+        background. -1 is unsupported. A transparent ring over a moving globe
+        cannot be inverted with a single warp, so that mixture is excluded.
+        """
+        labels = info["labels"]
+        globe = labels == LAYER_GLOBE
+        ring = (labels == LAYER_NEAR_RING) | (labels == LAYER_FAR_RING)
+        region = np.zeros(labels.shape, dtype=np.int8)
+        region = np.where(globe, np.where(info["ring_shadow"], 3, 1), region)
+        region = np.where(ring, np.where(info["globe_shadow"], 4, 2), region)
+        invalid = info["moon"] | info["ring_degenerate"]
+        if self.transmission > 0:
+            invalid |= info["near_ring"] & info["on_globe"]
+        if self.low_opening:
+            invalid |= info["on_globe"] & info["on_ring"]
+        return np.where(invalid, -1, region)
+
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
         info = self.classify_detector(x, y, src)
         gx, gy, gv = self.globe_model.src_to_ref(x, y, src, ref)
-        fx, fy, fv = self.field_model.src_to_ref(x, y, src, ref)
+        field_src = src if self.apply_field else replace(src, field_angle_rad=0.0)
+        field_ref = ref if self.apply_field else replace(ref, field_angle_rad=0.0)
+        fx, fy, fv = self.field_model.src_to_ref(x, y, field_src, field_ref)
         globe = info["labels"] == LAYER_GLOBE
-        moon = info["labels"] == LAYER_MOON
         dx = np.where(globe, gx, fx)
         dy = np.where(globe, gy, fy)
-        valid = np.where(moon, False, np.where(globe, gv, fv))
-        if self.edge_on:
-            ring = (info["labels"] == LAYER_NEAR_RING) | (info["labels"] == LAYER_FAR_RING)
-            valid = valid & ~ring
-        elif self.low_opening:
-            overlap = info["on_globe"] & info["on_ring"] & ~moon
-            valid = valid & ~overlap
+        regions = self.reconstruction_regions(info)
+        # The target is the static planet scene, with moons removed. Check both
+        # visibility and illumination before admitting a correspondence.
+        target = self.reconstruction_regions(self.classify_detector(dx, dy, ref, mask_moon=False))
+        valid = np.where(globe, gv, fv) & (regions >= 0) & (regions == target)
         return dx, dy, valid
 
 
@@ -226,6 +251,7 @@ def render_saturn(
     ring_tex=None,
     moon: MoonTrack | None = None,
     apply_field: bool = True,
+    field_angle0_rad: float = 0.0,
 ) -> np.ndarray:
     """Composite far ring, globe, near ring. Globe spin does not move the rings."""
     x, y = detector_xy_grids(height, width)
@@ -266,6 +292,8 @@ def render_saturn(
         img = np.where(near_only, near_vals, img)
         img = np.where(overlap, near_vals + trans * img, img)
     if moon is not None:
-        m = moon_mask(x, y, pose, moon, globe.reference_epoch_s)
+        moon_pose = pose if apply_field else replace(pose, field_angle_rad=0.0)
+        m = moon_mask(x, y, moon_pose, moon, globe.reference_epoch_s,
+                      field_angle0_rad if apply_field else 0.0)
         img = np.where(m, 1.35, img)
     return img

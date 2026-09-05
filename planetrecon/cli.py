@@ -154,8 +154,10 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--field-angle0-deg", type=float, default=0.0)
     st.add_argument("--flattening", type=float, default=0.0)
     st.add_argument("--radius", type=float, default=None, help="equatorial radius in pixels")
+    st.add_argument("--center-x", type=float, default=None, help="disc centre x in detector pixel-centre coordinates")
+    st.add_argument("--center-y", type=float, default=None, help="disc centre y in detector pixel-centre coordinates")
     st.add_argument("--pole-pa-deg", type=float, default=0.0)
-    st.add_argument("--sub-obs-lat-deg", type=float, default=0.0)
+    st.add_argument("--sub-obs-lat-deg", type=float, default=None)
     st.add_argument("--sub-obs-lon-deg", type=float, default=0.0)
     st.add_argument("--exposure", type=float, default=0.0, help="integration time in seconds")
     st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")
@@ -294,8 +296,10 @@ def main(argv: list[str] | None = None) -> int:
             field_angle0_rad=_rad(args.field_angle0_deg) or 0.0,
             flattening=args.flattening,
             equatorial_radius_px=args.radius,
+            field_center_x=args.center_x,
+            field_center_y=args.center_y,
             pole_pa_rad=_rad(args.pole_pa_deg) or 0.0,
-            sub_obs_lat_rad=_rad(args.sub_obs_lat_deg) or 0.0,
+            sub_obs_lat_rad=_rad(args.sub_obs_lat_deg),
             sub_obs_lon0_rad=_rad(args.sub_obs_lon_deg) or 0.0,
             exposure_s=args.exposure,
             cadence_s=args.cadence,
@@ -324,7 +328,8 @@ def main(argv: list[str] | None = None) -> int:
         np.savez_compressed(npz, image=result.image, coverage=result.coverage,
                             validity=result.validity, units=result.units,
                             reference_epoch=result.reference_epoch or "",
-                            provenance=json.dumps(result.provenance, sort_keys=True))
+                            provenance=json.dumps(result.provenance, sort_keys=True),
+                            **{f"layer_coverage__{name}": value for name, value in result.layer_coverage.items()})
         print(
             f"wrote {npz} backend={result.backend} n_used={result.n_used} "
             f"rejected={result.n_rejected} incomplete={result.incomplete}"

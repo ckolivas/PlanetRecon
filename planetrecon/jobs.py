@@ -94,6 +94,7 @@ def _worker_main(
                     "incomplete": result.incomplete,
                     "image": preview.image,
                     "coverage": preview.coverage,
+                    "layer_coverage": preview.layer_coverage,
                     "channel_order": result.channel_order,
                     "reference_epoch": result.reference_epoch,
                     "warnings": result.warnings,
@@ -136,6 +137,7 @@ def _worker_main(
                 "reference_epoch": result.reference_epoch,
                 "image": result.image,
                 "coverage": result.coverage,
+                "layer_coverage": result.layer_coverage,
                 "validity": result.validity,
                 "units": result.units,
                 "incomplete": result.incomplete,
@@ -179,10 +181,12 @@ def _write_checkpoint(
         "reference_epoch": result.reference_epoch,
         "incomplete": result.incomplete,
         "provenance": result.provenance,
+        "layer_names": sorted(result.layer_coverage),
     }
     tmp = dest.with_suffix(".tmp.npz")
     np.savez_compressed(tmp, image=result.image, coverage=result.coverage,
-                        validity=result.validity, metadata=json.dumps(meta, sort_keys=True))
+                        validity=result.validity, metadata=json.dumps(meta, sort_keys=True),
+                        **{f"layer_coverage__{name}": value for name, value in result.layer_coverage.items()})
     tmp.replace(dest)
 
 
@@ -195,6 +199,8 @@ def load_checkpoint(path: Path, config: ReconstructionConfig) -> dict:
             raise ValueError("legacy non-atomic checkpoint is unsupported")
         meta = json.loads(str(data["metadata"]))
         arrays = {key: data[key] for key in ("image", "coverage", "validity")}
+        arrays["layer_coverage"] = {name: data[f"layer_coverage__{name}"]
+                                    for name in meta.get("layer_names", [])}
     if meta.get("schema") != C.JOB_SCHEMA or meta.get("schema_version") != C.JOB_SCHEMA_VERSION:
         raise ValueError("unsupported checkpoint schema")
     stored = ReconstructionConfig.from_dict(meta["config"])
