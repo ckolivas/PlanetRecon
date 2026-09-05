@@ -111,11 +111,12 @@ class ReconstructionConfig:
                 raise ValueError(f"{name} must be finite or null")
         if self.equatorial_radius_px is not None and float(self.equatorial_radius_px) <= 0:
             raise ValueError("equatorial_radius_px must be positive")
-        if self.cadence_s is not None and float(self.cadence_s) < 0:
-            raise ValueError("cadence_s must be non-negative")
-        if self.geometry_mode in ("surface", "combined") and self.equatorial_radius_px is None:
-            # Radius may be inferred from the disc; not an error at config time.
-            pass
+        if self.cadence_s is not None and float(self.cadence_s) <= 0:
+            raise ValueError("cadence_s must be positive")
+        if abs(self.sub_obs_lat_rad) > math.pi / 2:
+            raise ValueError("sub_obs_lat_rad must be in [-pi/2, pi/2]")
+        if self.geometry_mode != "none" and self.exposure_s > 0 and not self.freeze_mid_exposure:
+            raise ValueError("exposure quadrature is not supported; use freeze_mid_exposure")
         # Budget enforcement has not been implemented; do not silently promise it.
         if self.max_ram_bytes is not None or self.max_vram_bytes is not None:
             raise ValueError("explicit memory budgets are not supported by the baseline yet")

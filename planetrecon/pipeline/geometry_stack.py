@@ -45,7 +45,10 @@ def _normalise_stack(accum: np.ndarray, weight: np.ndarray) -> np.ndarray:
     return np.divide(accum, weight, out=np.zeros_like(accum), where=weight > 0)
 
 
-def _warn_duration_and_exposure(times: np.ndarray, config: ReconstructionConfig, radius: float) -> list[str]:
+def _warn_duration_and_exposure(
+    times: np.ndarray, config: ReconstructionConfig, radius: float,
+    field_rate: float, surface_rate: float,
+) -> list[str]:
     warnings: list[str] = []
     if times.size:
         span = float(times[-1] - times[0])
@@ -55,10 +58,10 @@ def _warn_duration_and_exposure(times: np.ndarray, config: ReconstructionConfig,
                 f"clip {span:.3f}s exceeds {config.geometry_duration_warn_s:.3f}s"
             )
     rates = 0.0
-    if config.field_rate_rad_s:
-        rates += abs(float(config.field_rate_rad_s))
-    if config.surface_rate_rad_s:
-        rates += abs(float(config.surface_rate_rad_s))
+    if config.geometry_mode in ("field", "combined"):
+        rates += abs(field_rate)
+    if config.geometry_mode in ("surface", "combined"):
+        rates += abs(surface_rate)
     motion = rates * float(radius) * float(config.exposure_s)
     if motion > C.GEOMETRY_EXPOSURE_MOTION_PX and config.freeze_mid_exposure:
         warnings.append(
@@ -72,26 +75,53 @@ def prepare_geometry(
     source: FrameSource,
     config: ReconstructionConfig,
     planes: list[np.ndarray] | None = None,
+    *,
+    sample_indices: list[int] | None = None,
 ) -> tuple[list[FramePose], SceneModel, dict, list[str]]:
     times, time_origin = source_times_s(source, cadence_s=config.cadence_s)
-    shape = source.frame_shape()
-    h, w = int(shape[0]), int(shape[1])
+    if times.size == 0:
+        raise ValueError("geometry requires at least one frame")
+    active_rates = []
+    if config.geometry_mode in ("field", "combined"):
+        active_rates.append(config.field_rate_rad_s)
+    if config.geometry_mode in ("surface", "combined"):
+        active_rates.append(config.surface_rate_rad_s)
+    if time_origin == "inferred" and (
+        any(rate is not None and rate != 0 for rate in active_rates)
+        or config.exposure_s > 0 or config.reference_epoch_s != 0
+    ):
+        raise ValueError("geometry in seconds requires measured timestamps or an explicit cadence_s")
     if planes is None:
         color = source.color_mode()
-        planes = [_alignment_plane(np.asarray(source.read_raw(0), dtype=np.float64), color)]
-    disc = fit_disc_ellipse(planes[0])
+        sample_indices = sorted({0, source.n_frames() // 2, source.n_frames() - 1, config.reference_index})
+        planes = [_alignment_plane(np.asarray(source.read_raw(i), dtype=np.float64), color) for i in sample_indices]
+    if sample_indices is None:
+        sample_indices = list(range(len(planes)))
+    if not planes or len(sample_indices) != len(planes):
+        raise ValueError("geometry planes require matching sample_indices")
+    indices = np.asarray(sample_indices)
+    if (not np.issubdtype(indices.dtype, np.integer) or np.any(indices < 0)
+            or np.any(indices >= len(times)) or np.any(np.diff(indices) <= 0)):
+        raise ValueError("sample_indices must be unique increasing frame indices")
+    if not all(np.all(np.isfinite(plane)) for plane in planes):
+        raise ValueError("geometry sample planes must be finite")
+    anchor = sample_indices.index(config.reference_index) if config.reference_index in sample_indices else 0
+    disc = fit_disc_ellipse(planes[anchor])
     degeneracy = list(sequence_degeneracy(planes))
     cx = config.field_center_x
     cy = config.field_center_y
     radius = config.equatorial_radius_px
     centre_origin = "user"
+    if radius is None and not disc["ok"] and cx is not None and cy is not None and config.geometry_mode == "field":
+        h, w = source.frame_shape()[:2]
+        radius = float(np.hypot(h, w) / 2)
     if cx is None or cy is None or radius is None:
         if not disc["ok"]:
             raise ValueError("geometry requires a disc centre/radius or a fitted disc")
         cx = float(disc["cx"] if cx is None else cx)
         cy = float(disc["cy"] if cy is None else cy)
         radius = float(disc["radius"] if radius is None else radius)
-        centre_origin = "inferred" if config.field_center_x is None else "user"
+        centre_origin = "inferred" if config.field_center_x is None or config.field_center_y is None else "user"
         if config.field_center_x is None or config.field_center_y is None:
             degeneracy = list(dict.fromkeys([*degeneracy, *disc["degeneracy"]]))
     field_rate = config.field_rate_rad_s
@@ -100,14 +130,15 @@ def prepare_geometry(
     if field_rate is None and config.geometry_mode in ("field", "combined"):
         field_origin = "inferred"
         if len(planes) >= 2:
-            est = [
-                estimate_field_angle(planes[0], planes[i], cx, cy, radius)["angle_rad"]
-                for i in range(len(planes))
-            ]
-            angles = unwrap_angles(est)
-            dt = np.diff(times[: len(angles)])
-            if np.any(np.abs(dt) > 1e-12) and len(angles) >= 2:
-                field_rate = float(np.median(np.diff(angles) / dt))
+            estimates = [estimate_field_angle(planes[0], plane, cx, cy, radius) for plane in planes]
+            for estimate in estimates:
+                degeneracy.extend(estimate["degeneracy"])
+            angles = unwrap_angles([estimate["angle_rad"] for estimate in estimates])
+            dt = np.diff(times[indices])
+            usable = np.array([not estimate["degeneracy"] for estimate in estimates])
+            pairs = usable[:-1] & usable[1:]
+            if np.any(pairs):
+                field_rate = float(np.median(np.diff(angles)[pairs] / dt[pairs]))
             else:
                 field_rate = 0.0
                 degeneracy.append("roll_unconstrained")
@@ -149,6 +180,7 @@ def prepare_geometry(
     model = select_scene_model(config.geometry_mode, globe)
     diagnostics = {
         "time_origin": time_origin,
+        "time_unit": "frame" if time_origin == "inferred" else "s",
         "centre_origin": centre_origin,
         "field_origin": field_origin,
         "surface_origin": surface_origin,
@@ -159,15 +191,25 @@ def prepare_geometry(
         "surface_rate_rad_s": surface_rate,
         "degeneracy": list(degeneracy_t),
         "disc": {k: (v if not isinstance(v, tuple) else list(v)) for k, v in disc.items()},
+        "reference_index": int(sample_indices[anchor]),
+        "sample_indices": [int(i) for i in sample_indices],
+        "sample_times_s": [float(t) for t in times[indices]],
+        "reference_epoch_s": float(config.reference_epoch_s),
         "estimated_angles_rad": None if angles is None else [float(a) for a in angles],
         "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
         "geometry_mode": config.geometry_mode,
     }
-    warnings = _warn_duration_and_exposure(times, config, radius)
-    if "roll_unconstrained" in degeneracy_t:
+    warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate)
+                if time_origin != "inferred" else [])
+    if time_origin == "inferred":
+        warnings.append("cadence_unknown: relative field motion uses frame indices; physical seconds are unmeasured")
+    if "roll_unconstrained" in degeneracy_t and config.geometry_mode in ("field", "combined"):
         warnings.append("roll_unconstrained: near-circular or featureless disc cannot constrain field angle")
-    if "spin_unconstrained" in degeneracy_t:
-        warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated")
+    if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined"):
+        if config.surface_rate_rad_s is None:
+            warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated")
+        else:
+            warnings.append("spin_unconstrained: image texture cannot constrain spin; using supplied surface rate")
     return poses, model, diagnostics, warnings
 
 
@@ -179,7 +221,12 @@ def stack_source_geometry(
     on_event: PreviewFn | None = None,
     should_cancel: CancelFn | None = None,
 ) -> ReconstructionResult:
-    backend, report = select_backend(config.device, threads=config.threads)
+    # All geometry operators currently execute in NumPy float64.
+    backend, report = select_backend("cpu", threads=config.threads)
+    report.requested = config.device
+    if config.device != "cpu":
+        report.fallback = True
+        report.reason = "geometry_cpu_only: geometry operators currently run on CPU float64"
     meta = source.metadata()
     color = source.color_mode()
     n = source.n_frames()
@@ -207,14 +254,57 @@ def stack_source_geometry(
     demosaic_accum = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
 
+    def cancelled_before_geometry():
+        result = ReconstructionResult(
+            image=accum.copy(), coverage=weight.copy(), validity=weight > 0,
+            units=units, channel_order=channel_order, backend=backend.name,
+            precision=backend.precision, stage="baseline", incomplete=True,
+            reference_epoch=str(config.reference_epoch_s),
+            provenance={"device_report": report.__dict__, "source": meta.as_dict(),
+                        "config": config.to_dict(), "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION},
+            warnings=[report.reason] if report.fallback else [],
+        )
+        if on_event is not None:
+            on_event(result, {"seq": 1, "n_used": 0, "n_processed": 0, "n_total": n, "backend": backend.name})
+        return result
+
+    def usable_frame(raw):
+        if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, meta.bit_depth)):
+            return None
+        calibrated, info = apply_calibration(raw, calibration)
+        if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and info["saturated"]):
+            return None
+        return calibrated
+
     sample_idx = []
-    for i in (0, n // 2, n - 1, int(config.reference_index)):
-        if 0 <= i < n and i not in sample_idx:
-            sample_idx.append(i)
-    sample_planes = [
-        _alignment_plane(np.asarray(source.read_raw(i), dtype=np.float64), color) for i in sample_idx
-    ]
-    poses, model, diagnostics, geo_warnings = prepare_geometry(source, config, planes=sample_planes)
+    sample_planes = []
+    candidates = sorted({0, n // 2, n - 1, config.reference_index})
+    for index in candidates:
+        if should_cancel is not None and should_cancel():
+            return cancelled_before_geometry()
+        frame = usable_frame(source.read_raw(index))
+        if frame is None:
+            if index == config.reference_index and config.reference_index != 0:
+                raise ValueError("selected reference frame is invalid or saturated")
+            continue
+        sample_idx.append(index)
+        sample_planes.append(_alignment_plane(frame, color))
+    if not sample_planes:
+        for index in range(n):
+            if should_cancel is not None and should_cancel():
+                return cancelled_before_geometry()
+            if index in candidates:
+                continue
+            frame = usable_frame(source.read_raw(index))
+            if frame is not None:
+                sample_idx.append(index)
+                sample_planes.append(_alignment_plane(frame, color))
+                break
+    if not sample_planes:
+        raise ValueError("no usable frames remain for geometry estimation")
+    poses, model, diagnostics, geo_warnings = prepare_geometry(
+        source, config, planes=sample_planes, sample_indices=sample_idx,
+    )
     ref_pose = _reference_pose(poses, config)
     xg, yg = detector_xy_grids(h, w)
     n_used = 0
@@ -222,7 +312,6 @@ def stack_source_geometry(
     warnings = list(report.warnings) + list(geo_warnings)
     if report.fallback:
         warnings.append(report.reason)
-    bit_depth = meta.bit_depth
     seq = 0
     cancelled = False
 
@@ -269,12 +358,8 @@ def stack_source_geometry(
             if should_cancel is not None and should_cancel():
                 cancelled = True
                 break
-            raw = batch[local]
-            if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
-                n_rejected += 1
-                continue
-            calibrated, cal_info = apply_calibration(raw, calibration)
-            if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
+            calibrated = usable_frame(batch[local])
+            if calibrated is None:
                 n_rejected += 1
                 continue
             plane = _alignment_plane(calibrated, color)
@@ -330,7 +415,7 @@ def stack_source_geometry(
         "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
         "source": meta.as_dict(),
         "n_captured": n,
-        "reference_index": int(config.reference_index),
+        "reference_index": diagnostics["reference_index"],
         "config": config.to_dict(),
         "calibration_mode": (calibration.mode if calibration else "approximate-noise"),
         "geometry": diagnostics,
@@ -364,8 +449,7 @@ def stack_source_geometry(
 
 def _reference_pose(poses: list[FramePose], config: ReconstructionConfig) -> FramePose:
     target = float(config.reference_epoch_s)
-    if config.freeze_mid_exposure and config.exposure_s:
-        target = target + 0.5 * float(config.exposure_s)
+    # The output epoch is exact; only observed exposures use their midpoints.
     idx = int(np.argmin([abs(p.t_s - target) for p in poses]))
     p = poses[idx]
     return FramePose(

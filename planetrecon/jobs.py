@@ -95,6 +95,7 @@ def _worker_main(
                     "image": preview.image,
                     "coverage": preview.coverage,
                     "channel_order": result.channel_order,
+                    "reference_epoch": result.reference_epoch,
                     "warnings": result.warnings,
                     "fraction": float(info.get("n_processed", 0))
                     / max(float(info.get("n_total", 1)), 1.0),
@@ -132,6 +133,7 @@ def _worker_main(
                 "backend": result.backend,
                 "warnings": result.warnings,
                 "channel_order": result.channel_order,
+                "reference_epoch": result.reference_epoch,
                 "image": result.image,
                 "coverage": result.coverage,
                 "validity": result.validity,
@@ -174,6 +176,7 @@ def _write_checkpoint(
         "n_rejected": result.n_rejected,
         "units": result.units,
         "channel_order": result.channel_order,
+        "reference_epoch": result.reference_epoch,
         "incomplete": result.incomplete,
         "provenance": result.provenance,
     }

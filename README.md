@@ -93,6 +93,19 @@ Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
 next scientific work; W10+ add Saturn, export and releases.
 Advanced atmospheric claims stay gated by W03.
 
+Geometry currently runs on CPU float64, including when Auto/GPU is selected.
+Rates in seconds require measured timestamps or an explicit `--cadence`; duplicate
+or reversed timestamps are rejected. Without timing, inferred field motion uses
+frame indices and is labelled accordingly. `--reference-epoch` is the exact output
+time in seconds from the first frame start; exposure midpoints affect observed
+poses only. Exposure integration beyond the midpoint approximation is unsupported.
+`reference_index` selects the disc-fit anchor, while `reference_epoch_s` selects the
+output pose. The current prototype assumes a fixed centre and rigid rates;
+tracking drift and surface spin estimation remain unimplemented. Sparse field-angle
+estimates can alias large rotations between sampled frames; use a declared rate
+for those captures. Moment-based radius estimates are approximate for textured or
+limb-darkened discs, so use a measured radius for surface reconstruction.
+
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
 later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 

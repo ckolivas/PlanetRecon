@@ -330,6 +330,9 @@ class SERSource(FrameSource):
             return self.bayer_override
         return self.header.color_mode
 
+    def timestamp_scale_s(self) -> float:
+        return 1.0e-7  # SER timestamps are unsigned 100 ns ticks.
+
     def timestamps(self) -> np.ndarray | None:
         return None if self._timestamps is None else self._timestamps.copy()
 

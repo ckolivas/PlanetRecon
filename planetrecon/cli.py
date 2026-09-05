@@ -299,6 +299,7 @@ def main(argv: list[str] | None = None) -> int:
 
         np.savez_compressed(npz, image=result.image, coverage=result.coverage,
                             validity=result.validity, units=result.units,
+                            reference_epoch=result.reference_epoch or "",
                             provenance=json.dumps(result.provenance, sort_keys=True))
         print(
             f"wrote {npz} backend={result.backend} n_used={result.n_used} "

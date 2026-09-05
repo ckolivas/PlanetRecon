@@ -34,6 +34,9 @@ class GlobeParams:
             if not np.isfinite(getattr(self, name)):
                 raise ValueError(f"{name} must be finite")
 
+        if abs(self.sub_obs_lat_rad) > np.pi / 2:
+            raise ValueError("sub_obs_lat_rad must be in [-pi/2, pi/2]")
+
     @property
     def polar_radius_px(self) -> float:
         return float(self.equatorial_radius_px) * (1.0 - float(self.flattening))
@@ -103,7 +106,6 @@ def sky_to_body(
     n_obs_z = r[2, 0] * (xb * inv_a2) + r[2, 1] * (yb * inv_a2) + r[2, 2] * (zb * inv_c2)
     visible = visible & np.isfinite(t_hit) & (n_obs_z >= -1e-12)
     lon, lat = _lon_lat(xb, yb, zb, a, c)
-    mu = np.where(visible, np.clip(n_obs_z / np.maximum(np.abs(n_obs_z), 1e-30) * np.abs(n_obs_z), 0.0, None), 0.0)
     # Normalise μ by the local normal length so the limb is ~0 and the centre ~1.
     nlen = np.sqrt((xb * inv_a2) ** 2 + (yb * inv_a2) ** 2 + (zb * inv_c2) ** 2)
     mu = np.where(visible, np.clip(n_obs_z / np.maximum(nlen, 1e-30), 0.0, None), 0.0)
@@ -130,7 +132,6 @@ def body_to_sky(
     r = body_to_obs_matrix(globe.pole_pa_rad, globe.sub_obs_lat_rad, globe.sub_obs_lon(t_s))
     xo = r[0, 0] * xb + r[0, 1] * yb + r[0, 2] * zb
     yo = r[1, 0] * xb + r[1, 1] * yb + r[1, 2] * zb
-    zo = r[2, 0] * xb + r[2, 1] * yb + r[2, 2] * zb
     inv_a2 = 1.0 / (a * a)
     inv_c2 = 1.0 / (c * c)
     n_obs_z = r[2, 0] * (xb * inv_a2) + r[2, 1] * (yb * inv_a2) + r[2, 2] * (zb * inv_c2)

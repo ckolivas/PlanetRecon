@@ -80,7 +80,12 @@ class FrameSource(ABC):
         raise NotImplementedError
 
     def timestamps(self) -> np.ndarray | None:
+        """Sample start times, in units declared by timestamp_scale_s()."""
         return None
+
+    def timestamp_scale_s(self) -> float:
+        """Seconds per timestamp unit; array sources supply seconds."""
+        return 1.0
 
     def iter_batches(
         self,

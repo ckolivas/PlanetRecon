@@ -8,6 +8,10 @@ import numpy as np
 def _weights(y, x):
     y = np.asarray(y, dtype=np.float64)
     x = np.asarray(x, dtype=np.float64)
+    y, x = np.broadcast_arrays(y, x)
+    finite = np.isfinite(y) & np.isfinite(x)
+    y = np.where(finite, y, -2.0)
+    x = np.where(finite, x, -2.0)
     y0 = np.floor(y)
     x0 = np.floor(x)
     wy = y - y0
@@ -33,6 +37,7 @@ def bilinear_sample(src: np.ndarray, y, x, fill: float = 0.0) -> np.ndarray:
         return np.stack(planes, axis=-1)
     y = np.asarray(y, dtype=np.float64)
     x = np.asarray(x, dtype=np.float64)
+    y, x = np.broadcast_arrays(y, x)
     h, w = src.shape
     y0, x0, wy, wx = _weights(y, x)
     corners = (
@@ -49,10 +54,8 @@ def bilinear_sample(src: np.ndarray, y, x, fill: float = 0.0) -> np.ndarray:
         valid = (yi >= 0) & (yi < h) & (xi >= 0) & (xi < w)
         acc = acc + wt * _gather(src, yi, xi, valid)
         covered = covered + wt * valid.astype(np.float64)
-    missing = covered <= 0.0
-    if float(fill) != 0.0 and np.any(missing):
-        acc = acc.copy()
-        acc[missing] = float(fill)
+    if float(fill) != 0.0:
+        acc += (1.0 - covered) * float(fill)
     return acc
 
 

@@ -9,7 +9,7 @@ from planetrecon.rank import laplacian_score
 
 
 def fit_disc_ellipse(image: np.ndarray) -> dict:
-    """Intensity-weighted disc centre, RMS radius and ellipse second moments."""
+    """Background-subtracted centre and moment-equivalent ellipse semiaxes."""
     img = np.asarray(image, dtype=np.float64)
     if img.ndim == 3:
         img = 0.5 * img[..., 1] + 0.25 * img[..., 0] + 0.25 * img[..., 2]
@@ -23,12 +23,11 @@ def fit_disc_ellipse(image: np.ndarray) -> dict:
     if int(mask.sum()) < 9:
         return {"ok": False, "degeneracy": ("no_disc",)}
     yy, xx = np.nonzero(mask)
-    w = img[mask]
+    w = img[mask] - sky
     cx = float(np.average(xx + 0.5, weights=w))
     cy = float(np.average(yy + 0.5, weights=w))
     dx = xx + 0.5 - cx
     dy = yy + 0.5 - cy
-    r_rms = float(np.sqrt(np.average(dx * dx + dy * dy, weights=w) * 2.0))
     mxx = float(np.average(dx * dx, weights=w))
     myy = float(np.average(dy * dy, weights=w))
     mxy = float(np.average(dx * dy, weights=w))
@@ -37,15 +36,15 @@ def fit_disc_ellipse(image: np.ndarray) -> dict:
     disc = max(tr * tr * 0.25 - det, 0.0)
     l1 = 0.5 * tr + np.sqrt(disc)
     l2 = 0.5 * tr - np.sqrt(disc)
-    a = float(np.sqrt(max(2.0 * l1, 0.0)))
-    b = float(np.sqrt(max(2.0 * l2, 0.0)))
+    a = float(np.sqrt(max(4.0 * l1, 0.0)))
+    b = float(np.sqrt(max(4.0 * l2, 0.0)))
     pa = 0.5 * float(np.arctan2(2.0 * mxy, mxx - myy))
     flattening = 0.0 if a <= 1e-9 else max(0.0, 1.0 - b / a)
     return {
         "ok": True,
         "cx": cx,
         "cy": cy,
-        "radius": r_rms,
+        "radius": a,
         "semi_major": a,
         "semi_minor": b,
         "pa_rad": pa,
@@ -109,7 +108,7 @@ def estimate_field_angle(
     angle = float(shift) * (2.0 * np.pi / n_theta)
     degeneracy = []
     denom = float(np.linalg.norm(a) * np.linalg.norm(b))
-    if denom <= 0 or peak < 0.2 * denom / n_theta:
+    if denom <= 0 or peak < 0.2 * denom:
         degeneracy.append("roll_unconstrained")
     return {
         "angle_rad": angle,

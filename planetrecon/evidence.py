@@ -118,6 +118,7 @@ def w09_manifest() -> dict:
         seed_coverage={"unit_fixtures": True, "scientific_families": False},
         results=[
             {"path": "tests/test_w09.py", "status": "diagnostic", "kind": "unit"},
+            {"path": "tests/test_review_w09.py", "status": "diagnostic", "kind": "regression"},
         ],
         notes=(
             "Geometry-only reconstruction. Does not regenerate R9 tables or start Q3. "

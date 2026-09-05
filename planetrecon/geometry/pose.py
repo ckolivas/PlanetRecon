@@ -40,22 +40,32 @@ def source_times_s(
     cadence_s: float | None = None,
     n_frames: int | None = None,
 ) -> tuple[np.ndarray, str]:
-    """Seconds from the first sample. SER FILETIME is converted; else index*cadence."""
+    """Time from the first sample using declared timestamp units or index*cadence."""
     n = int(source.n_frames() if n_frames is None else n_frames)
+    if n == 0:
+        return np.empty(0, dtype=np.float64), "measured" if source.timestamps() is not None else "inferred"
     ts = source.timestamps()
     if ts is not None:
-        t = np.asarray(ts, dtype=np.float64).reshape(-1)
+        t = np.asarray(ts).reshape(-1)
         if t.size != n:
             raise ValueError("timestamp count must match the frame count")
         if not np.all(np.isfinite(t)):
             raise ValueError("timestamps must be finite")
-        # Windows FILETIME ticks (100 ns) are ~1e17; Unix/ns are still >> 1e12.
-        if float(np.max(np.abs(t))) > 1e12:
-            t = t * 1.0e-7
-        return t - t[0], "measured"
+        if np.any(t[1:] <= t[:-1]):
+            raise ValueError("timestamps must be strictly increasing (duplicates or reversed times)")
+        scale = float(source.timestamp_scale_s())
+        if not np.isfinite(scale) or scale <= 0:
+            raise ValueError("timestamp scale must be positive and finite")
+        # Subtract integer epochs before conversion: absolute SER ticks lose
+        # sub-microsecond cadence when first converted to float64.
+        if np.issubdtype(t.dtype, np.integer):
+            relative = np.array([int(v) - int(t[0]) for v in t], dtype=np.float64)
+        else:
+            relative = np.asarray(t - t[0], dtype=np.float64)
+        return relative * scale, "measured"
     dt = 1.0 if cadence_s is None else float(cadence_s)
-    if not np.isfinite(dt) or dt < 0:
-        raise ValueError("cadence_s must be finite and non-negative")
+    if not np.isfinite(dt) or dt <= 0:
+        raise ValueError("cadence_s must be positive and finite")
     origin = "inferred" if cadence_s is None else "user"
     return np.arange(n, dtype=np.float64) * dt, origin
 
