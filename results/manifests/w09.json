@@ -1,0 +1,33 @@
+{
+  "archived": false,
+  "baseline_operator_version": "1.1",
+  "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
+  "created_utc": "2026-09-05T04:57:29Z",
+  "default_cpu_threads": 32,
+  "device": "cpu",
+  "document_revision": "R9",
+  "estimator_operator_version": "1.2",
+  "experiment_id": "w09-field-surface-geometry",
+  "geometry_operator_version": "1.0",
+  "inputs": [],
+  "notes": "Geometry-only reconstruction. Does not regenerate R9 tables or start Q3. W02/W03 remain the scientific repair path. Saturn globe/ring layers are W10. MFBD with geometry remains gated by W03/W11. Freeze-mid-exposure is the default and reports limb motion during T_exp rather than claiming a full time quadrature.",
+  "protocol": "W09 field rotation and rigid oblate-globe surface operators with tested bilinear adjoints, pose unwrapping, degeneracy reporting, and geometry-aware baseline accumulation. CFA stays in detector coordinates. CPU fixtures only. No Q3, no R9 family rerun, no Saturn layers (W10).",
+  "results": [
+    {
+      "kind": "unit",
+      "path": "tests/test_w09.py",
+      "status": "diagnostic"
+    }
+  ],
+  "roadmap_revision": "R10",
+  "schema_name": "planetrecon-evidence-manifest",
+  "schema_version": "1.0",
+  "seed_coverage": {
+    "scientific_families": false,
+    "unit_fixtures": true
+  },
+  "simulator_operator_version": "1.0",
+  "source_hash": "da7145028130d12f10e97570cc12e19e7732f2938b992abbd0a7750632b1cf1d",
+  "status": "diagnostic",
+  "tolerances": {}
+}

@@ -13,6 +13,7 @@ from planetrecon.runtime import default_thread_count
 
 
 DeviceChoice = Literal["cpu", "auto", "gpu"]
+GeometryMode = Literal["none", "field", "surface", "combined"]
 
 
 @dataclass(frozen=True)
@@ -33,12 +34,31 @@ class ReconstructionConfig:
     reference_index: int = 0
     crop: str = "feature"
     baseline_operator_version: str = C.BASELINE_OPERATOR_VERSION
+    geometry_operator_version: str = C.GEOMETRY_OPERATOR_VERSION
+    geometry_mode: GeometryMode = "none"
+    reference_epoch_s: float = 0.0
+    field_angle0_rad: float = 0.0
+    field_rate_rad_s: float | None = None
+    field_center_x: float | None = None
+    field_center_y: float | None = None
+    equatorial_radius_px: float | None = None
+    flattening: float = 0.0
+    pole_pa_rad: float = 0.0
+    sub_obs_lat_rad: float = 0.0
+    sub_obs_lon0_rad: float = 0.0
+    surface_rate_rad_s: float | None = None
+    exposure_s: float = 0.0
+    cadence_s: float | None = None
+    geometry_duration_warn_s: float = C.GEOMETRY_DURATION_WARN_S
+    freeze_mid_exposure: bool = True
 
     def __post_init__(self) -> None:
         if self.schema_name != C.CONFIG_SCHEMA or self.schema_version != C.CONFIG_SCHEMA_VERSION:
             raise ValueError("unsupported config schema or schema_version")
         if self.baseline_operator_version != C.BASELINE_OPERATOR_VERSION:
             raise ValueError("unsupported baseline operator version")
+        if self.geometry_operator_version != C.GEOMETRY_OPERATOR_VERSION:
+            raise ValueError("unsupported geometry operator version")
         if self.device not in ("cpu", "auto", "gpu"):
             raise ValueError("unknown device")
         for name in ("threads", "batch_frames", "reference_index"):
@@ -55,6 +75,47 @@ class ReconstructionConfig:
             raise ValueError("unknown endian convention")
         if self.crop not in ("feature", "bland"):
             raise ValueError("unknown crop")
+        if self.geometry_mode not in ("none", "field", "surface", "combined"):
+            raise ValueError("unknown geometry_mode")
+        if type(self.freeze_mid_exposure) is not bool:
+            raise ValueError("freeze_mid_exposure must be a bool")
+        for name in (
+            "reference_epoch_s",
+            "field_angle0_rad",
+            "flattening",
+            "pole_pa_rad",
+            "sub_obs_lat_rad",
+            "sub_obs_lon0_rad",
+            "exposure_s",
+            "geometry_duration_warn_s",
+        ):
+            value = getattr(self, name)
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+        if float(self.flattening) < 0.0 or float(self.flattening) >= 1.0:
+            raise ValueError("flattening must be in [0, 1)")
+        if float(self.exposure_s) < 0.0 or float(self.geometry_duration_warn_s) < 0.0:
+            raise ValueError("exposure and duration warning must be non-negative")
+        for name in (
+            "field_rate_rad_s",
+            "field_center_x",
+            "field_center_y",
+            "equatorial_radius_px",
+            "surface_rate_rad_s",
+            "cadence_s",
+        ):
+            value = getattr(self, name)
+            if value is None:
+                continue
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite or null")
+        if self.equatorial_radius_px is not None and float(self.equatorial_radius_px) <= 0:
+            raise ValueError("equatorial_radius_px must be positive")
+        if self.cadence_s is not None and float(self.cadence_s) < 0:
+            raise ValueError("cadence_s must be non-negative")
+        if self.geometry_mode in ("surface", "combined") and self.equatorial_radius_px is None:
+            # Radius may be inferred from the disc; not an error at config time.
+            pass
         # Budget enforcement has not been implemented; do not silently promise it.
         if self.max_ram_bytes is not None or self.max_vram_bytes is not None:
             raise ValueError("explicit memory budgets are not supported by the baseline yet")

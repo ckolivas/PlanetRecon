@@ -105,6 +105,36 @@ def w04_w08_manifest() -> dict:
     )
 
 
+def w09_manifest() -> dict:
+    return experiment_manifest(
+        "w09-field-surface-geometry",
+        status="diagnostic",
+        protocol=(
+            "W09 field rotation and rigid oblate-globe surface operators with tested "
+            "bilinear adjoints, pose unwrapping, degeneracy reporting, and geometry-aware "
+            "baseline accumulation. CFA stays in detector coordinates. CPU fixtures only. "
+            "No Q3, no R9 family rerun, no Saturn layers (W10)."
+        ),
+        seed_coverage={"unit_fixtures": True, "scientific_families": False},
+        results=[
+            {"path": "tests/test_w09.py", "status": "diagnostic", "kind": "unit"},
+        ],
+        notes=(
+            "Geometry-only reconstruction. Does not regenerate R9 tables or start Q3. "
+            "W02/W03 remain the scientific repair path. Saturn globe/ring layers are W10. "
+            "MFBD with geometry remains gated by W03/W11. Freeze-mid-exposure is the default "
+            "and reports limb motion during T_exp rather than claiming a full time quadrature."
+        ),
+        extra={
+            "archived": False,
+            "default_cpu_threads": C.DEFAULT_CPU_THREADS,
+            "device": "cpu",
+            "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
+            "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
+        },
+    )
+
+
 def write_evidence_manifests(results_dir: Path) -> list[Path]:
     results_dir = Path(results_dir)
     dest = results_dir / "manifests"
@@ -113,6 +143,7 @@ def write_evidence_manifests(results_dir: Path) -> list[Path]:
         write_manifest(dest / "r9-historical.json", r9_historical_manifest()),
         write_manifest(dest / "w00-w01.json", w00_w01_manifest()),
         write_manifest(dest / "w04-w08.json", w04_w08_manifest()),
+        write_manifest(dest / "w09.json", w09_manifest()),
     ]
     for path in written:
         load_manifest(path)

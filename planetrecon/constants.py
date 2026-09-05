@@ -104,6 +104,10 @@ JOB_SCHEMA = "planetrecon-job"
 JOB_SCHEMA_VERSION = "1.1"
 BASELINE_OPERATOR_VERSION = "1.1"
 SER_OPERATOR_VERSION = "1.1"
+GEOMETRY_OPERATOR_VERSION = "1.0"
+GEOMETRY_DURATION_WARN_S = 120.0
+GEOMETRY_EXPOSURE_MOTION_PX = 0.25
+JUPITER_FLATTENING = 0.064874
 
 # Prompt Q2 — E2b production prior and blind D / D-tail (R9 §8.5, §18)
 # Quadratic stabilisation stays at the Prompt-2 freeze. Charbonnier TV μ was

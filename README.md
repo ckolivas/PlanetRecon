@@ -61,7 +61,9 @@ W00/W01 bounded operator audit is implemented; full scientific qualification
 and development-family ranking/gap checks remain outstanding.
 The W04–W08 prototype opens a SER or observed HDF5
 crop, runs an owned cancellable baseline stack (mono / RGB / raw CFA RGB),
-and shows it in a Qt6 raster shell. GPU `auto`/`gpu` probe live CUDA operators
+and shows it in a Qt6 raster shell. W09 adds field rotation and a rigid
+oblate-globe surface model as composable operators, with geometry-aware
+accumulation, coverage masks and degeneracy warnings. GPU `auto`/`gpu` probe live CUDA operators
 and fall back to CPU when the PyTorch build cannot run the device (Debian
 torch 2.6 does not support RTX 5070 / sm_120). Default CPU thread cap is 32.
 
@@ -75,15 +77,20 @@ Older split NPZ/JSON checkpoints are rejected. CLI NPZ output includes validity,
 units and provenance.
 
 This is a translation-only baseline using integer phase correlation and
-normalised CFA backprojection, with unsupported colour samples marked invalid.
-The iterative raw-CFA inverse solve, explicit RAM/VRAM budget enforcement,
-parent-crash recovery and full W04–W08 acceptance remain outstanding. Explicit
-memory-budget settings are rejected until enforcement exists. The Linux
-PyInstaller spec is a local packaging spike; clean-system and cross-platform
-release acceptance remain planned.
+normalised CFA backprojection, with unsupported colour samples marked invalid,
+plus a W09 geometry-aware baseline for declared field rotation and/or a rigid
+oblate globe. Field attitude and surface longitude are separate operators;
+unseen longitudes are left at zero coverage rather than filled. CFA parity
+stays in detector coordinates under rotation. Freeze-mid-exposure is the default
+and warns when limb motion during \(T_{\rm exp}\) is large. Saturn layers are
+not implemented (W10). The iterative raw-CFA inverse solve, explicit RAM/VRAM
+budget enforcement, parent-crash recovery and full W04–W08 acceptance remain
+outstanding. Explicit memory-budget settings are rejected until enforcement
+exists. The Linux PyInstaller spec is a local packaging spike; clean-system and
+cross-platform release acceptance remain planned.
 
 Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
-next scientific work; W09+ add rotation, Saturn, export and releases.
+next scientific work; W10+ add Saturn, export and releases.
 Advanced atmospheric claims stay gated by W03.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
@@ -103,6 +110,9 @@ export OMP_NUM_THREADS=32 OPENBLAS_NUM_THREADS=32 MKL_NUM_THREADS=32
 python3 -m planetrecon evidence --results results
 python3 -m planetrecon probe-device --device auto
 python3 -m planetrecon stack --path capture.ser --device auto --out out/stack
+python3 -m planetrecon stack --path capture.ser --geometry combined \
+  --field-rate-deg-s 0.2 --surface-rate-deg-s 0.03 --radius 80 --flattening 0.065 \
+  --out out/stack-geo
 python3 -m planetrecon gui --path capture.ser
 python3 -m pytest tests -q
 python3 -m pytest tests -q --run-slow

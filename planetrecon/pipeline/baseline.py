@@ -50,6 +50,16 @@ def stack_source(
     on_event: PreviewFn | None = None,
     should_cancel: CancelFn | None = None,
 ) -> ReconstructionResult:
+    if config.geometry_mode != "none":
+        from planetrecon.pipeline.geometry_stack import stack_source_geometry
+
+        return stack_source_geometry(
+            source,
+            config,
+            calibration=calibration,
+            on_event=on_event,
+            should_cancel=should_cancel,
+        )
     backend, report = select_backend(config.device, threads=config.threads)
     meta = source.metadata()
     color = source.color_mode()

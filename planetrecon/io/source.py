@@ -121,6 +121,7 @@ class ArraySource(FrameSource):
         bit_depth: int = 16,
         path: str = "memory://array",
         extras: dict[str, FieldValue] | None = None,
+        timestamps: np.ndarray | None = None,
     ):
         self._frames = np.asarray(frames)
         if self._frames.ndim not in (3, 4):
@@ -129,6 +130,15 @@ class ArraySource(FrameSource):
         self._bit_depth = int(bit_depth)
         self._path = path
         self._extras = extras or {}
+        if timestamps is None:
+            self._timestamps = None
+        else:
+            ts = np.asarray(timestamps, dtype=np.float64).reshape(-1)
+            if ts.size != self._frames.shape[0]:
+                raise ValueError("timestamp count must match the frame count")
+            if not np.all(np.isfinite(ts)):
+                raise ValueError("timestamps must be finite")
+            self._timestamps = ts
 
     def metadata(self) -> ObservationMetadata:
         shape = self._frames.shape
@@ -156,6 +166,9 @@ class ArraySource(FrameSource):
         if index < 0 or index >= self.n_frames():
             raise IndexError(index)
         return np.array(self._frames[index], copy=True)
+
+    def timestamps(self) -> np.ndarray | None:
+        return None if self._timestamps is None else self._timestamps.copy()
 
 
 def open_source(path: str | Path, **kwargs) -> FrameSource:

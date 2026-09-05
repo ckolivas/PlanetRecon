@@ -2188,4 +2188,11 @@ reruns until those diagnostics establish what must be regenerated. The next
 vertical slice is W04–W08: open a real Bayer SER, process a bounded CPU batch,
 and display the progressively built result in an owned, cancellable Qt6 job.
 
+**Implementation follow-up (W09):** field rotation and a rigid oblate globe are
+composable CPU operators with bilinear adjoints, pose unwrapping, disc/roll
+degeneracy flags and geometry-aware baseline accumulation. CFA samples stay on
+the detector lattice. Freeze-mid-exposure is the default and warns when limb
+motion during \(T_{\rm exp}\) is large. Unseen longitudes are not filled.
+Saturn layers, production MFBD with geometry, and Q3 remain out of scope here.
+
 This revision plans those changes; it does not implement or certify them.

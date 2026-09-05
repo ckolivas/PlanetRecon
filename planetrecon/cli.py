@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 
 from planetrecon.runtime import apply_thread_limits
@@ -142,6 +143,21 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
     st.add_argument("--bayer", default=None, help="override Bayer pattern, e.g. RGGB")
+    st.add_argument(
+        "--geometry",
+        choices=("none", "field", "surface", "combined"),
+        default="none",
+        help="W09 geometry: none=translation stack; field/surface/combined use declared rates",
+    )
+    st.add_argument("--field-rate-deg-s", type=float, default=None)
+    st.add_argument("--surface-rate-deg-s", type=float, default=None)
+    st.add_argument("--field-angle0-deg", type=float, default=0.0)
+    st.add_argument("--flattening", type=float, default=0.0)
+    st.add_argument("--radius", type=float, default=None, help="equatorial radius in pixels")
+    st.add_argument("--pole-pa-deg", type=float, default=0.0)
+    st.add_argument("--exposure", type=float, default=0.0, help="integration time in seconds")
+    st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")
+    st.add_argument("--reference-epoch", type=float, default=0.0)
 
     prb = sub.add_parser("probe-device", help="probe CPU/GPU backends and print the selection")
     prb.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
@@ -251,12 +267,25 @@ def main(argv: list[str] | None = None) -> int:
         from planetrecon.reconstruction import ReconstructionConfig
 
         args.out.mkdir(parents=True, exist_ok=True)
+        def _rad(deg):
+            return None if deg is None else float(deg) * math.pi / 180.0
+
         cfg = ReconstructionConfig(
             device=args.device,
             threads=applied_threads,
             batch_frames=args.batch,
             crop=args.crop,
             bayer_override=args.bayer,
+            geometry_mode=args.geometry,
+            field_rate_rad_s=_rad(args.field_rate_deg_s),
+            surface_rate_rad_s=_rad(args.surface_rate_deg_s),
+            field_angle0_rad=_rad(args.field_angle0_deg) or 0.0,
+            flattening=args.flattening,
+            equatorial_radius_px=args.radius,
+            pole_pa_rad=_rad(args.pole_pa_deg) or 0.0,
+            exposure_s=args.exposure,
+            cadence_s=args.cadence,
+            reference_epoch_s=args.reference_epoch,
         )
         with open_source(
             args.path,
