@@ -2201,4 +2201,13 @@ far-ring depth, transmission, illumination/shadow masks, edge-on degeneracy and
 moving-moon masks are implemented on CPU fixtures. Rings are static over a
 short clip. Production MFBD with geometry and Q3 remain out of scope here.
 
-This revision plans those changes; it does not implement or certify them.
+**Implementation follow-up (W13):** full-resolution result/checkpoint export now
+supports mono/RGB PNG16, TIFF16 and IEEE float32 TIFF, shared explicit integer
+mapping, optional labelled display gamma, validity/coverage, provenance and atomic
+image publication with immutable generation companions. Independent CPU read-back
+and interruption regressions plus a local Linux frozen-codec smoke are implemented.
+GUI save controls remain W14. Clean-system and cross-platform qualification remain
+W17. W11 advanced inference still requires W03; GPU qualification requires supported
+hardware. W02/W03 remain outstanding and Q3 does not start.
+
+Implementation follow-ups record bounded progress, not complete roadmap certification.

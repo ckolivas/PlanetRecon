@@ -2,9 +2,8 @@
 
 by Con Kolivas
 
-Planetary multi-frame atmospheric reconstruction. The current prototype uses
-synthetic monochrome sequences; the planned desktop application processes
-monochrome, RGB and raw Bayer planetary captures.
+Planetary multi-frame atmospheric reconstruction. The prototype processes synthetic observations and
+monochrome, RGB and raw Bayer planetary SER captures on CPU.
 
 This is MOMFBD / short-exposure inverse imaging in an amateur-planetary
 regime, tested against lucky-imaging architectures.
@@ -14,8 +13,8 @@ retains the frozen R9 Gate-1 experiment and plans the remaining application work
 in sections 21–26: CPU/optional GPU execution, Qt6 live preview and progress,
 raw-CFA SER reconstruction, field/surface rotation, Saturn's globe and rings,
 16-bit PNG and 16/32-bit TIFF export, and standalone Windows/Linux/macOS builds.
-These application features are planned, not implemented yet. Prompt 1 is the
-synthetic simulator and its validation tests (Python, NumPy/SciPy, HDF5).
+Implementation status and remaining qualification work are listed below.
+Prompt 1 is the synthetic simulator and its validation tests (Python, NumPy/SciPy, HDF5).
 Prompt 2 is the known-transfer estimators, Laplacian ranking, and G1/G2/G3
 tables. Q2 is E2b plus all-frame blind D / D-tail and the 40% closure gate.
 
@@ -93,7 +92,8 @@ exists. The Linux PyInstaller spec is a local packaging spike; clean-system and
 cross-platform release acceptance remain planned.
 
 Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
-next scientific work; W11+ add production MFBD, export and releases.
+next scientific work; W11 adds production MFBD. W13 scientific export is implemented;
+W14 GUI workflow and later release qualification remain planned.
 Advanced atmospheric claims stay gated by W03.
 
 Geometry currently runs on CPU float64, including when Auto/GPU is selected.
@@ -130,7 +130,7 @@ later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 
 ## Run
 
-From the repository root (Python 3 with numpy, scipy, h5py, pytest). Default
+From the repository root (Python 3 with numpy, scipy, h5py, tifffile, pytest). Default
 scientific execution is CPU-only, while capture commands expose CPU/auto/GPU
 selection. The default per-process thread cap is 32, reduced by
 `PLANETRECON_THREADS` or `--threads`; some FFT stages use one thread. Worker counts
@@ -184,6 +184,73 @@ numbers as diagnostics but inherit only the development pass/fail decisions.
 regimes if they are missing, then writes classification tables under
 `out/prompt2/`. Extension seeds `2013–2024` are only for an inconclusive
 12-seed result.
+
+## Scientific export (W13)
+
+Export uses the floating linear result at full resolution. Choose `png16`,
+`tiff16` or `tiff32`; all support mono and RGB. TIFF32 is IEEE float32 and
+preserves negative values and values above one without normalizing. Finite
+values outside float32 range are rejected. No resampling or sharpening is applied.
+
+```bash
+python3 -m planetrecon stack --path capture.ser --device cpu --out out/stack \
+  --export png16 --black 0 --white 65535 --checkpoint out/live.npz
+python3 -m planetrecon export --path out/stack/stack.npz --out out/linear.tif
+python3 -m planetrecon export --path out/live.npz --out out/intermediate.tif \
+  --encoding tiff16 --black 0 --white 4095
+```
+
+Integer export requires explicit black/white levels in result units, shared by
+all channels: clip to that interval, map to 0–65535, then round to nearest with
+half values upward. Metadata and CLI output report clipped sample/pixel counts.
+There is no automatic percentile or per-channel scaling. Optional
+`--display-gamma 2.2` labels an integer export **display-rendered** and applies
+power `1/2.2` after mapping. This does not convert camera RGB to sRGB or assign
+colour primaries. PNG records the transfer in its gAMA chunk; TIFF records it
+in ImageDescription. Linear output is the default.
+
+Invalid, non-finite or zero-coverage samples become NaN in float TIFF and zero
+in integer output. The effective validity mask distinguishes invalid zeros from
+real black pixels. TIFF pages contain the image, uint8 validity, float64 coverage,
+then named spatial layer coverage. PNG has a companion coverage TIFF with the
+same mask/coverage pages. Coverage means accumulation weight, not calibrated
+uncertainty. RGB validity remains per channel.
+
+The image embeds JSON metadata and names an immutable generation-specific JSON
+sidecar (`image.tif.<id>.json`); PNG also names `image.png.<id>.coverage.tif`.
+Keep these companions with the image. The sidecar includes an image SHA256.
+Metadata retains units, reference epoch, completion state, frame counts,
+CFA/source interpretation, calibration identities, geometry, settings and device
+precision. Large input identities use size, mtime and hashes of the first/last
+64 KiB, explicitly **not** full-file checksums.
+
+Files are staged beside the destination and flushed before publication. The
+image is published atomically only after its companions exist. Existing image
+paths require `--overwrite`; a failed save leaves the existing image and the
+in-memory result intact. Process interruption may leave unreferenced staging or
+companion files, and overwrites retain old companions for readers of the previous
+generation. These unused files may be removed once no image references them.
+Power-loss durability depends on the filesystem; this is not a multi-file disk
+transaction.
+
+`--checkpoint` atomically updates a full-resolution NPZ after each batch. Export
+can read that snapshot while stacking continues, with `incomplete` and frame
+counts recorded. New worker checkpoints are also exportable. Older NPZs without
+result metadata are rejected for export rather than assigned guessed units or
+completion state. CLI stack snapshots retain the earlier analysis array keys.
+GUI save controls are part of W14; Qt's downsampled display is not an export source.
+
+PNG uses the bundled dedicated 16-bit writer and zlib. TIFF uses `tifffile`
+without compression, avoiding extra codec runtimes. Run the local Linux package
+smoke after building:
+
+```bash
+python3 -m PyInstaller packaging/planetrecon-linux.spec
+python3 packaging/smoke_export.py dist/planetrecon/planetrecon
+```
+
+The smoke checks all six mono/RGB encodings; it does not qualify clean-system,
+Windows or macOS releases.
 
 ## Numerical conventions (Prompt 1)
 

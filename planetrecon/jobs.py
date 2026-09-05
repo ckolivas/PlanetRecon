@@ -182,6 +182,7 @@ def _write_checkpoint(
         "incomplete": result.incomplete,
         "provenance": result.provenance,
         "layer_names": sorted(result.layer_coverage),
+        "result": result.metadata(),
     }
     tmp = dest.with_suffix(".tmp.npz")
     np.savez_compressed(tmp, image=result.image, coverage=result.coverage,

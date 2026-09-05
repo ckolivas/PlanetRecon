@@ -139,6 +139,10 @@ def main(argv: list[str] | None = None) -> int:
     st = sub.add_parser("stack", help="W07 baseline stack of a SER or observed HDF5 crop")
     st.add_argument("--path", type=Path, required=True)
     st.add_argument("--out", type=Path, default=Path("out/stack"))
+    st.add_argument("--export", choices=("png16", "tiff16", "tiff32"), default=None,
+                    help="also save a scientific image in the output directory")
+    st.add_argument("--checkpoint", type=Path, default=None,
+                    help="atomically update a full-resolution NPZ snapshot after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -173,6 +177,17 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--moon-vx", type=float, default=0.0)
     st.add_argument("--moon-vy", type=float, default=0.0)
 
+    ex = sub.add_parser("export", help="export a saved result or full-resolution checkpoint")
+    ex.add_argument("--path", type=Path, required=True)
+    ex.add_argument("--out", type=Path, required=True)
+    ex.add_argument("--encoding", choices=("png16", "tiff16", "tiff32"), default="tiff32")
+    for command in (st, ex):
+        command.add_argument("--black", type=float, default=None, help="fixed integer black level in result units")
+        command.add_argument("--white", type=float, default=None, help="fixed integer white level in result units")
+        command.add_argument("--display-gamma", type=float, default=None,
+                             help="label as display-rendered and apply power 1/gamma (integer only)")
+        command.add_argument("--overwrite", action="store_true", help="allow replacement of an existing exported image")
+
     prb = sub.add_parser("probe-device", help="probe CPU/GPU backends and print the selection")
     prb.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
 
@@ -183,6 +198,35 @@ def main(argv: list[str] | None = None) -> int:
     if args.threads is not None and args.threads < 1:
         parser.error("--threads must be positive")
     applied_threads = apply_thread_limits(args.threads)
+    export_config = None
+    if args.cmd in ("stack", "export"):
+        from planetrecon.export import ExportConfig
+
+        encoding = args.encoding if args.cmd == "export" else args.export
+        if encoding:
+            try:
+                export_config = ExportConfig(encoding, args.black, args.white, args.display_gamma)
+            except ValueError as exc:
+                parser.error(str(exc))
+        elif any(v is not None for v in (args.black, args.white, args.display_gamma)) or args.overwrite:
+            parser.error("export mapping and overwrite options require --export")
+        if args.cmd == "stack" and args.checkpoint:
+            if args.checkpoint.suffix.lower() != ".npz":
+                parser.error("--checkpoint must name an NPZ snapshot")
+            if (args.checkpoint.resolve() == args.path.resolve() or
+                    (args.checkpoint.exists() and args.checkpoint.samefile(args.path))):
+                parser.error("checkpoint cannot replace the input capture")
+    if args.cmd == "export":
+        from planetrecon.export import export_result
+        from planetrecon.result import load_snapshot
+
+        try:
+            report = export_result(load_snapshot(args.path), args.out, export_config, overwrite=args.overwrite)
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        print(f"wrote {report.path} metadata={report.sidecar} "
+              f"incomplete={report.metadata['result']['incomplete']} counts={report.metadata['counts']}")
+        return 0
     if args.cmd == "generate":
         from planetrecon.simulate import generate_one
 
@@ -279,8 +323,14 @@ def main(argv: list[str] | None = None) -> int:
         from planetrecon.io import open_source
         from planetrecon.pipeline.baseline import stack_source
         from planetrecon.reconstruction import ReconstructionConfig
+        from planetrecon.result import save_snapshot
 
         args.out.mkdir(parents=True, exist_ok=True)
+        export_path = args.out / ("stack.png" if args.export == "png16" else "stack.tif")
+        if export_config and export_path.exists() and not args.overwrite:
+            parser.error(f"{export_path} exists; use --overwrite to replace it")
+        if args.checkpoint:
+            args.checkpoint.parent.mkdir(parents=True, exist_ok=True)
         def _rad(deg):
             return None if deg is None else float(deg) * math.pi / 180.0
 
@@ -320,16 +370,18 @@ def main(argv: list[str] | None = None) -> int:
             crop=args.crop,
             bayer_override=args.bayer,
         ) as source:
-            result = stack_source(source, cfg)
+            result = stack_source(source, cfg, on_event=(
+                (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)) if args.checkpoint else None))
         npz = args.out / "stack.npz"
-        import numpy as np
-        import json
+        save_snapshot(npz, result)
+        if export_config:
+            from planetrecon.export import export_result
 
-        np.savez_compressed(npz, image=result.image, coverage=result.coverage,
-                            validity=result.validity, units=result.units,
-                            reference_epoch=result.reference_epoch or "",
-                            provenance=json.dumps(result.provenance, sort_keys=True),
-                            **{f"layer_coverage__{name}": value for name, value in result.layer_coverage.items()})
+            try:
+                report = export_result(result, export_path, export_config, overwrite=args.overwrite)
+            except (OSError, ValueError) as exc:
+                parser.error(f"export failed: {exc}; full result retained at {npz}")
+            print(f"wrote {report.path} metadata={report.sidecar} counts={report.metadata['counts']}")
         print(
             f"wrote {npz} backend={result.backend} n_used={result.n_used} "
             f"rejected={result.n_rejected} incomplete={result.incomplete}"

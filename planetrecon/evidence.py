@@ -168,6 +168,25 @@ def w10_manifest() -> dict:
     )
 
 
+def w13_manifest() -> dict:
+    return experiment_manifest(
+        "w13-scientific-export", status="diagnostic",
+        protocol=("CPU PNG16, TIFF16 and float32 TIFF mono/RGB read-back; fixed shared "
+                  "mapping, invalid masks, coverage pages, provenance, atomic publication "
+                  "and full-resolution intermediate snapshot export."),
+        seed_coverage={"unit_fixtures": True, "scientific_families": False},
+        results=[{"path": "tests/test_w13.py", "status": "diagnostic", "kind": "unit"},
+                 {"path": "packaging/smoke_export.py", "status": "diagnostic", "kind": "packaging-smoke"}],
+        notes=("Qt/libpng independently reads PNG16 including RGB; a separate TIFF tag/strip "
+               "parser checks samples and types. Local Linux frozen encoder smoke is not "
+               "clean-system or cross-platform release acceptance. GUI save controls remain W14. "
+               "Input identities sample first/last 64KiB, not full-file hashes. Display gamma "
+               "is an explicit power transfer without colour-space conversion. Interrupted "
+               "processes may leave unreferenced generation companions. R9 and Q3 unchanged."),
+        extra={"archived": False, "device": "cpu", "export_schema_version": "1.0"},
+    )
+
+
 def write_evidence_manifests(results_dir: Path) -> list[Path]:
     results_dir = Path(results_dir)
     dest = results_dir / "manifests"
@@ -178,6 +197,7 @@ def write_evidence_manifests(results_dir: Path) -> list[Path]:
         write_manifest(dest / "w04-w08.json", w04_w08_manifest()),
         write_manifest(dest / "w09.json", w09_manifest()),
         write_manifest(dest / "w10.json", w10_manifest()),
+        write_manifest(dest / "w13.json", w13_manifest()),
     ]
     for path in written:
         load_manifest(path)

@@ -12,6 +12,7 @@ dependencies = [
     "numpy",
     "scipy",
     "h5py",
+    "tifffile",
 ]
 
 [project.optional-dependencies]

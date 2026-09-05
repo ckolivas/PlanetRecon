@@ -21,6 +21,7 @@ from planetrecon.io.source import FrameSource
 from planetrecon.rank import laplacian_score
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.result import ReconstructionResult
+from planetrecon.pipeline.provenance import capture_provenance
 
 
 PreviewFn = Callable[[ReconstructionResult, dict], None]
@@ -384,6 +385,8 @@ def stack_source_geometry(
     seq = 0
     cancelled = False
 
+    snapshot_provenance = capture_provenance(source, config, calibration)
+
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
         if on_event is None:
@@ -404,11 +407,14 @@ def stack_source_geometry(
             n_used=n_used,
             n_rejected=n_rejected,
             provenance={
+                **snapshot_provenance,
                 "device_report": report.__dict__,
                 "color_mode": color,
                 "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
                 "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
                 "source": meta.as_dict(),
+                "n_captured": n,
+                "reference_index": diagnostics["reference_index"],
                 "geometry": diagnostics,
             },
             warnings=list(warnings),
@@ -531,6 +537,7 @@ def stack_source_geometry(
 
     image = _normalise_stack(accum, weight)
     provenance = {
+        **snapshot_provenance,
         "device_report": report.__dict__,
         "color_mode": color,
         "baseline_operator_version": C.BASELINE_OPERATOR_VERSION,
