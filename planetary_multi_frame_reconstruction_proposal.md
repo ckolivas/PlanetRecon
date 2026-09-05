@@ -2237,3 +2237,12 @@ invalid-loss handling, closure denominator checks, complete-family gating and
 JSON boolean/null serialization. Q2 outputs no longer overwrite archived tables.
 Held-out diagnostics carry an explicit model-selection label; an independent
 assessment and full scientific qualification remain outstanding.
+
+**Implementation follow-up (bounded W03 decision):** a reproducible physical-screen
+audit now covers all three development seeds, both regimes/crops and both starts
+at M=15/35/60 on reduced eight-frame inputs. E1/E2a0 maximum relative disagreement
+is 4.48e-11; bounded low-frequency S10 membership is stable in six cases. All
+12 blind cases are incomplete at the declared optimizer budget. Shift mapping
+and projected-snapshot/exposure mismatch remain material. Full records and the
+negative qualification decision are in `results/r10-development-audit/DECISION.md`.
+This is development evidence, not completion of W01/W03 or authorization for Q3.

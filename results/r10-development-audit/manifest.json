@@ -1,0 +1,275 @@
+{
+  "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
+  "created_utc": "2026-09-05T14:52:59Z",
+  "document_revision": "R9",
+  "estimator_operator_version": "1.2",
+  "experiment_id": "r10-bounded-development-audit",
+  "inputs": [],
+  "lowfreq_ranking": [
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[2, 4, 13, 17, 46, 55, 61, 75] hi=[2, 4, 13, 17, 46, 55, 61, 75]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 4.0,
+      "seed": 1001
+    },
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=0.999 levels 4/5 lo=[4, 13, 16, 17, 46, 55, 61, 75] hi=[4, 13, 16, 17, 46, 55, 61, 75]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 8.0,
+      "seed": 1001
+    },
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 37, 43, 49, 50, 73] hi=[10, 11, 20, 37, 43, 49, 50, 73]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 4.0,
+      "seed": 1002
+    },
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 31, 37, 43, 49, 73] hi=[10, 11, 20, 31, 37, 43, 49, 73]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 8.0,
+      "seed": 1002
+    },
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 50, 64, 72] hi=[25, 33, 38, 46, 49, 50, 64, 72]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 4.0,
+      "seed": 1003
+    },
+    {
+      "checks": [
+        {
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 64, 65, 72] hi=[25, 33, 38, 46, 49, 64, 65, 72]",
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "value": 1.0
+        }
+      ],
+      "dr0": 8.0,
+      "seed": 1003
+    }
+  ],
+  "notes": "No evaluation seeds, Q3, production atmospheric claims or GPU execution.",
+  "protocol": "Physical-screen reduced-grid development ablations; never a Gate-1/Q2 qualification.",
+  "q3_authorized": false,
+  "results": [
+    {
+      "E1_E2a0_relative_error": 3.8075462502605455e-12,
+      "closure": 0.9978095235040223,
+      "crop": "feature",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1001-4-feature.json",
+      "seed": 1001,
+      "sha256": "0e5855fba9e0aa44dfb5277588c2181f687448ed238c6a74252a32aab8aa926b",
+      "shift_error_px": 0.15181846089182283,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 2.1195617754852517e-11,
+      "closure": 0.8163592910927148,
+      "crop": "bland",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1001-4-bland.json",
+      "seed": 1001,
+      "sha256": "2e8ae0f7a5dda50de7507cf7fdf37290351f50df118277d1a4f5ce6ebf5eb598",
+      "shift_error_px": 0.15181846089182283,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 1.8051006619247377e-12,
+      "closure": 0.9921382299911917,
+      "crop": "feature",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1001-8-feature.json",
+      "seed": 1001,
+      "sha256": "b0cf1042ebcfb1528adf0dd2f399b2471c7f9757563ca39f785ed40eca09bb4f",
+      "shift_error_px": 0.26416982978763187,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 4.962800245078708e-12,
+      "closure": 0.5070076869865723,
+      "crop": "bland",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1001-8-bland.json",
+      "seed": 1001,
+      "sha256": "f4ad98851c2a7e920bd537701035abd50e5c44f472695f2ea2a1eff2242c92b1",
+      "shift_error_px": 0.26416982978763187,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 4.6858469645489394e-12,
+      "closure": 0.9915853451003098,
+      "crop": "feature",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1002-4-feature.json",
+      "seed": 1002,
+      "sha256": "ea24fedf511800b5fb9db2fc44536ec52ea25e6d48dc45a120011a81f9e23aa0",
+      "shift_error_px": 0.012408603741499616,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 1.864621252177102e-11,
+      "closure": 1.0399928231617919,
+      "crop": "bland",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1002-4-bland.json",
+      "seed": 1002,
+      "sha256": "45d7bfb7528e776f672ba3de3daf912d92c64aaf0e24088a1008c9d321313868",
+      "shift_error_px": 0.012408603741499616,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 1.0343194712495611e-11,
+      "closure": 0.9875262114374027,
+      "crop": "feature",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1002-8-feature.json",
+      "seed": 1002,
+      "sha256": "061febf8a4f663b5fac317690267a89f1e5cbe549b7c74649eea0755727a4f4b",
+      "shift_error_px": 0.03852308826871132,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 4.477846819145595e-11,
+      "closure": 1.1711665368116755,
+      "crop": "bland",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1002-8-bland.json",
+      "seed": 1002,
+      "sha256": "e1b4ecb8ac77d926f215bf4daaba7dcf5dd9b3f42e5c66c4ec40367b25a90778",
+      "shift_error_px": 0.03852308826871132,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 1.4106134594952058e-12,
+      "closure": 0.9749909309932252,
+      "crop": "feature",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1003-4-feature.json",
+      "seed": 1003,
+      "sha256": "8965c873e57891c956c6fa4d9706233271a5886a57da0fd9d03304264c9bccf8",
+      "shift_error_px": 0.1829651983446724,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 7.659982161712894e-12,
+      "closure": 0.9989808598061733,
+      "crop": "bland",
+      "dr0": 4.0,
+      "fit_status": "incomplete",
+      "path": "audit-1003-4-bland.json",
+      "seed": 1003,
+      "sha256": "77fc17fb300a5cdd5ca66fc3a097963378161ffcaff9c09e7dd50cbdabbe37c8",
+      "shift_error_px": 0.1829651983446724,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 9.828664303867728e-12,
+      "closure": 0.9637343102210645,
+      "crop": "feature",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1003-8-feature.json",
+      "seed": 1003,
+      "sha256": "4bee409dd490641b5d7690aa17876f9101126a2f8eee6daee7b352555f575502",
+      "shift_error_px": 0.24658624946144037,
+      "status": "diagnostic"
+    },
+    {
+      "E1_E2a0_relative_error": 7.796715717730459e-12,
+      "closure": 1.0032111688102734,
+      "crop": "bland",
+      "dr0": 8.0,
+      "fit_status": "incomplete",
+      "path": "audit-1003-8-bland.json",
+      "seed": 1003,
+      "sha256": "40dfecbde9a66e8b6acd6503de6f28206626d30672f6438852710cb4f04b5fc7",
+      "shift_error_px": 0.24658624946144037,
+      "status": "diagnostic"
+    }
+  ],
+  "roadmap_revision": "R10",
+  "schema_name": "planetrecon-evidence-manifest",
+  "schema_version": "1.0",
+  "seed_coverage": {
+    "alpha_iters": 2,
+    "crops": [
+      "feature",
+      "bland"
+    ],
+    "eval_size": 32,
+    "gates_enabled": false,
+    "holdout_role": "model_selection",
+    "inits": [
+      "zero",
+      "subset"
+    ],
+    "n_diam": 16,
+    "n_frames": 8,
+    "outer_iters": [
+      1,
+      1,
+      1
+    ],
+    "pupil_pad_factor": 8.0,
+    "regimes": [
+      4.0,
+      8.0
+    ],
+    "seeds": [
+      1001,
+      1002,
+      1003
+    ],
+    "stages": [
+      15,
+      35,
+      60
+    ]
+  },
+  "simulator_operator_version": "1.0",
+  "source_hash": "b268f6a0e8683a5740dcebe0597d46e26c396e2f0eddcb992b3567055ec3031c",
+  "status": "diagnostic",
+  "tolerances": {},
+  "wall_s": 106.32733594707679
+}

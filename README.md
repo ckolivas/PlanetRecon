@@ -439,3 +439,9 @@ its declared complete seed/regime set and valid converged crop results. JSON
 preserves booleans/nulls. New Q2 runs write only to the chosen experiment directory;
 archived R9 tables remain immutable. Full development-family qualification is
 still required; these repairs do not authorize Q3.
+
+The bounded W03 audit and decision are in
+[`results/r10-development-audit/DECISION.md`](results/r10-development-audit/DECISION.md).
+All 12 reduced development cases remain incomplete. Reproduce with
+`python3 -m planetrecon.science_audit --out NEW_DIRECTORY`; this does not run
+or authorize Q3 and does not overwrite historical results.
