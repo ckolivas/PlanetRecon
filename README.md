@@ -57,12 +57,16 @@ high-band ill-conditioned. A two-initialization held-out-frame diagnostic on
 development seed 1001 (feature, 90/10 split) selects the `subset` start and has
 holdout/train residual 1.0103; the all-frame closure remains 0.5244.
 
-W00 (versioned evidence, test tiers, CPU thread policy) and W01 (Dykstra
-positivity/support projection, forward/adjoint audit, method certificates)
-are implemented. Historical R9 tables in `results/prompt2/` and `results/q2/`
+W00 evidence/test tiers and a bounded W01 operator audit are implemented.
+The review fixes Dykstra warm starts and convergence reporting, even-kernel
+convolution auditing, and generation/certificate provenance enforcement.
+Full W01 scientific qualification, W02 and W03 remain outstanding; unit-level
+ranking stability is not the required full development-family check.
+Historical R9 tables in `results/prompt2/` and `results/q2/`
 are archived in place and are not regenerated. Q3 still does not start.
-The next planned slice is W04–W08: open a real Bayer SER, process a bounded
-CPU batch, and display the result in an owned, cancellable Qt6 job. Advanced
+W02/W03 remain the next scientific work. W04–W08 can independently open a real
+Bayer SER, process a bounded CPU batch, and display the result in an owned,
+cancellable Qt6 job. Advanced
 atmospheric claims remain gated by W03.
 
 Local one-shot-colour RGGB `.ser` files may sit in the repository root for
@@ -71,7 +75,8 @@ later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 ## Run
 
 From the repository root (Python 3 with numpy, scipy, h5py, pytest). Default
-execution is CPU-only with 8 BLAS/FFT threads:
+execution is CPU-only with a per-process thread cap of 8; some FFT stages use
+one thread. Worker counts are separate limits, not an overall eight-thread budget:
 
 ```bash
 export PLANETRECON_THREADS=8
@@ -95,8 +100,12 @@ It does not run `@pytest.mark.slow` convergence jobs, scientific seed families,
 or hardware/GPU tests. Pass `--run-slow` / `--run-scientific` / `--run-hardware`
 to opt in. Do not put expensive simulations in the default suite.
 
-`python3 -m planetrecon evidence` writes `results/manifests/` without modifying
-archived R9 tables.
+`python3 -m planetrecon evidence` verifies the archived bundle's checksums and
+writes `results/manifests/` without modifying or relabelling archived R9 tables.
+Their estimator version is `1.0`; new results use `1.2`. Legacy HDF5 files remain
+readable, but absent/stale generation identities or certificates cannot authorize
+new Gate tables. They require explicit revalidation/regeneration, not an automatic
+stamp from current code. No historical capture or result was regenerated here.
 
 `validate-dev` runs the mandatory physics checks and, unless `--no-generate`
 is given, writes development-seed HDF5 files for `D/r0 = 8` and `4` at
@@ -160,10 +169,12 @@ regimes if they are missing, then writes classification tables under
   clip-then-support-then-clip. A1o registers with the known Fourier shift,
   forms the uniform mean stack, uses \(H_{\rm eff}=\mathrm{mean}(H_k)\) of the
   registered OTFs, and the exact stacked white-noise variance
-  \(\mathrm{mean}(\sigma_k^2)/|S|\). Estimator operator version: `1.1`.
+  \(\mathrm{mean}(\sigma_k^2)/|S|\). Estimator operator version: `1.2`.
+  Convergence requires feasibility and a projected-gradient residual, with
+  correctly rebased warm-start duals. Iteration exhaustion is not convergence.
   Simulator convolution remains the padded linear operator (version `1.0`);
   crop-FFT circular convolution is the frozen estimator model, audited as an
-  interior approximation.
+  a proposed interior approximation; full scientific qualification is pending.
 - **Ranking.** Exact Fourier registration, sky-median subtraction if a sky
   mask is present, 4-neighbour Laplacian energy, 2-pixel border ignored.
   Decision subset \(p=10\). Diagnostic grid \(\{5,10,25,50,100\}\).

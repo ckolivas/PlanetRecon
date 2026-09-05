@@ -5,13 +5,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from planetrecon.runtime import apply_thread_limits, default_thread_count
-
-apply_thread_limits(default_thread_count())
+from planetrecon.runtime import apply_thread_limits
 
 from planetrecon import constants as C
-from planetrecon.simulate import generate_one
-from planetrecon.validate import run_development_suite
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -25,8 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=(
             "CPU BLAS/FFT thread cap (default: PLANETRECON_THREADS or 8). "
-            "Must also be set in the environment to affect OpenBLAS if NumPy "
-            "is already loaded. GPU devices are not used."
+            "Applied before importing numerical libraries. GPU devices are not used."
         ),
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -141,9 +136,12 @@ def main(argv: list[str] | None = None) -> int:
     evd.add_argument("--results", type=Path, default=Path("results"))
 
     args = parser.parse_args(argv)
-    if args.threads is not None:
-        apply_thread_limits(args.threads)
+    if args.threads is not None and args.threads < 1:
+        parser.error("--threads must be positive")
+    apply_thread_limits(args.threads)
     if args.cmd == "generate":
+        from planetrecon.simulate import generate_one
+
         generate_one(
             args.seed,
             args.dr0,
@@ -154,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.cmd == "validate-dev":
+        from planetrecon.validate import run_development_suite
+
         return run_development_suite(args.out, generate=not args.no_generate)
     if args.cmd == "freeze-reg":
         from planetrecon.gate import run_freeze

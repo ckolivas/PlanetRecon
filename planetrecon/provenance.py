@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -33,9 +34,17 @@ PHYSICS_KEYS = (
     "eval_size",
     "object_oversample",
     "bin_factor_locked",
+    "tau0_factor",
+    "texp_over_tau0",
+    "dt_over_tau0",
+    "detector_samp_factor",
+    "read_noise_e",
 )
 COMPAT_KEYS = PHYSICS_KEYS + (
     "simulator_operator_version",
+    "estimator_operator_version",
+    "source_hash",
+    "config_hash",
 )
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -61,7 +70,7 @@ def package_python_files() -> list[Path]:
 
 
 def source_hash(paths: Iterable[Path] | None = None) -> str:
-    """Content hash of the engine package. Provenance only, not a compatibility key."""
+    """Conservative content identity of the engine and validation implementation."""
     items = []
     for path in paths if paths is not None else package_python_files():
         rel = path.resolve()
@@ -128,7 +137,7 @@ def current_method_fingerprint(cfg: SimConfig | None = None) -> dict[str, Any]:
         padding = cfg.padding_detector_px
         sub = cfg.subharmonic_levels
         eval_size = cfg.eval_size
-    return {
+    fp = {
         "revision": C.REVISION,
         "schema_name": C.SCHEMA_NAME,
         "schema_version": C.SCHEMA_VERSION,
@@ -139,17 +148,25 @@ def current_method_fingerprint(cfg: SimConfig | None = None) -> dict[str, Any]:
         "wavelength_m": C.WAVELENGTH_M,
         "wind_m_s": C.WIND_M_S,
         "n_diam": int(n_diam),
-        "pupil_pad_factor": float(pad_factor),
+        "pupil_pad_factor": float(pupil_n) / float(n_diam),
         "pupil_grid_size": int(pupil_n),
         "exposure_samples_J": int(j),
         "padding_detector_px": int(padding),
         "subharmonic_levels": int(sub),
         "eval_size": int(eval_size),
         "object_oversample": int(C.OBJECT_OVERSAMPLE),
-        "bin_factor_locked": int(C.OBJECT_OVERSAMPLE),
+        "bin_factor_locked": int(round(C.DETECTOR_SAMP_FACTOR * pupil_n / n_diam)),
+        "tau0_factor": C.TAU0_FACTOR,
+        "texp_over_tau0": C.TEXP_OVER_TAU0,
+        "dt_over_tau0": C.DT_OVER_TAU0,
+        "detector_samp_factor": C.DETECTOR_SAMP_FACTOR,
+        "read_noise_e": C.READ_NOISE_E,
         "source_hash": source_hash(),
-        "config_hash": config_hash(cfg),
     }
+    # A method-level configuration hash deliberately excludes seed, regime and
+    # frame count. config_hash(cfg) remains the separate per-experiment identity.
+    fp["config_hash"] = sha256_json(compatibility_view(fp, PHYSICS_KEYS))
+    return fp
 
 
 def fingerprint_from_h5(path: Path) -> dict[str, Any]:
@@ -158,14 +175,18 @@ def fingerprint_from_h5(path: Path) -> dict[str, Any]:
     path = Path(path)
     with h5py.File(path, "r") as f:
         g = f["/config"]
-        n_diam = int(round(C.D_M / float(g.attrs["screen_dx_m"])))
+        n_diam = int(round(float(g.attrs["D_m"]) / float(g.attrs["screen_dx_m"])))
         pupil_n = int(g.attrs["pupil_grid_size"])
         stored = {}
-        if "method_certificate_json" in f["/validation"]:
-            raw = f["/validation/method_certificate_json"][()]
+        # Generation identity is immutable evidence, not a certificate stamped
+        # later by whichever code happens to run certification.
+        if "generation_method_json" in g.attrs:
+            raw = g.attrs["generation_method_json"]
             if isinstance(raw, bytes):
                 raw = raw.decode("utf-8")
             stored = json.loads(str(raw))
+            if not isinstance(stored, dict):
+                raise ValueError("generation method must be a JSON object")
         fp = {
             "revision": str(f.attrs.get("revision", "")),
             "schema_name": str(f.attrs.get("schema_name", "")),
@@ -173,11 +194,11 @@ def fingerprint_from_h5(path: Path) -> dict[str, Any]:
             "simulator_operator_version": str(
                 stored.get(
                     "simulator_operator_version",
-                    g.attrs.get("simulator_operator_version", C.SIMULATOR_OPERATOR_VERSION),
+                    g.attrs.get("simulator_operator_version", "unknown"),
                 )
             ),
             "estimator_operator_version": str(
-                stored.get("estimator_operator_version", C.ESTIMATOR_OPERATOR_VERSION)
+                stored.get("estimator_operator_version", "unknown")
             ),
             "D_m": float(g.attrs["D_m"]),
             "obstruction_ratio": float(g.attrs["obstruction_ratio"]),
@@ -190,8 +211,16 @@ def fingerprint_from_h5(path: Path) -> dict[str, Any]:
             "padding_detector_px": int(g.attrs["padding_detector_px"]),
             "subharmonic_levels": int(g.attrs["subharmonic_levels"]),
             "eval_size": int(f["/object/feature_truth"].shape[0]),
-            "object_oversample": int(C.OBJECT_OVERSAMPLE),
-            "bin_factor_locked": int(C.OBJECT_OVERSAMPLE),
+            "object_oversample": stored.get("object_oversample", "unknown"),
+            "bin_factor_locked": int(round(
+                float(g.attrs["detector_pixel_scale_rad"]) * pupil_n
+                * float(g.attrs["screen_dx_m"]) / float(g.attrs["wavelength_m"])
+            )),
+            "tau0_factor": float(g.attrs["tau0_s"]) * float(g.attrs["wind_m_s"]) / float(g.attrs["r0_m"]),
+            "texp_over_tau0": float(g.attrs["texp_s"]) / float(g.attrs["tau0_s"]),
+            "dt_over_tau0": float(g.attrs["dt_s"]) / float(g.attrs["tau0_s"]),
+            "detector_samp_factor": float(g.attrs["detector_pixel_scale_rad"]) * float(g.attrs["D_m"]) / float(g.attrs["wavelength_m"]),
+            "read_noise_e": float(g.attrs["read_noise_e"]),
             "seed": int(f.attrs["seed"]),
             "Dr0": float(g.attrs["Dr0"]),
             "N_frames": int(g.attrs["N_frames"]),
@@ -212,10 +241,7 @@ def compatibility_view(
         if key not in fp:
             continue
         val = fp[key]
-        if isinstance(val, float):
-            out[key] = round(float(val), 12)
-        else:
-            out[key] = val
+        out[key] = val
     return out
 
 
@@ -227,7 +253,7 @@ def fingerprints_compatible(
     keys: tuple[str, ...] = COMPAT_KEYS,
 ) -> bool:
     va, vb = compatibility_view(a, keys), compatibility_view(b, keys)
-    if set(va) != set(vb):
+    if set(va) != set(keys) or set(vb) != set(keys):
         return False
     for key in va:
         x, y = va[key], vb[key]
@@ -237,6 +263,8 @@ def fingerprints_compatible(
             and not isinstance(x, bool)
             and not isinstance(y, bool)
         ):
+            if not math.isfinite(x) or not math.isfinite(y):
+                return False
             if abs(float(x) - float(y)) > atol + rtol * max(abs(float(x)), abs(float(y))):
                 return False
         elif x != y:
@@ -245,13 +273,13 @@ def fingerprints_compatible(
 
 
 def physics_compatible(a: dict[str, Any], b: dict[str, Any]) -> bool:
-    return fingerprints_compatible(a, b, keys=PHYSICS_KEYS)
+    return fingerprints_compatible(a, b)
 
 
 def fingerprint_mismatch(
     a: dict[str, Any],
     b: dict[str, Any],
-    keys: tuple[str, ...] = PHYSICS_KEYS,
+    keys: tuple[str, ...] = COMPAT_KEYS,
 ) -> list[str]:
     va, vb = compatibility_view(a, keys), compatibility_view(b, keys)
     names = sorted(set(va) | set(vb))
@@ -271,6 +299,18 @@ def fingerprint_mismatch(
 def certificate_is_current(stored: dict[str, Any], current: dict[str, Any] | None = None) -> bool:
     current = current_method_fingerprint() if current is None else current
     return fingerprints_compatible(stored, current)
+
+
+def current_fingerprint_for_file(fp: dict[str, Any]) -> dict[str, Any]:
+    """Current implementation evaluated at the file's numerical configuration."""
+    cfg = SimConfig(
+        seed=int(fp['seed']), dr0=float(fp['Dr0']), n_frames=int(fp['N_frames']),
+        n_diam=int(fp['n_diam']), pupil_pad_factor=float(fp['pupil_pad_factor']),
+        exposure_samples_j=int(fp['exposure_samples_J']),
+        padding_detector_px=int(fp['padding_detector_px']),
+        subharmonic_levels=int(fp['subharmonic_levels']), eval_size=int(fp['eval_size']),
+    )
+    return current_method_fingerprint(cfg)
 
 
 def validate_status(status: str) -> str:
@@ -320,6 +360,8 @@ def experiment_manifest(
 
 def manifest_errors(manifest: dict[str, Any]) -> list[str]:
     errors = []
+    if not isinstance(manifest, dict):
+        return ["manifest must be an object"]
     if manifest.get("schema_name") != MANIFEST_SCHEMA:
         errors.append("schema_name mismatch")
     if manifest.get("schema_version") != MANIFEST_SCHEMA_VERSION:
@@ -342,6 +384,21 @@ def manifest_errors(manifest: dict[str, Any]) -> list[str]:
         errors.append("inputs must be a list")
     if not isinstance(manifest.get("results", []), list):
         errors.append("results must be a list")
+    else:
+        for i, result in enumerate(manifest.get("results", [])):
+            if not isinstance(result, dict):
+                errors.append(f"results[{i}] must be an object")
+                continue
+            if result.get("status") not in RESULT_STATUSES:
+                errors.append(f"results[{i}] invalid status")
+            if not isinstance(result.get("path"), str) or not result['path']:
+                errors.append(f"results[{i}] missing path")
+            if 'gate_passed' in result and not isinstance(result['gate_passed'], bool):
+                errors.append(f"results[{i}] gate_passed must be a boolean")
+    try:
+        json.dumps(manifest, allow_nan=False)
+    except (ValueError, TypeError):
+        errors.append("manifest must contain finite JSON values")
     return errors
 
 
@@ -351,7 +408,7 @@ def write_manifest(path: Path, manifest: dict[str, Any]) -> Path:
     if errors:
         raise ValueError("invalid manifest: " + "; ".join(errors))
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n")
     return path
 
 

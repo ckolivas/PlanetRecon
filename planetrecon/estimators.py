@@ -151,6 +151,16 @@ def project_positivity_support(
     """
     x = np.asarray(image, dtype=np.float64).copy()
     support = np.asarray(support, dtype=np.float64)
+    if x.ndim != 2 or x.shape != support.shape or not np.all(np.isfinite(x)):
+        raise ValueError("projection requires a finite 2-D image and matching support")
+    if not np.all((support == 0) | (support == 1)):
+        raise ValueError("spectral support must be a binary mask")
+    reflected = support[np.ix_((-np.arange(x.shape[0])) % x.shape[0],
+                               (-np.arange(x.shape[1])) % x.shape[1])]
+    if not np.array_equal(support, reflected):
+        raise ValueError("real-image spectral support must be centrosymmetric in FFT order")
+    if maxiter < 1 or not np.isfinite(tol) or tol <= 0:
+        raise ValueError("projection maxiter and tolerance must be positive")
     if p is None:
         p = np.zeros_like(x)
     else:
@@ -159,30 +169,43 @@ def project_positivity_support(
         q = np.zeros_like(x)
     else:
         q = np.asarray(q, dtype=np.float64).copy()
-    last = 0.0
+    if any(v.shape != x.shape or not np.all(np.isfinite(v)) for v in (p, q)):
+        raise ValueError("projection dual arrays must be finite and match the image")
+    # Dykstra's invariant is target = x + p + q. Reusing dual corrections
+    # without rebasing x instead projects target + p + q, a different problem.
+    x -= p + q
+    last = float("inf")
+    dual_delta = float("inf")
+    converged = False
     n_iter = 0
     pos = positivity_violation(x)
     leak = out_of_support_fraction(x, support)
     for n_iter in range(1, int(maxiter) + 1):
+        old_p, old_q = p, q
         y = np.maximum(x + p, 0.0)
         p = x + p - y
         z = _apply_spectral_support(y + q, support)
         q = y + q - z
         denom = max(float(np.linalg.norm(z)), 1e-12)
         last = float(np.linalg.norm(z - x) / denom)
+        dual_delta = float(
+            max(np.linalg.norm(p - old_p), np.linalg.norm(q - old_q))
+            / max(np.linalg.norm(z), np.linalg.norm(p), np.linalg.norm(q), 1e-12)
+        )
         x = z
         pos = positivity_violation(x)
         leak = out_of_support_fraction(x, support)
-        if pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL:
-            break
-        if last < tol:
+        converged = bool(
+            pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL
+            and last < tol and dual_delta < tol
+        )
+        if converged:
             break
     info = {
         "n_iter": int(n_iter),
         "rel_delta": last,
-        "converged": bool(
-            last < tol or (pos <= C.FEASIBLE_POS_TOL and leak <= C.FEASIBLE_SUPPORT_TOL)
-        ),
+        "converged": converged,
+        "dual_rel_delta": dual_delta,
         "method": "dykstra",
         "positivity_violation": pos,
         "out_of_support": leak,
@@ -268,13 +291,11 @@ def e2a(
     t = 1.0
     last_delta = 0.0
     n_iter = 0
-    last_grad_norm = 0.0
     for n_iter in range(1, maxiter + 1):
         of = np.fft.fft2(y)
         grad = np.fft.ifft2((den * of - num) * support).real
         if tv_mu > 0.0:
             grad = grad + float(tv_mu) * isotropic_tv_grad(y, tv_eps)
-        last_grad_norm = float(np.linalg.norm(grad))
         o_next, proj_info = project_positivity_support(
             y - step * grad,
             support,
@@ -289,19 +310,17 @@ def e2a(
         last_delta = float(np.linalg.norm(o_next - o) / max(np.linalg.norm(o_next), 1e-12))
         o = o_next
         t = t_next
-        if last_delta < tol:
+        if last_delta < tol and proj_info["converged"]:
             break
-    o, proj_info = project_positivity_support(o, support, maxiter=400)
+    o, proj_info = project_positivity_support(o, support)
     of = np.fft.fft2(o)
     grad_o = np.fft.ifft2((den * of - num) * support).real
     if tv_mu > 0.0:
         grad_o = grad_o + float(tv_mu) * isotropic_tv_grad(o, tv_eps)
-    projected, _kkt = project_positivity_support(
+    projected, kkt_info = project_positivity_support(
         o - step * grad_o,
         support,
-        maxiter=max(C.DYKSTRA_MAXITER, 128),
-        p=dual_p,
-        q=dual_q,
+        maxiter=C.DYKSTRA_MAXITER,
     )
     kkt = float(np.linalg.norm(projected - o) / max(np.linalg.norm(o), 1e-12))
     feas = constraint_diagnostics(o, support)
@@ -309,13 +328,18 @@ def e2a(
         "n_iter": n_iter,
         "rel_delta": last_delta,
         "step": step,
-        "converged": bool(last_delta < tol),
+        "converged": bool(
+            last_delta < tol and feas["feasible"] and proj_info["converged"]
+            and kkt_info["converged"] and kkt < tol
+        ),
         "tv_mu": float(tv_mu),
         "positivity_violation": feas["positivity_violation"],
         "out_of_support": feas["out_of_support"],
         "feasible": feas["feasible"],
         "kkt_residual": kkt,
-        "grad_norm": last_grad_norm,
+        "grad_norm": float(np.linalg.norm(grad_o)),
+        "projection_converged": proj_info["converged"],
+        "kkt_projection_converged": kkt_info["converged"],
         "projection_iters": int(proj_info["n_iter"]),
         "projection_method": "dykstra",
         "estimator_operator_version": C.ESTIMATOR_OPERATOR_VERSION,

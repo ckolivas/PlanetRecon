@@ -2168,6 +2168,18 @@ advanced solver, but must state exactly which planned features remain unfinished
 
 # 26. Immediate next implementation handoff
 
+**Implementation follow-up (2026-09-05):** commit `cac7837` added W00 manifests
+and a bounded W01 audit. Review found and corrected Dykstra dual warm-start and
+stopping defects, an even-kernel spatial-oracle offset, unenforced/stale method
+provenance, historical-manifest relabelling and a ranking-correlation shortcut.
+Estimator operator 1.2 requires feasibility and a qualified projected-gradient
+residual; old result tables remain estimator 1.0. Generation identities and
+certificates now participate in Gate eligibility, with legacy/unknown identities
+requiring explicit revalidation. These small CPU regressions do not complete
+full development-family convergence checks or W02/W03 requalification. The
+remaining handoff below applies to outstanding work, not a request to repeat
+completed unit-level infrastructure.
+
 Implement **W00 and W01 first**, beginning with failing regression tests for the
 positivity/support intersection and certification compatibility, then the
 forward/adjoint consistency audit. Keep R9 result files unchanged. Add small CPU

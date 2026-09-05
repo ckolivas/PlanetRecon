@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import h5py
@@ -99,6 +100,9 @@ def write_truth(path: Path, cfg: SimConfig, arrays: dict) -> None:
         f.attrs["seed"] = int(cfg.seed)
 
         gcfg = f.create_group("config")
+        from planetrecon.provenance import current_method_fingerprint
+
+        gcfg.attrs["generation_method_json"] = json.dumps(current_method_fingerprint(cfg), sort_keys=True)
         for key, val in (
             ("D_m", cfg.d_m),
             ("obstruction_ratio", cfg.obstruction_ratio),
@@ -369,6 +373,23 @@ def gate_errors(path: Path) -> list[str]:
     errors = schema_errors(path)
     if errors:
         return errors
+    from planetrecon.provenance import (
+        certificate_is_current, current_fingerprint_for_file, fingerprint_from_h5,
+        load_stored_certificate,
+    )
+
+    try:
+        generated = fingerprint_from_h5(path)
+        current = current_fingerprint_for_file(generated)
+        certificate = load_stored_certificate(path)
+        if not certificate_is_current(generated, current):
+            errors.append("stale or unknown generation method; revalidation is required")
+        if certificate is None or not certificate_is_current(certificate, current):
+            errors.append("missing or stale method certificate")
+        elif not certificate_is_current(certificate, generated):
+            errors.append("method certificate does not match file configuration")
+    except (KeyError, TypeError, ValueError, ZeroDivisionError, OverflowError) as exc:
+        errors.append(f"invalid method provenance: {exc}")
     with h5py.File(path, "r") as f:
         for name in (*VALIDATION_PASS_KEYS, "gate_eligible"):
             if not bool(f[f"/validation/{name}"][()]):

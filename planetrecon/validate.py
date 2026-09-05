@@ -29,7 +29,8 @@ from planetrecon.hdf5io import (
     validation_is_gate_eligible,
 )
 from planetrecon.provenance import (
-    current_method_fingerprint,
+    certificate_is_current,
+    current_fingerprint_for_file,
     fingerprint_from_h5,
     fingerprint_mismatch,
     physics_compatible,
@@ -539,14 +540,16 @@ def check_lowfreq_ranking(cfg: SimConfig | None = None) -> list[Check]:
     from scipy.stats import spearmanr
 
     spear = float(spearmanr(scores_lo, scores_hi).correlation)
-    passed = (spear >= C.RANK_LOFREQ_SPEARMAN_MIN) or (jac >= C.RANK_LOFREQ_JACCARD_MIN)
+    # Whole-list correlation cannot substitute for top-10% membership stability.
+    # An unstable subset requires the separate G1/G2 follow-up, not an OR pass.
+    passed = jac >= C.RANK_LOFREQ_JACCARD_MIN
     return [
         _ok(
             "lowfreq_ranking_subharmonics",
             passed,
             f"S_10 Jaccard={jac:.3f} Spearman={spear:.3f} levels {levels}/{levels + 1} "
             f"lo={sorted(int(v) for v in top_lo)} hi={sorted(int(v) for v in top_hi)}",
-            spear if np.isfinite(spear) else jac,
+            jac,
         )
     ]
 
@@ -760,12 +763,21 @@ def certify_development_validations(
     method_passes: dict[tuple[int, float], dict[str, bool]] = {}
     fingerprints: dict[Path, dict] = {}
     for path in development_paths:
+        path = Path(path)
         if not path.exists() or schema_errors(path):
-            continue
-        fingerprints[Path(path)] = fingerprint_from_h5(path)
+            return _ok("development_validation_certification", False, f"missing/invalid development file: {path}")
+        try:
+            fp = fingerprint_from_h5(path)
+            if not certificate_is_current(fp, current_fingerprint_for_file(fp)):
+                return _ok("development_validation_certification", False, f"incompatible or stale development method: {path}")
+        except (KeyError, TypeError, ValueError, ZeroDivisionError, OverflowError) as exc:
+            return _ok("development_validation_certification", False, f"invalid method provenance: {path}: {exc}")
+        fingerprints[path] = fp
         with h5py.File(path, "r") as f:
             seed = int(f.attrs["seed"])
             dr0 = float(f["/config"].attrs["Dr0"])
+            if (seed, dr0) in method_passes:
+                return _ok("development_validation_certification", False, f"duplicate seed/regime: {seed}/{dr0}")
             measured = f["/validation/structure_function_measured"][...]
             target = f["/validation/structure_function_target"][...]
             ratios_by_seed.setdefault(seed, measured / target)
@@ -808,31 +820,31 @@ def certify_development_validations(
         for key in _DEVELOPMENT_METHOD_PASS_KEYS
     }
     passed = structure_passed and all(certified_passes.values())
-    certificate = current_method_fingerprint()
-    certificate.update({k: ref_fp[k] for k in (
-        "n_diam",
-        "pupil_pad_factor",
-        "pupil_grid_size",
-        "exposure_samples_J",
-        "padding_detector_px",
-        "subharmonic_levels",
-        "eval_size",
-    ) if k in ref_fp})
+    certificate = current_fingerprint_for_file(ref_fp)
 
     from planetrecon.simulate import write_summary
 
-    targets = development_paths if target_paths is None else target_paths
+    targets = [Path(p) for p in (development_paths if target_paths is None else target_paths)]
+    if not targets:
+        return _ok("development_validation_certification", False, "no certification targets")
     mismatched = []
+    # Preflight the entire target set before changing any file.
     for path in targets:
-        path = Path(path)
         if not path.exists() or schema_errors(path):
+            mismatched.append(f"{path.name}: missing/invalid target")
             continue
-        target_fp = fingerprint_from_h5(path)
-        if not physics_compatible(ref_fp, target_fp):
-            mismatched.append(
-                f"{path.name}: " + "; ".join(fingerprint_mismatch(ref_fp, target_fp))
-            )
-            continue
+        try:
+            target_fp = fingerprint_from_h5(path)
+            if not physics_compatible(ref_fp, target_fp):
+                mismatched.append(f"{path.name}: " + "; ".join(fingerprint_mismatch(ref_fp, target_fp)))
+        except (KeyError, TypeError, ValueError, ZeroDivisionError, OverflowError) as exc:
+            mismatched.append(f"{path.name}: invalid method provenance: {exc}")
+    if mismatched:
+        return _ok(
+            "development_validation_certification", False,
+            "incompatible method certificate targets: " + " | ".join(mismatched), rel_error,
+        )
+    for path in targets:
         with h5py.File(path, "r+") as f:
             gv = f["/validation"]
             gv["structure_function_pass"][...] = structure_passed
@@ -866,14 +878,6 @@ def certify_development_validations(
                 eval_size=int(f["/object/feature_truth"].shape[0]),
             )
         write_summary(path, cfg, values)
-
-    if mismatched:
-        return _ok(
-            "development_validation_certification",
-            False,
-            "incompatible method certificate targets: " + " | ".join(mismatched),
-            rel_error,
-        )
 
     return _ok(
         "development_validation_certification",

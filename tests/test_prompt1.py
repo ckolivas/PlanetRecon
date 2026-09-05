@@ -1,3 +1,4 @@
+import json
 import shutil
 
 import h5py
@@ -140,3 +141,34 @@ def test_generate_schema(tmp_path):
         assert not bool(f["validation"]["gate_eligible"][()])
         assert not bool(f["validation"]["lowfreq_convergence_pass"][()])
         assert "method_certificate_json" not in f["validation"]
+
+    # Reject the entire target batch before stamping even the compatible file.
+    with h5py.File(evaluation_target, 'r+') as f:
+        f['validation/gate_eligible'][...] = False
+    assert not certify_development_validations(paths, [evaluation_target, mismatched]).passed
+    with h5py.File(evaluation_target, 'r') as f:
+        assert not bool(f['validation/gate_eligible'][()])
+    assert not certify_development_validations(paths, [tmp_path / 'missing.h5']).passed
+    assert not certify_development_validations(paths + [paths[0]], paths).passed
+
+    from planetrecon.hdf5io import gate_errors
+    from planetrecon.provenance import write_certificate_dataset
+
+    for corruption in ('certificate', 'generation', 'exposure', 'noise', 'missing'):
+        shutil.copy2(paths[0], mismatched)
+        with h5py.File(mismatched, 'r+') as f:
+            if corruption == 'certificate':
+                cert = json.loads(f['validation/method_certificate_json'][()])
+                cert['simulator_operator_version'] = 'obsolete'
+                write_certificate_dataset(f['validation'], cert)
+            elif corruption == 'generation':
+                generation = json.loads(f['config'].attrs['generation_method_json'])
+                generation['source_hash'] = 'stale'
+                f['config'].attrs['generation_method_json'] = json.dumps(generation)
+            elif corruption == 'exposure':
+                f['config'].attrs['texp_s'] *= 2
+            elif corruption == 'noise':
+                f['config'].attrs['read_noise_e'] *= 2
+            else:
+                del f['config'].attrs['generation_method_json']
+        assert gate_errors(mismatched), corruption

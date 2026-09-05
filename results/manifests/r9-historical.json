@@ -1,10 +1,10 @@
 {
   "archived": true,
   "code_baseline": "d1b600a",
-  "config_hash": "e71f6bb1d6ddf78abbf3dc834fa8ac3e8ca858623b55e3ec4b074f3345eaa4e5",
+  "config_hash": "c343a31e896a99b0c8c034c0d7976a5c0a23a9f591724f81c59ab30cebb78826",
   "created_utc": "2026-09-04T23:47:33Z",
   "document_revision": "R9",
-  "estimator_operator_version": "1.1",
+  "estimator_operator_version": "1.0",
   "experiment_id": "r9-historical-bundle",
   "hdf5_revision": "R9",
   "inputs": [
@@ -14,7 +14,7 @@
       "schema": "planetary-mfbd-gate1"
     }
   ],
-  "notes": "Gate-1 feature G1 is strong only at D/r0=4 and is oracle-sensitive. Q2 evaluation feature-rich median C=0.36388457737905266 < 0.40, so Q3 does not start. Bland tables are high-band ill-conditioned diagnostics.",
+  "notes": "Gate-1 feature G1 is strong only at D/r0=4 and is oracle-sensitive. Q2 evaluation feature-rich median C=0.36388457737905266 < 0.40, so Q3 does not start. Bland tables are high-band ill-conditioned diagnostics. Metadata corrected during W01 review: source identity is the d1b600a engine, and estimator 1.0 denotes the historical clip/support implementation, not Dykstra. Artifact checksums cover the entire archived Prompt-2/Q2 bundle.",
   "protocol": "Frozen R9 Gate-1 and Q2 tables. Archived in place by W00; files are not regenerated and must not be relabelled as newly validated data.",
   "ranking_hash": "5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206",
   "results": [
@@ -123,15 +123,53 @@
       2012
     ],
     "q2_scope_dr0": [
-      4.0
+      4
     ]
   },
   "simulator_operator_version": "1.0",
-  "source_hash": "3f4adda808d1c221c47765a1da61f9f28ed2a2673e566ee075bbd0ef092b157b",
+  "source_hash": "490132868b5a5575a4de14a5ec99709169d27cea9697a7dfb5220d67599f2c5a",
   "status": "valid",
   "tolerances": {
     "E1_E2A0_EH_REL_TOL": 0.0001,
     "Q2_CLOSURE_TARGET": 0.4,
-    "RH_ILLCONDITIONED": 1e-05
+    "RH_ILLCONDITIONED": 0.00001
+  },
+  "artifact_hashes": {
+    "results/prompt2/classification_dev_bland.json": "27cbaa7d11d403f49778bc29650d292b9241fb4fdd9c2665efa79d160cbed224",
+    "results/prompt2/classification_dev_bland.txt": "73e23dd88a6069223c976f8e3b7850ea666e7a135354dc4a03bdb10e415632dc",
+    "results/prompt2/classification_dev_feature.json": "e9c7f1092b67105db661707588f8f76a17b3a0dc6fc5ca1835d41cca821e3b29",
+    "results/prompt2/classification_dev_feature.txt": "997c7e917a0b5f6b0e2312d44af9239312715ec951b584da1018e734a9d8b76e",
+    "results/prompt2/classification_eval_bland.json": "7a580d5a70401530513498324eda5afe4350270c557fbc25774ab65acc822450",
+    "results/prompt2/classification_eval_bland.txt": "69c4893e3b20d1216ea217ad48416d5b643ca3b5d6f4009cdb2a1098672f80d4",
+    "results/prompt2/classification_eval_feature.json": "93a867a1ffa1d4b77dc7df320f28c18ef7eabb6aba03a02712662839ef8b37c0",
+    "results/prompt2/classification_eval_feature.txt": "f1330d83fbdd7a7d62e1b36b7bdb1459863cd332ce99b6c71e5695ccac87be75",
+    "results/prompt2/frozen_regularisation.json": "cdb505ccedb4dd8a617d3cd34fea2a363a4e3453dbd5cfd1ec1458c8a478f3b2",
+    "results/prompt2/ranking_hash.txt": "f7770fe6f80003230675109e73a0fc3649508e2ffe060b12c6b259da9eee9211",
+    "results/prompt2/resource_dev_bland_A1o.csv": "f79cb7a68943a30dd8ee3523273f068fd070fffb6024ec8b77dd3622f2b7a267",
+    "results/prompt2/resource_dev_bland_E1.csv": "3bdd740b46cee158715d92765e5eb1fd392feeea6bbdd73432d72e4fa1fafaa6",
+    "results/prompt2/resource_dev_bland_E2a.csv": "480a7f52244a33067e31deca14c79814f3e9394203c653369b35bed7ae3f6fc2",
+    "results/prompt2/resource_dev_feature_A1o.csv": "1122c8a1d672a09dfbd14cd17038e4f6d58bb95dd45fe7a2050002a16f1c3aa8",
+    "results/prompt2/resource_dev_feature_E1.csv": "91396b89e3891e71e00e3080510c3068b0ba940eab6c009c879e46313d53e639",
+    "results/prompt2/resource_dev_feature_E2a.csv": "75e9df6db4a4b9b0ea27ee35eac47f3ccd516fdd2e1e62add80ada85cc06a181",
+    "results/prompt2/resource_eval_bland_A1o.csv": "89ef58acc5036bebb0e73d942de77e06a17d6db396d3c506f4d7204eff710fa2",
+    "results/prompt2/resource_eval_bland_E1.csv": "f0243f00d9f0e97ccbd3f9c8893c0d18702ff403abc41b706d389e441ad7eed4",
+    "results/prompt2/resource_eval_bland_E2a.csv": "20ad5c809a9ef0eff361b18c6521dfc0c35feac46e3e3ceaee1afd813f6f8ee9",
+    "results/prompt2/resource_eval_feature_A1o.csv": "17229d19063c65477fed2b1233a184e22e7fb492f57b97ab3039593c89738f93",
+    "results/prompt2/resource_eval_feature_E1.csv": "dd25e0c5f6277577e2dbbc86a7e6d37b8b327d3841c1f88041de1d7b19cb194c",
+    "results/prompt2/resource_eval_feature_E2a.csv": "a791453efc55984785749ae420fae587d5bc51fd7879dc8dcbdc06bccd797adc",
+    "results/prompt2/summary_dev.json": "3083cc9115d2c34adf935c25fc07f3a195bb300b446c527c6a3117ec0154059d",
+    "results/prompt2/summary_eval.json": "1a2960678fa72ed85e19810d8fe0fbb7891745690abf924ea36439f748a6162b",
+    "results/q2/closure_dev_bland.json": "9518845c78bb79df8d48e30d416c1717aef97726daf9fb828888d3940f92d9a0",
+    "results/q2/closure_dev_bland.txt": "195868dbeca6ef5b1c8bc3a658b2793403c9ec95d787398de0522cd5f12dd31d",
+    "results/q2/closure_dev_feature.json": "15f2a2cda56d5a17df25e48d4a5e2153b07734d5de074c1724bdf21bc9791a95",
+    "results/q2/closure_dev_feature.txt": "cbf50a1a89dc2ab3a5ef19662e7900bf9877d894da582887d1747bc623288da2",
+    "results/q2/closure_eval_bland.json": "50f3cbecabf9f0d93d77c2237b9113d1f29f2d0a97c5eb144fb32376b6fc63d6",
+    "results/q2/closure_eval_bland.txt": "352bc44abf078bbf5e82733317e0ea0990ab1e03ff67652a27a7c88143a22613",
+    "results/q2/closure_eval_feature.json": "41872f39b172f18448995ee5737cddbe2f61c0177eea6a47a4b52a862c749025",
+    "results/q2/closure_eval_feature.txt": "faf18213f89eba957ea47874a452c35a14386c0522bef52449133c0b4577440f",
+    "results/q2/frozen_prior.json": "46c90d5c012cbc9d3d66a49f18548f0033e6e9b6268cc81343b5cde8a646c4cb",
+    "results/q2/holdout_dev_seed-01001_feature.json": "6a3170281e90b16edfa7b8eebb200447ceff3fc0bfab30666451e24a30b2eaad",
+    "results/q2/summary_dev.json": "59ba22ae13885392e08dc5672a5b848747f2db3929bdcadb94a3e25f1a7d43e2",
+    "results/q2/summary_eval.json": "60c18105b892202b7985cdea3b0c465e958ab6a69ea3e1f463235c8456d5b2ba"
   }
 }

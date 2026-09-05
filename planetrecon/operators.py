@@ -72,7 +72,9 @@ def spatial_convolve_same(
     psf = np.asarray(psf, dtype=np.float64)
     ny, nx = image.shape
     py, px = psf.shape
-    cy, cx = py // 2, px // 2
+    # scipy's linear 'same' crop starts at floor((kernel_size - 1)/2).
+    # Circular FFT centring instead uses floor(kernel_size/2).
+    cy, cx = (py // 2, px // 2) if circular else ((py - 1) // 2, (px - 1) // 2)
     out = np.zeros((ny, nx), dtype=np.float64)
     for y in range(ny):
         for x in range(nx):

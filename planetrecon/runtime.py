@@ -36,6 +36,7 @@ def apply_thread_limits(n: int | None = None) -> int:
     """Cap BLAS/OpenMP/FFT worker threads. Returns the applied limit."""
     n = default_thread_count() if n is None else max(1, int(n))
     value = str(n)
+    os.environ["PLANETRECON_THREADS"] = value
     for key in THREAD_ENV_KEYS:
         os.environ[key] = value
     try:

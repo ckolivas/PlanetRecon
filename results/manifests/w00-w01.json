@@ -1,15 +1,15 @@
 {
   "archived": false,
-  "config_hash": "e71f6bb1d6ddf78abbf3dc834fa8ac3e8ca858623b55e3ec4b074f3345eaa4e5",
-  "cpu_threads": 8,
-  "created_utc": "2026-09-04T23:47:33Z",
+  "config_hash": "5acf171ea8cef93653511eb2faf8b24a18a5c857eb5b36a22186f78a5aa7f7e3",
+  "created_utc": "2026-09-05T00:02:23Z",
+  "default_cpu_threads": 8,
   "device": "cpu",
   "document_revision": "R9",
-  "estimator_operator_version": "1.1",
+  "estimator_operator_version": "1.2",
   "experiment_id": "w00-w01-operator-audit",
   "inputs": [],
-  "notes": "Estimator operator version is 1.1 (Dykstra). Simulator operator version remains 1.0. Historical R9 result files are unchanged.",
-  "protocol": "W00 versioned evidence and test tiers; W01 Dykstra positivity/support projection, forward/adjoint audit, noise-approximation quantification, and method-certificate fingerprints. CPU-only, 8 threads. No Q3 and no full seed-family rerun.",
+  "notes": "Estimator operator version is 1.2 (corrected Dykstra). Simulator operator version remains 1.0. Historical R9 result files are unchanged. The bounded audit is not full scientific requalification; W02/W03 and development-family ranking/gap checks remain outstanding.",
+  "protocol": "W00 versioned evidence and test tiers; W01 Dykstra positivity/support projection, forward/adjoint audit, noise-approximation quantification, and method-certificate fingerprints. CPU-only; default thread cap 8. No Q3 and no full seed-family rerun.",
   "results": [
     {
       "kind": "unit",
@@ -19,6 +19,11 @@
     {
       "kind": "unit",
       "path": "tests/test_w01.py",
+      "status": "diagnostic"
+    },
+    {
+      "kind": "regression",
+      "path": "tests/test_review_w01.py",
       "status": "diagnostic"
     }
   ],
@@ -30,7 +35,7 @@
     "unit_fixtures": true
   },
   "simulator_operator_version": "1.0",
-  "source_hash": "3f4adda808d1c221c47765a1da61f9f28ed2a2673e566ee075bbd0ef092b157b",
+  "source_hash": "dedc5cd98e34e8e86dbed77058ed3110472c26ef12b78759bf7e35fe614b32bd",
   "status": "diagnostic",
   "tolerances": {
     "DYKSTRA_TOL": 1e-12,

@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from planetrecon.runtime import DEFAULT_CPU_THREADS, apply_thread_limits
+from planetrecon.runtime import apply_thread_limits
 
 # CPU-only, 8 threads unless the caller already set PLANETRECON_THREADS.
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 os.environ.setdefault("HIP_VISIBLE_DEVICES", "")
-apply_thread_limits(int(os.environ.get("PLANETRECON_THREADS", DEFAULT_CPU_THREADS)))
+apply_thread_limits()
 
 
 def pytest_addoption(parser):
