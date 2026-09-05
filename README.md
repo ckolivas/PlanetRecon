@@ -445,3 +445,10 @@ The bounded W03 audit and decision are in
 All 12 reduced development cases remain incomplete. Reproduce with
 `python3 -m planetrecon.science_audit --out NEW_DIRECTORY`; this does not run
 or authorize Q3 and does not overwrite historical results.
+
+W16 real-capture assessment is available via
+`python3 -m planetrecon.benchmark --path CAPTURE.ser --out NEW_DIRECTORY --id CAPTURE_ID`.
+It records a protocol before processing, full input SHA256, throughput, preview
+latency, peak RSS, split-half consistency and raw CFA residuals. Local reports are
+in `results/real-data`; private captures/results are not redistributed. Geometry,
+independent camera/night coverage and GPU qualification remain separate requirements.

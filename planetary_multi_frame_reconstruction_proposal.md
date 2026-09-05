@@ -2246,3 +2246,10 @@ is 4.48e-11; bounded low-frequency S10 membership is stable in six cases. All
 and projected-snapshot/exposure mismatch remain material. Full records and the
 negative qualification decision are in `results/r10-development-audit/DECISION.md`.
 This is development evidence, not completion of W01/W03 or authorization for Q3.
+
+**Implementation follow-up (W16):** a private CPU benchmark/assessment harness now
+records full input identity, a predeclared protocol, throughput, preview latency,
+process RSS, split-half consistency and raw detector CFA residuals. The available
+Jupiter capture completed 3,749 frames with 3,743 used; the Saturn capture runs
+separately. Both are OSC; missing independent capture categories must be sourced.
+No geometry, GPU, calibrated-noise or advanced-recovery acceptance is implied.

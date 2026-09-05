@@ -1,0 +1,49 @@
+{
+  "status": "diagnostic",
+  "capture_id": "osc-jupiter",
+  "input_sha256": "93cad16b4632f4dc810adae35295ae15a0a30241d2407988b17ebb0fec4ea057",
+  "source_hash": "5c844c36e4709058e93add14e2c360c7e8a20ba20ae28251b375f75093878a38",
+  "hardware": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "backend": "cpu",
+  "precision": "float64",
+  "threads": 2,
+  "source_frames": 3749,
+  "processed_frames": 3749,
+  "used_frames": 3743,
+  "rejected_frames": 6,
+  "frame_shape": [
+    424,
+    656
+  ],
+  "color": "RGGB",
+  "bit_depth": 8,
+  "wall_s": 467.20076188305393,
+  "frames_per_s": 8.0243875992189,
+  "first_preview_s": 3.841889203991741,
+  "peak_rss_bytes": 211562496,
+  "rss_scope": "whole benchmark process including assessment",
+  "split_half": {
+    "status": "diagnostic",
+    "relative_rms": 0.023241230889213437,
+    "common_samples": 417213,
+    "shift_xy_px": [
+      0.0,
+      0.0
+    ]
+  },
+  "raw_residual": {
+    "status": "diagnostic",
+    "relative_rms": 0.06009822053623367,
+    "samples": 34642724,
+    "frames": 127,
+    "role": "in-sample unwhitened residual; not independent prediction or noise calibration"
+  },
+  "distribution_permission": false,
+  "geometry_qualified": false,
+  "gpu_qualified": false,
+  "full_capture": true
+}
