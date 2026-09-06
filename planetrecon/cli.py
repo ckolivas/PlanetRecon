@@ -143,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="also save a scientific image in the output directory")
     st.add_argument("--checkpoint", type=Path, default=None,
                     help="atomically update a full-resolution NPZ snapshot after each batch")
+    st.add_argument("--resume", type=Path, help="resume an exact CPU translation accumulator checkpoint")
+    st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable CPU translation state after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -223,6 +225,14 @@ def main(argv: list[str] | None = None) -> int:
             if (args.checkpoint.resolve() == args.path.resolve() or
                     (args.checkpoint.exists() and args.checkpoint.samefile(args.path))):
                 parser.error("checkpoint cannot replace the input capture")
+    if args.cmd == "stack" and (args.resume or args.state_checkpoint):
+        if args.device != "cpu" or args.geometry != "none":
+            parser.error("resumable checkpoints require --device cpu --geometry none")
+        if args.state_checkpoint:
+            for other in (args.out / "stack.npz", args.checkpoint):
+                if other is not None and (args.state_checkpoint.resolve() == other.resolve() or
+                        (args.state_checkpoint.exists() and other.exists() and args.state_checkpoint.samefile(other))):
+                    parser.error("resumable state and scientific result checkpoints must have different paths")
     if args.cmd == "export":
         from planetrecon.export import export_result
         from planetrecon.result import load_snapshot
@@ -380,7 +390,8 @@ def main(argv: list[str] | None = None) -> int:
             bayer_override=args.bayer,
         ) as source:
             result = stack_source(source, cfg, on_event=(
-                (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)) if args.checkpoint else None))
+                (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)) if args.checkpoint else None),
+                resume_from=args.resume, state_checkpoint=args.state_checkpoint)
         npz = args.out / "stack.npz"
         save_snapshot(npz, result)
         if export_config:

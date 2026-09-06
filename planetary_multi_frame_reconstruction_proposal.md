@@ -2253,3 +2253,10 @@ process RSS, split-half consistency and raw detector CFA residuals. The availabl
 Jupiter capture completed 3,749 frames with 3,743 used; the Saturn capture runs
 separately. Both are OSC; missing independent capture categories must be sourced.
 No geometry, GPU, calibrated-noise or advanced-recovery acceptance is implied.
+
+**W15 continuation:** exact CPU translation/CFA accumulator checkpoints now resume
+without reprocessing or double-counting frames, with full capture/calibration/config
+identity checks. Interrupted and uninterrupted results match bit for bit. A hard
+parent crash terminates owned workers via the multiprocessing parent sentinel.
+Geometry/GPU resume, hard memory limits and automatic orphan-spool removal remain
+outstanding; the result-snapshot and resumable-state formats are distinct.

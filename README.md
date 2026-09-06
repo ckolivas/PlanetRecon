@@ -427,8 +427,9 @@ GUI worker payloads use a private bounded disk spool so killing a worker cannot
 leave a partial large pickle in the GUI pipe. Normal close removes the spool;
 a parent crash can leave `planetrecon-events-*` in the system temporary directory.
 Checkpoint write failures preserve the prior checkpoint and clean temporary
-files. Checkpoints are inspectable/exportable results, **not resumable solver
-state**. Hard RAM limits and checkpoint resume remain unqualified.
+files. Image checkpoints remain inspectable/exportable results; exact CPU
+translation accumulator resume uses separate state files as described below.
+Hard RAM limits and geometry resume remain unqualified.
 
 W02 science repairs: frozen tip/tilt includes one/two-mode fits; phase optimizers
 report status, gradient norm, actual iterations and objective traces. Blind TV
@@ -452,3 +453,14 @@ It records a protocol before processing, full input SHA256, throughput, preview
 latency, peak RSS, split-half consistency and raw CFA residuals. Local reports are
 in `results/real-data`; private captures/results are not redistributed. Geometry,
 independent camera/night coverage and GPU qualification remain separate requirements.
+
+W15 resume and crash recovery: use `stack --device cpu --state-checkpoint state.npz`
+to save exact translation accumulators after every batch, then
+`stack --device cpu --resume state.npz --state-checkpoint state.npz` with the same
+capture and settings to continue. Add the usual `--path` and `--out` arguments.
+This includes raw-CFA RGB and rejected-frame counts. Full input SHA256, calibration
+identities, configuration and operator version must match. An image `--checkpoint`
+is a separate format and must use a different path. Disk-write failure preserves
+the previous state; CPU results are bit-for-bit identical to uninterrupted runs.
+Geometry/GPU states are rejected. Owned workers also exit after hard parent death;
+orphaned temporary spool directories may still need manual cleanup.

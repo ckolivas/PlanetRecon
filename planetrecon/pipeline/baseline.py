@@ -50,7 +50,15 @@ def stack_source(
     calibration: Calibration | None = None,
     on_event: PreviewFn | None = None,
     should_cancel: CancelFn | None = None,
+    resume_from=None,
+    state_checkpoint=None,
 ) -> ReconstructionResult:
+    if resume_from is not None or state_checkpoint is not None:
+        if config.geometry_mode != "none" or config.device != "cpu":
+            raise ValueError("resumable states require the CPU translation baseline")
+        from planetrecon import resume
+        if state_checkpoint is not None:
+            resume.validate_destination(state_checkpoint,source,config)
     if any(getattr(config, key) is not None for key in (
             "bias_path", "dark_path", "flat_path", "gain_e_per_adu", "read_noise_e", "saturate_adu")):
         if calibration is not None:
@@ -116,6 +124,17 @@ def stack_source(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    next_index = 0
+    state_identity = None
+    if resume_from is not None or state_checkpoint is not None:
+        state_identity = resume.identity(source, config, calibration)
+    if resume_from is not None:
+        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
+        accum, weight = restored["accum"], restored["weight"]
+        reference, reference_index = restored["reference"], restored["reference_index"]
+        n_used, n_rejected = restored["n_used"], restored["n_rejected"]
+        demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
+        next_index = restored["next_index"]
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -149,7 +168,7 @@ def stack_source(
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
-    for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
+    for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True
             break
@@ -210,6 +229,12 @@ def stack_source(
                 )
                 weight += score * support
             n_used += 1
+        if state_checkpoint is not None:
+            resume.save(state_checkpoint, state_identity, {
+                "accum": accum, "weight": weight, "reference": reference,
+                "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
+                "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
+                "next_index": n_used + n_rejected})
         emit("baseline", incomplete=True)
         if cancelled:
             break

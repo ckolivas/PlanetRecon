@@ -61,6 +61,21 @@ def result_from_payload(payload):
                                    if k in ReconstructionResult.__dataclass_fields__})
 
 
+def _watch_parent() -> None:
+    """Stop owned work after a hard parent crash, on spawn-supported platforms."""
+    import threading
+    parent = multiprocessing.parent_process()
+    if parent is None:
+        return
+    def watch():
+        while True:
+            if not parent.is_alive():
+                # No live UI can receive events. Do not wait for queue feeders.
+                os._exit(1)
+            time.sleep(0.25)
+    threading.Thread(target=watch, name="planetrecon-parent-watch", daemon=True).start()
+
+
 def _worker_main(
     job_id: str,
     source_path: str,
@@ -71,6 +86,7 @@ def _worker_main(
     snapshot_request=None,
     inspect_only: bool = False,
 ) -> None:
+    _watch_parent()
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
     # imports here so the requested thread limit precedes BLAS initialisation.
