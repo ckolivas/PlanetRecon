@@ -76,7 +76,20 @@ def _watch_parent() -> None:
     threading.Thread(target=watch, name="planetrecon-parent-watch", daemon=True).start()
 
 
-def _worker_main(
+def _worker_main(job_id, source_path, config_dict, event_q, cancel_event, *args):
+    _watch_parent()
+    from planetrecon.memory import cpu_memory_limit
+    try:
+        with cpu_memory_limit(config_dict.get('max_ram_bytes')):
+            _worker_run(job_id, source_path, config_dict, event_q, cancel_event, *args)
+    except Exception as exc:
+        # A memory failure may prevent the normal handler from allocating an
+        # event. The process ceiling has now been restored for terminal reporting.
+        _put_event(event_q, JobEvent(job_id, 2**63-1, 'error', {
+            'message': str(exc) or 'CPU process memory limit exceeded'}), cancel_event)
+
+
+def _worker_run(
     job_id: str,
     source_path: str,
     config_dict: dict,
@@ -88,7 +101,6 @@ def _worker_main(
     resume_from: str | None = None,
     state_checkpoint: str | None = None,
 ) -> None:
-    _watch_parent()
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
     # imports here so the requested thread limit precedes BLAS initialisation.

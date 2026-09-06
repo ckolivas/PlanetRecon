@@ -534,3 +534,11 @@ Select **Resume this checkpoint** to continue it with the same capture/settings;
 this works for CPU/CUDA translation and CPU geometry. An incompatible state is
 reported without replacing the last received image. Input inspection ignores
 checkpoint settings. Input hashing and pose verification are cancellable.
+
+On Linux, `--device cpu --cpu-memory-mib 2048` sets a conservative process memory
+ceiling through `RLIMIT_AS`, including mapped libraries. The GUI exposes the same
+option for its owned CPU worker. Allocations beyond the ceiling fail; an
+impossibly small cap is rejected before processing. The previous process limit is
+restored on exit, and provenance records the effective ceiling and process peak
+RSS. This does not cap the GUI parent or other processes. GPU processing uses the
+separate CUDA allocator budget because its virtual mappings do not fit this policy.

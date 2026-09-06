@@ -55,13 +55,22 @@ def stack_source(
 ) -> ReconstructionResult:
     from contextlib import nullcontext
     from planetrecon.backends.memory import cuda_allocation_limit
+    from planetrecon.memory import cpu_memory_limit
 
     context = (cuda_allocation_limit(config.max_vram_bytes)
                if config.device != 'cpu' and config.geometry_mode == 'none' else nullcontext(None))
-    with context as memory_report:
-        return _stack_source(source, config, calibration=calibration, on_event=on_event,
+    with cpu_memory_limit(config.max_ram_bytes) as cpu_report, context as memory_report:
+        def event(result, info):
+            if cpu_report is not None:
+                result.provenance['cpu_memory_budget'] = cpu_report
+            if on_event is not None:
+                on_event(result, info)
+        result = _stack_source(source, config, calibration=calibration, on_event=event if on_event else None,
                              should_cancel=should_cancel, resume_from=resume_from,
                              state_checkpoint=state_checkpoint, memory_report=memory_report)
+        if cpu_report is not None:
+            result.provenance['cpu_memory_budget'] = cpu_report
+        return result
 
 
 def _stack_source(

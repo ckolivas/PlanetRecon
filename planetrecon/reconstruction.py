@@ -194,7 +194,11 @@ class ReconstructionConfig:
         if self.geometry_mode != "none" and self.exposure_s > 0 and not self.freeze_mid_exposure:
             raise ValueError("exposure quadrature is not supported; use freeze_mid_exposure")
         if self.max_ram_bytes is not None:
-            raise ValueError("explicit RAM memory budgets are not supported by the baseline yet")
+            import sys
+            if type(self.max_ram_bytes) is not int or self.max_ram_bytes <= 0:
+                raise ValueError('max_ram_bytes must be a positive integer or null')
+            if self.device != 'cpu' or sys.platform != 'linux':
+                raise ValueError('CPU process memory limits require explicit CPU processing on Linux')
         if self.max_vram_bytes is not None:
             if type(self.max_vram_bytes) is not int or self.max_vram_bytes <= 0:
                 raise ValueError("max_vram_bytes must be a positive integer or null")

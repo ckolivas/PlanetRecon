@@ -18,10 +18,13 @@ class ConfigControls(QTabWidget):
         self._choice(capture, 'device', 'Device', ['auto', 'cpu', 'gpu'])
         self._integer(capture, 'threads', 'CPU threads', 1, 32)
         self._integer(capture, 'batch_frames', 'Frames per batch', 1, 4096)
+        self._number(capture, 'max_ram_bytes', 'Linux CPU process cap (MiB; blank = default)')
+        if config.max_ram_bytes is not None:
+            self.fields['max_ram_bytes'].setText(str(config.max_ram_bytes / 1024**2))
         self._number(capture, 'max_vram_bytes', 'CUDA tensor budget (MiB; blank = default)')
         if config.max_vram_bytes is not None:
             self.fields['max_vram_bytes'].setText(str(config.max_vram_bytes / 1024**2))
-        capture.addRow(QLabel('CUDA budget excludes driver/library memory.\nRAM is not capped. Geometry uses CPU float64.'))
+        capture.addRow(QLabel('CPU cap includes mapped libraries; excludes this UI.\nCUDA cap excludes driver/library memory.\nGeometry uses CPU float64.'))
         self._choice(capture, 'crop', 'HDF5 crop', ['feature', 'bland'])
         self._choice(capture, 'bayer_override', 'Raw colour override', [None, 'mono', 'RGGB', 'GRBG', 'GBRG', 'BGGR'])
         self._choice(capture, 'endian_override', 'Byte order override', [None, 'little', 'big'])
@@ -157,9 +160,9 @@ class ConfigControls(QTabWidget):
                     raise ValueError(f'{key}: enter a number') from None
                 if value is not None and key in self.angular:
                     value = math.radians(value)
-                if key == 'max_vram_bytes' and value is not None:
+                if key in ('max_ram_bytes', 'max_vram_bytes') and value is not None:
                     if not math.isfinite(value) or value <= 0:
-                        raise ValueError('CUDA tensor budget must be positive')
+                        raise ValueError('Memory budget must be positive')
                     value = int(value * 1024**2)
             values[key] = value
         if values['geometry_mode'] != 'saturn':

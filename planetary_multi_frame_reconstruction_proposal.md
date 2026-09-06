@@ -2324,3 +2324,15 @@ paths. Qt exposes those controls, locks them during processing and preserves the
 last image on incompatible-state errors. The packaging smoke covers cancellation,
 restart, checkpoint continuation and scientific save. Full-input and pose hashing
 check cancellation rather than delaying cancellation through a multi-GB scan.
+
+**CPU resource ceiling:** Linux CPU workers and the engine support a conservative
+`RLIMIT_AS` ceiling, including mapped libraries, before worker input reads and
+through event serialization. Kernel allocation-denial, limit restoration, normal
+stack equivalence, failed-worker cleanup and rerun are tested. This is a process
+ceiling, not a cgroup limit on the entire GUI/process tree. GPU address space is
+excluded and uses the separately qualified Torch allocator policy.
+
+**Release scope update (user, 2026-09-07):** Windows/macOS runtime testing is removed
+from the current process. Native build requirements and version-tag GitHub release
+automation must be committed for those targets; build success is not represented
+as runtime qualification. Linux validation continues locally.
