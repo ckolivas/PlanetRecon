@@ -216,6 +216,9 @@ class MainWindow:
         layout.addWidget(split, 1)
         self.progress = QProgressBar()
         layout.addWidget(self.progress)
+        self.run_device = QLabel('No processing run started')
+        self.run_device.setWordWrap(True)
+        layout.addWidget(self.run_device)
         self.status = QLabel('idle')
         self.error = QLabel('')
         self.error.setWordWrap(True)
@@ -293,6 +296,14 @@ class MainWindow:
         self.last_seq = 0
         self.auto_levels = not inspect_only
         self.error.clear()
+        self.warnings.clear()
+        self.run_device.setText('Input inspection; no reconstruction backend selected' if inspect_only
+                                else f'Run requested {cfg.device.upper()} · preparing input; backend pending')
+        self.details.setPlainText(json.dumps({'current_run_config': cfg.to_dict(),
+                                             'inspect_only': inspect_only}, indent=2))
+        if self.last_result is not None and not self.result_label.text().startswith('Previous result'):
+            self.result_label.setText('Previous result (retained until this run produces an image):\n'
+                                      + self.result_label.text())
         self.progress.setRange(0, 0)
         self.status.setText(f'Opening {self.path.name} on {cfg.device}')
         self.timer.start()
@@ -317,8 +328,22 @@ class MainWindow:
             self._fit_levels()
         self._draw()
 
+    def _update_run_device(self, payload):
+        backend = payload.get('backend')
+        if backend:
+            report = payload.get('device_report') or {}
+            reason = report.get('reason', '')
+            text = f'Run requested {self.config.device.upper()} · using {backend.upper()}'
+            if reason and reason not in ('ok', 'explicit_cpu'):
+                text += ' · ' + reason
+            self.run_device.setText(text)
+        if 'warnings' in payload:
+            self.warnings.setText('; '.join(payload['warnings']))
+
     def _accept_result(self, payload):
         result = result_from_payload(payload)
+        self._update_run_device({'backend': result.backend, 'warnings': result.warnings,
+                                 'device_report': result.provenance.get('device_report')})
         if result.n_used < 1 or result.spatial_stride != 1 or not np.any(result.validity):
             return
         # Received arrays are independent of the process accumulator. Export retains
@@ -362,6 +387,7 @@ class MainWindow:
                 self._accept_result(event.payload)
                 handle.snapshot_request.set()
             elif event.kind == 'progress' and self.cancel_started is None:
+                self._update_run_device(event.payload)
                 frac = event.payload.get('fraction')
                 self.progress.setRange(0, 0 if frac is None else 100)
                 if frac is not None:

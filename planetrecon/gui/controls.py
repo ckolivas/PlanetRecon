@@ -148,6 +148,9 @@ class ConfigControls(QTabWidget):
             if isinstance(edit, QComboBox):
                 value = edit.currentData()
             elif isinstance(edit, QSpinBox):
+                # Commit typed text even when Run is invoked before focus leaves
+                # the editor (for example through a shortcut or automation).
+                edit.interpretText()
                 value = edit.value()
             elif isinstance(edit, QCheckBox):
                 value = edit.isChecked()

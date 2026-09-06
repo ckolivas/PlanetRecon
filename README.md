@@ -555,3 +555,11 @@ The frozen CPU binary streamed a generated 2 GiB SER (4,096 frames) under a
 venv. This checks large-input mechanics using a flat fixture, not image quality.
 Current bundle hashes and local acceptance results are in
 `results/releases/native-local-2026-09-07.json`; earlier reports remain historical.
+
+
+Each GUI Run snapshots the current controls, including typed integer edits,
+calibration paths and checkpoint options. The run-device line shows the requested
+device separately from the actual backend and reports CPU fallback reasons.
+After a restart, the retained image is labelled **Previous result** until the new
+job produces an image; its old backend does not describe the new run. Restart the
+venv-launched GUI after updating source to load these UI changes.

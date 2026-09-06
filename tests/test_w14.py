@@ -421,3 +421,152 @@ def test_gui_heartbeat_under_full_cpu_load(gui, tmp_path):
             if worker.poll() is None:
                 worker.terminate()
             worker.wait(timeout=5)
+
+
+def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
+    """All visible settings, including cleared values, reach each fresh job."""
+    import planetrecon.gui.app as module
+    from PySide6.QtWidgets import QComboBox, QCheckBox, QSpinBox
+    _, win = gui
+    calls = []
+    def start(path, cfg, **options):
+        calls.append((path, cfg, options))
+        return SimpleNamespace(snapshot_request=threading.Event(), close=lambda: None)
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    win.path = tmp_path/'input.ser'
+    win.device.setCurrentText('auto')
+    win._run()
+    first = calls[-1][1]
+    win._finish_job()
+    edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
+        max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
+        endian_convention='spec', recover_complete_frames=True, reject_saturated=False,
+        reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
+        bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
+        gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',
+        reference_epoch_s=1., field_angle0_rad=5., field_rate_rad_s=2., surface_rate_rad_s=3.,
+        field_center_x=32., field_center_y=24., equatorial_radius_px=12., flattening=.1,
+        pole_pa_rad=10., sub_obs_lat_rad=20., sub_obs_lon0_rad=30.,
+        ring_inner_radius_px=16., ring_outer_radius_px=26., ring_transmission=.5,
+        sun_lon_rad=40., sun_lat_rad=50., moon_x=10., moon_y=12., moon_radius_px=2.,
+        moon_vx_px_s=.3, moon_vy_px_s=.4)
+    assert set(edits) == set(win.controls.fields), 'New controls need restart coverage'
+    expected = {}
+    for key, value in edits.items():
+        edit = win.controls.fields[key]
+        if isinstance(edit, QComboBox):edit.setCurrentIndex(edit.findData(value))
+        elif isinstance(edit, QCheckBox):edit.setChecked(value)
+        elif isinstance(edit, QSpinBox):
+            edit.setKeyboardTracking(False)
+            edit.lineEdit().setText(str(value))  # Uncommitted keyboard input.
+        else:edit.setText('' if value is None else str(value))
+        if value is not None and key in win.controls.angular:value = np.radians(value)
+        if value is not None and key in ('max_ram_bytes', 'max_vram_bytes'):value = int(value*1024**2)
+        expected[key] = value
+    win.checkpoint_path.setText(str(tmp_path/'new-state.npz'))
+    win.resume_check.setChecked(True)
+    win._run()
+    second = calls[-1][1]
+    assert second == replace(first, **expected)
+    assert first.device == 'auto' and first.geometry_mode == 'none'
+    assert calls[-1][2] == dict(state_checkpoint=tmp_path/'new-state.npz', resume_from=tmp_path/'new-state.npz')
+    win._finish_job()
+    # Clearing optional fields must not resurrect values from an earlier run.
+    for key in ('bias_path','dark_path','flat_path','max_vram_bytes','gain_e_per_adu'):
+        win.controls.fields[key].clear()
+        expected[key] = None
+    win.device.setCurrentText('cpu');expected['device'] = 'cpu'
+    win.controls.fields['max_ram_bytes'].setText('1024');expected['max_ram_bytes'] = 1024**3
+    win.checkpoint_path.clear();win.resume_check.setChecked(False)
+    win._run()
+    assert calls[-1][1] == replace(second, **expected) and calls[-1][2] == {}
+    win._finish_job()
+    win.device.setCurrentText('gpu')
+    win.controls.fields['geometry_mode'].setCurrentText('none')
+    win.controls.fields['max_ram_bytes'].clear()
+    win.controls.fields['max_vram_bytes'].setText('64.5')
+    win._run()
+    assert calls[-1][1].max_vram_bytes == int(64.5*1024**2)
+    assert calls[-1][1].max_ram_bytes is None and calls[-1][1].ring_inner_radius_px is None
+
+
+def test_cancel_restart_uses_new_settings_and_labels_previous_result(gui, tmp_path):
+    app, win = gui
+    frame = np.arange(96, dtype='u2').reshape(8,12)+100
+    win.path = write_ser(tmp_path/'rerun.ser', np.stack([frame]*8))
+    old = result(incomplete=False)
+    win._accept_result(result_payload(old))
+    win._run();win._cancel()
+    pump(app, lambda: win.job is None, timeout=5)
+    f = win.controls.fields
+    f['bayer_override'].setCurrentText('RGGB')
+    f['gain_e_per_adu'].setText('2')
+    f['reference_index'].setValue(2)
+    f['batch_frames'].setValue(3)
+    win._run()
+    assert 'Previous result' in win.result_label.text()
+    assert 'backend pending' in win.run_device.text()
+    assert 'example warning' not in win.warnings.text()
+    assert json.loads(win.details.toPlainText())['current_run_config']['gain_e_per_adu'] == 2
+    pump(app, lambda: win.job is None)
+    r = win.last_result
+    assert not win.error.text() and r is not old and r.channel_order == 'RGB'
+    assert r.provenance['config']['reference_index'] == 2
+    assert r.provenance['config']['batch_frames'] == 3
+    np.testing.assert_allclose(r.image.sum(axis=2), frame*2, rtol=1e-12, atol=1e-10)
+    assert 'Previous result' not in win.result_label.text()
+    assert 'requested CPU' in win.run_device.text() and 'using CPU' in win.run_device.text()
+
+
+def test_current_backend_and_fallback_are_shown_without_valid_image(gui):
+    _, win = gui
+    win.config = replace(win.config, device='gpu')
+    payload = result_payload(result())
+    payload['n_used'] = 0
+    payload['provenance']['device_report'] = {'reason': 'cuda_not_available', 'fallback': True}
+    payload['warnings'] = ['GPU unavailable; continuing on CPU']
+    win._accept_result(payload)
+    assert win.last_result is None
+    assert 'requested GPU' in win.run_device.text() and 'using CPU' in win.run_device.text()
+    assert 'cuda_not_available' in win.run_device.text()
+    assert 'GPU unavailable' in win.warnings.text()
+
+
+@pytest.mark.hardware
+def test_cancel_auto_then_gpu_then_cpu_in_same_gui(gui, tmp_path):
+    if os.environ.get('PLANETRECON_TEST_GPU') != '1':pytest.skip('explicit GPU opt-in required')
+    app, win = gui
+    frame = np.arange(96, dtype='u2').reshape(8,12)+100
+    win.path = write_ser(tmp_path/'device-rerun.ser', np.stack([frame]*8))
+    win.device.setCurrentText('auto')
+    win._run();win._cancel()
+    pump(app, lambda: win.job is None, timeout=6)
+    for device, backend, gain in [('gpu','cuda',2), ('cpu','cpu',3)]:
+        win.device.setCurrentText(device)
+        win.controls.fields['gain_e_per_adu'].setText(str(gain))
+        win._run()
+        assert win.config.device == device and 'backend pending' in win.run_device.text()
+        pump(app, lambda: win.job is None, timeout=15)
+        assert not win.error.text()
+        r = win.last_result
+        assert r.backend == backend, r.provenance.get('device_report')
+        assert r.provenance['config']['device'] == device
+        np.testing.assert_allclose(r.image, frame*gain, rtol=1e-12, atol=1e-10)
+        assert f'using {backend.upper()}' in win.run_device.text()
+
+
+def test_save_dialog_reads_changed_encoding_and_mapping_each_time(gui, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QFileDialog
+    _, win = gui
+    win._accept_result(result_payload(result()))
+    saved = []
+    monkeypatch.setattr(QFileDialog, 'getSaveFileName', lambda *a, **kw: (str(tmp_path/'output'), ''))
+    monkeypatch.setattr(win, 'save_result', lambda path, cfg, **kw: saved.append((path,cfg)))
+    for encoding, black, white, gamma in [('png16','2','200','2.2'), ('tiff16','4','400','1.2')]:
+        win.encoding.setCurrentText(encoding)
+        win.save_black.setText(black);win.save_white.setText(white);win.save_gamma.setText(gamma)
+        win._choose_save()
+        assert saved[-1][1] == ExportConfig(encoding,float(black),float(white),float(gamma))
+    win.encoding.setCurrentText('tiff32');win._choose_save()
+    assert saved[-1][1] == ExportConfig('tiff32')
+    assert saved[0][0].suffix == '.png' and saved[-1][0].suffix == '.tif'

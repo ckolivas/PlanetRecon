@@ -125,7 +125,7 @@ def _worker_run(
             recover_complete_frames=config.recover_complete_frames,
             crop=config.crop,
         )
-        emit("progress", {"stage": "scan", "fraction": 0.0, "backend": config.device})
+        emit("progress", {"stage": "scan", "fraction": 0.0})
         if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
             import numpy as np
             from planetrecon.detector import is_bayer, nearest_debayer_preview
@@ -144,7 +144,8 @@ def _worker_run(
             if inspect_only:
                 return
         if config.geometry_mode != "none":
-            emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu"})
+            emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",
+                              "device_report": {"reason": "Geometry processing uses CPU float64"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
             if snapshot_request is not None and snapshot_request.is_set() and result.n_used:
@@ -180,6 +181,8 @@ def _worker_run(
                     / max(float(info.get("n_total", 1)), 1.0),
                     "n_used": result.n_used,
                     "backend": result.backend,
+                    "device_report": result.provenance.get("device_report", {}),
+                    "warnings": result.warnings,
                 },
             )
             if checkpoint_dir:
