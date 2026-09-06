@@ -14,7 +14,7 @@ import pytest
 import tifffile
 
 from planetrecon.calibration import Calibration, load_calibration
-from planetrecon.export import ExportCancelled, ExportConfig, export_result
+from planetrecon.export import ExportCancelled, ExportConfig, export_result, parse_tiff_description
 from planetrecon.io.ser import write_ser
 from planetrecon.io.source import ArraySource
 from planetrecon.jobs import JobEvent, JobHandle, result_payload, start_stack_job
@@ -237,7 +237,7 @@ def test_save_retains_full_intermediate_snapshot_during_updates(gui, tmp_path, m
         release.set()
     with tifffile.TiffFile(dest) as tf:
         image = tf.pages[0].asarray()
-        meta = json.loads(tf.pages[0].description)
+        meta = parse_tiff_description(tf.pages[0].description)
     assert image.shape == (514,12,3) and np.all(image == 3)
     assert meta['result']['incomplete'] and meta['result']['reference_epoch'] == '2.5'
     assert win.last_result.image[0,0,0] == 8
@@ -373,8 +373,15 @@ def test_gui_saturn_geometry_and_layer_export(gui, tmp_path):
     win.save_result(dest)
     pump(app, lambda: win.export_worker is None)
     with tifffile.TiffFile(dest) as tf:
-        assert len(tf.pages) == 5
-        assert json.loads(tf.pages[0].description)['result']['reference_epoch'] == '0.0'
+        assert len(tf.pages) == 1
+        meta = parse_tiff_description(tf.pages[0].description)
+        assert meta['result']['reference_epoch'] == '0.0'
+        assert not tf.pages[0].is_shaped
+    coverage = dest.with_name(meta['coverage_file'])
+    with tifffile.TiffFile(coverage) as tf:
+        roles = [json.loads(page.description)['role'] for page in tf.pages]
+        assert roles[:2] == ['validity', 'coverage']
+        assert {json.loads(page.description)['layer'] for page in tf.pages[2:]} == {'globe', 'ring'}
 
 
 def test_gui_bayer_override_and_per_channel_validity(gui, tmp_path):

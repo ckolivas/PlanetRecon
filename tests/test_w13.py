@@ -13,7 +13,7 @@ import pytest
 import tifffile
 
 import planetrecon.export as exporter
-from planetrecon.export import ExportConfig, export_result
+from planetrecon.export import ExportConfig, export_result, parse_tiff_description
 from planetrecon.result import ReconstructionResult, load_snapshot, save_snapshot
 
 
@@ -42,6 +42,18 @@ def png_chunks(path):
     return chunks
 
 
+def tiff_ifd_count(path):
+    raw = path.read_bytes()
+    order = '<' if raw[:2] == b'II' else '>'
+    offset = struct.unpack_from(order+'I', raw, 4)[0]
+    pages = 0
+    while offset:
+        pages += 1
+        count = struct.unpack_from(order+'H', raw, offset)[0]
+        offset = struct.unpack_from(order+'I', raw, offset + 2 + 12*count)[0]
+    return pages
+
+
 def independent_tiff(path):
     """Read classic uncompressed TIFF tags/strips without using the encoder library."""
     raw = path.read_bytes()
@@ -62,10 +74,21 @@ def independent_tiff(path):
     bits, samples = tags[258][0], tags.get(277, (1,))[0]
     fmt = tags.get(339, (1,))[0]
     assert tags[274] == (1,)  # top-left
+    ids = []
+    for i in range(count):
+        ids.append(struct.unpack_from(order+'H', raw, offset + 2 + 12*i)[0])
+    assert ids == sorted(ids) and len(ids) == len(set(ids))
     shape = (tags[257][0], tags[256][0]) + ((samples,) if samples > 1 else ())
     data = b''.join(raw[start:start+length] for start, length in zip(tags[273], tags[279]))
     image = np.frombuffer(data, dtype=order+('f' if fmt == 3 else 'u')+str(bits//8)).reshape(shape)
     return image, tags
+
+
+def collapse_replicated_rgb(array):
+    array = np.asarray(array)
+    if array.ndim == 3 and array.shape[-1] == 3 and np.array_equal(array[..., 0], array[..., 1]) and np.array_equal(array[..., 0], array[..., 2]):
+        return array[..., 0]
+    return array
 
 
 @pytest.mark.parametrize('rgb', [False, True])
@@ -96,21 +119,34 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
         assert not q.isNull()
         rgba = np.frombuffer(q.constBits(), dtype=np.uint16).reshape(1, 10, 4)
         np.testing.assert_array_equal(rgba[..., :3] if rgb else rgba[..., 0], expected)
-        mask_file, first_mask = report.coverage_path, 0
     else:
         actual, tags = independent_tiff(p)
+        assert tiff_ifd_count(p) == 1
         assert tags[258] == ((32 if encoding == 'tiff32' else 16),) * (3 if rgb else 1)
         assert tags.get(339, (1,)) == ((3,) * (3 if rgb else 1) if encoding == 'tiff32' else (1,))
         np.testing.assert_array_equal(actual, expected)
         with tifffile.TiffFile(p) as tf:
-            embedded = json.loads(tf.pages[0].description)
-        mask_file, first_mask = p, 1
+            embedded = parse_tiff_description(tf.pages[0].description)
+            assert not tf.pages[0].is_shaped
+            assert len(tf.pages) == 1
+            assert tf.pages[0].description.startswith('PlanetRecon\n')
+        if encoding == 'tiff16':
+            Image = pytest.importorskip('PIL.Image')
+            with Image.open(p) as im:
+                im.load()
+                assert im.size == (10, 1)
+            QtGui = pytest.importorskip('PySide6.QtGui')
+            q = QtGui.QImage(str(p)).convertToFormat(QtGui.QImage.Format.Format_RGBA64)
+            assert not q.isNull()
+            rgba = np.frombuffer(q.constBits(), dtype=np.uint16).reshape(1, 10, 4)
+            np.testing.assert_array_equal(rgba[..., :3] if rgb else rgba[..., 0], expected)
     assert embedded == {k:v for k,v in meta.items() if k != 'image_sha256'}
-    with tifffile.TiffFile(mask_file) as tf:
-        np.testing.assert_array_equal(tf.pages[first_mask].asarray(), r.validity)
-        np.testing.assert_array_equal(tf.pages[first_mask+1].asarray(), r.coverage)
-        assert json.loads(tf.pages[first_mask+2].description)['layer'] == 'ring'
-        np.testing.assert_array_equal(tf.pages[first_mask+2].asarray(), r.layer_coverage['ring'])
+    assert report.coverage_path is not None and report.coverage_path.exists()
+    with tifffile.TiffFile(report.coverage_path) as tf:
+        np.testing.assert_array_equal(tf.pages[0].asarray(), collapse_replicated_rgb(r.validity))
+        np.testing.assert_array_equal(tf.pages[1].asarray(), collapse_replicated_rgb(r.coverage))
+        assert json.loads(tf.pages[2].description)['layer'] == 'ring'
+        np.testing.assert_array_equal(tf.pages[2].asarray(), r.layer_coverage['ring'])
     np.testing.assert_array_equal(r.image, a)
 
 
@@ -130,6 +166,36 @@ def test_invalid_and_nonfinite_samples_have_explicit_masks(tmp_path, encoding):
         pixels, _ = independent_tiff(report.path)
         assert np.isnan(pixels[0, 0]).all() and np.isnan(pixels[1, 0, :2]).all()
         assert pixels[1, 1, 0] == -1 and pixels[1, 1, 1] == 20
+
+
+def test_tiff_files_are_single_page_and_not_tifffile_shaped(tmp_path, caplog):
+    import logging
+    r = result([[1., 2., 3.]])
+    caplog.set_level(logging.ERROR)
+    for encoding, extra in (('tiff16', {'black': 0, 'white': 65535}), ('tiff32', {})):
+        p = tmp_path / f'{encoding}.tif'
+        export_result(r, p, ExportConfig(encoding, **extra))
+        with tifffile.TiffFile(p) as tf:
+            assert len(tf.pages) == 1
+            assert not tf.pages[0].is_shaped
+            assert tf.pages[0].asarray().shape == (1, 3)
+        assert tiff_ifd_count(p) == 1
+        with tifffile.TiffFile(p) as tf:
+            assert tf.pages[0].description.startswith('PlanetRecon\n')
+            parse_tiff_description(tf.pages[0].description)
+    assert 'corrupted file' not in caplog.text
+    assert 'invalid shaped series' not in caplog.text
+    Image = pytest.importorskip('PIL.Image')
+    with Image.open(tmp_path / 'tiff16.tif') as im:
+        im.load()
+        np.testing.assert_array_equal(np.array(im), [[1, 2, 3]])
+    nested = result([[4., 5.]], provenance={'calibration': {'bias': {'shape': [8, 8], 'dtype': '<f8'}}})
+    export_result(nested, tmp_path / 'nested.tif')
+    with tifffile.TiffFile(tmp_path / 'nested.tif') as tf:
+        assert '"shape":' in tf.pages[0].description
+        assert tf.pages[0].description.startswith('PlanetRecon\n')
+        assert not tf.pages[0].is_shaped
+        assert parse_tiff_description(tf.pages[0].description)['result']['provenance']['calibration']['bias']['shape'] == [8, 8]
 
 
 def test_mapping_rounding_display_gamma_and_spatial_mask(tmp_path):

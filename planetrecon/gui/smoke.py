@@ -8,6 +8,7 @@ import numpy as np
 import tifffile
 from PySide6.QtCore import QTimer
 
+from planetrecon.export import parse_tiff_description
 from planetrecon.gui.app import MainWindow, create_app
 from planetrecon.io.ser import write_ser, COLOR_RGGB
 from planetrecon.reconstruction import ReconstructionConfig
@@ -79,9 +80,14 @@ def run_smoke(directory: Path, device: str = "cpu") -> int:
             elif phase == 'save' and win.export_worker is None:
                 with tifffile.TiffFile(dest) as tf:
                     actual = tf.pages[0].asarray()
-                    valid = tf.pages[1].asarray().astype(bool)
-                    np.testing.assert_array_equal(actual[valid], win.last_result.image[valid].astype(np.float32))
-                    assert np.isnan(actual[~valid]).all()
+                    meta = parse_tiff_description(tf.pages[0].description)
+                    assert len(tf.pages) == 1 and not tf.pages[0].is_shaped
+                with tifffile.TiffFile(dest.with_name(meta['coverage_file'])) as tf:
+                    valid = tf.pages[0].asarray().astype(bool)
+                if valid.ndim == 2 and actual.ndim == 3:
+                    valid = np.broadcast_to(valid[..., None], actual.shape)
+                np.testing.assert_array_equal(actual[valid], win.last_result.image[valid].astype(np.float32))
+                assert np.isnan(actual[~valid]).all()
                 outcome.update(n_used=4, shape=[16,24,3], encoding='tiff32', backend=win.last_result.backend,
                                invalid_samples=int((~valid).sum()))
                 finish()

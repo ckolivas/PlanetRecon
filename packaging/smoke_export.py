@@ -14,6 +14,7 @@ import tifffile
 from PySide6.QtGui import QImage
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from planetrecon.export import parse_tiff_description
 from planetrecon.io.ser import write_ser, COLOR_MONO, COLOR_RGB
 from planetrecon.result import load_snapshot
 
@@ -49,7 +50,7 @@ def main():
                     with tifffile.TiffFile(dest) as tf:
                         actual = tf.pages[0].asarray()
                         assert actual.dtype == expected.dtype
-                        assert not json.loads(tf.pages[0].description)['result']['incomplete']
+                        assert not parse_tiff_description(tf.pages[0].description)['result']['incomplete']
                 np.testing.assert_array_equal(actual, expected)
     print('PASS: frozen mono/RGB PNG16, TIFF16, TIFF32 encoders and CPU SER stack')
 

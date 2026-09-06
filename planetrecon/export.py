@@ -23,6 +23,15 @@ import tifffile
 
 from planetrecon.result import ReconstructionResult
 
+TIFF_JSON_HEADER = "PlanetRecon\n"
+
+
+def parse_tiff_description(text: str) -> dict:
+    """Parse JSON from a PlanetRecon TIFF ImageDescription."""
+    if text.startswith(TIFF_JSON_HEADER):
+        text = text[len(TIFF_JSON_HEADER):]
+    return json.loads(text)
+
 
 class ExportCancelled(Exception):
     pass
@@ -57,6 +66,16 @@ class ExportReport:
     sidecar: Path
     coverage_path: Path | None
     metadata: dict
+
+
+def _collapse_replicated_rgb(array):
+    """Keep true per-channel masks; store replicated RGB planes as spatial maps."""
+    array = np.ascontiguousarray(array)
+    if array.ndim == 3 and array.shape[-1] == 3:
+        first = array[..., 0]
+        if np.array_equal(first, array[..., 1]) and np.array_equal(first, array[..., 2]):
+            return np.ascontiguousarray(first)
+    return array
 
 
 def _prepare(result, config):
@@ -119,8 +138,10 @@ def _prepare(result, config):
                    "rounding": "nearest, ties upward", "shared_across_channels": True,
                    "formula": "65535 * clip((linear - black) / (white - black), 0, 1) ** (1 / gamma)",
                    "gamma": config.display_gamma or 1.0}
-    metadata = {"schema": "planetrecon-export", "schema_version": "1.0",
-                "encoding": config.encoding, "shape": list(image.shape),
+    # Do not embed a JSON "shape" key: tifffile treats ImageDescription containing
+    # '"shape":' as its own series metadata and reports the file as corrupted.
+    metadata = {"schema": "planetrecon-export", "schema_version": "1.1",
+                "encoding": config.encoding, "image_shape": list(image.shape),
                 "rendering": "display-rendered" if config.display_gamma is not None else "scientific-linear",
                 "transfer": {"function": "power" if config.display_gamma is not None else "linear",
                              "gamma": config.display_gamma or 1.0,
@@ -129,7 +150,7 @@ def _prepare(result, config):
                 "invalid_policy": "NaN" if config.encoding == "tiff32" else "zero with separate validity mask",
                 "coverage_description": "per-sample accumulation weights; not a calibrated uncertainty",
                 "result": result.metadata()}
-    return pixels, valid, coverage, layers, metadata
+    return pixels, _collapse_replicated_rgb(valid), _collapse_replicated_rgb(coverage), layers, metadata
 
 
 def _chunk(stream, kind, payload):
@@ -158,21 +179,33 @@ def _write_png(stream, pixels, metadata, check_cancel=lambda: None):
 
 def _write_tiff(stream, pixels, valid, coverage, layers, metadata, check_cancel=lambda: None):
     # Uncompressed TIFF uses no imagecodecs/FFmpeg dependency. BigTIFF when needed.
-    size = valid.nbytes + coverage.nbytes + sum(a.nbytes for a in layers.values())
-    size += 0 if pixels is None else pixels.nbytes
+    # The visible image is a single IFD. Masks live in a companion file so ordinary
+    # viewers are not asked to convert 64-bit coverage pages as extra images.
+    size = 0 if pixels is None else pixels.nbytes
+    if valid is not None:
+        size += valid.nbytes + coverage.nbytes + sum(a.nbytes for a in layers.values())
     with tifffile.TiffWriter(stream, byteorder="<", bigtiff=size > 2**32 - 2**25) as writer:
-        def page(array, description):
+        def page(array, description, *, image=False):
             check_cancel()
-            writer.write(array, photometric="rgb" if array.ndim == 3 else "minisblack",
+            text = _json(description).decode("ascii")
+            if image:
+                text = TIFF_JSON_HEADER + text
+            writer.write(np.ascontiguousarray(array),
+                         photometric="rgb" if array.ndim == 3 else "minisblack",
                          planarconfig="contig" if array.ndim == 3 else None,
-                         compression=None, metadata=None, description=_json(description).decode("ascii"),
+                         compression=None, metadata=None,
+                         description=text,
                          software="PlanetRecon W13", extratags=[(274, "H", 1, 1, False)])
         if pixels is not None:
-            page(pixels, metadata)
-        page(valid.astype(np.uint8), {"role": "validity", "values": "0 invalid, 1 valid", "export_id": metadata["export_id"]})
-        page(coverage, {"role": "coverage", "units": "accumulation weight", "export_id": metadata["export_id"]})
-        for name, array in sorted(layers.items()):
-            page(array, {"role": "layer_coverage", "layer": name, "units": "accumulation weight", "export_id": metadata["export_id"]})
+            page(pixels, metadata, image=True)
+        if valid is not None:
+            page(valid.astype(np.uint8, copy=False),
+                 {"role": "validity", "values": "0 invalid, 1 valid", "export_id": metadata["export_id"]})
+            page(np.ascontiguousarray(coverage, dtype=np.float64),
+                 {"role": "coverage", "units": "accumulation weight", "export_id": metadata["export_id"]})
+            for name, array in sorted(layers.items()):
+                page(array, {"role": "layer_coverage", "layer": name, "units": "accumulation weight",
+                             "export_id": metadata["export_id"]})
 
 
 def _json(value):
@@ -224,23 +257,22 @@ def export_result(result: ReconstructionResult, path: Path, config: ExportConfig
     check_cancel()
     generation = uuid.uuid4().hex
     sidecar = path.with_name(f"{path.name}.{generation}.json")
-    masks = path.with_name(f"{path.name}.{generation}.coverage.tif") if config.encoding == "png16" else None
+    masks = path.with_name(f"{path.name}.{generation}.coverage.tif")
     metadata.update(export_id=generation, sidecar=sidecar.name,
-                    coverage_file=masks.name if masks else None,
+                    coverage_file=masks.name,
                     encoder={"png": "PlanetRecon PNG16 1.0 / zlib", "tiff": f"tifffile {tifffile.__version__}"})
     # Validate serialization before creating files.
     _json(metadata)
     staged, companions = [], []
     committed = False
     try:
-        if masks:
-            temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata, check_cancel))
-            staged.append(temp)
-            check_cancel()
-            _publish(temp, masks)
-            companions.append(masks)
+        temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata, check_cancel))
+        staged.append(temp)
+        check_cancel()
+        _publish(temp, masks)
+        companions.append(masks)
         write = (lambda s: _write_png(s, pixels, metadata, check_cancel)) if config.encoding == "png16" else (
-            lambda s: _write_tiff(s, pixels, valid, coverage, layers, metadata, check_cancel))
+            lambda s: _write_tiff(s, pixels, None, None, None, metadata, check_cancel))
         image_temp = _staged_file(path, write)
         staged.append(image_temp)
         check_cancel()

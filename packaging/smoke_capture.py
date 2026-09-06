@@ -1,5 +1,6 @@
 """Offline frozen-native AVI and geometry/layer export functional checks."""
 from pathlib import Path
+import json
 import os
 import struct
 import subprocess
@@ -10,6 +11,7 @@ import numpy as np
 import tifffile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from planetrecon.export import parse_tiff_description
 from planetrecon.io.ser import write_ser
 from planetrecon.result import load_snapshot
 
@@ -50,7 +52,12 @@ def main(executable):
             if mode=='saturn':
                 assert set(result.layer_coverage)=={'globe','ring'}
                 assert all(value.max()>0 for value in result.layer_coverage.values())
-                with tifffile.TiffFile(root/mode/'stack.tif') as file:assert len(file.pages)==5
+                image=root/mode/'stack.tif'
+                with tifffile.TiffFile(image) as file:
+                    assert len(file.pages)==1 and not file.pages[0].is_shaped
+                    coverage=image.with_name(parse_tiff_description(file.pages[0].description)['coverage_file'])
+                with tifffile.TiffFile(coverage) as file:
+                    assert {json.loads(page.description).get('layer') for page in file.pages} >= {'globe','ring'}
     print('PASS: frozen native AVI without external executables; combined/Saturn CPU and layered TIFF')
 
 
