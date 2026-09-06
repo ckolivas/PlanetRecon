@@ -2270,3 +2270,11 @@ concurrent host load. This qualifies the tested local baseline operations, not
 advanced atmospheric inference, geometry acceleration or all memory/release limits.
 User-confirmed IR642 Mars mono interpretation overrides its RGGB header; L3 Mars
 remains OSC. Private capture pixels are excluded from Git.
+
+**W17 local candidates:** the venv builds separate CPU and GPU standalone Linux
+bundles, including Python/Qt/numerical/image components and GPU Torch/CUDA libraries
+where selected. No-argument launch opens Qt. Packaged CPU and CUDA checks exercise
+native AVI, scientific encoders, owned-worker cancellation/restart and live saving;
+real CUDA is verified with Python/venv search paths disabled. The build toolchain,
+source identities, notices, file SBOM and checksums are recorded. This does not
+complete clean-system, Windows/macOS, licensing or signing/notarization acceptance.

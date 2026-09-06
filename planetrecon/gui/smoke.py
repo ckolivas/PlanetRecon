@@ -13,15 +13,16 @@ from planetrecon.io.ser import write_ser, COLOR_RGGB
 from planetrecon.reconstruction import ReconstructionConfig
 
 
-def run_smoke(directory: Path) -> int:
+def run_smoke(directory: Path, device: str = "cpu") -> int:
     directory = Path(directory) / ('gui-' + uuid.uuid4().hex[:12])
     directory.mkdir(parents=True)
     frame = (300 + np.arange(16*24).reshape(16,24)).astype(np.uint16)
     source = write_ser(directory/'fixture.ser', np.stack([frame]*4), color_id=COLOR_RGGB)
     app = create_app(['planetrecon-gui-smoke'])
-    win = MainWindow(source, ReconstructionConfig(device='cpu', threads=2, batch_frames=1))
-    outcome = {'status': 'running', 'directory': str(directory)}
-    phase = 'stack'
+    win = MainWindow(source, ReconstructionConfig(device=device, threads=2, batch_frames=1))
+    outcome = {'status': 'running', 'directory': str(directory), 'requested_device': device}
+    phase = 'cancel_request'
+    cancel_started = None
     started = time.monotonic()
     dest = directory/'result.tif'
     timer = QTimer()
@@ -41,13 +42,24 @@ def run_smoke(directory: Path) -> int:
         app.quit()
 
     def advance():
-        nonlocal phase
+        nonlocal phase, cancel_started
         try:
             if time.monotonic()-started > 30:
                 raise TimeoutError('GUI smoke exceeded 30 seconds')
-            if phase == 'stack' and win.job is None:
+            if phase == 'cancel_request':
+                cancel_started = time.monotonic()
+                win._cancel()
+                phase = 'cancel_wait'
+            elif phase == 'cancel_wait' and win.job is None:
+                outcome['cancel_latency_s'] = time.monotonic()-cancel_started
+                outcome['cancel_restart'] = True
+                phase = 'stack'
+                win._run()
+            elif phase == 'stack' and win.job is None:
                 if win.error.text() or win.last_result is None:
                     raise RuntimeError(win.error.text() or 'No result')
+                if device == "gpu" and win.last_result.backend != "cuda":
+                    raise RuntimeError("GPU smoke fell back instead of exercising CUDA")
                 assert win.last_result.n_used == 4 and not win.last_result.incomplete
                 assert win.last_result.image.shape == (16,24,3)
                 phase = 'save'
@@ -58,7 +70,7 @@ def run_smoke(directory: Path) -> int:
                     valid = tf.pages[1].asarray().astype(bool)
                     np.testing.assert_array_equal(actual[valid], win.last_result.image[valid].astype(np.float32))
                     assert np.isnan(actual[~valid]).all()
-                outcome.update(n_used=4, shape=[16,24,3], encoding='tiff32', backend='cpu',
+                outcome.update(n_used=4, shape=[16,24,3], encoding='tiff32', backend=win.last_result.backend,
                                invalid_samples=int((~valid).sum()))
                 finish()
         except Exception as exc:

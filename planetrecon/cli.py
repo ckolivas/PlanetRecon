@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import sys
 from pathlib import Path
 
 from planetrecon.runtime import apply_thread_limits
@@ -12,6 +13,8 @@ from planetrecon import constants as C
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None and getattr(sys, "frozen", False) and len(sys.argv) == 1:
+        argv = ["gui"]
     parser = argparse.ArgumentParser(
         prog="planetrecon",
         description="PlanetRecon Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)",
@@ -202,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
     gui.add_argument("--path", type=Path, default=None)
     smoke = sub.add_parser("gui-smoke", help="bounded Qt/owned-worker/scientific-save packaging check")
     smoke.add_argument("--out", type=Path, required=True)
+    smoke.add_argument("--device", choices=("cpu", "gpu"), default="cpu")
 
     args = parser.parse_args(argv)
     if args.threads is not None and args.threads < 1:
@@ -417,6 +421,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "gui-smoke":
         from planetrecon.gui.smoke import run_smoke
 
-        return run_smoke(args.out)
+        return run_smoke(args.out, args.device)
     parser.error("unknown command")
     return 2

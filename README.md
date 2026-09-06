@@ -487,3 +487,16 @@ speedups under concurrent host load. Reports are in `results/gpu` and
 `results/real-data`. These are scoped local diagnostics. IR642 Mars is explicitly
 mono despite its RGGB header; L3 Mars is OSC. Select `--color mono` (alias
 `--bayer mono`) or the GUI's Raw colour override when appropriate.
+
+Standalone Linux candidates are built from the venv:
+
+- CPU: `out/dist/cpu/planetrecon/planetrecon`
+- CUDA: `out/dist/gpu/planetrecon-gpu/planetrecon-gpu`
+
+Run either executable without arguments to open the GUI, or use its CLI commands.
+Copy the whole corresponding bundle directory. Python, Qt and required numerical /
+image components are included; the GPU bundle also includes Torch/CUDA user-space
+libraries and requires a compatible NVIDIA driver. See `packaging/README.md` for
+reproducible builds, smoke tests, notices, file SBOMs and checksum verification.
+These are local unsigned candidates; clean-system Windows/macOS acceptance and
+public-release licensing/signing are still outstanding.

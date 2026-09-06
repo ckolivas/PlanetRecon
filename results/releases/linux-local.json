@@ -1,0 +1,141 @@
+{
+  "schema": "planetrecon-local-packaging-validation-1",
+  "date": "2026-09-06",
+  "status": "local checks passed; release acceptance incomplete",
+  "host": "Devuan Linux x86_64; NVIDIA RTX 5070; driver 595.91.07",
+  "release_ready": false,
+  "bundles": {
+    "cpu": {
+      "path": "out/dist/cpu/planetrecon",
+      "executable_sha256": "598c4c5c8ce7b7fe4eb7636172d045ec6638a87b4dba405b03b1b4685064d181",
+      "file_count": 996,
+      "checksums_verified": true,
+      "inventory_base_revision": "8b5d3a393fc458c0c0ba6c1c852a2cb2a72e4a5e",
+      "inventory": {
+        "manifest.json": {
+          "path": "out/release/cpu/manifest.json",
+          "sha256": "58b730506581dd654576644f06575f8f9981c22cc4200f43c0c4fbd719bee9ca"
+        },
+        "sbom.cdx.json": {
+          "path": "out/release/cpu/sbom.cdx.json",
+          "sha256": "903c0646a919f197881b8c3c1a801b10e37151eca83227bf2efad53e77f136b5"
+        },
+        "SHA256SUMS": {
+          "path": "out/release/cpu/SHA256SUMS",
+          "sha256": "81e7709ce04ea3981131592891f88e9411e2b89c9b3028ba077db43737fc2a9a"
+        }
+      },
+      "gui_cancel_restart_save": {
+        "status": "passed",
+        "directory": "out/validation/final-cpu-gui/gui-ee59e7cff4a5",
+        "requested_device": "cpu",
+        "cancel_latency_s": 0.5499944780021906,
+        "cancel_restart": true,
+        "n_used": 4,
+        "shape": [
+          16,
+          24,
+          3
+        ],
+        "encoding": "tiff32",
+        "backend": "cpu",
+        "invalid_samples": 768,
+        "elapsed_s": 1.114653779000946
+      },
+      "functional_checks": {
+        "export": {
+          "status": "passed",
+          "log": "out/validation/final-cpu-export.log",
+          "sha256": "e9610c16701eb5d7a6844e9bd6ff07cb29115645d59c872caab415ccc9efee9a",
+          "summary": "PASS: frozen mono/RGB PNG16, TIFF16, TIFF32 encoders and CPU SER stack"
+        },
+        "capture": {
+          "status": "passed",
+          "log": "out/validation/final-cpu-capture.log",
+          "sha256": "7c420014e0377bbfb0de04c108f9af90268c9e9ef1838c58c111ede0d47a18da",
+          "summary": "PASS: frozen native AVI without external executables; combined/Saturn CPU and layered TIFF"
+        }
+      }
+    },
+    "gpu": {
+      "path": "out/dist/gpu/planetrecon-gpu",
+      "executable_sha256": "27d0929d4bf1e2f9b5d6a8389ce5d88b2051b36d5120cdaeca3eaa182042af24",
+      "file_count": 3701,
+      "checksums_verified": true,
+      "inventory_base_revision": "8b5d3a393fc458c0c0ba6c1c852a2cb2a72e4a5e",
+      "inventory": {
+        "manifest.json": {
+          "path": "out/release/gpu/manifest.json",
+          "sha256": "470e8d7f7f8dfcbf9a71c5d9f985c5cb99ac3a5bd51bad10baeaad10a5972015"
+        },
+        "sbom.cdx.json": {
+          "path": "out/release/gpu/sbom.cdx.json",
+          "sha256": "97e4bbad230e80f4cbeb16c49efa20f580a117cc5c9e0cccef08eb4774187241"
+        },
+        "SHA256SUMS": {
+          "path": "out/release/gpu/SHA256SUMS",
+          "sha256": "7613e396ebb4f52c66b1edb3e6caf80d796b7d511dd1561542175d11b780e426"
+        }
+      },
+      "gui_cancel_restart_save": {
+        "status": "passed",
+        "directory": "out/validation/final-gpu-gui/gui-441d64ac2d86",
+        "requested_device": "gpu",
+        "cancel_latency_s": 1.9960548939998262,
+        "cancel_restart": true,
+        "n_used": 4,
+        "shape": [
+          16,
+          24,
+          3
+        ],
+        "encoding": "tiff32",
+        "backend": "cuda",
+        "invalid_samples": 768,
+        "elapsed_s": 4.177972173998569
+      },
+      "functional_checks": {
+        "export": {
+          "status": "passed",
+          "log": "out/validation/final-gpu-export.log",
+          "sha256": "db5990eba9eb4ea84e60339cf96a984b097eca83b279b1f7e210aa1ac1f143fb",
+          "summary": "PASS: frozen mono/RGB PNG16, TIFF16, TIFF32 encoders and CPU SER stack"
+        },
+        "capture": {
+          "status": "passed",
+          "log": "out/validation/final-gpu-capture.log",
+          "sha256": "ec66c82bd5152b48e84a0a3f2faea00373d223363d3c1fa113c7cbbfda8c6a01",
+          "summary": "PASS: frozen native AVI without external executables; combined/Saturn CPU and layered TIFF"
+        }
+      }
+    }
+  },
+  "cpu_suite": {
+    "passed": 286,
+    "skipped": 31
+  },
+  "gpu_tests": {
+    "passed": 29,
+    "real_allocator_oom_recovery": true
+  },
+  "release_tests": {
+    "passed": 4
+  },
+  "historical_r9_artifact_hashes_verified": 36,
+  "frozen_cpu_cuda_parity": {
+    "status": "passed",
+    "cpu_backend": "cpu",
+    "gpu_backend": "cuda",
+    "image_exact": true,
+    "validity_exact": true,
+    "counts_equal": true,
+    "python_paths_disabled": true
+  },
+  "limitations": [
+    "Development host only; clean offline target validation not run",
+    "Windows and macOS not built or validated",
+    "Unsigned; project release license not selected",
+    "Advanced atmospheric solver and Q3 remain unqualified",
+    "Native OS/graphics stack and compatible NVIDIA driver remain host dependencies"
+  ]
+}
