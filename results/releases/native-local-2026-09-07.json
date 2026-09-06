@@ -1,0 +1,266 @@
+{
+  "schema": "planetrecon-native-local-validation-1",
+  "date": "2026-09-07",
+  "status": "Linux native candidates validated; GitHub build automation committed",
+  "host": "Devuan Linux x86_64; NVIDIA RTX 5070; driver 595.91.07",
+  "supersedes": "results/releases/linux-local.json",
+  "tag_created": false,
+  "github_release_published": false,
+  "windows_macos_runtime_testing": "excluded by user request",
+  "cpu_suite": {
+    "passed": 350,
+    "skipped": 36,
+    "wall_s": 36.57
+  },
+  "gpu_tests": {
+    "passed": 34,
+    "wall_s": 1.34
+  },
+  "release_tests": {
+    "passed": 17
+  },
+  "historical_r9_artifact_hashes_verified": 36,
+  "bundles": {
+    "cpu": {
+      "executable": "out/native-release-cpu/dist/planetrecon/planetrecon",
+      "executable_sha256": "f151efc128c2e9898057db902a10343b11460802f297b582fbd14462c4d2f00f",
+      "descriptor": {
+        "tag": "v0.1.0",
+        "version": "0.1.0",
+        "target": "linux-x86_64-cpu",
+        "revision": "d4beea6cc25e5f38c58a8ac9f99df201fa7529ce",
+        "native_host": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+        "libc": [
+          "glibc",
+          "2.41"
+        ],
+        "runtime_validation": "Linux CPU GUI, checkpoint resume, encoders, native AVI and geometry passed; hardware CUDA tested separately",
+        "publisher_signed": false,
+        "macos_ad_hoc_signed": false,
+        "archive": {
+          "name": "planetrecon-0.1.0-linux-x86_64-cpu.tar.gz",
+          "size": 126875244,
+          "sha256": "9778e53e4fe0746b815305724173410c336c6b6a20928bce4995a7a0072abde6"
+        },
+        "archive_parts": [
+          "planetrecon-0.1.0-linux-x86_64-cpu.tar.gz"
+        ],
+        "assets": [
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-cpu.manifest.json",
+            "size": 255256,
+            "sha256": "9b6ac5019e1fb6898b7611f9593ea3f9f9671ad2728fad24dc1a9449e5161861"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-cpu.sbom.cdx.json",
+            "size": 319407,
+            "sha256": "9011a0e66bdf35559e4f121c4154dab1142fab097bb4ed9bf0c3eacc4165891c"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-cpu.tar.gz",
+            "size": 126875244,
+            "sha256": "9778e53e4fe0746b815305724173410c336c6b6a20928bce4995a7a0072abde6"
+          }
+        ]
+      },
+      "inventory_verified_during_build": true,
+      "cpu_gui_smoke": {
+        "status": "passed",
+        "directory": "/home/conman/Code/PlanetRecon/out/native-release-cpu/gui-smoke/gui-76e86f20f6f2",
+        "requested_device": "cpu",
+        "cancel_latency_s": 0.3552443980006501,
+        "cancel_restart": true,
+        "checkpoint_resume": true,
+        "n_used": 4,
+        "shape": [
+          16,
+          24,
+          3
+        ],
+        "encoding": "tiff32",
+        "backend": "cpu",
+        "invalid_samples": 768,
+        "elapsed_s": 1.3692669899901375
+      }
+    },
+    "gpu": {
+      "executable": "out/native-release-gpu/dist/planetrecon-gpu/planetrecon-gpu",
+      "executable_sha256": "dbefac0504341205d3c2b799fcfa465e47bd937e1f66f7f72b3d07ea4f35e3dd",
+      "descriptor": {
+        "tag": "v0.1.0",
+        "version": "0.1.0",
+        "target": "linux-x86_64-gpu",
+        "revision": "d4beea6cc25e5f38c58a8ac9f99df201fa7529ce",
+        "native_host": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+        "libc": [
+          "glibc",
+          "2.41"
+        ],
+        "runtime_validation": "Linux CPU GUI, checkpoint resume, encoders, native AVI and geometry passed; hardware CUDA tested separately",
+        "publisher_signed": false,
+        "macos_ad_hoc_signed": false,
+        "archive": {
+          "name": "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz",
+          "size": 2713244503,
+          "sha256": "b7c186ddd8f5d993a98e4d77602b87f848b552a515be722948254c03eb0b6c07"
+        },
+        "archive_parts": [
+          "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part001",
+          "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part002",
+          "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part003"
+        ],
+        "assets": [
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-gpu.manifest.json",
+            "size": 876157,
+            "sha256": "63bdb78d1014687b66676d335625f3ffe42dffafa076beace9a2adca8b9b6756"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-gpu.sbom.cdx.json",
+            "size": 1229041,
+            "sha256": "5a3a1395986da601d48cee8debbe7cf3e756fc0c8472b2faf5f4619a917eca55"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part001",
+            "size": 1073741824,
+            "sha256": "0c36d38ec1790e739d8d620cc244d870756f69382e12cad87b2684598f063a82"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part002",
+            "size": 1073741824,
+            "sha256": "103fa2be4691c6597ed4d376ba790b5e834894b85474f3a73625322f43950d2d"
+          },
+          {
+            "name": "planetrecon-0.1.0-linux-x86_64-gpu.tar.gz.part003",
+            "size": 565760855,
+            "sha256": "9cc96b883574d5340a97d41c0f41b46f07549e89492ce21610760f6d97390d56"
+          }
+        ]
+      },
+      "inventory_verified_during_build": true,
+      "cpu_gui_smoke": {
+        "status": "passed",
+        "directory": "/home/conman/Code/PlanetRecon/out/native-release-gpu/gui-smoke/gui-dc140852b8a8",
+        "requested_device": "cpu",
+        "cancel_latency_s": 0.363727662988822,
+        "cancel_restart": true,
+        "checkpoint_resume": true,
+        "n_used": 4,
+        "shape": [
+          16,
+          24,
+          3
+        ],
+        "encoding": "tiff32",
+        "backend": "cpu",
+        "invalid_samples": 768,
+        "elapsed_s": 1.4405040220008232
+      }
+    }
+  },
+  "large_capture": {
+    "status": "passed",
+    "scope": "generated flat SER; input/memory/lifetime mechanics only",
+    "capture_bytes": 2147483826,
+    "frames": 4096,
+    "shape": [
+      512,
+      512
+    ],
+    "wall_s": 82.49787727299554,
+    "cpu_memory_budget": {
+      "effective_bytes": 536870912,
+      "enforced": true,
+      "initial_virtual_bytes": 368496640,
+      "process_peak_rss_bytes": 148226048,
+      "requested_bytes": 536870912,
+      "scope": "Linux process RLIMIT_AS; includes mapped libraries; excludes GUI parent and other processes"
+    },
+    "frames_used": 4096,
+    "standalone": true,
+    "date": "2026-09-07",
+    "command": "PLANETRECON_THREADS=2 .venv/bin/python tools/qualify_large_capture.py --out out/validation/large-capped-capture --executable out/native-release-cpu/dist/planetrecon/planetrecon",
+    "executable_sha256": "f151efc128c2e9898057db902a10343b11460802f297b582fbd14462c4d2f00f",
+    "bundle_manifest_sha256": "9b6ac5019e1fb6898b7611f9593ea3f9f9671ad2728fad24dc1a9449e5161861",
+    "fixture": "Sparse zero-filled mono uint16 SER, generated locally; no private capture pixels"
+  },
+  "frozen_gpu_gui": {
+    "status": "passed",
+    "directory": "out/validation/final-plan-gpu-gui/gui-5cd7efb6ac6a",
+    "requested_device": "gpu",
+    "cancel_latency_s": 2.5222355440055253,
+    "cancel_restart": true,
+    "checkpoint_resume": true,
+    "n_used": 4,
+    "shape": [
+      16,
+      24,
+      3
+    ],
+    "encoding": "tiff32",
+    "backend": "cuda",
+    "invalid_samples": 768,
+    "elapsed_s": 7.410152309996192
+  },
+  "frozen_accelerator": {
+    "status": "passed",
+    "python_paths_disabled": true,
+    "gpu_cpu_parity": true,
+    "completed_state_resume_exact": true,
+    "allocator_limit_cpu_recovery": true,
+    "cases": {
+      "cpu": {
+        "backend": "cpu",
+        "n_used": 4,
+        "budget": null
+      },
+      "gpu": {
+        "backend": "cuda",
+        "n_used": 4,
+        "budget": {
+          "effective_bytes": 67108864,
+          "enforced": true,
+          "error": null,
+          "peak_reserved_bytes": 2097152,
+          "requested_bytes": 67108864,
+          "scope": "PyTorch CUDA caching allocator; excludes driver and external library allocations"
+        }
+      },
+      "resume": {
+        "backend": "cuda",
+        "n_used": 4,
+        "budget": {
+          "effective_bytes": 67108864,
+          "enforced": true,
+          "error": null,
+          "peak_reserved_bytes": 2097152,
+          "requested_bytes": 67108864,
+          "scope": "PyTorch CUDA caching allocator; excludes driver and external library allocations"
+        }
+      },
+      "limited": {
+        "backend": "cpu",
+        "n_used": 4,
+        "budget": {
+          "effective_bytes": 1048576,
+          "enforced": true,
+          "error": null,
+          "peak_reserved_bytes": 0,
+          "requested_bytes": 1048576,
+          "scope": "PyTorch CUDA caching allocator; excludes driver and external library allocations"
+        }
+      }
+    }
+  },
+  "capture_interpretation": "IR642 and L3 Mars are RGGB OSC; previous mono IR642 evidence is superseded",
+  "corrected_ir642_report": "results/real-data/ir642-interpretation-correction.json",
+  "limitations": [
+    "Native builds were validated locally on the development host; no clean-machine certification",
+    "Windows/macOS build recipes and compatible wheels are recorded; those builds await GitHub execution",
+    "Bundles are local version 0.1.0 candidates with exact build-time source hashes; their base commit predates the packaging commit",
+    "Unsigned; no project license or publisher signing/notarization identity was selected",
+    "CPU RLIMIT_AS cap covers one Linux CPU process including mapped libraries; excludes GUI parent",
+    "CUDA cap covers the Torch caching allocator; excludes driver and external allocations",
+    "Advanced atmospheric inference and Q3 remain unqualified; independent rotation/geometry capture evidence is still missing"
+  ]
+}

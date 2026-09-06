@@ -548,3 +548,10 @@ impossibly small cap is rejected before processing. The previous process limit i
 restored on exit, and provenance records the effective ceiling and process peak
 RSS. This does not cap the GUI parent or other processes. GPU processing uses the
 separate CUDA allocator budget because its virtual mappings do not fit this policy.
+
+The frozen CPU binary streamed a generated 2 GiB SER (4,096 frames) under a
+512 MiB Linux address-space cap, with 141 MiB peak RSS. Reproduce with
+`tools/qualify_large_capture.py --executable PATH --out NEW_DIRECTORY` from the
+venv. This checks large-input mechanics using a flat fixture, not image quality.
+Current bundle hashes and local acceptance results are in
+`results/releases/native-local-2026-09-07.json`; earlier reports remain historical.

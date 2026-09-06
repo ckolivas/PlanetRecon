@@ -2359,3 +2359,23 @@ Local CPU/CUDA native candidates built successfully. No GitHub tag or release
 was created locally, and no project license or publisher signing identity was
 invented. This completes the requested build-automation implementation, without
 claiming clean-target runtime or advanced scientific acceptance.
+
+**Large-input and final local validation (2026-09-07):** the standalone CPU binary
+processed all 4,096 frames of a generated 2 GiB SER under a 512 MiB Linux address-
+space cap in 82.50 s, with 141.36 MiB process peak RSS. The sparse flat fixture
+qualifies streaming/allocation mechanics, not reconstruction quality. The
+reproduction tool and compact report are committed. Final local validation is
+350 CPU-suite passes/36 skips, 34 real-CUDA passes and 17 release-helper passes;
+frozen CPU/CUDA GUI checkpoint resume, native capture, scientific export and
+CUDA recovery passed. All 36 archived R9 artifact hashes remain unchanged.
+Current bundle hashes and evidence are in
+`results/releases/native-local-2026-09-07.json`.
+
+The implementable baseline continuation and requested native release automation
+are delivered. Remaining scientific acceptance requires the unresolved W01–W03
+model/optimization work before W11/Q3 and independently documented captures for
+W16; existing evidence does not authorize a Q3 scale-up or a full MFBD claim.
+Compressed/OpenDML AVI remains outside the declared native AVI adapter scope.
+Cross-platform build execution awaits the workflow; Windows/macOS runtime tests
+are excluded from the process. Licensing and publisher signing have not been
+invented. No private captures or derived pixels were added to Git.

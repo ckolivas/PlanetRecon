@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "scope": "generated flat SER; input/memory/lifetime mechanics only",
+  "capture_bytes": 2147483826,
+  "frames": 4096,
+  "shape": [
+    512,
+    512
+  ],
+  "wall_s": 82.49787727299554,
+  "cpu_memory_budget": {
+    "effective_bytes": 536870912,
+    "enforced": true,
+    "initial_virtual_bytes": 368496640,
+    "process_peak_rss_bytes": 148226048,
+    "requested_bytes": 536870912,
+    "scope": "Linux process RLIMIT_AS; includes mapped libraries; excludes GUI parent and other processes"
+  },
+  "frames_used": 4096,
+  "standalone": true,
+  "date": "2026-09-07",
+  "command": "PLANETRECON_THREADS=2 .venv/bin/python tools/qualify_large_capture.py --out out/validation/large-capped-capture --executable out/native-release-cpu/dist/planetrecon/planetrecon",
+  "executable_sha256": "f151efc128c2e9898057db902a10343b11460802f297b582fbd14462c4d2f00f",
+  "bundle_manifest_sha256": "9b6ac5019e1fb6898b7611f9593ea3f9f9671ad2728fad24dc1a9449e5161861",
+  "fixture": "Sparse zero-filled mono uint16 SER, generated locally; no private capture pixels"
+}
