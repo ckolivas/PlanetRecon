@@ -91,6 +91,35 @@ def bilinear_demosaic(raw: np.ndarray, pattern: str, origin_xy=(0, 0)) -> np.nda
     return rgb
 
 
+def nearest_debayer_preview(raw: np.ndarray, pattern: str, origin_xy=(0, 0), stride=1) -> np.ndarray:
+    """Display-only RGB: copy the closest measured site for each colour.
+
+    Sampling is evaluated on the original detector lattice before preview
+    reduction. No averaging or interpolation; ties choose a deterministic site.
+    Temporary storage scales with the preview, not a full-resolution RGB image.
+    """
+    raw = np.asarray(raw)
+    if raw.ndim != 2 or min(raw.shape) < 2 or pattern not in BAYER_PATTERNS:
+        raise ValueError('nearest Bayer display requires a 2-D mosaic of at least 2 by 2 and a known pattern')
+    if type(stride) is not int or stride < 1:
+        raise ValueError('preview stride must be a positive integer')
+    h,w = raw.shape
+    y,x = np.arange(0,h,stride),np.arange(0,w,stride)
+    labels = cfa_labels(2,2,pattern,origin_xy)
+    rgb = np.empty((len(y),len(x),3),dtype=raw.dtype)
+    for channel,index in CHANNEL_INDEX.items():
+        best_distance = np.full((len(y),len(x)),np.iinfo(np.int64).max,dtype=np.int64)
+        for py,px in np.argwhere(labels==channel):
+            yy = py + 2*np.clip((y-py+1)//2,0,(h-1-py)//2)
+            xx = px + 2*np.clip((x-px+1)//2,0,(w-1-px)//2)
+            distance = (y-yy)[:,None]**2 + (x-xx)[None,:]**2
+            closer = distance < best_distance
+            values = raw[yy[:,None],xx[None,:]]
+            rgb[...,index][closer] = values[closer]
+            best_distance[closer] = distance[closer]
+    return rgb
+
+
 def cfa_accumulate(
     raw: np.ndarray,
     shift_xy: tuple[float, float],

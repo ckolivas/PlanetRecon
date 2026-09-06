@@ -33,9 +33,12 @@ The completed CUDA OSC Saturn run used 17,928/17,934 frames (6 rejected),
 results are retained locally in `out/real-data/osc-saturn-gpu-full/result.npz`.
 The earlier unfinished CPU Saturn attempt was not treated as completed evidence.
 
-Five 512-frame samples uniformly spanning the full local captures now cover mono
-and OSC Mars, mono and OSC Saturn, and OSC Jupiter. The IR642 Mars data is treated
-as mono per user confirmation despite its RGGB header; L3 Mars remains RGGB.
+Five 512-frame samples uniformly spanning the full local captures cover two OSC
+Mars filters, mono and OSC Saturn, and OSC Jupiter. The corrected IR642 Mars
+interpretation is pseudo-monochrome OSC RGGB; L3 Mars also remains RGGB.
+The old `mono-mars-*-512.json` files and their row in the original GPU aggregate
+are retained as superseded interpretation diagnostics, not mono Mars evidence.
+See `ir642-interpretation-correction.json` and `osc-mars-ir642-*-512.json`.
 All paired CPU/CUDA outputs have exactly equal image arrays, validity and used /
 rejected counts. Stack speedups were 2.10–4.32×; these were concurrent desktop
 measurements, not isolated speed records. The three new captures contain 27,689,

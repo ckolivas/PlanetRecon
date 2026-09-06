@@ -190,7 +190,7 @@ regimes if they are missing, then writes classification tables under
 
 Start `python3 -m planetrecon gui --path capture.ser`, or use **Open capture**.
 **Inspect input** reads metadata and a bounded raw preview in an owned process.
-CFA inputs show a labelled green proxy; the reconstruction still uses raw samples.
+CFA inputs show labelled nearest-neighbour RGB previews; reconstruction still uses raw samples.
 The four settings tabs expose:
 
 - **Capture:** CPU/Auto/GPU, 1–32 CPU threads, batch size, Bayer and byte-order
@@ -484,9 +484,11 @@ run with host access. No driver change was needed.
 Five 512-frame uniform full-capture samples produced exactly equal CPU/CUDA
 images, coverage validity and rejection counts, with measured 2.10–4.32× stack
 speedups under concurrent host load. Reports are in `results/gpu` and
-`results/real-data`. These are scoped local diagnostics. IR642 Mars is explicitly
-mono despite its RGGB header; L3 Mars is OSC. Select `--color mono` (alias
-`--bayer mono`) or the GUI's Raw colour override when appropriate.
+`results/real-data`. These are scoped local diagnostics. **IR642 and L3 Mars are
+both OSC RGGB**; IR642 is pseudo-monochrome, not a mono detector. The earlier IR642
+mono interpretation is superseded by `results/real-data/ir642-interpretation-correction.json`.
+Use the header colour mode for these files. The corrected IR642 sample uses
+454/512 frames, with exactly equal CPU/CUDA images, coverage and validity.
 
 Standalone Linux candidates are built from the venv:
 

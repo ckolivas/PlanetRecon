@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-07",
+  "input_sha256": "c067c506b7ffd0655dac3c83458d4084ed50299d99799bfac20f5fcb112870e8",
+  "interpretation": "IR642 pseudo-monochrome OSC; retain RGGB detector CFA",
+  "authority": "user correction",
+  "superseded_reports": [
+    "mono-mars-cpu-512.json",
+    "mono-mars-gpu-512.json"
+  ],
+  "superseded_aggregate": "../gpu/rtx5070-local.json: mono-mars entry",
+  "replacement_reports": [
+    "osc-mars-ir642-cpu-512.json",
+    "osc-mars-ir642-gpu-512.json"
+  ],
+  "cpu_cuda_image_coverage_validity_exact": true,
+  "used_frames": 454,
+  "rejected_frames": 58,
+  "scope": "512 uniformly sampled frames; no mono Mars qualification is available"
+}

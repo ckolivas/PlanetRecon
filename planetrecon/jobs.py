@@ -128,18 +128,18 @@ def _worker_run(
         emit("progress", {"stage": "scan", "fraction": 0.0, "backend": config.device})
         if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
             import numpy as np
-            from planetrecon.pipeline.baseline import _alignment_plane
+            from planetrecon.detector import is_bayer, nearest_debayer_preview
 
             raw = source.read_raw(0)
             color = source.color_mode()
             if color == "BGR":
                 raw = raw[..., ::-1]
-            elif color not in ("mono", "RGB"):
-                raw = _alignment_plane(raw, color)
             step = max(1, int(np.ceil(max(raw.shape[:2]) / 512)))
+            bayer = is_bayer(color)
+            preview = nearest_debayer_preview(raw, color, stride=step) if bayer else np.array(raw[::step, ::step], copy=True)
             payload = {"source_metadata": source.metadata().as_dict(),
-                       "input_image": np.array(raw[::step, ::step], copy=True),
-                       "input_stride": step, "input_view": "green proxy" if color not in ("mono", "RGB", "BGR") else color}
+                       "input_image": preview,
+                       "input_stride": step, "input_view": "nearest-neighbour Bayer RGB" if bayer else color}
             emit("completed" if inspect_only else "source", payload)
             if inspect_only:
                 return

@@ -2336,3 +2336,11 @@ excluded and uses the separately qualified Torch allocator policy.
 from the current process. Native build requirements and version-tag GitHub release
 automation must be committed for those targets; build success is not represented
 as runtime qualification. Linux validation continues locally.
+
+**Capture/display correction (user, 2026-09-07):** IR642 Mars is pseudo-monochrome
+OSC with RGGB samples, like L3's OSC interpretation. Earlier IR642 mono reports
+are superseded, and no mono Mars capture is currently available. Corrected
+512-frame CPU/CUDA runs have 454 used/58 rejected and bit-identical image,
+coverage and validity. Raw Bayer colour previews copy nearest measured channel
+samples on the original CFA lattice before decimation; scientific operators are
+unchanged. All four patterns/ROI parities and worker RGB preview transport pass.
