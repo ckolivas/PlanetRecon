@@ -2305,8 +2305,9 @@ encodings. The frozen CUDA CLI passes parity, checkpoint continuation and capped
 allocator recovery with Python/venv search paths disabled. Current checksums and
 evidence are in `results/releases/linux-local.json`; this remains local acceptance.
 
-The next outstanding application work is geometry-state continuation and total
-working-set enforcement, followed by remaining large-input/format qualification.
+At that earlier checkpoint, the outstanding application work was geometry-state
+continuation and memory/large-input qualification; the dated updates below
+record the subsequent implementation and revised release scope.
 Scientific W01–W03 work must resolve the recorded optimization/model diagnostics
 before W11 integration or Q3. W16 still needs independently documented rotation
 and geometry captures. W17 still needs clean target machines, Windows/macOS
@@ -2344,3 +2345,17 @@ are superseded, and no mono Mars capture is currently available. Corrected
 coverage and validity. Raw Bayer colour previews copy nearest measured channel
 samples on the original CFA lattice before decimation; scientific operators are
 unchanged. All four patterns/ROI parities and worker RGB preview transport pass.
+
+
+**Native release automation (2026-09-07):** a committed five-target GitHub matrix
+builds Linux x64 CPU/CUDA, Windows x64 CPU and macOS Intel/Apple Silicon CPU.
+Python/native wheels and CUDA components are pinned. Version tags stamp each
+executable, package its complete runtime, notices, source/file inventory and SBOM,
+and publish only after all target/version/revision/checksum checks pass. Oversized
+CUDA archives are split below GitHub's asset limit and verified as a reassembled
+stream. Manual workflow runs only build artifacts. Linux runs regression and
+frozen functional checks; Windows/macOS runtime tests are excluded by request.
+Local CPU/CUDA native candidates built successfully. No GitHub tag or release
+was created locally, and no project license or publisher signing identity was
+invented. This completes the requested build-automation implementation, without
+claiming clean-target runtime or advanced scientific acceptance.

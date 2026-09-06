@@ -1,75 +1,95 @@
-The current deliverables are unsigned Linux CPU and CUDA candidates. Windows/macOS builds,
-clean offline acceptance, other accelerators and signing/notarization have not
-been qualified. The local RTX 5070 baseline has passed parity and recovery checks. The project release license has not been selected. Local smoke
-results do not change those statuses.
+The native release workflow builds Linux x64 CPU/CUDA, Windows x64 CPU and macOS
+Intel/Apple Silicon CPU bundles. Windows/macOS runtime testing is excluded at the
+user's request. Linux runs the CPU regression suite and frozen GUI, checkpoint,
+encoder and capture checks. CUDA hardware checks run locally on the RTX 5070;
+GitHub's ordinary hosted runners do not provide that GPU.
 
-The recorded local checks are in `results/releases/linux-local.json`, including
-executable and inventory hashes, actual CUDA parity, and CPU/GPU GUI cancellation,
-restart and save results. Inventories and bundled notices are under `out/release`
-and each bundle's `licenses` directory. The CPU bundle is approximately 321 MiB;
-the GPU bundle is approximately 4.4 GiB.
+Push a version tag such as `v1.2.3` or `v1.2.3-rc.1` to trigger
+[the release workflow](../.github/workflows/release.yml). The accepted prerelease
+suffixes are `alpha.N`, `beta.N` and `rc.N`. All five targets must build and their
+revision, version, inventories, checksums and complete archive hashes must agree
+before publication. Upload failures leave a draft. Prerelease tags publish as
+prereleases. A manual Actions run builds downloadable artifacts without
+publishing. No tag or public release is created by a local build.
 
-The latest continuation inventories are in `out/release/continuation/cpu` and
-`out/release/continuation/gpu`. Use a new inventory directory for every build;
-the report records the exact manifest hashes for that generation.
+Each bundle contains Python, Qt, numerical/image components, third-party notices
+and a quick-start guide. CPU bundles exclude Torch; the Linux CUDA bundle adds
+Torch and CUDA user-space libraries with sm_120 support. Keep the entire extracted
+bundle together. The host still supplies its OS graphics stack and, for CUDA, a
+compatible NVIDIA driver. No installed Python or virtual environment is needed
+at runtime. Run the executable without arguments to open the GUI.
 
-Build on the recorded Linux toolchain:
+The build matrix and native runner requirements are committed in
+`targets.json` and the workflow. Windows uses the hosted runner's native tools;
+macOS uses its Xcode command-line tools and `codesign`; Linux installs the listed
+binutils and Qt graphics dependencies. These are native builds, not cross builds.
+Python is pinned to 3.13.5. `requirements/build-native.lock` pins compatible binary
+wheels, including Windows PE and macOS Mach-O tooling. CUDA's pure-Python and
+native components are pinned separately in `build-gpu-python.lock` and
+`gpu-cu132.lock`. `test.lock` pins the regression runner. Compatible Windows/macOS
+wheel availability was checked; runtime behavior on those systems is untested.
+
+For a native CPU build from a Python 3.13.5 environment:
 
 ```sh
-python3 tools/setup_venv.py --gpu
-.venv/bin/python packaging/release.py check-toolchain
-.venv/bin/python -m PyInstaller --noconfirm --distpath out/dist/cpu --workpath out/build/cpu packaging/planetrecon-linux.spec
-PLANETRECON_BUNDLE_GPU=1 .venv/bin/python -m PyInstaller --noconfirm --distpath out/dist/gpu --workpath out/build/gpu packaging/planetrecon-linux.spec
-QT_QPA_PLATFORM=offscreen out/dist/cpu/planetrecon/planetrecon gui-smoke --out out/validation/cpu-gui
-QT_QPA_PLATFORM=offscreen out/dist/gpu/planetrecon-gpu/planetrecon-gpu gui-smoke --device gpu --out out/validation/gpu-gui
-.venv/bin/python packaging/smoke_export.py out/dist/cpu/planetrecon/planetrecon
-.venv/bin/python packaging/smoke_capture.py out/dist/cpu/planetrecon/planetrecon
-.venv/bin/python packaging/smoke_accelerator.py out/dist/gpu/planetrecon-gpu/planetrecon-gpu --out out/validation/accelerator
-.venv/bin/python packaging/release.py inventory --bundle out/dist/cpu/planetrecon --out out/release/cpu --toc out/build/cpu/planetrecon-linux/Analysis-00.toc
-.venv/bin/python packaging/release.py verify --bundle out/dist/cpu/planetrecon --manifest out/release/cpu/manifest.json
+python -m venv .venv
+# Activate .venv using your platform's shell, then:
+python -m pip install --only-binary=:all: -r requirements/build-native.lock
+python -m pip install --no-deps --no-build-isolation -e .
+python -m pip check
+python packaging/build_native.py --tag v0.1.0 --flavor cpu --out out/native-cpu
 ```
 
-Repeat the export/capture/inventory/verify commands for the GPU bundle using
-`out/dist/gpu/planetrecon-gpu` and the GPU build TOC. The entire bundle directory
-must travel together. The CPU bundle excludes Torch; the GPU bundle includes
-Torch and the CUDA user-space libraries. A compatible NVIDIA host driver is
-still required for CUDA. Both include the Python interpreter, Qt and numerical /
-image dependencies; no installed Python or virtual environment is needed at run
-time. Running a bundled executable without arguments opens the GUI.
+For the Linux CUDA build, additionally install the pinned components before
+running the same builder with `--flavor gpu` and a different output directory:
 
+```sh
+python -m pip install -r requirements/build-gpu-python.lock
+python -m pip install -r requirements/gpu-cu132.lock
+python packaging/build_native.py --tag v0.1.0 --flavor gpu --out out/native-gpu
+```
 
-`toolchain-linux.json` pins the observed Python and installed Python package
-versions; it is checked before building. It is not a cross-platform wheel lock or
-a complete OS dependency lock. The inventory records exact source file hashes,
-base Git revision, bundled file checksums, symlink targets, a CycloneDX file SBOM
-and copyright notices found from the build TOC's Debian packages and Python
-metadata. Verify after copying the bundle. Missing/changed/extra files and links
-that escape the bundle are errors. A complete redistribution review, project
-license and target-specific signing remain prerequisites for a public release.
+Use a new output directory for each build. Builds temporarily stamp the tag's
+version into the executable without editing the project version. The existing
+`tools/setup_venv.py --gpu` remains the local Devuan development setup; its observed
+Linux toolchain lock is distinct from the portable release requirements.
 
-Native AVI decoding and TIFF/PNG encoding are bundled. The native capture smoke
-sets PATH to a nonexistent directory to catch accidental external decoder use.
-The Linux development host still supplies its OS/graphics stack; this is not a
-clean-machine or cross-platform acceptance claim.
+Assets appear in the output's `assets` directory: ZIP on Windows, tar.gz on
+Linux/macOS, bundle inventory, CycloneDX SBOM, release descriptor and SHA-256 list.
+Archives that exceed GitHub's per-file limit are split into numbered 1 GiB parts.
+Download every part, check the part hashes and concatenate in numeric order:
 
-The accelerator smoke checks real CUDA, CPU agreement, completed-checkpoint
-continuation and allocator-limit recovery through the frozen CLI with Python and
-venv search paths disabled. Its output directory must be new. The source suite
-also tests interruption/resume after a mid-job CUDA failure. Optional
-`stack --cuda-memory-mib 512` caps Torch's CUDA caching allocator, excluding
-driver/context and external-library allocations; total process RAM is not capped.
+```sh
+sha256sum -c planetrecon-VERSION-linux-x86_64-gpu.sha256
+cat planetrecon-VERSION-linux-x86_64-gpu.tar.gz.part* > planetrecon-gpu.tar.gz
+```
 
-For local use, unpack/copy the entire `planetrecon` directory and run
-`./planetrecon --threads 2 gui`. Choose CPU, open a SER or supported AVI, inspect
-its metadata and select a Bayer override only when known. Configure calibration
-and physical geometry only from justified values, then Run. The live image is a
-bounded preview; zoom/levels do not modify the full scientific result. Magenta
-marks invalid coverage. Save float TIFF to preserve scale, or set explicit shared
-black/white levels for integer PNG/TIFF. Cancel processing retains the last
-received result. Use the CLI's separate `--state-checkpoint`/`--resume` flags for
-translation continuation on CPU or CUDA with matching configuration; GUI geometry
-resume is not implemented.
+The descriptor records the reassembled archive's SHA-256 and size. Extract it with
+`tar -xzf planetrecon-gpu.tar.gz`. The publisher independently verifies both the
+parts and their reassembled stream before uploading. macOS archives preserve Qt
+framework symlinks. Inventories reject broken, cyclic or escaping links and
+record exact source hashes, base revision and bundle contents. To verify an
+extracted bundle, use `packaging/release.py verify --bundle PATH --manifest FILE`.
 
-The distro Torch lacks sm_120, but the local venv and GPU bundle use
-Torch 2.13.0+cu132 and support this RTX 5070. The advanced atmospheric solver
-remains experimental and Q3 closed. Geometry remains on CPU.
+Current local candidates are in `out/native-release-cpu/dist/planetrecon` and
+`out/native-release-gpu/dist/planetrecon-gpu`; their version is 0.1.0 for local
+validation, without a corresponding release tag. Dated results in
+`results/releases/native-local-2026-09-07.json` supersede the older
+`linux-local.json` report. Both candidates passed Linux frozen GUI checkpoint
+resume, export and native AVI/geometry checks. Real CUDA also passed GUI
+cancellation/restart, CPU parity, completed-state resume and allocation-limit
+recovery with Python/venv search paths disabled.
+
+The GUI displays Bayer data with nearest-neighbour RGB. IR642 and L3 Mars are
+both RGGB OSC inputs. Reconstruction consumes the raw CFA samples. Choose
+calibration/geometry only from known capture information. Checkpoint and Resume
+controls support translation on CPU/CUDA and geometry/Saturn on CPU with matching
+input and configuration. CPU memory controls enforce a Linux process address-space
+ceiling including mapped libraries; the GUI parent is excluded. CUDA's separate
+allocator ceiling excludes driver and external-library allocations.
+
+These are unsigned candidates; macOS uses ad-hoc signing, without publisher
+signing or notarization. No project license has been selected or invented.
+Bundled third-party notices do not constitute a completed redistribution review.
+The advanced atmospheric solver remains experimental and Q3 is unqualified;
+these baseline build artifacts do not assert full scientific acceptance.

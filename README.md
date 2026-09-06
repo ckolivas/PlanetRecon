@@ -462,8 +462,9 @@ This includes raw-CFA RGB and rejected-frame counts. Full input SHA256, calibrat
 identities, configuration and operator version must match. An image `--checkpoint`
 is a separate format and must use a different path. Disk-write failure preserves
 the previous state; CPU results are bit-for-bit identical to uninterrupted runs.
-Geometry/GPU states are rejected. Owned workers also exit after hard parent death;
-orphaned temporary spool directories may still need manual cleanup.
+Geometry and CUDA continuation are described below. Owned workers also exit
+after hard parent death; Linux job startup reclaims abandoned spools after all
+owner/worker leases have closed.
 
 The project-local environment now supports the RTX 5070 independently of distro
 Torch. Recreate it with `python3 tools/setup_venv.py --gpu` (Linux Python 3.13),
@@ -481,9 +482,9 @@ and Q3 remain unqualified. Run GPU tests explicitly with
 The restricted agent sandbox hides GPU device access; real-device checks were
 run with host access. No driver change was needed.
 
-Five 512-frame uniform full-capture samples produced exactly equal CPU/CUDA
-images, coverage validity and rejection counts, with measured 2.10–4.32× stack
-speedups under concurrent host load. Reports are in `results/gpu` and
+The initial five 512-frame uniform samples produced equal CPU/CUDA outputs
+and 2.10–4.32× speedups under concurrent host load; that historical comparison
+included the now-superseded mono interpretation of IR642. Reports are in `results/gpu` and
 `results/real-data`. These are scoped local diagnostics. **IR642 and L3 Mars are
 both OSC RGGB**; IR642 is pseudo-monochrome, not a mono detector. The earlier IR642
 mono interpretation is superseded by `results/real-data/ir642-interpretation-correction.json`.
@@ -492,16 +493,19 @@ Use the header colour mode for these files. The corrected IR642 sample uses
 
 Standalone Linux candidates are built from the venv:
 
-- CPU: `out/dist/cpu/planetrecon/planetrecon`
-- CUDA: `out/dist/gpu/planetrecon-gpu/planetrecon-gpu`
+- CPU: `out/native-release-cpu/dist/planetrecon/planetrecon`
+- CUDA: `out/native-release-gpu/dist/planetrecon-gpu/planetrecon-gpu`
 
 Run either executable without arguments to open the GUI, or use its CLI commands.
 Copy the whole corresponding bundle directory. Python, Qt and required numerical /
 image components are included; the GPU bundle also includes Torch/CUDA user-space
 libraries and requires a compatible NVIDIA driver. See `packaging/README.md` for
 reproducible builds, smoke tests, notices, file SBOMs and checksum verification.
-These are local unsigned candidates; clean-system Windows/macOS acceptance and
-public-release licensing/signing are still outstanding.
+These are local unsigned candidates. Windows/macOS runtime testing is excluded
+from this process by request. Their native build requirements are committed in
+`.github/workflows/release.yml`: pushing a version tag builds all five native
+targets and publishes only after asset verification. Manual workflow runs build
+artifacts without publishing. No project license or signing identity was invented.
 
 On Linux, each event spool has independent owner/worker file leases in a private
 per-user temporary directory. Starting a job reclaims abandoned payloads only

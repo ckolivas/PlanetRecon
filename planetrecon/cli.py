@@ -19,6 +19,8 @@ def main(argv: list[str] | None = None) -> int:
         prog="planetrecon",
         description="PlanetRecon Gate-1 simulator, known-transfer estimators, and Q2 MFBD (R9)",
     )
+    from planetrecon import __version__
+    parser.add_argument('--version', action='version', version=f'PlanetRecon {__version__}')
     parser.add_argument(
         "--threads",
         type=int,

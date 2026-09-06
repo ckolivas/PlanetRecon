@@ -1,0 +1,7 @@
+[
+  {"id": "linux-x86_64-cpu", "runner": "ubuntu-24.04", "flavor": "cpu"},
+  {"id": "linux-x86_64-gpu", "runner": "ubuntu-24.04", "flavor": "gpu"},
+  {"id": "windows-x86_64-cpu", "runner": "windows-2025", "flavor": "cpu"},
+  {"id": "macos-arm64-cpu", "runner": "macos-15", "flavor": "cpu"},
+  {"id": "macos-x86_64-cpu", "runner": "macos-15-intel", "flavor": "cpu"}
+]

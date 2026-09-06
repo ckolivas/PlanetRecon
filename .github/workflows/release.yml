@@ -1,0 +1,130 @@
+name: Native versioned releases
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Build-only version (v1.2.3 or v1.2.3-rc.1); manual runs do not publish'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.version || github.ref_name }}
+  PLANETRECON_THREADS: '2'
+  QT_QPA_PLATFORM: offscreen
+  PYTHONNOUSERSITE: '1'
+
+jobs:
+  targets:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - id: matrix
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          targets = json.loads(Path('packaging/targets.json').read_text())
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write('matrix=' + json.dumps({'include': targets}) + '\n')
+
+  build:
+    needs: targets
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.targets.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      BUILD_FLAVOR: ${{ matrix.flavor }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13.5'
+      - name: Linux graphics/build requirements
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils libegl1 libgl1 libdbus-1-3 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0
+      - name: Make room on the disposable CUDA runner
+        if: runner.os == 'Linux' && matrix.flavor == 'gpu'
+        run: sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+      - name: Create isolated build environment
+        run: |
+          python -m venv .venv
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          executable_dir = Path('.venv') / ('Scripts' if os.name == 'nt' else 'bin')
+          with open(os.environ['GITHUB_PATH'], 'a') as stream:
+              stream.write(str(executable_dir.resolve()) + '\n')
+          PY
+      - name: Install pinned native requirements
+        run: |
+          python -m pip install --no-cache-dir --only-binary=:all: -r requirements/build-native.lock
+          python -m pip install --no-deps --no-build-isolation -e .
+      - name: Install pinned Linux CUDA components
+        if: matrix.flavor == 'gpu'
+        run: |
+          python -m pip install --no-cache-dir --only-binary=:all: -r requirements/build-gpu-python.lock
+          python -m pip install --no-cache-dir -r requirements/gpu-cu132.lock
+      - name: Check dependency consistency
+        run: python -m pip check
+      - name: Linux regression suite
+        if: runner.os == 'Linux' && matrix.flavor == 'cpu'
+        run: |
+          python -m pip install --no-cache-dir -r requirements/test.lock
+          python -m pytest -q tests
+      - name: Build native versioned bundle and manifests
+        run: python packaging/build_native.py --tag "$RELEASE_TAG" --flavor "$BUILD_FLAVOR" --out out/native
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-${{ matrix.id }}
+          path: out/native/assets/*
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13.5'
+      - run: python -m pip install packaging==26.3
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: release-*
+          path: out/release-assets
+          merge-multiple: true
+      - name: Verify every target and publish the tag release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python packaging/publish.py --assets out/release-assets --tag "$RELEASE_TAG" --repository "$GH_REPO"

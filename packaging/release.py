@@ -9,6 +9,7 @@ from importlib import metadata
 import json
 from pathlib import Path
 import platform
+import shutil
 import subprocess
 import sys
 
@@ -40,9 +41,20 @@ def bundled_paths(bundle):
     for path in sorted(bundle.rglob('*')):
         if path.is_symlink() and not path.resolve().is_relative_to(bundle):
             raise ValueError(f'bundle link escapes its directory: {path}')
-        if path.is_symlink() and not path.is_file():
-            raise ValueError(f'bundle link must resolve to a file: {path}')
-        if path.is_file():yield path
+        if path.is_symlink():
+            if not path.exists() or (path.is_dir() and path.parent.resolve().is_relative_to(path.resolve())):
+                raise ValueError(f'bundle link is broken or cyclic: {path}')
+            yield path
+        elif path.is_file():yield path
+
+
+def file_record(path,bundle):
+    link=str(path.readlink()) if path.is_symlink() else None
+    directory_link=path.is_symlink() and path.is_dir()
+    return {'path':path.relative_to(bundle).as_posix(),
+            'size':len(link.encode()) if directory_link else path.stat().st_size,
+            'sha256':hashlib.sha256(link.encode()).hexdigest() if directory_link else digest(path),
+            'symlink':link,'kind':'directory_symlink' if directory_link else 'file'}
 
 
 def notices(bundle,toc):
@@ -57,15 +69,24 @@ def notices(bundle,toc):
     walk(data)
     owners=set()
     ordered=sorted(sources)
-    for start in range(0,len(ordered),200):
+    for start in range(0,len(ordered) if shutil.which('dpkg-query') else 0,200):
         result=subprocess.run(['dpkg-query','-S',*ordered[start:start+200]],capture_output=True,text=True)
         for line in result.stdout.splitlines():
             if ': ' in line:
                 owner=line.rsplit(': ',1)[0]
                 if not owner.startswith(('diversion','local diversion')):
                     owners.update(p.split(':')[0] for p in owner.split(', '))
-    target=Path(bundle)/'licenses';target.mkdir(exist_ok=True)
+    target=Path(bundle)/('Contents/Resources/licenses' if Path(bundle).suffix=='.app' else 'licenses')
+    target.mkdir(parents=True,exist_ok=True)
     records=[]
+    python_license=Path(sys.base_prefix)/'LICENSE.txt'
+    if python_license.is_file():
+        dest=target/'Python-LICENSE.txt';dest.write_bytes(python_license.read_bytes())
+        records.append({'provider':'Python','path':dest.relative_to(bundle).as_posix()})
+    for project_license in (ROOT/'LICENSE',ROOT/'LICENSE.txt',ROOT/'LICENSE.md'):
+        if project_license.is_file():
+            dest=target/f'PlanetRecon-{project_license.name}';dest.write_bytes(project_license.read_bytes())
+            records.append({'provider':'PlanetRecon','path':dest.relative_to(bundle).as_posix()})
     for owner in sorted(owners):
         path=Path('/usr/share/doc')/owner/'copyright'
         if path.is_file():
@@ -84,17 +105,16 @@ def notices(bundle,toc):
     return records
 
 
-def inventory(bundle,out,toc=None):
+def inventory(bundle,out,toc=None,notice_records=None):
     bundle=Path(bundle).resolve();out=Path(out).resolve()
     if out==bundle or out.is_relative_to(bundle):
         raise ValueError('inventory must be outside the bundle')
     out.mkdir(parents=True,exist_ok=False)
-    license_records=notices(bundle,toc) if toc else []
+    license_records=notice_records if notice_records is not None else (notices(bundle,toc) if toc else [])
     files=[]
     for path in bundled_paths(bundle):
-        files.append({'path':path.relative_to(bundle).as_posix(),'size':path.stat().st_size,
-                      'sha256':digest(path),'symlink':str(path.readlink()) if path.is_symlink() else None})
-    source_files=sorted([*ROOT.glob('planetrecon/**/*.py'),*ROOT.glob('packaging/*.py'),*ROOT.glob('packaging/*.spec'),*ROOT.glob('requirements/*.lock'),*ROOT.glob('tools/*.py'),ROOT/'packaging/toolchain-linux.json',ROOT/'pyproject.toml'])
+        files.append(file_record(path,bundle))
+    source_files=sorted([*ROOT.glob('planetrecon/**/*.py'),*ROOT.glob('packaging/*.py'),*ROOT.glob('packaging/*.spec'),*ROOT.glob('requirements/*.lock'),*ROOT.glob('tools/*.py'),*ROOT.glob('.github/workflows/*.yml'),*ROOT.glob('packaging/*.json'),ROOT/'pyproject.toml'])
     source_identity={p.relative_to(ROOT).as_posix():digest(p) for p in source_files}
     revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
     manifest={'base_revision':revision,'source_files':source_identity,'schema':'planetrecon-local-release-candidate-1','status':'incomplete','release_ready':False,
@@ -120,8 +140,8 @@ def verify(bundle,manifest):
         raise ValueError('bundle file set changed')
     for record in expected:
         path=actual[record['path']]
-        link=str(path.readlink()) if path.is_symlink() else None
-        if digest(path)!=record['sha256'] or path.stat().st_size!=record['size'] or link!=record['symlink']:
+        current=file_record(path,bundle)
+        if any(current[key]!=value for key,value in record.items()):
             raise ValueError(f'bundle content changed: {record["path"]}')
     return len(actual)
 

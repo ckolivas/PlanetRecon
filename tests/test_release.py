@@ -39,6 +39,15 @@ def test_inventory_rejects_untracked_nonfile_links(tmp_path):
     bundle=tmp_path/'bundle';bundle.mkdir();(bundle/'app').write_bytes(b'app')
     out=tmp_path/'inventory';r.inventory(bundle,out)
     link=bundle/'extra';link.symlink_to('missing')
-    with pytest.raises(ValueError,match='resolve to a file'):r.verify(bundle,out/'manifest.json')
+    with pytest.raises(ValueError,match='broken or cyclic'):r.verify(bundle,out/'manifest.json')
     link.unlink();link.symlink_to('.',target_is_directory=True)
-    with pytest.raises(ValueError,match='resolve to a file'):r.verify(bundle,out/'manifest.json')
+    with pytest.raises(ValueError,match='broken or cyclic'):r.verify(bundle,out/'manifest.json')
+
+
+def test_framework_directory_link_is_recorded_and_verified(tmp_path):
+    bundle=tmp_path/'bundle';version=bundle/'Versions/A';version.mkdir(parents=True)
+    (version/'binary').write_bytes(b'framework')
+    (bundle/'Versions/Current').symlink_to('A',target_is_directory=True)
+    out=tmp_path/'inventory';report=r.inventory(bundle,out)
+    assert any(f['kind']=='directory_symlink' for f in report['files'])
+    assert r.verify(bundle,out/'manifest.json')==2

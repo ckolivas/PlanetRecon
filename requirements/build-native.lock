@@ -1,0 +1,20 @@
+# Python 3.13.5 native release builders. Target-specific wheels are resolved on
+# each OS/architecture; every installed version is captured in the build manifest.
+altgraph==0.17.5
+h5py==3.16.0
+numpy==2.5.2
+packaging==26.3
+pip==26.2.1
+pyinstaller-hooks-contrib==2026.7
+pyinstaller==6.22.2
+PySide6==6.11.2
+PySide6_Addons==6.11.2
+PySide6_Essentials==6.11.2
+scipy==1.18.1
+setuptools==84.0.0
+shiboken6==6.11.2
+threadpoolctl==3.6.0
+tifffile==2026.8.23
+macholib==1.16.4; sys_platform == 'darwin'
+pefile==2024.8.26; sys_platform == 'win32'
+pywin32-ctypes==0.2.3; sys_platform == 'win32'
