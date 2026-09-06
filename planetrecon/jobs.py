@@ -85,6 +85,8 @@ def _worker_main(
     checkpoint_dir: str | None,
     snapshot_request=None,
     inspect_only: bool = False,
+    resume_from: str | None = None,
+    state_checkpoint: str | None = None,
 ) -> None:
     _watch_parent()
     apply_thread_limits(config_dict.get("threads"))
@@ -176,6 +178,8 @@ def _worker_main(
             config,
             on_event=on_event,
             should_cancel=cancel_event.is_set,
+            resume_from=resume_from,
+            state_checkpoint=state_checkpoint,
         )
         source.close()
         source = None
@@ -350,9 +354,17 @@ def start_stack_job(
     checkpoint_dir: str | Path | None = None,
     queue_size: int = 8,
     inspect_only: bool = False,
+    resume_from: str | Path | None = None,
+    state_checkpoint: str | Path | None = None,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
+    if inspect_only and (resume_from is not None or state_checkpoint is not None):
+        raise ValueError('input inspection cannot use accumulator checkpoints')
+    if state_checkpoint is not None and checkpoint_dir is not None:
+        state, snapshot = Path(state_checkpoint), Path(checkpoint_dir) / f'{job_id}.npz'
+        if state.resolve() == snapshot.resolve() or (state.exists() and snapshot.exists() and state.samefile(snapshot)):
+            raise ValueError('resumable state and result checkpoint must have different paths')
     from planetrecon.event_transport import FileEventQueue
 
     event_q = FileEventQueue.create(ctx, maxsize=max(2, int(queue_size)))
@@ -369,6 +381,8 @@ def start_stack_job(
             None if checkpoint_dir is None else str(checkpoint_dir),
             snapshot_request,
             inspect_only,
+            None if resume_from is None else str(resume_from),
+            None if state_checkpoint is None else str(state_checkpoint),
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,

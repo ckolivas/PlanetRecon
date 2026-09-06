@@ -155,7 +155,7 @@ def _stack_source(
     next_index = 0
     state_identity = None
     if resume_from is not None or state_checkpoint is not None:
-        state_identity = resume.identity(source, config, calibration)
+        state_identity = resume.identity(source, config, calibration, should_cancel)
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]

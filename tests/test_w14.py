@@ -162,6 +162,33 @@ def test_gui_real_source_inspection_calibration_and_completion(gui, tmp_path):
     assert not win.last_result.image.flags.writeable
 
 
+def test_gui_resumes_partial_checkpoint_and_preserves_result_on_mismatch(gui,tmp_path):
+    app,win=gui
+    frame=np.arange(96,dtype='u2').reshape(8,12)+100
+    win.path=write_ser(tmp_path/'in.ser',np.stack([frame]*5))
+    state=tmp_path/'state.npz';cfg=win.controls.configuration()
+    from planetrecon.io.ser import SERSource
+    with SERSource(win.path) as source:
+        expected=stack_source(source,cfg)
+    cancel=False
+    def event(result,info):
+        nonlocal cancel
+        cancel=result.n_used>=2
+    with SERSource(win.path) as source:
+        stack_source(source,cfg,state_checkpoint=state,on_event=event,should_cancel=lambda:cancel)
+    win.checkpoint_path.setText(str(state));win.resume_check.setChecked(True)
+    win._run()
+    assert not win.checkpoint_path.isEnabled()
+    pump(app,lambda:win.job is None)
+    assert not win.error.text() and win.last_result.n_used==5
+    assert win.last_result.provenance['resumed_from_frame']==2
+    np.testing.assert_array_equal(win.last_result.image,expected.image)
+    prior=win.last_result
+    win.controls.fields['max_shift_px'].setText('12')
+    win._run();pump(app,lambda:win.job is None)
+    assert 'mismatch' in win.error.text() and win.last_result is prior
+
+
 def test_worker_failures_preserve_last_result_and_allow_rerun(gui, tmp_path):
     app, win = gui
     old = result(incomplete=False)

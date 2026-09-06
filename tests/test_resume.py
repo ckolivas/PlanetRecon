@@ -61,6 +61,13 @@ def test_failed_state_write_preserves_prior(tmp_path,monkeypatch):
     assert path.read_bytes()==b'prior' and list(tmp_path.iterdir())==[path]
 
 
+def test_input_identity_can_be_cancelled(tmp_path):
+    path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))
+    with SERSource(path) as source:
+        with pytest.raises(InterruptedError,match='verification cancelled'):
+            resume.identity(source,ReconstructionConfig(device='cpu'),None,lambda:True)
+
+
 def test_cli_resumable_state(tmp_path):
     from planetrecon.cli import main
     path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))

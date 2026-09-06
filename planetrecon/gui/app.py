@@ -11,7 +11,7 @@ import numpy as np
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
+    QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar,
     QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget,
 )
@@ -124,6 +124,16 @@ class MainWindow:
             buttons.addWidget(b)
         buttons.addStretch()
         layout.addLayout(buttons)
+        checkpoint_row = QHBoxLayout()
+        self.checkpoint_path = QLineEdit()
+        self.checkpoint_path.setPlaceholderText('Optional accumulator checkpoint file')
+        self.checkpoint_btn = QPushButton('Checkpoint file…')
+        self.checkpoint_btn.clicked.connect(self._choose_checkpoint)
+        self.resume_check = QCheckBox('Resume this checkpoint')
+        checkpoint_row.addWidget(self.checkpoint_path, 1)
+        checkpoint_row.addWidget(self.checkpoint_btn)
+        checkpoint_row.addWidget(self.resume_check)
+        layout.addLayout(checkpoint_row)
         self.source_label = QLabel(str(self.path) if self.path else 'Open a SER, AVI or observed HDF5 capture')
         self.source_label.setWordWrap(True)
         layout.addWidget(self.source_label)
@@ -228,6 +238,8 @@ class MainWindow:
         self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.controls.setEnabled(not busy and not self.closing)
+        for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
+            control.setEnabled(not busy and not self.closing)
         self.cancel_btn.setEnabled(busy and self.cancel_started is None)
         self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing)
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
@@ -236,11 +248,19 @@ class MainWindow:
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
             self.path = Path(name)
+            self.checkpoint_path.clear()
+            self.resume_check.setChecked(False)
             self.source_label.setText(str(self.path))
             self._inspect()
 
     def _inspect(self):
         self._start(inspect_only=True)
+
+    def _choose_checkpoint(self):
+        name, _ = QFileDialog.getSaveFileName(self.window, 'Accumulator checkpoint',
+                                             self.checkpoint_path.text(), 'NumPy state (*.npz)')
+        if name:
+            self.checkpoint_path.setText(name)
 
     def _run(self):
         self._start(inspect_only=False)
@@ -250,8 +270,17 @@ class MainWindow:
             return
         try:
             cfg = self.controls.configuration()
+            checkpoint_options = {}
+            if not inspect_only:
+                path = self.checkpoint_path.text().strip()
+                if self.resume_check.isChecked() and not path:
+                    raise ValueError('Select an accumulator checkpoint to resume')
+                if path:
+                    checkpoint_options['state_checkpoint'] = Path(path)
+                    if self.resume_check.isChecked():
+                        checkpoint_options['resume_from'] = Path(path)
             handle = (start_stack_job(self.path, cfg, inspect_only=True) if inspect_only
-                      else start_stack_job(self.path, cfg))
+                      else start_stack_job(self.path, cfg, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             return

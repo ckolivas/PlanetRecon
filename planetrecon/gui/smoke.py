@@ -20,6 +20,7 @@ def run_smoke(directory: Path, device: str = "cpu") -> int:
     source = write_ser(directory/'fixture.ser', np.stack([frame]*4), color_id=COLOR_RGGB)
     app = create_app(['planetrecon-gui-smoke'])
     win = MainWindow(source, ReconstructionConfig(device=device, threads=2, batch_frames=1))
+    win.checkpoint_path.setText(str(directory/'state.npz'))
     outcome = {'status': 'running', 'directory': str(directory), 'requested_device': device}
     phase = 'cancel_request'
     cancel_started = None
@@ -62,6 +63,17 @@ def run_smoke(directory: Path, device: str = "cpu") -> int:
                     raise RuntimeError("GPU smoke fell back instead of exercising CUDA")
                 assert win.last_result.n_used == 4 and not win.last_result.incomplete
                 assert win.last_result.image.shape == (16,24,3)
+                phase = 'resume'
+                win.resume_check.setChecked(True)
+                win._run()
+            elif phase == 'resume' and win.job is None:
+                if win.error.text():
+                    raise RuntimeError(win.error.text())
+                assert win.last_result.provenance['resumed_from_frame'] == 4
+                assert win.last_result.n_used == 4 and not win.last_result.incomplete
+                if device == 'gpu':
+                    assert win.last_result.backend == 'cuda'
+                outcome['checkpoint_resume'] = True
                 phase = 'save'
                 win.save_result(dest)
             elif phase == 'save' and win.export_worker is None:

@@ -528,3 +528,9 @@ with the capture/calibration/configuration identities, then continues after the
 last committed batch. Field, surface, combined and Saturn mono/RGB/Bayer tests
 match uninterrupted arrays bit for bit. Cancellation before geometry preparation
 leaves the prior checkpoint intact.
+
+The GUI's optional **Checkpoint file** writes accumulator state after each batch.
+Select **Resume this checkpoint** to continue it with the same capture/settings;
+this works for CPU/CUDA translation and CPU geometry. An incompatible state is
+reported without replacing the last received image. Input inspection ignores
+checkpoint settings. Input hashing and pose verification are cancellable.

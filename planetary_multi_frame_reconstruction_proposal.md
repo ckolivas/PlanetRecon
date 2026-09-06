@@ -2318,3 +2318,9 @@ identity, per-frame pose/timing hashes and Saturn layer weights. Twelve interrup
 mono/RGB/Bayer cases across field, surface, combined and Saturn modes match complete
 runs bit for bit; malformed weights, altered geometry and early cancellation are
 checked. The geometry path remains CPU float64 and preserves the same model limits.
+
+**GUI continuation:** owned workers now accept accumulator checkpoint/resume
+paths. Qt exposes those controls, locks them during processing and preserves the
+last image on incompatible-state errors. The packaging smoke covers cancellation,
+restart, checkpoint continuation and scientific save. Full-input and pose hashing
+check cancellation rather than delaying cancellation through a multi-GB scan.

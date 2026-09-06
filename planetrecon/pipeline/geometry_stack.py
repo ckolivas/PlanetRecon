@@ -400,11 +400,13 @@ def stack_source_geometry(
         import hashlib
         import json
         from dataclasses import asdict
-        state_identity = resume.identity(source, config, calibration)
+        state_identity = resume.identity(source, config, calibration, should_cancel)
         # Re-estimation is bounded in image count. Refuse continuation if any
         # fitted geometry or per-frame timing changed, even with identical sums.
         pose_hash = hashlib.sha256()
         for pose in poses:
+            if should_cancel is not None and should_cancel():
+                raise InterruptedError('checkpoint geometry verification cancelled')
             pose_hash.update(json.dumps(asdict(pose), sort_keys=True).encode())
         state_identity['geometry'] = diagnostics
         state_identity['poses_sha256'] = pose_hash.hexdigest()

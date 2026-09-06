@@ -15,11 +15,16 @@ ARRAYS=('accum','weight','reference','demosaic_accum','demosaic_weight')
 GEOMETRY_ARRAYS=ARRAYS+('globe_weight','ring_weight')
 
 
-def identity(source,config,calibration):
+def identity(source,config,calibration,should_cancel=None):
     path=Path(source.metadata().path)
     digest=hashlib.sha256()
     with path.open('rb') as stream:
-        for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block)
+        while True:
+            if should_cancel is not None and should_cancel():
+                raise InterruptedError('checkpoint input verification cancelled')
+            block=stream.read(1024*1024)
+            if not block:break
+            digest.update(block)
     return {'input_sha256':digest.hexdigest(),'config':config.to_dict(),
             'capture':capture_provenance(source,config,calibration)}
 
