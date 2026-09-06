@@ -71,11 +71,11 @@ def probe_torch_cuda() -> DeviceReport:
     if sm not in archs and f"compute_{major}{minor}" not in archs:
         reason = (
             f"cuda_arch_unsupported:{sm} not in {archs}; "
-            f"Debian torch {getattr(torch, '__version__', '?')} cannot run {name}"
+            f"Torch {getattr(torch, '__version__', '?')} cannot run {name}"
         )
         return DeviceReport("gpu", "cpu", ["cpu"], True, reason, name, [reason])
     try:
-        x = torch.randn(32, 32, device="cuda", dtype=torch.float32)
+        x = torch.randn(32, 32, device="cuda", dtype=torch.float64)
         y = torch.fft.fft2(x)
         _ = y.abs().sum().item()
         del x, y

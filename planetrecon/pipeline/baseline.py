@@ -136,6 +136,17 @@ def stack_source(
         demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
         next_index = restored["next_index"]
 
+    def cpu_fallback(exc):
+        nonlocal backend
+        if backend.name != "cuda":
+            raise exc
+        from planetrecon.backends.cpu import CPUBackend
+        message = f"CUDA operation failed; continued on CPU with prior sums retained: {type(exc).__name__}: {exc}"
+        backend = CPUBackend(threads=config.threads)
+        report.selected, report.fallback, report.reason = "cpu", True, message
+        report.execution_history = ["cuda", "cpu"]
+        warnings.append(message)
+
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
         if on_event is None:
@@ -190,13 +201,32 @@ def stack_source(
                 reference_index = int(index)
                 shift = (0.0, 0.0)
             else:
-                shift = backend.phase_correlation(reference, plane)
+                try:
+                    shift = backend.phase_correlation(reference, plane)
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
+                    shift = backend.phase_correlation(reference, plane)
             if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
                 n_rejected += 1
                 continue
             score = max(laplacian_score(plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
+                continue
+            projected = None
+            if backend.name == "cuda":
+                try:
+                    projected = backend.backproject(calibrated, shift, color)
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
+            if projected is not None:
+                add, wt, demo, support = projected
+                accum += score * add
+                weight += score * wt
+                if bayer:
+                    demosaic_accum += score * demo
+                    demosaic_weight += score * support[..., None]
+                n_used += 1
                 continue
             support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
                               order=1, prefilter=False, mode="grid-constant")

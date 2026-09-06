@@ -1,0 +1,64 @@
+{
+  "status": "diagnostic",
+  "capture_id": "osc-saturn",
+  "input_sha256": "b4d8a790ef713565204e72df1695294722baff9816bfe6e3f9ea9b968771bb59",
+  "source_hash": "7b9226bcec8e2f79ed051406a0a0ff2d0a933cbfa2cc37d4d1bdae8a7770da7c",
+  "hardware": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "backend": "cpu",
+  "precision": "float64",
+  "threads": 2,
+  "requested_device": "cpu",
+  "source_color": 8,
+  "color_override": "RGGB",
+  "sampling": "uniform capture subsample",
+  "device_report": {
+    "requested": "cpu",
+    "selected": "cpu",
+    "available": [
+      "cpu"
+    ],
+    "fallback": false,
+    "reason": "explicit_cpu",
+    "name": "cpu",
+    "warnings": []
+  },
+  "source_frames": 17934,
+  "processed_frames": 512,
+  "used_frames": 512,
+  "rejected_frames": 0,
+  "frame_shape": [
+    320,
+    512
+  ],
+  "color": "RGGB",
+  "bit_depth": 8,
+  "wall_s": 50.980597525998746,
+  "frames_per_s": 10.04303646576315,
+  "first_preview_s": 3.750001204,
+  "peak_rss_bytes": 161878016,
+  "rss_scope": "whole benchmark process including assessment",
+  "split_half": {
+    "status": "diagnostic",
+    "relative_rms": 0.03615901517631247,
+    "common_samples": 244514,
+    "shift_xy_px": [
+      1.0,
+      1.0
+    ]
+  },
+  "raw_residual": {
+    "status": "diagnostic",
+    "relative_rms": 0.11310206825536964,
+    "samples": 20790867,
+    "frames": 128,
+    "role": "in-sample unwhitened residual; not independent prediction or noise calibration"
+  },
+  "distribution_permission": false,
+  "geometry_qualified": false,
+  "gpu_qualified": false,
+  "full_capture": false
+}

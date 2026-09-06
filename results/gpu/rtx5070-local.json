@@ -1,0 +1,117 @@
+{
+  "status": "diagnostic",
+  "scope": "local RTX 5070 baseline; full physical solver/release acceptance not implied",
+  "source_hash": "7b9226bcec8e2f79ed051406a0a0ff2d0a933cbfa2cc37d4d1bdae8a7770da7c",
+  "probe": {
+    "torch": "2.13.0+cu132",
+    "cuda": "13.2",
+    "device": "NVIDIA GeForce RTX 5070",
+    "capability": [
+      12,
+      0
+    ],
+    "archs": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "fft_max_error": 0.0001220703125,
+    "peak_bytes": 20480
+  },
+  "backend_precision": "float64",
+  "gpu_tests": {
+    "passed": 29,
+    "actual_allocator_oom_fallback": true
+  },
+  "cpu_suite": {
+    "passed": 286,
+    "skipped": 31
+  },
+  "real_capture_parity": [
+    {
+      "capture_id": "mono-mars",
+      "input_sha256": "c067c506b7ffd0655dac3c83458d4084ed50299d99799bfac20f5fcb112870e8",
+      "color": "mono",
+      "used_frames": 465,
+      "source_frames": 116691,
+      "processed_frames": 512,
+      "cpu_wall_s": 6.868835903998843,
+      "gpu_wall_s": 3.267479549998825,
+      "speedup": 2.102181757802069,
+      "validity_equal": true,
+      "max_image_difference": 0.0,
+      "relative_image_difference": 0.0,
+      "counts_equal": true
+    },
+    {
+      "capture_id": "mono-saturn",
+      "input_sha256": "cdf0a1158f6798106daa96f59f13b52228dcf4ecb00719f960406fc2f2089930",
+      "color": "mono",
+      "used_frames": 495,
+      "source_frames": 27689,
+      "processed_frames": 512,
+      "cpu_wall_s": 25.216128478001337,
+      "gpu_wall_s": 5.838619341000594,
+      "speedup": 4.318851256653413,
+      "validity_equal": true,
+      "max_image_difference": 0.0,
+      "relative_image_difference": 0.0,
+      "counts_equal": true
+    },
+    {
+      "capture_id": "osc-jupiter",
+      "input_sha256": "93cad16b4632f4dc810adae35295ae15a0a30241d2407988b17ebb0fec4ea057",
+      "color": "RGGB",
+      "used_frames": 512,
+      "source_frames": 3749,
+      "processed_frames": 512,
+      "cpu_wall_s": 84.94809172099849,
+      "gpu_wall_s": 23.87565526400067,
+      "speedup": 3.5579376055526257,
+      "validity_equal": true,
+      "max_image_difference": 0.0,
+      "relative_image_difference": 0.0,
+      "counts_equal": true
+    },
+    {
+      "capture_id": "osc-mars",
+      "input_sha256": "c11c025c2c4bb5c6e2732085066ff9e845dabe2ca149db2b0a95bb9b9f0e7b67",
+      "color": "RGGB",
+      "used_frames": 477,
+      "source_frames": 116629,
+      "processed_frames": 512,
+      "cpu_wall_s": 26.119630397999572,
+      "gpu_wall_s": 7.316915062001499,
+      "speedup": 3.569759957122517,
+      "validity_equal": true,
+      "max_image_difference": 0.0,
+      "relative_image_difference": 0.0,
+      "counts_equal": true
+    },
+    {
+      "capture_id": "osc-saturn",
+      "input_sha256": "b4d8a790ef713565204e72df1695294722baff9816bfe6e3f9ea9b968771bb59",
+      "color": "RGGB",
+      "used_frames": 512,
+      "source_frames": 17934,
+      "processed_frames": 512,
+      "cpu_wall_s": 50.980597525998746,
+      "gpu_wall_s": 11.90973378900162,
+      "speedup": 4.28058245710565,
+      "validity_equal": true,
+      "max_image_difference": 0.0,
+      "relative_image_difference": 0.0,
+      "counts_equal": true
+    }
+  ],
+  "performance_context": "CPU/GPU pairs, builds and other desktop GPU work overlapped; not isolated maximum throughput",
+  "limitations": [
+    "geometry remains CPU",
+    "hard RAM/VRAM budgets not enforced",
+    "physical MFBD/Q3 unqualified",
+    "geometry/GPU checkpoint resume not supported"
+  ]
+}

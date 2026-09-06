@@ -147,7 +147,7 @@ def test_gpu_probe_success_and_query_failure_are_safe(monkeypatch):
                            get_arch_list=lambda: ["sm_120"], synchronize=lambda: None)
     scalar = SimpleNamespace(item=lambda: 1.)
     tensor = SimpleNamespace(abs=lambda: SimpleNamespace(sum=lambda: scalar))
-    torch = SimpleNamespace(cuda=cuda, float32="float32", randn=lambda *a, **kw: tensor,
+    torch = SimpleNamespace(cuda=cuda, float32="float32", float64="float64", randn=lambda *a, **kw: tensor,
                             fft=SimpleNamespace(fft2=lambda x: tensor))
     monkeypatch.setitem(sys.modules, "torch", torch)
     report = probe_torch_cuda()

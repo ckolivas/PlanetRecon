@@ -236,7 +236,7 @@ class SERSource(FrameSource):
         self.recover_complete_frames = bool(recover_complete_frames)
         if endian_override not in (None, "little", "big"):
             raise ValueError("unknown endian override")
-        if bayer_override not in (None, "RGGB", "GRBG", "GBRG", "BGGR"):
+        if bayer_override not in (None, "mono", "RGGB", "GRBG", "GBRG", "BGGR"):
             raise ValueError("unknown Bayer override")
         with self.path.open("rb") as fh:
             header_blob = fh.read(SER_HEADER_SIZE)

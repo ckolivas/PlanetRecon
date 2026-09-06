@@ -1,0 +1,65 @@
+{
+  "status": "diagnostic",
+  "capture_id": "mono-saturn",
+  "input_sha256": "cdf0a1158f6798106daa96f59f13b52228dcf4ecb00719f960406fc2f2089930",
+  "source_hash": "7b9226bcec8e2f79ed051406a0a0ff2d0a933cbfa2cc37d4d1bdae8a7770da7c",
+  "hardware": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "backend": "cuda",
+  "precision": "float64",
+  "threads": 2,
+  "requested_device": "gpu",
+  "source_color": 0,
+  "color_override": "mono",
+  "sampling": "uniform capture subsample",
+  "device_report": {
+    "requested": "gpu",
+    "selected": "gpu",
+    "available": [
+      "cpu",
+      "gpu"
+    ],
+    "fallback": false,
+    "reason": "ok",
+    "name": "NVIDIA GeForce RTX 5070",
+    "warnings": []
+  },
+  "source_frames": 27689,
+  "processed_frames": 512,
+  "used_frames": 495,
+  "rejected_frames": 17,
+  "frame_shape": [
+    404,
+    696
+  ],
+  "color": "mono",
+  "bit_depth": 8,
+  "wall_s": 5.838619341000594,
+  "frames_per_s": 87.69196450341904,
+  "first_preview_s": 1.6200557420015684,
+  "peak_rss_bytes": 1324195840,
+  "rss_scope": "whole benchmark process including assessment",
+  "split_half": {
+    "status": "diagnostic",
+    "relative_rms": 0.04931737127286457,
+    "common_samples": 277492,
+    "shift_xy_px": [
+      -4.0,
+      -3.0
+    ]
+  },
+  "raw_residual": {
+    "status": "diagnostic",
+    "relative_rms": 0.17695185659677728,
+    "samples": 32996981,
+    "frames": 119,
+    "role": "in-sample unwhitened residual; not independent prediction or noise calibration"
+  },
+  "distribution_permission": false,
+  "geometry_qualified": false,
+  "gpu_qualified": false,
+  "full_capture": false
+}

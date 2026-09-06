@@ -464,3 +464,26 @@ is a separate format and must use a different path. Disk-write failure preserves
 the previous state; CPU results are bit-for-bit identical to uninterrupted runs.
 Geometry/GPU states are rejected. Owned workers also exit after hard parent death;
 orphaned temporary spool directories may still need manual cleanup.
+
+The project-local environment now supports the RTX 5070 independently of distro
+Torch. Recreate it with `python3 tools/setup_venv.py --gpu` (Linux Python 3.13),
+then use `.venv/bin/python` or `source .venv/bin/activate`. Version locks are in
+`requirements/venv-linux.lock` and `requirements/gpu-cu132.lock`. Torch
+2.13.0+cu132 includes `sm_120`; it passed actual CUDA FFT and float64 baseline
+parity tests on this machine with NVIDIA driver 595.91.07.
+
+The CUDA baseline accelerates registration, mono/RGB/CFA backprojection and the
+matched demosaic comparison. CPU float64 sums remain authoritative. A CUDA
+operation failure, including actual allocator exhaustion, continues on CPU with
+prior sums retained and a visible warning. Geometry stays on CPU; advanced MFBD
+and Q3 remain unqualified. Run GPU tests explicitly with
+`PLANETRECON_TEST_GPU=1 .venv/bin/python -m pytest tests/test_gpu.py --run-hardware`.
+The restricted agent sandbox hides GPU device access; real-device checks were
+run with host access. No driver change was needed.
+
+Five 512-frame uniform full-capture samples produced exactly equal CPU/CUDA
+images, coverage validity and rejection counts, with measured 2.10–4.32× stack
+speedups under concurrent host load. Reports are in `results/gpu` and
+`results/real-data`. These are scoped local diagnostics. IR642 Mars is explicitly
+mono despite its RGGB header; L3 Mars is OSC. Select `--color mono` (alias
+`--bayer mono`) or the GUI's Raw colour override when appropriate.

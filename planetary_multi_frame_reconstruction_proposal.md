@@ -2260,3 +2260,13 @@ identity checks. Interrupted and uninterrupted results match bit for bit. A hard
 parent crash terminates owned workers via the multiprocessing parent sentinel.
 Geometry/GPU resume, hard memory limits and automatic orphan-spool removal remain
 outstanding; the result-snapshot and resumable-state formats are distinct.
+
+**W12 local accelerator continuation:** an isolated Python 3.13 environment with
+Torch 2.13.0+cu132 supports the RTX 5070/sm_120. Float64 CUDA registration and
+mono/RGB/CFA backprojection pass 29 hardware tests, including a real mid-job
+allocator-OOM recovery. Five uniformly sampled real captures have exactly matching
+CPU/CUDA images, validity and frame counts. Observed speedups are 2.10–4.32× under
+concurrent host load. This qualifies the tested local baseline operations, not
+advanced atmospheric inference, geometry acceleration or all memory/release limits.
+User-confirmed IR642 Mars mono interpretation overrides its RGGB header; L3 Mars
+remains OSC. Private capture pixels are excluded from Git.

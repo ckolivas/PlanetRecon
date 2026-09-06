@@ -91,21 +91,23 @@ def raw_residual(source,result,indices,config):
         'samples':count,'frames':frames,'role':'in-sample unwhitened residual; not independent prediction or noise calibration'}
 
 
-def run(path, out, capture_id, *, threads=2, sample_frames=128, max_frames=None):
+def run(path, out, capture_id, *, threads=2, sample_frames=128, max_frames=None, device="cpu", color_override=None, uniform=False):
     if sample_frames < 4 or (max_frames is not None and max_frames < 4):
         raise ValueError('at least four frames required')
     apply_thread_limits(threads)
     out=Path(out);out.mkdir(parents=True,exist_ok=False)
-    config=ReconstructionConfig(device='cpu',threads=threads,batch_frames=32)
+    config=ReconstructionConfig(device=device,threads=threads,batch_frames=32,bayer_override=color_override)
     protocol={'capture_id':capture_id,'distribution_permission':False,'permission_to_process':'user supplied local capture',
         'config':config.to_dict(),'sample_frames':sample_frames,'max_frames':max_frames,
-        'sampling':'uniform indices over processed interval, alternating split halves',
+        'sampling':'uniform capture subsample' if uniform else 'processed prefix; uniform assessment indices',
         'assessment':'baseline only; no geometry or atmospheric inference; no sharpening',
         'source_hash':source_hash(),'input_sha256':capture_sha256(path)}
     (out/'protocol.json').write_text(json.dumps(protocol,indent=2)+'\n')
-    with open_source(path) as original:
+    with open_source(path,bayer_override=color_override) as original:
         count=original.n_frames() if max_frames is None else min(original.n_frames(),max_frames)
-        source=original if count==original.n_frames() else IndexedSource(original,np.arange(count))
+        if count<4:raise ValueError('at least four capture frames required')
+        selected=np.linspace(0,original.n_frames()-1,count,dtype=np.int64) if uniform else np.arange(count)
+        source=original if count==original.n_frames() else IndexedSource(original,selected)
         start=time.monotonic();first=None;last_print=0
         def event(result,info):
             nonlocal first,last_print
@@ -126,7 +128,10 @@ def run(path, out, capture_id, *, threads=2, sample_frames=128, max_frames=None)
             rss=None
         report={'status':'diagnostic','capture_id':capture_id,'input_sha256':protocol['input_sha256'],
             'source_hash':protocol['source_hash'],'hardware':{'system':platform.system(),'machine':platform.machine(),'processor':platform.processor()},
-            'backend':result.backend,'precision':result.precision,'threads':threads,
+            'backend':result.backend,'precision':result.precision,'threads':threads,'requested_device':device,
+            'source_color':original.metadata().extras.get('color_id').value if 'color_id' in original.metadata().extras else original.color_mode(),
+            'color_override':color_override,'sampling':protocol['sampling'],
+            'device_report':result.provenance.get('device_report'),
             'source_frames':original.n_frames(),'processed_frames':count,'used_frames':result.n_used,
             'rejected_frames':result.n_rejected,'frame_shape':source.frame_shape(),'color':source.color_mode(),
             'bit_depth':source.metadata().bit_depth,'wall_s':wall,'frames_per_s':count/wall,
@@ -147,5 +152,8 @@ if __name__=='__main__':
     parser.add_argument('--threads',type=int,default=2)
     parser.add_argument('--sample-frames',type=int,default=128)
     parser.add_argument('--max-frames',type=int)
+    parser.add_argument('--device',choices=['cpu','gpu','auto'],default='cpu')
+    parser.add_argument('--color',choices=['mono','RGGB','GRBG','GBRG','BGGR'])
+    parser.add_argument('--uniform',action='store_true',help='sample over the full capture when max-frames is set')
     args=parser.parse_args()
-    run(args.path,args.out,args.id,threads=args.threads,sample_frames=args.sample_frames,max_frames=args.max_frames)
+    run(args.path,args.out,args.id,threads=args.threads,sample_frames=args.sample_frames,max_frames=args.max_frames,device=args.device,color_override=args.color,uniform=args.uniform)

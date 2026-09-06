@@ -1,0 +1,22 @@
+# Official PyTorch CUDA 13.2 index; includes sm_120.
+--index-url https://download.pytorch.org/whl/cu132
+cuda-bindings==13.3.1
+cuda-pathfinder==1.6.0
+cuda-toolkit==13.2.1
+nvidia-cublas==13.4.0.1
+nvidia-cuda-cupti==13.2.75
+nvidia-cuda-nvrtc==13.2.78
+nvidia-cuda-runtime==13.2.75
+nvidia-cudnn-cu13==9.20.0.48
+nvidia-cufft==12.2.0.46
+nvidia-cufile==1.17.1.22
+nvidia-curand==10.4.2.55
+nvidia-cusolver==12.2.0.1
+nvidia-cusparse==12.7.10.1
+nvidia-cusparselt-cu13==0.8.1
+nvidia-nccl-cu13==2.29.7
+nvidia-nvjitlink==13.3.33
+nvidia-nvshmem-cu13==3.4.5
+nvidia-nvtx==13.2.75
+torch==2.13.0+cu132
+triton==3.7.1

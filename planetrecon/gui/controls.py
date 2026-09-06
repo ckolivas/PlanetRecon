@@ -20,7 +20,7 @@ class ConfigControls(QTabWidget):
         self._integer(capture, 'batch_frames', 'Frames per batch', 1, 4096)
         capture.addRow(QLabel('RAM/VRAM budgets are not enforced.\nGeometry uses CPU float64.'))
         self._choice(capture, 'crop', 'HDF5 crop', ['feature', 'bland'])
-        self._choice(capture, 'bayer_override', 'CFA override', [None, 'RGGB', 'GRBG', 'GBRG', 'BGGR'])
+        self._choice(capture, 'bayer_override', 'Raw colour override', [None, 'mono', 'RGGB', 'GRBG', 'GBRG', 'BGGR'])
         self._choice(capture, 'endian_override', 'Byte order override', [None, 'little', 'big'])
         self._choice(capture, 'endian_convention', 'SER byte-order convention', ['ecosystem', 'spec'])
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')

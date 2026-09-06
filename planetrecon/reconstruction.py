@@ -92,7 +92,7 @@ class ReconstructionConfig:
                 raise ValueError(f"invalid {name}")
         if not math.isfinite(self.max_shift_px) or self.max_shift_px < 0:
             raise ValueError("max_shift_px must be finite and non-negative")
-        if self.bayer_override not in (None, "RGGB", "GRBG", "GBRG", "BGGR"):
+        if self.bayer_override not in (None, "mono", "RGGB", "GRBG", "GBRG", "BGGR"):
             raise ValueError("unknown Bayer override")
         if self.endian_override not in (None, "little", "big"):
             raise ValueError("unknown endian override")

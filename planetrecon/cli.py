@@ -148,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
-    st.add_argument("--bayer", default=None, help="override Bayer pattern, e.g. RGGB")
+    st.add_argument("--bayer", "--color", default=None, help="raw colour override: mono or a Bayer pattern such as RGGB")
     for name in ("bias", "dark", "flat"):
         st.add_argument(f"--{name}", default=None, help=f"detector-shape {name} NPY table")
     st.add_argument("--gain", type=float, default=None, help="electrons per ADU")
