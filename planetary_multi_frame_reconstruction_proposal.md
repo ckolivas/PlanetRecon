@@ -2290,3 +2290,11 @@ and preserves backend history and warnings across restarts. Thirty-two RTX 5070
 tests pass, including mono/RGB/CFA continuation after a CUDA failure and rejection,
 with repeated completed-state resume avoiding double counting. Geometry resume
 and hard memory limits remain outstanding.
+
+**W12 allocation-budget continuation:** the CLI/GUI expose a scoped native Torch
+CUDA caching-allocator cap, applied before probing and restored on every exit.
+Unsupported enforcement and allocator OOM use explicit CPU fallback. Device 0
+is used consistently for the probe, kernels and limit. Hardware tests exercise
+a 2 MiB cap causing recovery and a 64 MiB cap retaining CUDA, verify recorded
+allocator peaks and CPU agreement. Driver/external-library VRAM and total RAM
+remain outside this cap; full working-set acceptance is still incomplete.

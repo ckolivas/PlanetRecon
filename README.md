@@ -511,3 +511,13 @@ Translation checkpoints also support `--device gpu` and `--device auto`: use
 and configuration. CPU remains the authoritative accumulator store; GPU failures
 retain prior sums. Resume records prior backend transitions and warnings. Legacy
 CPU states remain readable. Geometry continuation is still unsupported.
+
+`stack --device gpu --cuda-memory-mib 512` caps the PyTorch CUDA caching allocator
+on device 0 before the live probe. The GUI provides the same control in MiB.
+The cap excludes CUDA driver/context and external library allocations; it is not
+a total VRAM or RAM working-set bound. Unsupported limit enforcement uses CPU,
+and allocator OOM retains prior sums and continues on CPU. The prior process
+allocator setting is restored after success, cancellation or failure; an existing
+stricter setting is never relaxed. Provenance records requested/effective bytes,
+enforcement and peak reserved bytes. Use a dedicated process for library calls
+that coexist with other Torch workloads. Geometry remains CPU-only.

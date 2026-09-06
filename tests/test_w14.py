@@ -59,6 +59,22 @@ def pump(app, condition, timeout=10):
     assert condition(), 'Qt condition timed out'
 
 
+def test_cuda_budget_control_preserves_mib_units(gui):
+    _, win = gui
+    fields = win.controls.fields
+    fields['device'].setCurrentText('gpu')
+    fields['max_vram_bytes'].setText('64.5')
+    cfg = win.controls.configuration()
+    assert cfg.max_vram_bytes == int(64.5 * 1024**2)
+    from planetrecon.gui.controls import ConfigControls
+    restored = ConfigControls(cfg)
+    assert restored.configuration() == cfg
+    restored.deleteLater()
+    fields['max_vram_bytes'].setText('0')
+    with pytest.raises(ValueError, match='positive'):
+        win.controls.configuration()
+
+
 def test_config_controls_preserve_units_and_optional_state(gui):
     _, win = gui
     fields = win.controls.fields

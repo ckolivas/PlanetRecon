@@ -135,7 +135,7 @@ def test_ser_trailers_empty_capture_and_overrides(tmp_path):
 
 @pytest.mark.parametrize("kwargs", [{"batch_frames": 0}, {"reference_index": -1},
     {"device": "typo"}, {"max_shift_px": float("nan")}, {"endian_convention": "typo"},
-    {"max_ram_bytes": 1000}, {"max_vram_bytes": 1000}])
+    {"max_ram_bytes": 1000}, {"max_vram_bytes": 0}])
 def test_config_rejects_ignored_or_invalid_settings(kwargs):
     with pytest.raises(ValueError):
         ReconstructionConfig(**kwargs)

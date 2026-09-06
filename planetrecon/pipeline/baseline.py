@@ -53,6 +53,28 @@ def stack_source(
     resume_from=None,
     state_checkpoint=None,
 ) -> ReconstructionResult:
+    from contextlib import nullcontext
+    from planetrecon.backends.memory import cuda_allocation_limit
+
+    context = (cuda_allocation_limit(config.max_vram_bytes)
+               if config.device != 'cpu' and config.geometry_mode == 'none' else nullcontext(None))
+    with context as memory_report:
+        return _stack_source(source, config, calibration=calibration, on_event=on_event,
+                             should_cancel=should_cancel, resume_from=resume_from,
+                             state_checkpoint=state_checkpoint, memory_report=memory_report)
+
+
+def _stack_source(
+    source: FrameSource,
+    config: ReconstructionConfig,
+    *,
+    calibration: Calibration | None = None,
+    on_event: PreviewFn | None = None,
+    should_cancel: CancelFn | None = None,
+    resume_from=None,
+    state_checkpoint=None,
+    memory_report=None,
+) -> ReconstructionResult:
     if resume_from is not None or state_checkpoint is not None:
         if config.geometry_mode != "none":
             raise ValueError("resumable states require the translation baseline")
@@ -74,7 +96,10 @@ def stack_source(
             on_event=on_event,
             should_cancel=should_cancel,
         )
-    backend, report = select_backend(config.device, threads=config.threads)
+    budget_error = memory_report and memory_report['error']
+    backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)
+    if budget_error:
+        report.requested, report.fallback, report.reason = config.device, True, budget_error
     report.execution_history = [backend.name]
     meta = source.metadata()
     color = source.color_mode()
@@ -125,6 +150,8 @@ def stack_source(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    if memory_report is not None:
+        snapshot_provenance['cuda_allocation_budget'] = memory_report
     next_index = 0
     state_identity = None
     if resume_from is not None or state_checkpoint is not None:

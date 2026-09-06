@@ -75,7 +75,7 @@ def probe_torch_cuda() -> DeviceReport:
         )
         return DeviceReport("gpu", "cpu", ["cpu"], True, reason, name, [reason])
     try:
-        x = torch.randn(32, 32, device="cuda", dtype=torch.float64)
+        x = torch.randn(32, 32, device="cuda:0", dtype=torch.float64)
         y = torch.fft.fft2(x)
         _ = y.abs().sum().item()
         del x, y

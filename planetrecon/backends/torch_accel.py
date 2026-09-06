@@ -16,8 +16,8 @@ class TorchBackend(Backend):
         return np.asarray(array, dtype=np.float64)
 
     def phase_correlation(self, reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
-        ref = torch.as_tensor(reference, device="cuda", dtype=torch.float64)
-        img = torch.as_tensor(frame, device="cuda", dtype=torch.float64)
+        ref = torch.as_tensor(reference, device="cuda:0", dtype=torch.float64)
+        img = torch.as_tensor(frame, device="cuda:0", dtype=torch.float64)
         ref = ref - ref.mean()
         img = img - img.mean()
         fa = torch.fft.fft2(ref)
@@ -75,14 +75,14 @@ class TorchBackend(Backend):
     def backproject(self, raw, shift_xy, color):
         """CUDA mono/RGB/CFA contributions; CPU retains authoritative sums."""
         from planetrecon.detector import BAYER_PATTERNS
-        image=torch.as_tensor(raw,device='cuda',dtype=torch.float64)
+        image=torch.as_tensor(raw,device='cuda:0',dtype=torch.float64)
         if color in BAYER_PATTERNS:
             key=(tuple(raw.shape),color)
             if getattr(self,'_mask_key',None)!=key:
-                tile=torch.tensor([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]],device='cuda')
-                y=torch.arange(raw.shape[0],device='cuda')[:,None]%2
-                x=torch.arange(raw.shape[1],device='cuda')[None,:]%2
-                self._masks=tile[y,x][...,None]==torch.arange(3,device='cuda')
+                tile=torch.tensor([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]],device='cuda:0')
+                y=torch.arange(raw.shape[0],device='cuda:0')[:,None]%2
+                x=torch.arange(raw.shape[1],device='cuda:0')[None,:]%2
+                self._masks=tile[y,x][...,None]==torch.arange(3,device='cuda:0')
                 self._mask_weights=self._masks.to(torch.float64)
                 self._demo_weights=torch.clamp(self._neighbors(self._mask_weights),min=1.)
                 self._mask_key=key

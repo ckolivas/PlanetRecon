@@ -142,3 +142,23 @@ def test_cuda_resume_preserves_sums_and_fallback_history(cuda_backend,tmp_path,m
     np.testing.assert_allclose(continued.coverage,whole.coverage,rtol=1e-12,atol=1e-10)
     with SERSource(path) as source:repeated=stack_source(source,cfg,resume_from=state)
     np.testing.assert_array_equal(repeated.image,continued.image)
+
+
+@pytest.mark.hardware
+@pytest.mark.parametrize('budget_mib,expected_backend',[(2,'cpu'),(64,'cuda')])
+def test_cuda_allocator_budget_and_recovery(cuda_backend,budget_mib,expected_backend):
+    import torch
+    rng=np.random.default_rng(909)
+    frames=rng.integers(10,200,(3,256,320),dtype='u2')
+    cfg=ReconstructionConfig(device='cpu',threads=2,batch_frames=1)
+    expected=stack_source(ArraySource(frames,color_mode='RGGB'),cfg)
+    previous=torch.cuda.get_per_process_memory_fraction()
+    result=stack_source(ArraySource(frames,color_mode='RGGB'),replace(cfg,device='gpu',max_vram_bytes=budget_mib*1024**2))
+    assert result.backend==expected_backend
+    assert result.n_used==expected.n_used and result.n_rejected==expected.n_rejected
+    limit=result.provenance['cuda_allocation_budget']
+    assert limit['enforced'] and limit['effective_bytes']<=budget_mib*1024**2
+    assert 0<limit['peak_reserved_bytes']<=limit['effective_bytes']
+    assert torch.cuda.get_per_process_memory_fraction()==previous
+    np.testing.assert_array_equal(result.validity,expected.validity)
+    np.testing.assert_allclose(result.image,expected.image,rtol=1e-12,atol=1e-10)

@@ -150,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable translation state after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
+    st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
     st.add_argument("--bayer", "--color", default=None, help="raw colour override: mono or a Bayer pattern such as RGGB")
     for name in ("bias", "dark", "flat"):
@@ -359,6 +360,7 @@ def main(argv: list[str] | None = None) -> int:
             device=args.device,
             threads=applied_threads,
             batch_frames=args.batch,
+            max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             crop=args.crop,
             bayer_override=args.bayer,
             bias_path=args.bias, dark_path=args.dark, flat_path=args.flat,
