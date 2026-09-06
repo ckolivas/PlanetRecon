@@ -7,19 +7,33 @@ from pathlib import Path
 import pickle
 import queue
 import shutil
-import tempfile
 import uuid
+from planetrecon import spool
 
 
 class FileEventQueue:
-    def __init__(self, queue, directory, slots):
+    def __init__(self, queue, directory, slots, lease=None):
         self.queue = queue
         self.directory = str(directory)
         self.slots = slots
+        self._lease = lease
+
+    def __getstate__(self):
+        return {key: value for key, value in self.__dict__.items() if key != '_lease'}
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._lease = spool.acquire(self.directory)
 
     @classmethod
     def create(cls, ctx, maxsize):
-        return cls(ctx.Queue(maxsize=maxsize), tempfile.mkdtemp(prefix='planetrecon-events-'), ctx.BoundedSemaphore(maxsize))
+        directory, lease = spool.create()
+        try:
+            return cls(ctx.Queue(maxsize=maxsize), directory, ctx.BoundedSemaphore(maxsize), lease)
+        except BaseException:
+            spool.release(lease)
+            shutil.rmtree(directory, ignore_errors=True)
+            raise
 
     def put(self, event, block=True, timeout=None):
         if not self.slots.acquire(block, timeout):
@@ -61,3 +75,5 @@ class FileEventQueue:
     def close(self):
         self.queue.close()
         shutil.rmtree(self.directory, ignore_errors=True)
+        spool.release(self._lease)
+        self._lease = None

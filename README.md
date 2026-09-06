@@ -500,3 +500,8 @@ libraries and requires a compatible NVIDIA driver. See `packaging/README.md` for
 reproducible builds, smoke tests, notices, file SBOMs and checksum verification.
 These are local unsigned candidates; clean-system Windows/macOS acceptance and
 public-release licensing/signing are still outstanding.
+
+On Linux, each event spool has independent owner/worker file leases in a private
+per-user temporary directory. Starting a job reclaims abandoned payloads only
+after all leases have closed, including after a hard crash. Live jobs and
+unrecognised directories are retained. Other platforms retain owner-close cleanup.

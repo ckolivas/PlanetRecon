@@ -2278,3 +2278,8 @@ native AVI, scientific encoders, owned-worker cancellation/restart and live savi
 real CUDA is verified with Python/venv search paths disabled. The build toolchain,
 source identities, notices, file SBOM and checksums are recorded. This does not
 complete clean-system, Windows/macOS, licensing or signing/notarization acceptance.
+
+**W15 crash-spool continuation:** Linux workers and owners hold independent file
+leases; job startup reclaims generated abandoned spools after both have exited.
+Spawn, abrupt worker death, active-owner/worker protection and unknown-directory
+preservation are tested. Automatic orphan reclamation on other OSes is unqualified.

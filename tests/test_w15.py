@@ -136,9 +136,10 @@ def test_event_queue_full_cleans_unpublished_payloads():
         events.put_nowait(JobEvent('x',2,'progress'))
         with pytest.raises(queue.Full):
             events.put_nowait(JobEvent('x',3,'progress'))
-        assert len(list(Path(events.directory).iterdir())) == 2
+        assert len(list(Path(events.directory).glob('*.event'))) == 2
         assert events.get(timeout=1).seq == 1
         assert events.get(timeout=1).seq == 2
-        assert not list(Path(events.directory).iterdir())
+        assert not list(Path(events.directory).glob('*.event'))
+        assert not list(Path(events.directory).glob('*.tmp'))
     finally:
         events.close()
