@@ -286,8 +286,13 @@ def stack_source_geometry(
     calibration: Calibration | None = None,
     on_event: PreviewFn | None = None,
     should_cancel: CancelFn | None = None,
+    resume_from=None,
+    state_checkpoint=None,
 ) -> ReconstructionResult:
     # All geometry operators currently execute in NumPy float64.
+    if state_checkpoint is not None:
+        from planetrecon import resume
+        resume.validate_destination(state_checkpoint, source, config)
     backend, report = select_backend("cpu", threads=config.threads)
     report.requested = config.device
     if config.device != "cpu":
@@ -388,6 +393,30 @@ def stack_source_geometry(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    next_index = 0
+    state_identity = None
+    if resume_from is not None or state_checkpoint is not None:
+        from planetrecon import resume
+        import hashlib
+        import json
+        from dataclasses import asdict
+        state_identity = resume.identity(source, config, calibration)
+        # Re-estimation is bounded in image count. Refuse continuation if any
+        # fitted geometry or per-frame timing changed, even with identical sums.
+        pose_hash = hashlib.sha256()
+        for pose in poses:
+            pose_hash.update(json.dumps(asdict(pose), sort_keys=True).encode())
+        state_identity['geometry'] = diagnostics
+        state_identity['poses_sha256'] = pose_hash.hexdigest()
+    if resume_from is not None:
+        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer, geometry=True)
+        accum, weight = restored['accum'], restored['weight']
+        demosaic_accum, demosaic_weight = restored['demosaic_accum'], restored['demosaic_weight']
+        globe_weight, ring_weight = restored['globe_weight'], restored['ring_weight']
+        n_used, n_rejected = restored['n_used'], restored['n_rejected']
+        next_index = restored['next_index']
+        warnings = list(dict.fromkeys(restored['warnings'] + warnings))
+        snapshot_provenance['resumed_from_frame'] = next_index
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -429,7 +458,7 @@ def stack_source_geometry(
             {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name},
         )
 
-    for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
+    for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True
             break
@@ -533,6 +562,14 @@ def stack_source_geometry(
                 globe_weight += score * gw
                 ring_weight += score * rw
             n_used += 1
+        if state_checkpoint is not None:
+            resume.save(state_checkpoint, state_identity, {
+                'accum': accum, 'weight': weight, 'reference': None,
+                'demosaic_accum': demosaic_accum, 'demosaic_weight': demosaic_weight,
+                'globe_weight': globe_weight, 'ring_weight': ring_weight,
+                'reference_index': diagnostics['reference_index'],
+                'n_used': n_used, 'n_rejected': n_rejected, 'next_index': n_used+n_rejected,
+                'execution_history': ['cpu'], 'warnings': warnings}, geometry=True)
         emit("baseline", incomplete=True)
         if cancelled:
             break

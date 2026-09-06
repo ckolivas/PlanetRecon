@@ -1,4 +1,4 @@
-"""Translation accumulator checkpoints, with CPU/CUDA execution provenance."""
+"""Baseline accumulator checkpoints, with geometry and execution provenance."""
 import hashlib
 import json
 import os
@@ -10,7 +10,9 @@ import numpy as np
 from planetrecon.pipeline.provenance import capture_provenance
 
 SCHEMA='planetrecon-baseline-state-2'
+GEOMETRY_SCHEMA='planetrecon-geometry-state-1'
 ARRAYS=('accum','weight','reference','demosaic_accum','demosaic_weight')
+GEOMETRY_ARRAYS=ARRAYS+('globe_weight','ring_weight')
 
 
 def identity(source,config,calibration):
@@ -31,11 +33,12 @@ def validate_destination(path,source,config):
             raise ValueError('state checkpoint cannot replace a capture or calibration input')
 
 
-def save(path,identity,state):
+def save(path,identity,state,*,geometry=False):
     path=Path(path)
-    metadata={'schema':SCHEMA,'identity':identity,
+    names=GEOMETRY_ARRAYS if geometry else ARRAYS
+    metadata={'schema':GEOMETRY_SCHEMA if geometry else SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
-        'arrays':[name for name in ARRAYS if state[name] is not None],
+        'arrays':[name for name in names if state[name] is not None],
         'execution_history':state.get('execution_history',['cpu']),
         'warnings':state.get('warnings',[])}
     fd,tmp=tempfile.mkstemp(prefix=f'.{path.name}-',suffix='.tmp',dir=path.parent)
@@ -48,19 +51,22 @@ def save(path,identity,state):
         Path(tmp).unlink(missing_ok=True)
 
 
-def load(path,expected,shape,n_frames,bayer):
+def load(path,expected,shape,n_frames,bayer,*,geometry=False):
+    allowed_arrays=GEOMETRY_ARRAYS if geometry else ARRAYS
     with np.load(path,allow_pickle=False) as data:
         meta=json.loads(str(data['metadata']))
         schema=meta.get('schema')
-        if schema not in (SCHEMA,'planetrecon-baseline-state-1') or meta.get('identity')!=expected:
+        schemas=(GEOMETRY_SCHEMA,) if geometry else (SCHEMA,'planetrecon-baseline-state-1')
+        if schema not in schemas or meta.get('identity')!=expected:
             raise ValueError('state checkpoint identity/configuration mismatch')
         if schema=='planetrecon-baseline-state-1' and expected['config']['device']!='cpu':
             raise ValueError('legacy state checkpoints require CPU execution')
         names=meta.get('arrays',[])
         required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer else set())
-        if not required.issubset(names) or set(names)-set(ARRAYS):
+        if geometry:required|={'globe_weight','ring_weight'}
+        if not required.issubset(names) or set(names)-set(allowed_arrays):
             raise ValueError('state checkpoint arrays are incomplete or unknown')
-        state={name:(data[name].copy() if name in names else None) for name in ARRAYS}
+        state={name:(data[name].copy() if name in names else None) for name in allowed_arrays}
     for key in ('n_used','n_rejected','next_index'):
         value=meta.get(key)
         if type(value) is not int or not 0<=value<=n_frames:
@@ -71,7 +77,7 @@ def load(path,expected,shape,n_frames,bayer):
     ref=meta.get('reference_index')
     if ref is not None and (type(ref) is not int or not 0<=ref<n_frames):
         raise ValueError('invalid reference index in state checkpoint')
-    if state['n_used'] and (ref is None or state['reference'] is None):
+    if state['n_used'] and (ref is None or (not geometry and state['reference'] is None)):
         raise ValueError('state checkpoint reference missing')
     state['reference_index']=ref
     history=meta.get('execution_history',['cpu'] if schema=='planetrecon-baseline-state-1' else None)
@@ -82,9 +88,9 @@ def load(path,expected,shape,n_frames,bayer):
         raise ValueError('invalid checkpoint warnings')
     state['execution_history']=history
     state['warnings']=warnings
-    for name,arr in ((name,state[name]) for name in ARRAYS):
+    for name,arr in ((name,state[name]) for name in allowed_arrays):
         if arr is None:continue
-        expected_shape=shape[:2] if name=='reference' else shape
+        expected_shape=shape[:2] if name in ('reference','globe_weight','ring_weight') else shape
         if arr.shape!=expected_shape or arr.dtype!=np.float64 or not np.isfinite(arr).all():
             raise ValueError(f'invalid state checkpoint array {name}')
         if 'weight' in name and (arr<0).any():raise ValueError('negative checkpoint weights')

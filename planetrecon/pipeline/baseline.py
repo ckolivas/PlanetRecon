@@ -76,8 +76,6 @@ def _stack_source(
     memory_report=None,
 ) -> ReconstructionResult:
     if resume_from is not None or state_checkpoint is not None:
-        if config.geometry_mode != "none":
-            raise ValueError("resumable states require the translation baseline")
         from planetrecon import resume
         if state_checkpoint is not None:
             resume.validate_destination(state_checkpoint,source,config)
@@ -95,6 +93,8 @@ def _stack_source(
             calibration=calibration,
             on_event=on_event,
             should_cancel=should_cancel,
+            resume_from=resume_from,
+            state_checkpoint=state_checkpoint,
         )
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)

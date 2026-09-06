@@ -510,7 +510,7 @@ Translation checkpoints also support `--device gpu` and `--device auto`: use
 `--state-checkpoint state.npz`, then `--resume state.npz` with the same capture
 and configuration. CPU remains the authoritative accumulator store; GPU failures
 retain prior sums. Resume records prior backend transitions and warnings. Legacy
-CPU states remain readable. Geometry continuation is still unsupported.
+CPU states remain readable. Geometry continuation is described below.
 
 `stack --device gpu --cuda-memory-mib 512` caps the PyTorch CUDA caching allocator
 on device 0 before the live probe. The GUI provides the same control in MiB.
@@ -521,3 +521,10 @@ allocator setting is restored after success, cancellation or failure; an existin
 stricter setting is never relaxed. Provenance records requested/effective bytes,
 enforcement and peak reserved bytes. Use a dedicated process for library calls
 that coexist with other Torch workloads. Geometry remains CPU-only.
+
+Geometry also supports `--state-checkpoint` and `--resume`, including Saturn's
+separate globe/ring coverage. Resume rechecks fitted geometry and timing along
+with the capture/calibration/configuration identities, then continues after the
+last committed batch. Field, surface, combined and Saturn mono/RGB/Bayer tests
+match uninterrupted arrays bit for bit. Cancellation before geometry preparation
+leaves the prior checkpoint intact.

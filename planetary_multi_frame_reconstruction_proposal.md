@@ -2312,3 +2312,9 @@ before W11 integration or Q3. W16 still needs independently documented rotation
 and geometry captures. W17 still needs clean target machines, Windows/macOS
 builds, a project release license and signing/notarization credentials. These
 requirements remain unfinished after the local continuation checks above.
+
+**Geometry continuation (2026-09-07):** CLI accumulator state includes geometry
+identity, per-frame pose/timing hashes and Saturn layer weights. Twelve interrupted
+mono/RGB/Bayer cases across field, surface, combined and Saturn modes match complete
+runs bit for bit; malformed weights, altered geometry and early cancellation are
+checked. The geometry path remains CPU float64 and preserves the same model limits.
