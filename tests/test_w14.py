@@ -570,3 +570,21 @@ def test_save_dialog_reads_changed_encoding_and_mapping_each_time(gui, tmp_path,
     win.encoding.setCurrentText('tiff32');win._choose_save()
     assert saved[-1][1] == ExportConfig('tiff32')
     assert saved[0][0].suffix == '.png' and saved[-1][0].suffix == '.tif'
+
+
+def test_jupiter_sized_green_result_display_does_not_lose_bayer_support(gui):
+    _, win = gui
+    y,x = np.indices((424,656))
+    green = (x+y)%2 == 1
+    valid = np.stack([~green,green,~green],axis=2)
+    r = ReconstructionResult(np.broadcast_to([10.,20.,30.],valid.shape).copy(),
+        valid.astype(float),valid,'adu','RGB','cpu','float64','final',False,n_used=1,
+        provenance={'color_mode':'RGGB'})
+    win._accept_result(result_payload(r))
+    win.channel.setCurrentText('G')
+    win._draw()
+    assert win.preview.validity[...,1].all()
+    assert 'valid 100.0%' in win.histogram.text()
+    assert win.last_result.validity[...,1].mean() == .5
+    np.testing.assert_array_equal(win.last_result.validity,r.validity)
+    assert win.image_label.pixmap().toImage().pixelColor(0,0).getRgb()[:3] != (180,40,160)

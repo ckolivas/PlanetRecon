@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from planetrecon.export import ExportCancelled, ExportConfig, export_result
 from planetrecon.gui.controls import ConfigControls
+from planetrecon.gui.preview import display_result_preview
 from planetrecon.jobs import JobHandle, result_from_payload, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits
@@ -351,7 +352,7 @@ class MainWindow:
         for arr in (result.image, result.coverage, result.validity, *result.layer_coverage.values()):
             arr.flags.writeable = False
         self.last_result = result
-        self.preview = result.copy_preview()
+        self.preview = display_result_preview(result)
         if self.auto_levels:
             self.auto_levels = False
             self.view.setCurrentText('Result')
@@ -488,7 +489,10 @@ class MainWindow:
         bins = np.histogram(samples, bins=16, range=(lo, hi if hi > lo else lo+1))[0] if samples.size else np.zeros(16)
         heights = np.rint(bins / max(1, bins.max()) * 7).astype(int)
         bars = ''.join('▁▂▃▄▅▆▇█'[n] for n in heights)
-        self.histogram.setText(f'Preview histogram {bars} · valid {valid.mean():.1%} · '
+        sampling = ('Nearest-neighbour Bayer display; scientific masks are unchanged.\n'
+                    if self.view.currentText() != 'Input' and self.preview is not None
+                    and 'display_sampling' in self.preview.provenance else '')
+        self.histogram.setText(sampling + f'Preview histogram {bars} · valid {valid.mean():.1%} · '
             f'{clipped} display-clipped samples · magenta = missing support.\n'
             'Coverage shows accumulation weights, not calibrated uncertainty. Zoom refers to preview pixels.')
 

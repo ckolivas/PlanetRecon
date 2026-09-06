@@ -563,3 +563,11 @@ device separately from the actual backend and reports CPU fallback reasons.
 After a restart, the retained image is labelled **Previous result** until the new
 job produces an image; its old backend does not describe the new run. Restart the
 venv-launched GUI after updating source to load these UI changes.
+
+
+Bayer result previews select each channel's nearest supported sample on the
+full-resolution grid before shrinking the display. This prevents even preview
+strides from discarding every green site. The search is limited to one pixel
+(including diagonals); larger gaps remain magenta. Display coverage/validity refer
+to those selected samples. Full-resolution scientific images, masks and exports
+retain their original support without this display-only filling.
