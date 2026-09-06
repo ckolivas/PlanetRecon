@@ -9,6 +9,10 @@ restart and save results. Inventories and bundled notices are under `out/release
 and each bundle's `licenses` directory. The CPU bundle is approximately 321 MiB;
 the GPU bundle is approximately 4.4 GiB.
 
+The latest continuation inventories are in `out/release/continuation/cpu` and
+`out/release/continuation/gpu`. Use a new inventory directory for every build;
+the report records the exact manifest hashes for that generation.
+
 Build on the recorded Linux toolchain:
 
 ```sh
@@ -20,6 +24,7 @@ QT_QPA_PLATFORM=offscreen out/dist/cpu/planetrecon/planetrecon gui-smoke --out o
 QT_QPA_PLATFORM=offscreen out/dist/gpu/planetrecon-gpu/planetrecon-gpu gui-smoke --device gpu --out out/validation/gpu-gui
 .venv/bin/python packaging/smoke_export.py out/dist/cpu/planetrecon/planetrecon
 .venv/bin/python packaging/smoke_capture.py out/dist/cpu/planetrecon/planetrecon
+.venv/bin/python packaging/smoke_accelerator.py out/dist/gpu/planetrecon-gpu/planetrecon-gpu --out out/validation/accelerator
 .venv/bin/python packaging/release.py inventory --bundle out/dist/cpu/planetrecon --out out/release/cpu --toc out/build/cpu/planetrecon-linux/Analysis-00.toc
 .venv/bin/python packaging/release.py verify --bundle out/dist/cpu/planetrecon --manifest out/release/cpu/manifest.json
 ```
@@ -46,6 +51,13 @@ Native AVI decoding and TIFF/PNG encoding are bundled. The native capture smoke
 sets PATH to a nonexistent directory to catch accidental external decoder use.
 The Linux development host still supplies its OS/graphics stack; this is not a
 clean-machine or cross-platform acceptance claim.
+
+The accelerator smoke checks real CUDA, CPU agreement, completed-checkpoint
+continuation and allocator-limit recovery through the frozen CLI with Python and
+venv search paths disabled. Its output directory must be new. The source suite
+also tests interruption/resume after a mid-job CUDA failure. Optional
+`stack --cuda-memory-mib 512` caps Torch's CUDA caching allocator, excluding
+driver/context and external-library allocations; total process RAM is not capped.
 
 For local use, unpack/copy the entire `planetrecon` directory and run
 `./planetrecon --threads 2 gui`. Choose CPU, open a SER or supported AVI, inspect

@@ -1,0 +1,23 @@
+{
+  "status": "diagnostic",
+  "scope": "Linux crash cleanup and local RTX 5070 translation continuation/allocation cap; not full release acceptance",
+  "source_hash": "7bbf88a5ce3a00ab1f287216a037b68d264e9f946165e812a8141eb34506980d",
+  "cpu_suite": {
+    "passed": 301,
+    "skipped": 36
+  },
+  "gpu_suite": {
+    "passed": 34
+  },
+  "new_checks": [
+    "Spawned-worker lease protects spool after owner lease closes",
+    "Dead-worker spool reclaimed on next job startup",
+    "CPU legacy checkpoint accepted; invalid history rejected",
+    "Mono/RGB/CFA GPU resume after CUDA failure preserves sums and backend history",
+    "2 MiB allocator cap forces CPU recovery; 64 MiB completes on CUDA",
+    "Recorded peak reserved bytes remain within effective allocator cap",
+    "Prior allocator fraction restored; existing stricter cap never relaxed"
+  ],
+  "memory_scope": "PyTorch native CUDA caching allocator on device 0; excludes driver/context, external libraries and RAM",
+  "historical_artifacts_verified": 36
+}

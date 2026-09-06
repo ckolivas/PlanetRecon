@@ -2298,3 +2298,17 @@ is used consistently for the probe, kernels and limit. Hardware tests exercise
 a 2 MiB cap causing recovery and a 64 MiB cap retaining CUDA, verify recorded
 allocator peaks and CPU agreement. Driver/external-library VRAM and total RAM
 remain outside this cap; full working-set acceptance is still incomplete.
+
+**W17 continuation validation:** refreshed CPU/CUDA Linux bundles pass GUI
+cancel/restart/save, native AVI/geometry/layer export and all six scientific
+encodings. The frozen CUDA CLI passes parity, checkpoint continuation and capped
+allocator recovery with Python/venv search paths disabled. Current checksums and
+evidence are in `results/releases/linux-local.json`; this remains local acceptance.
+
+The next outstanding application work is geometry-state continuation and total
+working-set enforcement, followed by remaining large-input/format qualification.
+Scientific W01–W03 work must resolve the recorded optimization/model diagnostics
+before W11 integration or Q3. W16 still needs independently documented rotation
+and geometry captures. W17 still needs clean target machines, Windows/macOS
+builds, a project release license and signing/notarization credentials. These
+requirements remain unfinished after the local continuation checks above.
