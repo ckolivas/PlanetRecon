@@ -196,9 +196,9 @@ class MainWindow:
         self.encoding = QComboBox()
         self.encoding.addItems(['tiff32', 'tiff16', 'png16'])
         self.save_black = QLineEdit()
-        self.save_black.setPlaceholderText('Integer black')
+        self.save_black.setPlaceholderText('Integer black (display black if empty)')
         self.save_white = QLineEdit()
-        self.save_white.setPlaceholderText('Integer white')
+        self.save_white.setPlaceholderText('Integer white (display white if empty)')
         self.save_gamma = QLineEdit()
         self.save_gamma.setPlaceholderText('Display gamma (optional)')
         self.save_btn = QPushButton('Save result…')
@@ -208,7 +208,7 @@ class MainWindow:
         for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_btn, self.cancel_save_btn):
             save_row.addWidget(widget)
         body.addLayout(save_row)
-        self.save_status = QLabel('Float TIFF preserves scale. Integer output requires shared black/white levels.')
+        self.save_status = QLabel('Float TIFF preserves scale. Integer PNG/TIFF uses the black/white boxes, or the display levels if those boxes are empty.')
         self.save_status.setWordWrap(True)
         body.addWidget(self.save_status)
         self.encoding.currentIndexChanged.connect(self._export_options)
@@ -501,15 +501,32 @@ class MainWindow:
         for edit in (self.save_black, self.save_white, self.save_gamma):
             edit.setEnabled(integer)
 
+    def _parse_save_number(self, text, name, fallback=None):
+        text = text.strip().replace('\u2212', '-')
+        if not text:
+            return fallback
+        try:
+            return float(text)
+        except ValueError:
+            try:
+                return float(text.replace(',', '.'))
+            except ValueError:
+                raise ValueError(f'{name} {text!r} is not a number') from None
+
+    def _export_config(self):
+        encoding = self.encoding.currentText()
+        if encoding == 'tiff32':
+            return ExportConfig('tiff32')
+        return ExportConfig(encoding,
+            self._parse_save_number(self.save_black.text(), 'Integer black', self.black.value()),
+            self._parse_save_number(self.save_white.text(), 'Integer white', self.white.value()),
+            self._parse_save_number(self.save_gamma.text(), 'Display gamma'))
+
     def _choose_save(self):
         if self.last_result is None or self.export_worker is not None:
             return
         try:
-            integer = self.encoding.currentText() != 'tiff32'
-            cfg = ExportConfig(self.encoding.currentText(),
-                float(self.save_black.text()) if integer else None,
-                float(self.save_white.text()) if integer else None,
-                float(self.save_gamma.text()) if integer and self.save_gamma.text().strip() else None)
+            cfg = self._export_config()
         except ValueError as exc:
             self.save_status.setText(f'Save settings: {exc}')
             return

@@ -577,6 +577,17 @@ def test_save_dialog_reads_changed_encoding_and_mapping_each_time(gui, tmp_path,
     win.encoding.setCurrentText('tiff32');win._choose_save()
     assert saved[-1][1] == ExportConfig('tiff32')
     assert saved[0][0].suffix == '.png' and saved[-1][0].suffix == '.tif'
+    saved.clear()
+    win.black.setValue(10); win.white.setValue(50)
+    win.save_black.clear(); win.save_white.clear(); win.save_gamma.clear()
+    for encoding in ('tiff16', 'png16'):
+        win.encoding.setCurrentText(encoding)
+        win._choose_save()
+        assert saved[-1][1] == ExportConfig(encoding, 10.0, 50.0)
+    win.save_black.setText('not-a-number')
+    win._choose_save()
+    assert 'not a number' in win.save_status.text()
+    assert saved[-1][1] == ExportConfig('png16', 10.0, 50.0)
 
 
 def test_jupiter_sized_green_result_display_does_not_lose_bayer_support(gui):
