@@ -99,3 +99,46 @@ def test_real_cuda_allocator_oom_falls_back_mid_job(cuda_backend):
     finally:
         torch.cuda.set_per_process_memory_fraction(.15)
         torch.cuda.empty_cache()
+
+
+@pytest.mark.hardware
+@pytest.mark.parametrize('color',['mono','RGB','RGGB'])
+def test_cuda_resume_preserves_sums_and_fallback_history(cuda_backend,tmp_path,monkeypatch,color):
+    from planetrecon.io.ser import write_ser,SERSource,COLOR_MONO,COLOR_RGB,COLOR_RGGB
+    from planetrecon.backends.torch_accel import TorchBackend
+    rng=np.random.default_rng(780)
+    shape=(12,16,3) if color=='RGB' else (12,16)
+    frame=rng.integers(10,300,shape,dtype='u2')
+    frames=np.stack([np.roll(frame,i,axis=0) for i in range(6)])
+    frames[2]=65535
+    path=write_ser(tmp_path/'in.ser',frames,color_id={'mono':COLOR_MONO,'RGB':COLOR_RGB,'RGGB':COLOR_RGGB}[color])
+    cfg=ReconstructionConfig(device='gpu',threads=2,batch_frames=1)
+    state=tmp_path/'state.npz'
+    with SERSource(path) as source:whole=stack_source(source,cfg)
+    original=TorchBackend.backproject
+    calls=0
+    def fail_once(self,*args):
+        nonlocal calls
+        calls+=1
+        if calls==2:raise RuntimeError('injected pre-checkpoint CUDA failure')
+        return original(self,*args)
+    cancel=False
+    def event(result,info):
+        nonlocal cancel
+        if info['n_processed']>=3:cancel=True
+    with monkeypatch.context() as patch:
+        patch.setattr(TorchBackend,'backproject',fail_once)
+        with SERSource(path) as source:
+            partial=stack_source(source,cfg,state_checkpoint=state,on_event=event,should_cancel=lambda:cancel)
+    assert partial.incomplete and partial.backend=='cpu' and partial.n_rejected==1
+    with SERSource(path) as source:continued=stack_source(source,cfg,resume_from=state,state_checkpoint=state)
+    assert continued.backend=='cuda' and continued.n_used==whole.n_used
+    assert continued.n_rejected==whole.n_rejected
+    assert continued.provenance['device_report']['execution_history']==['cuda','cpu','cuda']
+    assert continued.provenance['resumed_from_frame']==3
+    assert any('pre-checkpoint CUDA failure' in warning for warning in continued.warnings)
+    np.testing.assert_array_equal(continued.validity,whole.validity)
+    np.testing.assert_allclose(continued.image,whole.image,rtol=1e-12,atol=1e-10)
+    np.testing.assert_allclose(continued.coverage,whole.coverage,rtol=1e-12,atol=1e-10)
+    with SERSource(path) as source:repeated=stack_source(source,cfg,resume_from=state)
+    np.testing.assert_array_equal(repeated.image,continued.image)

@@ -55,7 +55,8 @@ bounded preview; zoom/levels do not modify the full scientific result. Magenta
 marks invalid coverage. Save float TIFF to preserve scale, or set explicit shared
 black/white levels for integer PNG/TIFF. Cancel processing retains the last
 received result. Use the CLI's separate `--state-checkpoint`/`--resume` flags for
-exact CPU translation continuation; GUI geometry resume is not implemented.
+translation continuation on CPU or CUDA with matching configuration; GUI geometry
+resume is not implemented.
 
 The distro Torch lacks sm_120, but the local venv and GPU bundle use
 Torch 2.13.0+cu132 and support this RTX 5070. The advanced atmospheric solver

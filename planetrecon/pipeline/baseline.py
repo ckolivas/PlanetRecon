@@ -54,8 +54,8 @@ def stack_source(
     state_checkpoint=None,
 ) -> ReconstructionResult:
     if resume_from is not None or state_checkpoint is not None:
-        if config.geometry_mode != "none" or config.device != "cpu":
-            raise ValueError("resumable states require the CPU translation baseline")
+        if config.geometry_mode != "none":
+            raise ValueError("resumable states require the translation baseline")
         from planetrecon import resume
         if state_checkpoint is not None:
             resume.validate_destination(state_checkpoint,source,config)
@@ -75,6 +75,7 @@ def stack_source(
             should_cancel=should_cancel,
         )
     backend, report = select_backend(config.device, threads=config.threads)
+    report.execution_history = [backend.name]
     meta = source.metadata()
     color = source.color_mode()
     n = source.n_frames()
@@ -135,6 +136,10 @@ def stack_source(
         n_used, n_rejected = restored["n_used"], restored["n_rejected"]
         demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
         next_index = restored["next_index"]
+        history = restored["execution_history"]
+        report.execution_history = history + ([] if history[-1] == backend.name else [backend.name])
+        warnings = list(dict.fromkeys(restored["warnings"] + warnings))
+        snapshot_provenance["resumed_from_frame"] = next_index
 
     def cpu_fallback(exc):
         nonlocal backend
@@ -144,7 +149,7 @@ def stack_source(
         message = f"CUDA operation failed; continued on CPU with prior sums retained: {type(exc).__name__}: {exc}"
         backend = CPUBackend(threads=config.threads)
         report.selected, report.fallback, report.reason = "cpu", True, message
-        report.execution_history = ["cuda", "cpu"]
+        report.execution_history.append("cpu")
         warnings.append(message)
 
     def emit(stage: str, incomplete: bool) -> None:
@@ -264,7 +269,8 @@ def stack_source(
                 "accum": accum, "weight": weight, "reference": reference,
                 "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
                 "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
-                "next_index": n_used + n_rejected})
+                "next_index": n_used + n_rejected,
+                "execution_history": report.execution_history, "warnings": warnings})
         emit("baseline", incomplete=True)
         if cancelled:
             break

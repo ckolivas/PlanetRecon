@@ -1,4 +1,4 @@
-"""Exact CPU translation-baseline accumulator checkpoints, distinct from images."""
+"""Translation accumulator checkpoints, with CPU/CUDA execution provenance."""
 import hashlib
 import json
 import os
@@ -9,7 +9,7 @@ import numpy as np
 
 from planetrecon.pipeline.provenance import capture_provenance
 
-SCHEMA='planetrecon-baseline-state-1'
+SCHEMA='planetrecon-baseline-state-2'
 ARRAYS=('accum','weight','reference','demosaic_accum','demosaic_weight')
 
 
@@ -35,7 +35,9 @@ def save(path,identity,state):
     path=Path(path)
     metadata={'schema':SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
-        'arrays':[name for name in ARRAYS if state[name] is not None]}
+        'arrays':[name for name in ARRAYS if state[name] is not None],
+        'execution_history':state.get('execution_history',['cpu']),
+        'warnings':state.get('warnings',[])}
     fd,tmp=tempfile.mkstemp(prefix=f'.{path.name}-',suffix='.tmp',dir=path.parent)
     try:
         with os.fdopen(fd,'wb') as stream:
@@ -49,8 +51,11 @@ def save(path,identity,state):
 def load(path,expected,shape,n_frames,bayer):
     with np.load(path,allow_pickle=False) as data:
         meta=json.loads(str(data['metadata']))
-        if meta.get('schema')!=SCHEMA or meta.get('identity')!=expected:
+        schema=meta.get('schema')
+        if schema not in (SCHEMA,'planetrecon-baseline-state-1') or meta.get('identity')!=expected:
             raise ValueError('state checkpoint identity/configuration mismatch')
+        if schema=='planetrecon-baseline-state-1' and expected['config']['device']!='cpu':
+            raise ValueError('legacy state checkpoints require CPU execution')
         names=meta.get('arrays',[])
         required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer else set())
         if not required.issubset(names) or set(names)-set(ARRAYS):
@@ -69,6 +74,14 @@ def load(path,expected,shape,n_frames,bayer):
     if state['n_used'] and (ref is None or state['reference'] is None):
         raise ValueError('state checkpoint reference missing')
     state['reference_index']=ref
+    history=meta.get('execution_history',['cpu'] if schema=='planetrecon-baseline-state-1' else None)
+    warnings=meta.get('warnings',[])
+    if not isinstance(history,list) or not history or any(value not in ('cpu','cuda') for value in history):
+        raise ValueError('invalid checkpoint execution history')
+    if not isinstance(warnings,list) or any(not isinstance(value,str) for value in warnings):
+        raise ValueError('invalid checkpoint warnings')
+    state['execution_history']=history
+    state['warnings']=warnings
     for name,arr in ((name,state[name]) for name in ARRAYS):
         if arr is None:continue
         expected_shape=shape[:2] if name=='reference' else shape

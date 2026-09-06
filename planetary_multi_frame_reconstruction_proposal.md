@@ -2283,3 +2283,10 @@ complete clean-system, Windows/macOS, licensing or signing/notarization acceptan
 leases; job startup reclaims generated abandoned spools after both have exited.
 Spawn, abrupt worker death, active-owner/worker protection and unknown-directory
 preservation are tested. Automatic orphan reclamation on other OSes is unqualified.
+
+**W12/W15 GPU continuation:** translation accumulator state now supports CPU,
+auto and CUDA execution, validates the same full capture/configuration identities,
+and preserves backend history and warnings across restarts. Thirty-two RTX 5070
+tests pass, including mono/RGB/CFA continuation after a CUDA failure and rejection,
+with repeated completed-state resume avoiding double counting. Geometry resume
+and hard memory limits remain outstanding.

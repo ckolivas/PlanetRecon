@@ -505,3 +505,9 @@ On Linux, each event spool has independent owner/worker file leases in a private
 per-user temporary directory. Starting a job reclaims abandoned payloads only
 after all leases have closed, including after a hard crash. Live jobs and
 unrecognised directories are retained. Other platforms retain owner-close cleanup.
+
+Translation checkpoints also support `--device gpu` and `--device auto`: use
+`--state-checkpoint state.npz`, then `--resume state.npz` with the same capture
+and configuration. CPU remains the authoritative accumulator store; GPU failures
+retain prior sums. Resume records prior backend transitions and warnings. Legacy
+CPU states remain readable. Geometry continuation is still unsupported.

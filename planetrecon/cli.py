@@ -146,8 +146,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="also save a scientific image in the output directory")
     st.add_argument("--checkpoint", type=Path, default=None,
                     help="atomically update a full-resolution NPZ snapshot after each batch")
-    st.add_argument("--resume", type=Path, help="resume an exact CPU translation accumulator checkpoint")
-    st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable CPU translation state after each batch")
+    st.add_argument("--resume", type=Path, help="resume CPU/CUDA translation accumulator state with matching configuration")
+    st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable translation state after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -230,8 +230,8 @@ def main(argv: list[str] | None = None) -> int:
                     (args.checkpoint.exists() and args.checkpoint.samefile(args.path))):
                 parser.error("checkpoint cannot replace the input capture")
     if args.cmd == "stack" and (args.resume or args.state_checkpoint):
-        if args.device != "cpu" or args.geometry != "none":
-            parser.error("resumable checkpoints require --device cpu --geometry none")
+        if args.geometry != "none":
+            parser.error("resumable checkpoints require --geometry none")
         if args.state_checkpoint:
             for other in (args.out / "stack.npz", args.checkpoint):
                 if other is not None and (args.state_checkpoint.resolve() == other.resolve() or

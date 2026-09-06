@@ -71,6 +71,28 @@ def test_cli_resumable_state(tmp_path):
     with pytest.raises(SystemExit):main(args+['--state-checkpoint',str(tmp_path/'out/stack.npz')])
 
 
+def test_legacy_cpu_state_and_malformed_history(tmp_path):
+    import json
+    path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))
+    cfg=ReconstructionConfig(device='cpu',threads=2)
+    state=tmp_path/'state.npz'
+    with SERSource(path) as src:
+        original=stack_source(src,cfg,state_checkpoint=state)
+    with np.load(state,allow_pickle=False) as data:
+        arrays={key:data[key] for key in data.files if key!='metadata'}
+        meta=json.loads(str(data['metadata']))
+    meta['execution_history']=['bogus']
+    np.savez(state,metadata=json.dumps(meta),**arrays)
+    with SERSource(path) as src:
+        with pytest.raises(ValueError,match='execution history'):stack_source(src,cfg,resume_from=state)
+    meta['schema']='planetrecon-baseline-state-1'
+    del meta['execution_history'];del meta['warnings']
+    np.savez(state,metadata=json.dumps(meta),**arrays)
+    with SERSource(path) as src:restored=stack_source(src,cfg,resume_from=state)
+    np.testing.assert_array_equal(original.image,restored.image)
+    assert restored.provenance['device_report']['execution_history']==['cpu']
+
+
 @pytest.mark.skipif(not Path('/proc/self/stat').exists(),reason='local process-crash integration uses Linux procfs')
 def test_owned_worker_exits_after_parent_crash(tmp_path):
     import subprocess,sys,time
