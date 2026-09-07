@@ -601,3 +601,21 @@ alignment, which could lock to the Bayer/noise pattern in the Jupiter capture.
 It remains a global translation model, so local seeing distortions are not yet
 corrected. The noise sensitivity of phase-only correlation is also described in
 the [scikit-image registration documentation](https://scikit-image.org/docs/stable/api/skimage.registration.html).
+
+The full 3,749-frame Jupiter comparison against the supplied **unsharpened**
+16-bit conventional stack reduced interior relative RMS error from 0.663% to
+0.563% (15.1% reduction), with high-pass detail correlation increasing from
+0.917 to 0.959. These figures fit translation and per-channel brightness first;
+they measure agreement with one reference, not independent scientific accuracy.
+No sharpening is applied. Numeric evidence and limitations are recorded in
+`results/registration/jupiter-unsharpened-comparison.json`.
+
+To repeat a comparison without reducing the reference PNG to 8 bits:
+
+```bash
+.venv/bin/python tools/compare_stack_reference.py \
+  --reference reference.png --result stack.npz --out out/comparison
+```
+
+The output directory must be new. It contains metrics and full-precision arrays
+for plotting; supplied capture/reference pixels remain outside Git.

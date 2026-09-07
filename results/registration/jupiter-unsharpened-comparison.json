@@ -1,0 +1,83 @@
+{
+  "status": "development comparison, not an independent qualification gate",
+  "capture_id": "osc-jupiter",
+  "reference": "user supplied unsharpened conventional stack",
+  "reference_sha256": "da004f156d423babeb30f2b5df0ff98fcc4b186b5387199f7d669fe7cac77eca",
+  "capture_frames": 3749,
+  "device": "RTX 5070 CUDA float64",
+  "implementation_commit": "f956a21",
+  "protocol": {
+    "registration_filter_sigma_px": 1.5,
+    "comparison_highpass_sigma_px": 3,
+    "mask": "reference green > 15% of peak, eroded 10 pixels; common valid support",
+    "fits": "one translation and one gain/offset per channel; no sharpening, spatial deformation, or detail fitting",
+    "limitations": [
+      "Same capture and one supplied reference; not independent nights/cameras",
+      "Conventional stack selection/alignment parameters unknown",
+      "Global translation only; local atmospheric distortions remain unmodelled",
+      "Reference PNG is decoded as 16-bit RGB; early 8-bit exploration is superseded"
+    ]
+  },
+  "old_phase_integer": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 3743,
+    "n_rejected": 6,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -14.46914044434362,
+      -0.15053782838883925
+    ],
+    "per_channel_gain_offset": [
+      [
+        232.91112179952827,
+        90.18952791908791
+      ],
+      [
+        233.06618394705285,
+        82.72699094227198
+      ],
+      [
+        232.96066576642423,
+        82.13076530565765
+      ]
+    ],
+    "relative_rmse": 0.00662650341021338,
+    "highpass_correlation_sigma3": 0.9168220760654944,
+    "registration_method": "historical phase-only integer correlation, diagnostic override"
+  },
+  "new_amplitude_subpixel": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 3749,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -13.878774739257345,
+      -0.5548432860167926
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.1331269895597,
+        46.6522496816426
+      ],
+      [
+        233.22453472006242,
+        42.91013554088495
+      ],
+      [
+        232.99323120688163,
+        63.33976060139593
+      ]
+    ],
+    "relative_rmse": 0.005626674483458052,
+    "highpass_correlation_sigma3": 0.9589175403495358,
+    "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+  },
+  "relative_rmse_reduction_percent": 15.088333391850362,
+  "validation": {
+    "default_suite": "392 passed, 41 skipped",
+    "hardware_suite": "39 passed",
+    "reference_precision_regression": "1 passed"
+  }
+}
