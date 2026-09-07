@@ -647,6 +647,20 @@ def test_input_white_fit_uses_raw_peak_and_bit_depth(gui):
     assert win.white.value() == pytest.approx(65535)
 
 
+def test_uniform_positive_channel_coverage_remains_visible(gui):
+    _, win = gui
+    r = result(value=10)
+    r.coverage.fill(104.)
+    win._accept_result(result_payload(r))
+    win.view.setCurrentText('Coverage')
+    win.channel.setCurrentText('R')
+    win._fit_levels()
+    assert win.black.value() == 0.
+    assert win.white.value() == pytest.approx(1.43*104.)
+    pixel = win.image_label.pixmap().toImage().pixelColor(0, 0)
+    assert pixel.red() > 100 and pixel.red() == pixel.green() == pixel.blue()
+
+
 def test_qimage_automatic_white_does_not_clip_sparse_bright_pixel():
     from planetrecon.gui.app import _to_qimage
     image = np.full((20,20),10,dtype='u1');image[0,0] = 200

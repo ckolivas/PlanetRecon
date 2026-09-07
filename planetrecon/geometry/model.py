@@ -33,8 +33,7 @@ class FieldOnlyModel(SceneModel):
 
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
         sx, sy = detector_to_sky(x, y, src.cx, src.cy)
-        inertial = field_rotate_sky(sx, sy, -src.field_angle_rad)
-        rx, ry = field_rotate_sky(inertial[0], inertial[1], ref.field_angle_rad)
+        rx, ry = field_rotate_sky(sx, sy, ref.field_angle_rad - src.field_angle_rad)
         dx, dy = sky_to_detector(rx, ry, ref.cx, ref.cy)
         valid = np.isfinite(dx) & np.isfinite(dy)
         return dx, dy, valid
@@ -50,6 +49,13 @@ class OblateGlobeModel(SceneModel):
 
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
         sx, sy = detector_to_sky(x, y, src.cx, src.cy)
+        if not self.apply_surface or self.globe.surface_rate_rad_s * (src.t_s - ref.t_s) == 0:
+            # No longitude change: avoid a lossy sphere round trip, especially
+            # the tiny fractional CFA weights it creates at unsampled colours.
+            angle = ref.field_angle_rad - src.field_angle_rad if self.apply_field else 0.
+            rx, ry = field_rotate_sky(sx, sy, angle)
+            dx, dy = sky_to_detector(rx, ry, ref.cx, ref.cy)
+            return dx, dy, np.isfinite(dx) & np.isfinite(dy)
         if self.apply_field:
             sky_x, sky_y = field_rotate_sky(sx, sy, -src.field_angle_rad)
         else:

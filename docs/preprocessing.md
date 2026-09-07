@@ -187,6 +187,28 @@ estimates clear stale automatic rates. Runs with an accumulator checkpoint
 retain their settings to preserve resume compatibility. Estimates remain in
 result metadata. The active reconstruction configuration is never changed.
 
+A blank surface rate applies **no surface rotation correction**: an unresolved
+estimate is not a measured zero or an inferred planetary rotation period. Field,
+surface and combined modes retain subpixel translation tracking. They predict
+the registration reference at each frame's time with the selected motion model
+before estimating the remaining translation, then backproject raw observations
+once with the combined transform. The configured centre anchors the reference
+frame; `max_shift_px` rejects excessive tracking displacement. Saturn retains
+its fixed-centre contract because its moon tracks use detector coordinates.
+
+Zero surface rotation bypasses the spherical round trip; bilinear coordinates
+within 10⁻¹⁰ pixels of integer sites are snapped consistently in sampling and its
+adjoint to prevent round-off from creating spurious CFA support. Coverage and
+validity display levels start at zero so uniform positive support stays visible.
+
+The [Jupiter surface regression](../results/preprocessing/surface-tracking-validation.json)
+uses 96 frames distributed through the capture, with 89 retained by its own
+preprocessing pass. With the surface rate blank, the corrected surface result
+matches the no-motion-model aligned stack within 3×10⁻¹³ ADU, with identical
+validity. Relative RMSE against the supplied conventional unsharpened stack
+improved from 0.017708 to 0.007212. This bounded development comparison does not
+establish Jupiter's rotation rate or replace full-capture qualification.
+
 The synthetic validation covers both spin signs, tilted poles, tracking-only
 motion, both image-roll directions and signed viewing latitudes. The local
 [Jupiter diagnostic](../results/geometry-discovery/jupiter-estimate.json) gives

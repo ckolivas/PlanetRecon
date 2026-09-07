@@ -548,6 +548,9 @@ class MainWindow:
         # The preview may omit the brightest pixel. Fit white against the full
         # scientific view, retaining common levels across RGB channels.
         mode = self.view.currentText()
+        if mode in ('Coverage', 'Globe coverage', 'Ring coverage', 'Validity'):
+            # Zero means no support. Uniform positive coverage stays visible.
+            low = 0.
         source = self.input_metadata if mode == 'Input' else {}
         gain = 1.
         maximum = float(values.max()) if values.size else 0.

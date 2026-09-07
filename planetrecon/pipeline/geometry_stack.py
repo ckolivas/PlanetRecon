@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from dataclasses import replace
 
 import numpy as np
 
@@ -12,7 +13,7 @@ from planetrecon.calibration import Calibration, apply_calibration
 from planetrecon.detector import bilinear_demosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
 from planetrecon.geometry.coords import detector_xy_grids
 from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
-from planetrecon.geometry.model import SceneModel, select_scene_model
+from planetrecon.geometry.model import SceneModel, select_scene_model, render_observed
 from planetrecon.geometry.pose import FramePose, build_frame_poses, globe_for_config, source_times_s, unwrap_angles
 from planetrecon.geometry.rings import RingParams
 from planetrecon.geometry.saturn import LAYER_GLOBE, LAYER_FAR_RING, LAYER_NEAR_RING, MoonTrack, SaturnSceneModel, fit_saturn_geometry
@@ -23,6 +24,7 @@ from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.result import ReconstructionResult
 from planetrecon.pipeline.provenance import capture_provenance
 from planetrecon.pipeline.colour import complete_bayer_rgb
+from planetrecon.pipeline.align import phase_correlation_shift
 
 
 PreviewFn = Callable[[ReconstructionResult, dict], None]
@@ -274,7 +276,7 @@ def prepare_geometry(
         warnings.append("low_opening: globe/ring overlap is conservatively masked")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if config.surface_rate_rad_s is None:
-            warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated")
+            warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; no surface rotation correction is applied")
         else:
             warnings.append("spin_unconstrained: image texture cannot constrain spin; using supplied surface rate")
     return poses, model, diagnostics, warnings
@@ -397,6 +399,16 @@ def stack_source_geometry(
         source, config, planes=sample_planes, sample_indices=sample_idx,
     )
     ref_pose = _reference_pose(poses, config)
+    anchor_index = diagnostics['reference_index']
+    anchor_plane = sample_planes[sample_idx.index(anchor_index)]
+    anchor_pose = poses[anchor_index]
+    # Saturn's moon masks currently use absolute detector tracks; keep that
+    # model's fixed-centre contract until those tracks also support jitter.
+    track_translation = not isinstance(model, SaturnSceneModel)
+    static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
+        diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
+    diagnostics['registration'] = ('model-predicted reference plus Gaussian 1.5px subpixel translation'
+                                   if track_translation else 'fixed centre (Saturn detector tracks)')
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
@@ -503,6 +515,17 @@ def stack_source_geometry(
                 continue
             plane = _alignment_plane(calibrated, color)
             pose = poses[int(index)]
+            if track_translation:
+                # Predict the anchor at this frame's time before fitting camera
+                # translation, so registration does not absorb the chosen spin.
+                predicted = (anchor_plane if static_attitude or int(index) == anchor_index else
+                             render_observed(anchor_plane, model, pose, anchor_pose))
+                dx, dy = phase_correlation_shift(predicted, plane)
+                if (not np.isfinite([dx, dy]).all() or abs(dx) > config.max_shift_px
+                        or abs(dy) > config.max_shift_px):
+                    n_rejected += 1
+                    continue
+                pose = replace(pose, cx=pose.cx + dx, cy=pose.cy + dy)
             layer_labels = None
             if isinstance(model, SaturnSceneModel):
                 from scipy.ndimage import binary_erosion, convolve

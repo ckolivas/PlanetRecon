@@ -12,7 +12,7 @@ from planetrecon.result import ReconstructionResult, load_snapshot, save_snapsho
 
 
 @pytest.mark.parametrize('pattern', ['RGGB', 'GRBG', 'GBRG', 'BGGR'])
-@pytest.mark.parametrize('geometry', ['none', 'field'])
+@pytest.mark.parametrize('geometry', ['none', 'field', 'surface', 'combined'])
 def test_bayer_stack_publishes_and_exports_complete_rgb(pattern, geometry, tmp_path):
     labels = cfa_labels(9, 11, pattern)
     raw = np.zeros((9, 11))
@@ -23,6 +23,8 @@ def test_bayer_stack_publishes_and_exports_complete_rgb(pattern, geometry, tmp_p
                          timestamps=np.array([0.]))
     cfg = ReconstructionConfig(frame_preselection=False, device='cpu', threads=2, geometry_mode=geometry,
                                field_rate_rad_s=0., field_center_x=5.5, field_center_y=4.5,
+                               equatorial_radius_px=3.2, pole_pa_rad=.17, flattening=.08,
+                               sub_obs_lat_rad=.12,
                                freeze_mid_exposure=False, reject_saturated=False)
     events = []
     result = stack_source(source, cfg, on_event=lambda r, _: events.append(r))

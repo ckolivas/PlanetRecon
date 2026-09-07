@@ -1,0 +1,98 @@
+{
+  "before-baseline": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 89,
+    "n_rejected": 7,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -13.876787914682684,
+      -0.5577340284240939
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.06196767975172,
+        52.078615085357775
+      ],
+      [
+        233.1471282645753,
+        48.28905206119745
+      ],
+      [
+        232.7664490279022,
+        84.38922464951969
+      ]
+    ],
+    "relative_rmse": 0.0072118966303763785,
+    "highpass_correlation_sigma3": 0.6698102890920352,
+    "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+  },
+  "before-surface": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 89,
+    "n_rejected": 7,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -16.104406307079017,
+      -1.7307418050722259
+    ],
+    "per_channel_gain_offset": [
+      [
+        231.98194735893145,
+        266.2295308228895
+      ],
+      [
+        232.01357275463,
+        316.0469051341186
+      ],
+      [
+        232.85482015814745,
+        151.3740122546773
+      ]
+    ],
+    "relative_rmse": 0.017708309625453167,
+    "highpass_correlation_sigma3": 0.2711249815636622,
+    "registration_method": null
+  },
+  "after-surface": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 89,
+    "n_rejected": 7,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -13.876787914682684,
+      -0.5577340284240621
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.06196767975166,
+        52.078615085348005
+      ],
+      [
+        233.14712826457523,
+        48.28905206118334
+      ],
+      [
+        232.76644902790227,
+        84.3892246495097
+      ]
+    ],
+    "relative_rmse": 0.00721189663037635,
+    "highpass_correlation_sigma3": 0.6698102890920372,
+    "registration_method": null
+  },
+  "parity": {
+    "max_image_difference_adu": 2.8421709430404007e-13,
+    "max_coverage_difference": 5.435651928564766e-13,
+    "same_validity": true
+  },
+  "validation_date": "2026-09-08",
+  "capture": "2022-09-10-0649_2-GB-L-Jup_ZWO ASI224MC.ser",
+  "sampled_frames": 96,
+  "sample_selection": "np.linspace(0,3748,96,dtype=int); standalone preprocessing on sample",
+  "surface_rate_input": null,
+  "estimated_surface_rate": "unresolved; no rate supplied",
+  "scope": "Development regression, not independent qualification or a measurement of Jupiter rotation"
+}

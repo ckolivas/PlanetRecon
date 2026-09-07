@@ -27,7 +27,7 @@ CONTROL_HELP = {
     'reference_epoch_s': 'Time of the reconstructed output view, in seconds from the capture start.',
     'field_angle0_rad': 'Field orientation at the output epoch, in degrees.',
     'field_rate_rad_s': 'Field rotation rate in degrees per second. Leave blank to estimate it from the capture when geometry requires it.',
-    'surface_rate_rad_s': 'Rigid globe rotation rate in degrees per second for surface, combined or Saturn processing.',
+    'surface_rate_rad_s': 'Rigid globe rotation rate in degrees per second. Preprocess fills this only when motion is reliably measured. Blank applies no surface rotation; surface mode still aligns frame translation.',
     'field_center_x': 'Horizontal rotation centre in pixels, increasing to the right. Leave blank to estimate the centre.',
     'field_center_y': 'Vertical rotation centre in pixels, increasing downwards. Leave blank to estimate the centre.',
     'equatorial_radius_px': 'Globe equatorial radius in pixels for the geometry model.',

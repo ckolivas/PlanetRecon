@@ -72,14 +72,14 @@ class ConfigControls(QTabWidget):
             ('reference_epoch_s', 'Output epoch (s from start)'),
             ('field_angle0_rad', 'Reference field angle (°)'),
             ('field_rate_rad_s', 'Field rate (°/s; blank = fit)'),
-            ('surface_rate_rad_s', 'Surface rate (°/s)'),
+            ('surface_rate_rad_s', 'Surface rate (°/s; blank = no correction)'),
             ('field_center_x', 'Centre x (px)'), ('field_center_y', 'Centre y (px)'),
             ('equatorial_radius_px', 'Globe equatorial radius (px)'), ('flattening', 'Globe flattening'),
             ('pole_pa_rad', 'Pole position angle (°)'), ('sub_obs_lat_rad', 'Signed observer latitude (°)'),
             ('sub_obs_lon0_rad', 'Reference longitude (°)'),
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
-        geo.addRow(QLabel('Fixed centre and rigid rates.\nExposure uses the midpoint approximation.'))
+        geo.addRow(QLabel('Centre anchors translation tracking; rates are rigid.\nSaturn uses a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
         sat.addRow(QLabel('Saturn requires globe/ring radii and signed\nobserver latitude in the Geometry tab.'))
         for key, label in [

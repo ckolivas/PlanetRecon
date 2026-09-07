@@ -12,6 +12,10 @@ def _weights(y, x):
     finite = np.isfinite(y) & np.isfinite(x)
     y = np.where(finite, y, -2.0)
     x = np.where(finite, x, -2.0)
+    # Round-off from composed rotations must not invent direct CFA support at
+    # another colour site. Use the same coordinates for sampling and adjoints.
+    y = np.where(abs(y - np.rint(y)) < 1e-10, np.rint(y), y)
+    x = np.where(abs(x - np.rint(x)) < 1e-10, np.rint(x), x)
     y0 = np.floor(y)
     x0 = np.floor(x)
     wy = y - y0
