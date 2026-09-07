@@ -113,3 +113,31 @@ comparison of both filtering and weighting changes, not independent qualificatio
 Uniform 128-frame samples of each remaining capture also produced usable
 silhouettes; neither Mars recording was interpreted as mono. Those sampled
 checks do not substitute for full-capture runs.
+
+## Geometry suggestions
+
+Accepted frames also supply three aligned averages (up to 32 frames each,
+reduced to at most 256 pixels per side) for a small-angle projected-sphere
+motion fit. Translation, depth-dependent surface drift and image roll are fit
+jointly with SciPy's robust least-squares solver. Consistent, significant motion
+in both time intervals can supply signed surface and field rates and a pole
+orientation. Timestamps or a supplied cadence are required for rates per second.
+Unknown observer latitude uses an explicitly labelled equator-on approximation.
+The pole direction is an image-coordinate convention, not physical north.
+
+A stable mildly oval silhouette supplies an initial pole-axis hypothesis when
+surface motion is unresolved; this assumes its major axis is equatorial and
+can be biased by phase. Ring/strong-phase captures require a supplied globe
+radius for the spherical motion fit. Unconstrained rotation is left unset.
+
+The GUI prefills Geometry for the next run and preserves user edits, including
+explicit zeros. New captures clear unchanged automatic values; unresolved new
+estimates clear stale automatic rates. Runs with an accumulator checkpoint
+retain their settings to preserve resume compatibility. Estimates remain in
+result metadata. The active reconstruction configuration is never changed.
+
+The synthetic validation covers both spin signs, tilted poles, tracking-only
+motion, both image-roll directions and signed viewing latitudes. The local
+[Jupiter diagnostic](../results/geometry-discovery/jupiter-estimate.json) gives
+an initial silhouette pole angle of 1.91°, but surface motion is unresolved
+and no rotation rate is prefilled for that capture.

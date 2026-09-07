@@ -17,6 +17,8 @@ class ConfigControls(QTabWidget):
         self.base = config
         self.fields = {}
         self.angular = set()
+        self.geometry_manual = set()
+        self.geometry_auto = {}
         capture = self._tab('Capture')
         self._choice(capture, 'device', 'Device', ['auto', 'cpu', 'gpu'])
         self._integer(capture, 'threads', 'CPU threads', 1, 32)
@@ -62,6 +64,9 @@ class ConfigControls(QTabWidget):
         self._number(cal, 'saturate_adu', 'Saturation threshold (ADU)')
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
+        self.geometry_estimate_label = QLabel('Preprocessing can prefill geometry for the next run. User edits are preserved.')
+        self.geometry_estimate_label.setWordWrap(True)
+        geo.addRow(self.geometry_estimate_label)
         self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
         for key, label in [
             ('reference_epoch_s', 'Output epoch (s from start)'),
@@ -90,6 +95,8 @@ class ConfigControls(QTabWidget):
         self._mode_changed()
         for key, edit in self.fields.items():
             edit.setToolTip(CONTROL_HELP[key])
+            if isinstance(edit, QLineEdit):
+                edit.textEdited.connect(lambda text, key=key: self.geometry_manual.add(key))
         for index, text in enumerate((
                 'Input interpretation, processing device, memory and frame handling.',
                 'Optional detector calibration tables and intensity units.',
@@ -192,3 +199,54 @@ class ConfigControls(QTabWidget):
                 values[key] = None
             values.update(ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         return replace(self.base, **values)
+
+    def clear_geometry_estimate(self):
+        from planetrecon.reconstruction import ReconstructionConfig
+        defaults = ReconstructionConfig()
+        for key, text in self.geometry_auto.items():
+            if key not in self.geometry_manual and self.fields[key].text() == text:
+                value = getattr(defaults, key)
+                self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
+        self.geometry_auto.clear()
+        self.geometry_estimate_label.setText('Preprocessing can prefill geometry for the next run. User edits are preserved.')
+
+    def prefill_geometry(self, estimate, *, allow_prefill=True):
+        from planetrecon.reconstruction import ReconstructionConfig
+        defaults = ReconstructionConfig()
+        allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
+                   'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s'}
+        if allow_prefill:
+            for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s'):
+                old = self.geometry_auto.get(key)
+                if (old is not None and key not in estimate.get('suggestions', {})
+                        and key not in self.geometry_manual and self.fields[key].text() == old):
+                    value = getattr(defaults, key)
+                    self.fields[key].setText('' if value is None else str(math.degrees(value)))
+                    del self.geometry_auto[key]
+        applied = []
+        for key, value in estimate.get('suggestions', {}).items():
+            if not allow_prefill or key not in allowed or key in self.geometry_manual or not math.isfinite(value):
+                continue
+            edit = self.fields[key]
+            text = edit.text()
+            try:
+                current = float(text) if text.strip() else None
+            except ValueError:
+                continue
+            if current is not None and key in self.angular:
+                current = math.radians(current)
+            if text != self.geometry_auto.get(key) and current != getattr(defaults, key):
+                continue
+            new_text = format(math.degrees(value) if key in self.angular else value, '.10g')
+            edit.setText(new_text)
+            self.geometry_auto[key] = new_text
+            applied.append(key)
+        direction = estimate.get('surface_direction', 'unresolved')
+        roll = estimate.get('roll_direction', 'unresolved')
+        usage = ('Prefills apply to the next run.' if allow_prefill else
+                 'Checkpoint settings retained; estimates are available in result metadata.')
+        self.geometry_estimate_label.setText(
+            f'Surface drift: {direction}; image roll: {roll}. {usage}\n'
+            + 'Orientation: ' + estimate.get('orientation_origin', 'unresolved') + '. '
+            + ' '.join(estimate.get('notes', [])))
+        return applied

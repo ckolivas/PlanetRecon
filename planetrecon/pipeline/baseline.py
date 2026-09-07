@@ -132,6 +132,19 @@ def _stack_source(
                              '(disable frame preselection for surface-detail crops)')
         if config.reference_index and not selection.accepted[config.reference_index]:
             raise ValueError('selected reference frame was rejected by preprocessing; choose an accepted frame or automatic reference 0')
+        from planetrecon.geometry.discovery import discover_geometry
+        if on_event is not None:
+            on_event(progress_result, {'n_processed': n, 'n_total': n, 'n_used': 0,
+                                      'backend': 'cpu', 'phase': 'orientation and rotation'})
+        try:
+            estimate = discover_geometry(source, config, selection, calibration, should_cancel)
+        except InterruptedError:
+            return progress_result
+        selection.summary['geometry_estimate'] = estimate
+        if on_event is not None:
+            on_event(progress_result, {'n_processed': n, 'n_total': n, 'n_used': 0,
+                                      'backend': 'cpu', 'phase': 'orientation and rotation',
+                                      'geometry_estimate': estimate})
         del progress_result, empty
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry

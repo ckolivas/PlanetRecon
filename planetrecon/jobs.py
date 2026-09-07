@@ -34,7 +34,7 @@ class JobEvent:
 def _put_event(q, event: JobEvent, cancel_event=None) -> bool:
     # Optional UI updates must never stall processing or cancellation. The
     # terminal event carries the final image even when previews were dropped.
-    if event.kind in ("preview", "progress", "snapshot", "source"):
+    if event.kind in ("preview", "progress", "snapshot", "source", "geometry_estimate"):
         try:
             q.put_nowait(event)
         except queue.Full:
@@ -150,7 +150,9 @@ def _worker_run(
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
             if result.stage == 'preprocessing':
-                emit('progress', {'stage': 'preprocessing: quality and planet size',
+                if 'geometry_estimate' in info:
+                    emit('geometry_estimate', info['geometry_estimate'])
+                emit('progress', {'stage': 'preprocessing: ' + info.get('phase', 'quality and planet size'),
                     'fraction': info.get('n_processed', 0) / max(info.get('n_total', 1), 1),
                     'n_used': 0, 'backend': 'cpu'})
                 return

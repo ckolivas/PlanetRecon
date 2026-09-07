@@ -280,6 +280,7 @@ class MainWindow:
     def _choose(self):
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
+            self.controls.clear_geometry_estimate()
             self.path = Path(name)
             self.checkpoint_path.clear()
             self.resume_check.setChecked(False)
@@ -374,6 +375,9 @@ class MainWindow:
 
     def _accept_result(self, payload):
         result = result_from_payload(payload)
+        estimate = result.provenance.get('preprocessing', {}).get('geometry_estimate')
+        if estimate is not None:
+            self.controls.prefill_geometry(estimate, allow_prefill=not self.checkpoint_path.text().strip())
         self._update_run_device({'backend': result.backend, 'warnings': result.warnings,
                                  'device_report': result.provenance.get('device_report')})
         if result.n_used < 1 or result.spatial_stride != 1 or not np.any(result.validity):
@@ -415,6 +419,8 @@ class MainWindow:
             self.last_seq = event.seq
             if event.kind == 'source':
                 self._set_input(event.payload)
+            elif event.kind == 'geometry_estimate' and self.cancel_started is None:
+                self.controls.prefill_geometry(event.payload, allow_prefill=not self.checkpoint_path.text().strip())
             elif event.kind == 'snapshot':
                 self._accept_result(event.payload)
                 handle.snapshot_request.set()
