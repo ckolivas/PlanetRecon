@@ -160,6 +160,7 @@ def _stack_source(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    snapshot_provenance["registration"] = "Gaussian 1.5px amplitude correlation with subpixel peak fit"
     if memory_report is not None:
         snapshot_provenance['cuda_allocation_budget'] = memory_report
     next_index = 0

@@ -23,14 +23,13 @@ class TorchBackend(Backend):
         fa = torch.fft.fft2(ref)
         fb = torch.fft.fft2(img)
         cross = fb * torch.conj(fa)
-        cross = cross / torch.clamp(torch.abs(cross), min=1e-15)
-        corr = torch.fft.ifft2(cross).real
-        flat = torch.argmax(corr)
-        peak_y = int(flat // corr.shape[1])
-        peak_x = int(flat % corr.shape[1])
-        sy = peak_y if peak_y < corr.shape[0] / 2 else peak_y - corr.shape[0]
-        sx = peak_x if peak_x < corr.shape[1] / 2 else peak_x - corr.shape[1]
-        return float(sx), float(sy)
+        from planetrecon.pipeline.align import correlation_filter, correlation_peak
+        shape = tuple(ref.shape)
+        if getattr(self, '_correlation_shape', None) != shape:
+            self._correlation_filter = torch.as_tensor(correlation_filter(shape), device='cuda:0')
+            self._correlation_shape = shape
+        corr = torch.fft.ifft2(cross * self._correlation_filter).real
+        return correlation_peak(corr.cpu().numpy())
 
     def shift(self, image: np.ndarray, shift_xy: tuple[float, float]) -> np.ndarray:
         from scipy.ndimage import shift as ndshift

@@ -77,7 +77,7 @@ NPZ file (schema 1.1); they are snapshots, with no resume implementation yet.
 Older split NPZ/JSON checkpoints are rejected. CLI NPZ output includes validity,
 units and provenance.
 
-This is a translation-only baseline using integer phase correlation and
+This is a translation baseline using subpixel amplitude correlation and
 normalised CFA backprojection followed by nearest-neighbour RGB completion,
 plus a W09 geometry-aware baseline for declared field rotation and/or a rigid
 oblate globe, and a W10 Saturn layered scene. Field attitude and surface
@@ -591,3 +591,13 @@ full-resolution result or inspected input frame, including pixels omitted by the
 preview. Capture full-scale is `(2^bit_depth − 1)` ADU, scaled by gain for electron
 output; floating data without a known detector range uses the peak rule alone.
 RGB channels share levels, and manual levels remain fixed across later updates.
+
+
+Translation registration suppresses detector-scale noise with a Gaussian 1.5-pixel
+spectral filter, retains signal amplitude, and fits the correlation peak to
+subpixel precision on CPU and CUDA. Only registration proxies are filtered; raw
+observations still feed CFA accumulation. This replaces phase-only integer
+alignment, which could lock to the Bayer/noise pattern in the Jupiter capture.
+It remains a global translation model, so local seeing distortions are not yet
+corrected. The noise sensitivity of phase-only correlation is also described in
+the [scikit-image registration documentation](https://scikit-image.org/docs/stable/api/skimage.registration.html).
