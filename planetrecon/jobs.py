@@ -139,6 +139,7 @@ def _worker_run(
             preview = nearest_debayer_preview(raw, color, stride=step) if bayer else np.array(raw[::step, ::step], copy=True)
             payload = {"source_metadata": source.metadata().as_dict(),
                        "input_image": preview,
+                       "input_max": float(np.max(raw, where=np.isfinite(raw), initial=0)),
                        "input_stride": step, "input_view": "nearest-neighbour Bayer RGB" if bayer else color}
             emit("completed" if inspect_only else "source", payload)
             if inspect_only:

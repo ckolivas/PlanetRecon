@@ -606,3 +606,54 @@ def test_jupiter_sized_green_result_display_does_not_lose_bayer_support(gui):
     assert win.last_result.validity[...,1].mean() == .5
     np.testing.assert_array_equal(win.last_result.validity,r.validity)
     assert win.image_label.pixmap().toImage().pixelColor(0,0).getRgb()[:3] != (180,40,160)
+
+
+@pytest.mark.parametrize('bits,peak,gain,expected', [
+    (8,100.,None,143.), (8,250.,None,255.),
+    (16,100.,None,143.), (8,200.,2.,286.), (8,1000.,2.,510.),
+])
+def test_white_fit_uses_full_result_peak_or_capture_range(gui,bits,peak,gain,expected):
+    _,win = gui
+    r = result(value=10)
+    r.image[1,1,0] = peak  # Omitted by this 514-row result's stride-2 preview.
+    r.image[3,1,1] = 1e9
+    r.validity[3,1,1] = False  # Unsupported samples must not affect fitting.
+    r.provenance = {'source':{'bit_depth':bits,'units':'adu'},
+                    'config':{'gain_e_per_adu':gain}}
+    r.units = 'e-' if gain else 'adu'
+    win._accept_result(result_payload(r))
+    assert win.white.value() == pytest.approx(expected)
+    assert win.white.value() <= ((1 << bits)-1)*(gain or 1.)
+    win.white.setValue(42.)  # Later results still preserve explicit user levels.
+    win._accept_result(result_payload(r))
+    assert win.white.value() == 42.
+    win._fit_levels()
+    assert win.white.value() == pytest.approx(expected)
+    win.view.setCurrentText('Validity');win._fit_levels()
+    assert win.white.value() == pytest.approx(1.)
+
+
+def test_input_white_fit_uses_raw_peak_and_bit_depth(gui):
+    _,win = gui
+    win.inspecting = True
+    win._set_input({'input_image':np.full((8,12),20,dtype='u2'), 'input_max':65535.,
+        'input_view':'mono','source_metadata':{'path':'input.ser','width':24,'height':16,
+        'n_frames':1,'color_mode':'mono','bit_depth':16,'units':'adu'}})
+    assert win.white.value() == pytest.approx(65535)
+
+
+def test_qimage_automatic_white_does_not_clip_sparse_bright_pixel():
+    from planetrecon.gui.app import _to_qimage
+    image = np.full((20,20),10,dtype='u1');image[0,0] = 200
+    rendered = _to_qimage(image)
+    assert rendered.pixelColor(0,0).red() < 255
+
+
+def test_inspection_white_includes_bright_pixel_missing_from_preview(gui,tmp_path):
+    app,win = gui
+    raw = np.full((8,1026),10,dtype='u2')
+    raw[1,1] = 15000
+    win.path = write_ser(tmp_path/'bright.ser',raw[None])
+    win._inspect();pump(app,lambda:win.job is None)
+    assert win.input_image.max() == 10
+    assert win.white.value() == pytest.approx(21450)

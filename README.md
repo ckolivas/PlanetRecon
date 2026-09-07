@@ -575,3 +575,11 @@ strides from discarding every green site. The search is limited to one pixel
 (including diagonals); larger gaps remain magenta. Display coverage/validity refer
 to those selected samples. Full-resolution scientific images, masks and exports
 retain their original support without this display-only filling.
+
+
+Automatic display white and **Fit levels** use
+`min(1.43 × brightest valid pixel, capture full-scale)`. The peak comes from the
+full-resolution result or inspected input frame, including pixels omitted by the
+preview. Capture full-scale is `(2^bit_depth − 1)` ADU, scaled by gain for electron
+output; floating data without a known detector range uses the peak rule alone.
+RGB channels share levels, and manual levels remain fixed across later updates.

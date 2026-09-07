@@ -35,10 +35,14 @@ def _to_qimage(image, black=None, white=None, validity=None):
     finite = arr[valid]
     if black is None:
         black = float(np.percentile(finite, 1)) if finite.size else 0.
-    if white is None:
-        white = float(np.percentile(finite, 99)) if finite.size else 1.
+    automatic_white = white is None
+    if automatic_white:
+        dtype = np.asarray(image).dtype
+        full_scale = float(np.iinfo(dtype).max) if np.issubdtype(dtype, np.integer) else float('inf')
+        white = min(1.43 * float(finite.max()), full_scale) if finite.size else 1.
     if white <= black:
-        white = black + 1.
+        if automatic_white:black = white - 1.
+        else:white = black + 1.
     scaled = np.clip((np.where(valid, arr, black) - black) / (white - black), 0, 1)
     rgb = np.repeat(scaled[..., None], 3, axis=2) if arr.ndim == 2 else scaled
     rgb8 = (rgb * 255).astype(np.uint8)
@@ -85,6 +89,8 @@ class MainWindow:
         self.last_result = None
         self.preview = None
         self.input_image = None
+        self.input_metadata = {}
+        self.input_max = None
         self.export_worker = None
         self.closing = False
         self.cancel_started = None
@@ -320,6 +326,8 @@ class MainWindow:
     def _set_input(self, payload):
         self.input_image = payload['input_image']
         meta = payload['source_metadata']
+        self.input_metadata = meta
+        self.input_max = payload.get('input_max')
         self.source_label.setText(f"{meta['path']} · {meta['width']}×{meta['height']} · "
                                   f"{meta['n_frames']} frames · {meta['color_mode']} · "
                                   f"{meta['bit_depth']} bit · input view: {payload['input_view']}")
@@ -448,9 +456,39 @@ class MainWindow:
         if mask is not None:
             valid &= mask
         values = np.asarray(arr)[valid]
-        low, high = np.percentile(values, [1, 99]) if values.size else (0, 1)
+        low = float(np.percentile(values, 1)) if values.size else 0.
+        # The preview may omit the brightest pixel. Fit white against the full
+        # scientific view, retaining common levels across RGB channels.
+        mode = self.view.currentText()
+        source = self.input_metadata if mode == 'Input' else {}
+        gain = 1.
+        maximum = float(values.max()) if values.size else 0.
+        if mode == 'Input':
+            if self.input_max is not None:maximum = max(maximum, self.input_max)
+        elif self.last_result is not None:
+            result = self.last_result
+            full_mask = None
+            if mode == 'Result':
+                full, full_mask = result.image, result.validity
+                source = result.provenance.get('source', {})
+                if result.units == 'e-':
+                    gain = result.provenance.get('config', {}).get('gain_e_per_adu') or 1.
+            elif mode == 'Coverage':full = result.coverage
+            elif mode == 'Validity':full = result.validity
+            else:full = result.layer_coverage.get('globe' if mode == 'Globe coverage' else 'ring')
+            if full is not None:
+                supported = np.isfinite(full)
+                if full_mask is not None:supported &= full_mask
+                maximum = max(maximum, float(np.max(full, where=supported, initial=0)))
+        # Floating radiance/coverage has no nominal detector ceiling. Validity
+        # is bounded by one; raw ADU and gain-scaled ADU use the capture range.
+        full_scale = 1. if mode == 'Validity' else float('inf')
+        bits = source.get('bit_depth')
+        if source.get('units') == 'adu' and isinstance(bits, int) and 0 < bits <= 32:
+            full_scale = ((1 << bits)-1) * gain
+        high = min(1.43 * maximum, full_scale) if maximum > 0 else min(1., full_scale)
         if high <= low:
-            high = low + 1
+            low = high - 1.
         self.black.blockSignals(True)
         self.white.blockSignals(True)
         self.black.setValue(float(low))
