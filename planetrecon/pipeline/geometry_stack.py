@@ -289,7 +289,13 @@ def stack_source_geometry(
     should_cancel: CancelFn | None = None,
     resume_from=None,
     state_checkpoint=None,
+    selection=None,
 ) -> ReconstructionResult:
+    if config.frame_preselection and selection is None:
+        from planetrecon.pipeline.baseline import stack_source
+        return stack_source(source, config, calibration=calibration, on_event=on_event,
+                            should_cancel=should_cancel, resume_from=resume_from,
+                            state_checkpoint=state_checkpoint)
     # All geometry operators currently execute in NumPy float64.
     if state_checkpoint is not None:
         from planetrecon import resume
@@ -338,6 +344,8 @@ def stack_source_geometry(
                         "config": config.to_dict(), "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION},
             warnings=[report.reason] if report.fallback else [],
         )
+        if selection is not None:
+            result.provenance['preprocessing'] = selection.summary
         if on_event is not None:
             on_event(result, {"seq": 1, "n_used": 0, "n_processed": 0, "n_total": n, "backend": backend.name})
         return result
@@ -353,9 +361,15 @@ def stack_source_geometry(
     sample_idx = []
     sample_planes = []
     candidates = sorted({0, n // 2, n - 1, config.reference_index})
+    if selection is not None:
+        accepted_indices = np.flatnonzero(selection.accepted)
+        candidates = sorted({int(accepted_indices[0]), int(accepted_indices[len(accepted_indices)//2]),
+                             int(accepted_indices[-1]), config.reference_index})
     for index in candidates:
         if should_cancel is not None and should_cancel():
             return cancelled_before_geometry()
+        if selection is not None and not selection.accepted[index]:
+            continue
         frame = usable_frame(source.read_raw(index))
         if frame is None:
             if index == config.reference_index and config.reference_index != 0:
@@ -368,6 +382,8 @@ def stack_source_geometry(
             if should_cancel is not None and should_cancel():
                 return cancelled_before_geometry()
             if index in candidates:
+                continue
+            if selection is not None and not selection.accepted[index]:
                 continue
             frame = usable_frame(source.read_raw(index))
             if frame is not None:
@@ -394,6 +410,8 @@ def stack_source_geometry(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    if selection is not None:
+        snapshot_provenance['preprocessing'] = selection.summary
     next_index = 0
     state_identity = None
     if resume_from is not None or state_checkpoint is not None:
@@ -470,6 +488,9 @@ def stack_source_geometry(
             if should_cancel is not None and should_cancel():
                 cancelled = True
                 break
+            if selection is not None and not selection.accepted[index]:
+                n_rejected += 1
+                continue
             calibrated = usable_frame(batch[local])
             if calibrated is None:
                 n_rejected += 1
@@ -493,7 +514,7 @@ def stack_source_geometry(
                 lap = convolve(plane, LAPLACIAN_KERNEL, mode="nearest")
                 score = max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12
             else:
-                score = max(laplacian_score(plane), 1e-12)
+                score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
                 continue

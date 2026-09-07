@@ -126,7 +126,7 @@ def test_pose_fit_uses_calibrated_samples_and_rejects_selected_bad_reference():
 
 def test_manual_field_center_allows_constant_capture_without_disc():
     source = ArraySource(np.full((2, 48, 48), 25.), timestamps=np.arange(2.))
-    cfg = replace(config(field_rate_rad_s=0.), equatorial_radius_px=None)
+    cfg = replace(config(field_rate_rad_s=0.), equatorial_radius_px=None, frame_preselection=False)
     result = stack_source(source, cfg)
     np.testing.assert_allclose(result.image, 25.)
 

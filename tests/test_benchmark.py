@@ -5,8 +5,8 @@ from planetrecon.io.ser import write_ser, COLOR_RGGB
 
 
 def test_private_bayer_benchmark_records_scope(tmp_path):
-    yy,xx=np.indices((12,16))
-    frame=(10+100*np.exp(-((yy-6)**2+(xx-8)**2)/12)).astype('u1')
+    yy,xx=np.indices((64,80))
+    frame=(10+100*np.exp(-((yy-32)**2+(xx-40)**2)/80)).astype('u1')
     path=write_ser(tmp_path/'private-observer.ser',np.stack([frame]*6),color_id=COLOR_RGGB)
     report=run(path,tmp_path/'bench','fixture',sample_frames=6)
     assert report['full_capture'] and report['used_frames']==6
@@ -18,7 +18,8 @@ def test_private_bayer_benchmark_records_scope(tmp_path):
 
 
 def test_mono_override_and_uniform_whole_capture_sampling(tmp_path):
-    frame=np.arange(192,dtype='u2').reshape(12,16)
+    yy,xx=np.indices((64,80))
+    frame=(10+100*np.exp(-((yy-32)**2+(xx-40)**2)/80)).astype('u2')
     path=write_ser(tmp_path/'infrared.ser',np.stack([frame]*10),color_id=COLOR_RGGB)
     report=run(path,tmp_path/'mono','mono-fixture',sample_frames=4,max_frames=4,color_override='mono',uniform=True)
     assert report['source_frames']==10 and report['processed_frames']==4

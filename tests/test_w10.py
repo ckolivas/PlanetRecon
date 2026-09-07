@@ -114,7 +114,7 @@ def test_saturn_stack_recovers_layers():
         for t in times
     ]
     src = ArraySource(np.stack(frames), color_mode="mono", bit_depth=32, timestamps=times)
-    cfg = ReconstructionConfig(
+    cfg = ReconstructionConfig(frame_preselection=False,
         device="cpu",
         threads=2,
         geometry_mode="saturn",
@@ -177,7 +177,7 @@ def test_moving_moon_is_masked_not_baked_into_globe():
     assert frames[0][24, 36] > 1.2
     assert frames[1][24, 36] < 1.2
     src = ArraySource(np.stack(frames), color_mode="mono", bit_depth=32, timestamps=times)
-    cfg = ReconstructionConfig(
+    cfg = ReconstructionConfig(frame_preselection=False,
         device="cpu",
         threads=2,
         geometry_mode="saturn",

@@ -305,7 +305,7 @@ def test_full_resolution_intermediate_export_preserves_processing(tmp_path):
     from planetrecon.jobs import _write_checkpoint
     frame = 10 + np.random.default_rng(7).random((514, 8))
     source = ArraySource(np.stack([frame]*3), bit_depth=32)
-    cfg = ReconstructionConfig(device='cpu', threads=2, batch_frames=1)
+    cfg = ReconstructionConfig(frame_preselection=False, device='cpu', threads=2, batch_frames=1)
     snapshots = []
     def callback(r, info):
         if snapshots:
@@ -332,7 +332,7 @@ def test_cli_stack_export_and_checkpoint(tmp_path):
     frame = (10 + np.random.default_rng(1).random((9, 12))*30).astype(np.uint16)
     path = tmp_path/'fixture.ser'
     write_ser(path, np.stack([frame]*2))
-    args = ['--threads', '2', 'stack', '--path', str(path), '--out', str(tmp_path/'out'), '--device', 'cpu',
+    args = ['--threads', '2', 'stack', '--no-frame-preselection', '--path', str(path), '--out', str(tmp_path/'out'), '--device', 'cpu',
             '--export', 'png16', '--black', '0', '--white', '65535', '--checkpoint', str(tmp_path/'live.npz')]
     assert main(args) == 0
     loaded = load_snapshot(tmp_path/'out/stack.npz')
@@ -381,5 +381,5 @@ def test_checkpoint_cannot_replace_capture_even_through_hardlink(tmp_path):
     os.link(capture, checkpoint)
     for p in (capture, checkpoint):
         with pytest.raises(SystemExit):
-            main(['stack', '--path', str(capture), '--checkpoint', str(p)])
+            main(['stack', '--no-frame-preselection', '--path', str(capture), '--checkpoint', str(p)])
     assert capture.read_bytes() == b'protected recording'

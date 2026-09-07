@@ -24,7 +24,7 @@ from planetrecon.result import ReconstructionResult
 
 
 def config(**kw):
-    return ReconstructionConfig(device='cpu', threads=2, batch_frames=1, **kw)
+    return ReconstructionConfig(frame_preselection=False, device='cpu', threads=2, batch_frames=1, **kw)
 
 
 def result(value=2, incomplete=True):
@@ -450,7 +450,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     win._finish_job()
     edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
         max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
-        endian_convention='spec', recover_complete_frames=True, reject_saturated=False,
+        endian_convention='spec', recover_complete_frames=True, reject_saturated=False, frame_preselection=True,
         reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
         gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',

@@ -61,7 +61,7 @@ def test_cuda_stack_matches_cpu(cuda_backend,color):
 def test_mid_job_cuda_failure_retains_sums_and_continues(monkeypatch):
     rng=np.random.default_rng(4);frames=rng.uniform(1,100,(4,12,16))
     source=ArraySource(frames)
-    cfg=ReconstructionConfig(device='cpu',threads=2)
+    cfg=ReconstructionConfig(frame_preselection=False, device='cpu',threads=2)
     expected=stack_source(source,cfg)
     class Failing(Backend):
         name='cuda';precision='float64';calls=0

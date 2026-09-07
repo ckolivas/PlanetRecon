@@ -149,6 +149,11 @@ def _worker_run(
                               "device_report": {"reason": "Geometry processing uses CPU float64"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
+            if result.stage == 'preprocessing':
+                emit('progress', {'stage': 'preprocessing: quality and planet size',
+                    'fraction': info.get('n_processed', 0) / max(info.get('n_total', 1), 1),
+                    'n_used': 0, 'backend': 'cpu'})
+                return
             if snapshot_request is not None and snapshot_request.is_set() and result.n_used:
                 snapshot_request.clear()
                 if not emit("snapshot", result_payload(result)):

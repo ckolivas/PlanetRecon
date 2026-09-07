@@ -1,0 +1,284 @@
+{
+  "status": "development validation; not independent qualification",
+  "capture_id": "osc-jupiter",
+  "reference": "user supplied unsharpened conventional stack",
+  "reference_sha256": "da004f156d423babeb30f2b5df0ff98fcc4b186b5387199f7d669fe7cac77eca",
+  "algorithm_contract": "docs/preprocessing.md",
+  "baseline_operator_version": "1.4",
+  "geometry_operator_version": "1.5",
+  "full_jupiter_run": {
+    "method": "Kraaikamp-style noise-robust squared Laplacian adaptation v1",
+    "noise_filter": "2x2 area bin then Gaussian sigma=1 binned pixel",
+    "size_method": "15% contrast largest silhouette; principal-axis projected extents",
+    "sigma": 2.0,
+    "std_ddof": 0,
+    "statistics": {
+      "quality": {
+        "mean": 1.1786565894492689,
+        "std": 0.09852286333779962,
+        "lower": 0.9816108627736696,
+        "upper": null
+      },
+      "width_px": {
+        "mean": 378.69399346224964,
+        "std": 1.6075549032556813,
+        "lower": 375.4788836557383,
+        "upper": 381.909103268761
+      },
+      "height_px": {
+        "mean": 352.5290875294138,
+        "std": 1.6834332183228986,
+        "lower": 349.162221092768,
+        "upper": 355.8959539660596
+      }
+    },
+    "n_measured": 3749,
+    "n_total": 3749,
+    "n_accepted": 3341,
+    "n_rejected": 408,
+    "complete": true,
+    "axis_note": "Apparent major/minor axes; phase and rings included, physical equator not inferred.",
+    "n_used": 3341,
+    "n_rejected_final": 408,
+    "backend": "cuda",
+    "seconds": 109.46526589999849,
+    "rejection_counts_by_reason": {
+      "invalid": 0,
+      "saturated": 0,
+      "no_target": 0,
+      "clipped_target": 0,
+      "low_quality": 81,
+      "width_outlier": 178,
+      "height_outlier": 190
+    }
+  },
+  "reference_comparison_before": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 3749,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -13.878774739257345,
+      -0.5548432860167926
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.1331269895597,
+        46.6522496816426
+      ],
+      [
+        233.22453472006242,
+        42.91013554088495
+      ],
+      [
+        232.99323120688163,
+        63.33976060139593
+      ]
+    ],
+    "relative_rmse": 0.005626674483458052,
+    "highpass_correlation_sigma3": 0.9589175403495358,
+    "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+  },
+  "reference_comparison_after": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 3341,
+    "n_rejected": 408,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -13.879310065592401,
+      -0.5557374658641443
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.2391899417802,
+        20.65644543679885
+      ],
+      [
+        233.28204170648868,
+        20.22327990423594
+      ],
+      [
+        232.98866197271795,
+        52.04751834722053
+      ]
+    ],
+    "relative_rmse": 0.005319288317006859,
+    "highpass_correlation_sigma3": 0.9606305502724362,
+    "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+  },
+  "relative_rmse_reduction_percent": 5.463016695827749,
+  "comparison_limitations": [
+    "Same capture and supplied reference; not independent nights/cameras.",
+    "Filtering and quality weighting both change; this comparison does not isolate their effects.",
+    "One translation and per-channel gain/offset fit; no sharpening or local spatial deformation."
+  ],
+  "other_captures": [
+    {
+      "capture": "mono-saturn",
+      "color": "mono",
+      "source_frames": 27689,
+      "sample_frames": 128,
+      "sampling": "uniform whole-capture subset; not full-capture qualification",
+      "accepted": 113,
+      "rejection_counts": {
+        "invalid": 0,
+        "saturated": 0,
+        "no_target": 0,
+        "clipped_target": 0,
+        "low_quality": 2,
+        "width_outlier": 10,
+        "height_outlier": 8
+      },
+      "statistics": {
+        "quality": {
+          "mean": 5.149170401321864,
+          "std": 1.0433496482022917,
+          "lower": 3.062471104917281,
+          "upper": null
+        },
+        "width_px": {
+          "mean": 438.71117412262936,
+          "std": 2.0945293746742326,
+          "lower": 434.5221153732809,
+          "upper": 442.90023287197783
+        },
+        "height_px": {
+          "mean": 178.4168646388218,
+          "std": 1.5376778599223164,
+          "lower": 175.34150891897718,
+          "upper": 181.49222035866643
+        }
+      }
+    },
+    {
+      "capture": "osc-mars-ir642",
+      "color": "RGGB",
+      "source_frames": 116691,
+      "sample_frames": 128,
+      "sampling": "uniform whole-capture subset; not full-capture qualification",
+      "accepted": 113,
+      "rejection_counts": {
+        "invalid": 0,
+        "saturated": 0,
+        "no_target": 0,
+        "clipped_target": 0,
+        "low_quality": 1,
+        "width_outlier": 10,
+        "height_outlier": 7
+      },
+      "statistics": {
+        "quality": {
+          "mean": 2.33045153091416,
+          "std": 0.34079992976320816,
+          "lower": 1.6488516713877435,
+          "upper": null
+        },
+        "width_px": {
+          "mean": 160.10677609578406,
+          "std": 2.7301810023308346,
+          "lower": 154.64641409112238,
+          "upper": 165.56713810044573
+        },
+        "height_px": {
+          "mean": 155.6330127454797,
+          "std": 2.7299177951045666,
+          "lower": 150.17317715527057,
+          "upper": 161.09284833568884
+        }
+      }
+    },
+    {
+      "capture": "osc-saturn",
+      "color": "RGGB",
+      "source_frames": 17934,
+      "sample_frames": 128,
+      "sampling": "uniform whole-capture subset; not full-capture qualification",
+      "accepted": 120,
+      "rejection_counts": {
+        "invalid": 0,
+        "saturated": 0,
+        "no_target": 0,
+        "clipped_target": 0,
+        "low_quality": 0,
+        "width_outlier": 4,
+        "height_outlier": 4
+      },
+      "statistics": {
+        "quality": {
+          "mean": 4.712307806276323,
+          "std": 0.7291848077007744,
+          "lower": 3.2539381908747744,
+          "upper": null
+        },
+        "width_px": {
+          "mean": 431.91247131176317,
+          "std": 1.551987052707673,
+          "lower": 428.80849720634785,
+          "upper": 435.0164454171785
+        },
+        "height_px": {
+          "mean": 175.3849789730707,
+          "std": 1.409006685750159,
+          "lower": 172.5669656015704,
+          "upper": 178.20299234457102
+        }
+      }
+    },
+    {
+      "capture": "osc-mars-l3",
+      "color": "RGGB",
+      "source_frames": 116629,
+      "sample_frames": 128,
+      "sampling": "uniform whole-capture subset; not full-capture qualification",
+      "accepted": 121,
+      "rejection_counts": {
+        "invalid": 0,
+        "saturated": 0,
+        "no_target": 0,
+        "clipped_target": 0,
+        "low_quality": 0,
+        "width_outlier": 3,
+        "height_outlier": 4
+      },
+      "statistics": {
+        "quality": {
+          "mean": 1.7899520336877004,
+          "std": 0.2629980057941089,
+          "lower": 1.2639560220994825,
+          "upper": null
+        },
+        "width_px": {
+          "mean": 164.81368993040627,
+          "std": 2.374375059263742,
+          "lower": 160.0649398118788,
+          "upper": 169.56244004893375
+        },
+        "height_px": {
+          "mean": 160.64395861297794,
+          "std": 2.492933019306055,
+          "lower": 155.65809257436584,
+          "upper": 165.62982465159004
+        }
+      }
+    }
+  ],
+  "cpu_cuda_parity": {
+    "frames": 32,
+    "used": 28,
+    "rejected": 4,
+    "cpu_cuda_max_image_difference": 5.128697466716403e-11,
+    "cpu_cuda_max_coverage_difference": 1.950883898871325e-11,
+    "absolute_tolerance": 1e-09,
+    "selection_identical": true,
+    "validity_identical": true,
+    "cuda_device": "RTX 5070"
+  },
+  "tests": {
+    "passed": 410,
+    "skipped": 41,
+    "command": "QT_QPA_PLATFORM=offscreen PLANETRECON_THREADS=2 .venv/bin/python -m pytest -q"
+  },
+  "capture_pixels_distributed": false
+}

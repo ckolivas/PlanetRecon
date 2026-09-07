@@ -14,7 +14,7 @@ def test_exact_resume_with_rejections_and_no_double_count(tmp_path,bayer):
     rng=np.random.default_rng(12)
     frames=rng.integers(0,200,(11,12,16),dtype='u2');frames[3]=65535
     path=write_ser(tmp_path/'in.ser',frames,color_id=COLOR_RGGB if bayer else 0)
-    cfg=ReconstructionConfig(device='cpu',threads=2,batch_frames=2,max_shift_px=100)
+    cfg=ReconstructionConfig(frame_preselection=False, device='cpu',threads=2,batch_frames=2,max_shift_px=100)
     state=tmp_path/'state.npz'
     with SERSource(path) as src:whole=stack_source(src,cfg)
     cancel=False
@@ -36,7 +36,7 @@ def test_exact_resume_with_rejections_and_no_double_count(tmp_path,bayer):
 
 def test_resume_rejects_changed_input_config_and_alias(tmp_path):
     path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))
-    cfg=ReconstructionConfig(device='cpu',threads=2,batch_frames=2)
+    cfg=ReconstructionConfig(frame_preselection=False, device='cpu',threads=2,batch_frames=2)
     state=tmp_path/'state.npz'
     with SERSource(path) as src:
         stack_source(src,cfg,state_checkpoint=state)
@@ -72,7 +72,7 @@ def test_cli_resumable_state(tmp_path):
     from planetrecon.cli import main
     path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))
     state=tmp_path/'state.npz'
-    args=['--threads','2','stack','--path',str(path),'--out',str(tmp_path/'out'),'--device','cpu']
+    args=['--threads','2','stack', '--no-frame-preselection','--path',str(path),'--out',str(tmp_path/'out'),'--device','cpu']
     assert main(args+['--state-checkpoint',str(state)])==0
     assert main(args+['--resume',str(state)])==0
     with pytest.raises(SystemExit):main(args+['--state-checkpoint',str(tmp_path/'out/stack.npz')])
@@ -81,7 +81,7 @@ def test_cli_resumable_state(tmp_path):
 def test_legacy_cpu_state_and_malformed_history(tmp_path):
     import json
     path=write_ser(tmp_path/'in.ser',np.ones((4,8,8),dtype='u2'))
-    cfg=ReconstructionConfig(device='cpu',threads=2)
+    cfg=ReconstructionConfig(frame_preselection=False, device='cpu',threads=2)
     state=tmp_path/'state.npz'
     with SERSource(path) as src:
         original=stack_source(src,cfg,state_checkpoint=state)

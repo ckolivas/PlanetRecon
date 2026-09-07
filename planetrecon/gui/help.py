@@ -1,6 +1,7 @@
 """Hover help for capture configuration, expressed in the GUI's displayed units."""
 
 CONTROL_HELP = {
+    'frame_preselection': 'Before stacking, measure every frame using a noise-robust Laplacian quality estimate and the apparent planet axes. Reject quality below mean − 2σ, either dimension outside mean ± 2σ, missing targets and clipped silhouettes. Disable for surface-detail crops without a complete planet.',
     'device': 'Choose CPU or CUDA GPU processing. Auto uses a supported GPU when available. Geometry processing uses CPU.',
     'threads': 'Maximum CPU worker threads for the next run, from 1 to 32.',
     'batch_frames': 'Number of frames read per batch. Larger batches use more memory; progress and checkpoints update after each batch.',

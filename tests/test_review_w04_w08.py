@@ -23,7 +23,7 @@ from planetrecon.reconstruction import ReconstructionConfig
 
 
 def cpu_config(**kwargs):
-    return ReconstructionConfig(device="cpu", threads=2, **kwargs)
+    return ReconstructionConfig(frame_preselection=False, device="cpu", threads=2, **kwargs)
 
 
 @pytest.mark.parametrize("rgb", [False, True])

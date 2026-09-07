@@ -94,6 +94,45 @@ def _stack_source(
         if calibration is not None:
             raise ValueError("use either calibration settings or an explicit Calibration, not both")
         calibration = load_calibration(config, source.frame_shape())
+    if source.color_mode() not in ('mono', 'RGB', 'BGR', 'RGGB', 'GRBG', 'GBRG', 'BGGR'):
+        raise ValueError(f'unsupported reconstruction color mode {source.color_mode()!r}')
+    if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
+        raise ValueError('gain calibration cannot be applied to observations already in electrons')
+    selection = None
+    if config.frame_preselection:
+        from planetrecon.pipeline.preprocess import screen_source
+        n = source.n_frames()
+        shape = source.frame_shape()
+        if n < 1 or min(shape[:2]) < 5:
+            raise ValueError('stack requires frames of at least 5 by 5 pixels')
+        if config.reference_index >= n:
+            raise ValueError('reference_index is outside the capture')
+        rgb = is_bayer(source.color_mode()) or len(shape) == 3
+        out_shape = (*shape[:2], 3) if rgb else shape[:2]
+        empty = np.zeros(out_shape, dtype=np.float64)
+        progress_result = ReconstructionResult(
+            image=empty, coverage=empty.copy(), validity=empty > 0,
+            units='e-' if calibration and calibration.gain_e_per_adu is not None else source.metadata().units,
+            channel_order='RGB' if rgb else 'mono', backend='cpu', precision='float64',
+            stage='preprocessing', incomplete=True,
+            provenance=capture_provenance(source, config, calibration),
+        )
+        def progress(processed, total):
+            if on_event is not None:
+                on_event(progress_result, {'n_processed': processed, 'n_total': total,
+                                          'n_used': 0, 'backend': 'cpu'})
+        progress(0, n)
+        selection = screen_source(source, config, calibration, should_cancel=should_cancel,
+                                  on_progress=progress)
+        progress_result.provenance['preprocessing'] = selection.summary
+        if selection.cancelled:
+            return progress_result
+        if not selection.accepted.any():
+            raise ValueError('no usable frames remain after preprocessing; a complete visible planet is required '
+                             '(disable frame preselection for surface-detail crops)')
+        if config.reference_index and not selection.accepted[config.reference_index]:
+            raise ValueError('selected reference frame was rejected by preprocessing; choose an accepted frame or automatic reference 0')
+        del progress_result, empty
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
 
@@ -105,6 +144,7 @@ def _stack_source(
             should_cancel=should_cancel,
             resume_from=resume_from,
             state_checkpoint=state_checkpoint,
+            selection=selection,
         )
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)
@@ -160,6 +200,8 @@ def _stack_source(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    if selection is not None:
+        snapshot_provenance['preprocessing'] = selection.summary
     snapshot_provenance["registration"] = "Gaussian 1.5px amplitude correlation with subpixel peak fit"
     if memory_report is not None:
         snapshot_provenance['cuda_allocation_budget'] = memory_report
@@ -232,6 +274,9 @@ def _stack_source(
                 cancelled = True
                 break
             raw = batch[local]
+            if selection is not None and not selection.accepted[index]:
+                n_rejected += 1
+                continue
             if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
                 n_rejected += 1
                 continue
@@ -253,7 +298,7 @@ def _stack_source(
             if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
                 n_rejected += 1
                 continue
-            score = max(laplacian_score(plane), 1e-12)
+            score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
                 continue

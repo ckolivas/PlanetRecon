@@ -171,7 +171,7 @@ def test_stack_array_mono_and_cfa():
     base = np.clip(40 + 80 * np.exp(-0.5 * ((np.indices((24, 24))[1] - 12) ** 2 + (np.indices((24, 24))[0] - 12) ** 2) / 8.0), 0, 255)
     frames = np.stack([base, np.roll(base, 1, axis=1), np.roll(base, -1, axis=0)])
     src = ArraySource(frames.astype(np.float64), color_mode="mono", bit_depth=16)
-    cfg = ReconstructionConfig(device="cpu", threads=2, batch_frames=2)
+    cfg = ReconstructionConfig(frame_preselection=False, device="cpu", threads=2, batch_frames=2)
     result = stack_source(src, cfg)
     assert result.n_used == 3
     assert result.channel_order == "mono"

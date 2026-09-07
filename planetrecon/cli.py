@@ -152,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable accumulator state after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
+    st.add_argument('--no-frame-preselection', action='store_true',
+                    help='disable the default quality/planet-size preprocessing pass (for surface-detail crops)')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
     st.add_argument("--cpu-memory-mib", type=int, help="Linux CPU process address-space cap in MiB, including mapped libraries")
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -361,6 +363,7 @@ def main(argv: list[str] | None = None) -> int:
             device=args.device,
             threads=applied_threads,
             batch_frames=args.batch,
+            frame_preselection=not args.no_frame_preselection,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
             crop=args.crop,
@@ -398,7 +401,8 @@ def main(argv: list[str] | None = None) -> int:
             bayer_override=args.bayer,
         ) as source:
             result = stack_source(source, cfg, on_event=(
-                (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)) if args.checkpoint else None),
+                (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)
+                 if snapshot.stage != 'preprocessing' else None) if args.checkpoint else None),
                 resume_from=args.resume, state_checkpoint=args.state_checkpoint)
         npz = args.out / "stack.npz"
         save_snapshot(npz, result)

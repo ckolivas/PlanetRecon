@@ -21,7 +21,7 @@ def test_bayer_stack_publishes_and_exports_complete_rgb(pattern, geometry, tmp_p
         raw[labels == name] = expected[c]
     source = ArraySource(raw[None], color_mode=pattern, bit_depth=32,
                          timestamps=np.array([0.]))
-    cfg = ReconstructionConfig(device='cpu', threads=2, geometry_mode=geometry,
+    cfg = ReconstructionConfig(frame_preselection=False, device='cpu', threads=2, geometry_mode=geometry,
                                field_rate_rad_s=0., field_center_x=5.5, field_center_y=4.5,
                                freeze_mid_exposure=False, reject_saturated=False)
     events = []

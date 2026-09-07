@@ -53,7 +53,7 @@ def test_avi_exact_and_indexed(tmp_path, rgb, top_down):
         assert src.timestamps() is None
         assert src.metadata().units == 'decoded-code-value'
         assert src._index.seek(0,2) == 3*8
-        out = stack_source(src, ReconstructionConfig(device='cpu',threads=2, max_shift_px=100))
+        out = stack_source(src, ReconstructionConfig(frame_preselection=False, device='cpu',threads=2, max_shift_px=100))
         assert out.n_used == 3 and any('linearity' in w for w in out.warnings)
 
 

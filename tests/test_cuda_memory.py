@@ -31,7 +31,7 @@ def test_limit_restored_after_exception_and_never_relaxes_existing_cap(monkeypat
 
 def test_unavailable_budget_falls_back_without_attempting_uncapped_gpu(monkeypatch):
     monkeypatch.setitem(sys.modules,'torch',SimpleNamespace(cuda=SimpleNamespace(is_available=lambda:False)))
-    cfg=ReconstructionConfig(device='gpu',threads=2,max_vram_bytes=1024)
+    cfg=ReconstructionConfig(frame_preselection=False, device='gpu',threads=2,max_vram_bytes=1024)
     frames=np.ones((2,8,8),dtype='u2')
     result=stack_source(ArraySource(frames),cfg)
     assert result.backend=='cpu' and result.n_used==2

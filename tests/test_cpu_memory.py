@@ -39,7 +39,7 @@ def test_cpu_stack_under_ceiling_and_immediate_rerun():
         from planetrecon.pipeline.baseline import stack_source
         from planetrecon.runtime import apply_thread_limits
         apply_thread_limits(2)
-        cfg=ReconstructionConfig(device='cpu',threads=2,batch_frames=1)
+        cfg=ReconstructionConfig(frame_preselection=False, device='cpu',threads=2,batch_frames=1)
         frames=np.arange(3*16*24,dtype='u2').reshape(3,16,24)+1
         whole=stack_source(ArraySource(frames),cfg)
         original=resource.getrlimit(resource.RLIMIT_AS)

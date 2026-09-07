@@ -34,6 +34,7 @@ class ConfigControls(QTabWidget):
         self._choice(capture, 'endian_convention', 'SER byte-order convention', ['ecosystem', 'spec'])
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
+        self._check(capture, 'frame_preselection', 'Preprocess: quality and size (2σ)')
         self._integer(capture, 'reference_index', 'Reference frame (from 0)', 0, 2**31-1)
         self._number(capture, 'max_shift_px', 'Maximum shift (px)')
         self._number(capture, 'cadence_s', 'Cadence (s; blank = timestamps)')

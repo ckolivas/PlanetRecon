@@ -30,6 +30,7 @@ class ReconstructionConfig:
     endian_convention: str = "ecosystem"
     recover_complete_frames: bool = False
     reject_saturated: bool = True
+    frame_preselection: bool = True
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -69,6 +70,8 @@ class ReconstructionConfig:
     saturate_adu: float | None = None
 
     def __post_init__(self) -> None:
+        if type(self.frame_preselection) is not bool:
+            raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):
             value = getattr(self, name)
             if value is not None and (not isinstance(value, str) or not value.strip()):

@@ -34,7 +34,7 @@ def test_geometry_continuation_is_exact(tmp_path,mode,color):
     cancel=False
     def event(result,info):
         nonlocal cancel
-        if info['n_processed']>=4:cancel=True
+        if result.stage != 'preprocessing' and info['n_processed']>=4:cancel=True
     with SERSource(path) as src:
         partial=stack_source(src,cfg,state_checkpoint=state,on_event=event,should_cancel=lambda:cancel)
     assert partial.incomplete and partial.n_used==3 and partial.n_rejected==1
