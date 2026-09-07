@@ -181,6 +181,7 @@ class MainWindow:
         levels.addWidget(QLabel('white'))
         levels.addWidget(self.white)
         fit = QPushButton('Fit levels')
+        fit.setToolTip('Set display black to the first percentile and white to 1.43 times the brightest valid pixel, capped at the capture range. Changes viewing levels; float TIFF keeps the original intensity scale.')
         fit.clicked.connect(self._fit_levels)
         levels.addWidget(fit)
         body.addLayout(levels)
@@ -233,6 +234,28 @@ class MainWindow:
         layout.addWidget(self.status)
         layout.addWidget(self.error)
         self.window.setCentralWidget(root)
+        tips = {
+            self.open_btn: 'Choose a SER, AVI or observed HDF5 capture, then inspect its metadata and input preview.',
+            self.inspect_btn: 'Read capture metadata and preview the input using the current settings, without starting reconstruction.',
+            self.run_btn: 'Start reconstruction with the current settings, or continue the selected checkpoint when Resume is enabled.',
+            self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
+            self.checkpoint_btn: 'Choose the NPZ file used to save accumulator progress after each batch. To resume, choose an existing file and enable Resume.',
+            self.checkpoint_path: 'Optional accumulator checkpoint path. Progress is saved here during processing; leave blank to disable checkpoints.',
+            self.resume_check: 'Continue from the selected accumulator checkpoint. The capture and processing settings must match the saved run.',
+            self.view: 'Choose the reconstructed result, input preview, accumulation weights, validity mask or Saturn layer coverage.',
+            self.channel: 'Display all colour channels together, or inspect only red, green or blue. This does not change the exported channels.',
+            self.zoom: 'Fit the preview to the window or choose a display zoom. This does not resize the saved full-resolution result.',
+            self.black: 'Intensity mapped to black in the display. Also used for integer export when its black box is empty.',
+            self.white: 'Intensity mapped to white in the display. Also used for integer export when its white box is empty.',
+            self.encoding: 'Float TIFF preserves linear intensity values. Integer TIFF and PNG map black and white levels into 16-bit values.',
+            self.save_black: 'Intensity mapped to zero in integer PNG/TIFF. Leave blank to use display black. Ignored for float TIFF.',
+            self.save_white: 'Intensity mapped to 65535 in integer PNG/TIFF. Leave blank to use display white. Ignored for float TIFF.',
+            self.save_gamma: 'Optional display gamma for integer export. Leave blank for linear output. Ignored for float TIFF.',
+            self.save_btn: 'Save the latest full-resolution result in the selected format, with provenance and coverage companions. Partial results are labelled incomplete.',
+            self.cancel_save_btn: 'Request cancellation of the active export. Cancellation can wait for the current encoding operation to finish.',
+        }
+        for widget, tip in tips.items():
+            widget.setToolTip(tip)
         self.timer = QTimer(self.window)
         self.timer.setInterval(200)
         self.timer.timeout.connect(self._poll)

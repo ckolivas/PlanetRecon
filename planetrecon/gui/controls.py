@@ -4,8 +4,11 @@ import math
 
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QScrollArea, QSpinBox, QTabWidget, QWidget,
+    QLineEdit, QPushButton, QScrollArea, QSpinBox, QTabWidget, QToolButton, QWidget,
 )
+
+
+from planetrecon.gui.help import CONTROL_HELP
 
 
 class ConfigControls(QTabWidget):
@@ -47,6 +50,7 @@ class ConfigControls(QTabWidget):
             edit.setPlaceholderText('No table')
             self.fields[name+'_path'] = edit
             button = QPushButton('…')
+            button.setToolTip(f'Choose the {name} calibration NPY table for the next run. The array must match the raw detector frame shape.')
             button.setMaximumWidth(30)
             button.clicked.connect(lambda checked=False, e=edit: self._choose_table(e))
             layout.addWidget(edit)
@@ -83,6 +87,19 @@ class ConfigControls(QTabWidget):
         self.saturn_page = self.widget(3)
         self.fields['geometry_mode'].currentIndexChanged.connect(self._mode_changed)
         self._mode_changed()
+        for key, edit in self.fields.items():
+            edit.setToolTip(CONTROL_HELP[key])
+        for index, text in enumerate((
+                'Input interpretation, processing device, memory and frame handling.',
+                'Optional detector calibration tables and intensity units.',
+                'Field rotation and globe surface geometry.',
+                'Ring, illumination and moon-mask settings for the Saturn motion model.')):
+            self.setTabToolTip(index, text)
+        for button in self.tabBar().findChildren(QToolButton):
+            if button.objectName() == 'ScrollLeftButton':
+                button.setToolTip('Scroll the settings tabs to the left.')
+            elif button.objectName() == 'ScrollRightButton':
+                button.setToolTip('Scroll the settings tabs to the right.')
 
     def _tab(self, name):
         scroll = QScrollArea()
