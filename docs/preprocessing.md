@@ -1,10 +1,54 @@
 # Capture preprocessing
 
-The GUI and `stack` command now scan the entire capture before accumulating
-any frames. The default Capture checkbox **Preprocess: quality and size (2σ)**
-controls this step. For surface-detail crops, flat fields or other data without
-a complete visible planet, disable it (CLI: `--no-frame-preselection`; Python:
-`ReconstructionConfig(frame_preselection=False)`). No input files are modified.
+Use the **Preprocess** button or the separate `preprocess` command whenever
+fresh measurements are needed. It measures quality, shape and geometry without
+reconstructing or replacing the displayed result. The measurements are cached
+beside the capture as `<capture filename>.planetrecon-preprocess.npz`.
+
+The **Use cached preprocessing (quality and shape)** checkbox independently
+controls whether later runs use those decisions. Processing never launches a
+new analysis automatically. Without a cache, runs apply only their existing
+validity, saturation and registration checks. A stale or corrupt selected cache
+requires another Preprocess action or disabling cache use. Input files are not
+modified.
+
+The GUI shows quality exclusions, shape exclusions, overlap, other invalid or
+saturated frames, the unique total excluded, and the retained frame count before
+a run. Missing targets and clipped silhouettes count as shape failures. Toggling
+cache use updates the display; changing input/calibration settings marks the
+counts unverified until inspection or preprocessing validates them.
+
+```sh
+.venv/bin/python -m planetrecon preprocess --path capture.ser
+.venv/bin/python -m planetrecon stack --path capture.ser --device gpu
+.venv/bin/python -m planetrecon stack --path capture.ser --no-frame-preselection
+```
+
+`preprocess --config settings.json` accepts calibration and geometry settings;
+`--bayer` and `--cadence` provide direct overrides. To choose another cache
+location, use `preprocess --cache measurements.npz` and
+`stack --preprocessing-cache measurements.npz`.
+
+Python callers can call `preprocess_source(source, config)` independently, then
+`stack_source(source, config, preprocessing=selection)` with its returned
+selection. File-backed sources also save/load the sidecar automatically. Set
+`ReconstructionConfig(frame_preselection=False)` to ignore preprocessing.
+
+## Cache validity
+
+Cache identity hashes **all observed pixels**, frame layout/colour, bit depth,
+timestamps and actual calibration tables/settings. It distinguishes indexed
+subsets of the same source. Thread count, device, batch size and reconstruction
+geometry can change without invalidating quality/shape decisions. Checking a
+cache reads the observations but does not repeat quality or shape estimation.
+Geometry suggestions with incompatible new timing/viewing settings are labelled
+outdated independently of the still-valid frame selection.
+
+Writes are atomic. Cancellation and failed analysis retain the previous cache.
+The input is checked before and after analysis to catch changes during the pass.
+Accumulator resume verifies the cached accepted indices and weights as well as
+the original input/configuration; refreshing only geometry suggestions does not
+invalidate otherwise identical sums.
 
 ## Quality estimator and attribution
 
@@ -80,10 +124,10 @@ estimation samples accepted frames across the capture and retains original times
 Preprocessing runs on CPU using bounded source batches and four scalar
 measurements per frame; reconstruction still uses the requested backend. The
 GUI shows preprocessing progress without replacing an existing image with an
-empty preview. Cancellation during screening returns an incomplete result with
-zero accumulated frames and does not replace an accumulator checkpoint.
-Resuming reruns screening on the original capture before continuing the saved
-sums. Operator versions reject incompatible older checkpoints.
+empty preview. Cancellation raises `InterruptedError` in the Python API and
+does not replace a cache or accumulator checkpoint. Resuming reuses validated
+cached decisions before continuing the saved sums. Operator versions reject
+incompatible older checkpoints.
 
 Result metadata includes `preprocessing`: estimator parameters, mean/standard
 deviation/cutoffs, accepted counts and original zero-based rejected indices
@@ -94,9 +138,16 @@ checks (such as maximum registration displacement) can reject additional frames.
 The locked R9 scientific ranking in `planetrecon/rank.py` is unchanged.
 Unit fixtures that exercise flat fields, raw lattice algebra or cropped textures
 explicitly disable whole-planet screening; the dedicated preprocessing tests
-exercise the default two-pass path.
+exercise independent preprocessing followed by optional cached reconstruction.
 
 ## Development validation
+
+The [standalone cache validation](../results/preprocessing/cache-validation.json)
+reused the saved Jupiter measurements on the RTX 5070: 3,341 frames retained,
+408 excluded (81 quality, 348 shape, 21 overlapping), with identical RGB pixels
+and validity to the previous screened reconstruction. The cache implementation
+passes the full suite (434 passed, 41 opt-in skips), including separate GUI/CLI
+actions, optional reuse, pixel/calibration invalidation, corruption and cancellation.
 
 [Recorded validation](../results/preprocessing/capture-validation.json) includes
 410 passing tests and 41 opt-in skips, exact screened checkpoint continuation,

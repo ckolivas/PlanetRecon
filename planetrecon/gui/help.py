@@ -1,7 +1,7 @@
 """Hover help for capture configuration, expressed in the GUI's displayed units."""
 
 CONTROL_HELP = {
-    'frame_preselection': 'Before stacking, reject quality below mean − 2σ, either dimension outside mean ± 2σ, missing targets and clipped silhouettes. Estimate orientation and rotation from accepted frames and prefill Geometry for the next run, preserving user edits and checkpoint settings. Disable for surface-detail crops without a complete planet.',
+    'frame_preselection': 'Use matching cached quality and shape decisions for this run. The separate Preprocess button creates or refreshes measurements and geometry estimates. Turning this off keeps all frames except existing validity, saturation and registration rejections.',
     'device': 'Choose CPU or CUDA GPU processing. Auto uses a supported GPU when available. Geometry processing uses CPU.',
     'threads': 'Maximum CPU worker threads for the next run, from 1 to 32.',
     'batch_frames': 'Number of frames read per batch. Larger batches use more memory; progress and checkpoints update after each batch.',

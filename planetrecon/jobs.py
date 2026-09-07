@@ -34,7 +34,7 @@ class JobEvent:
 def _put_event(q, event: JobEvent, cancel_event=None) -> bool:
     # Optional UI updates must never stall processing or cancellation. The
     # terminal event carries the final image even when previews were dropped.
-    if event.kind in ("preview", "progress", "snapshot", "source", "geometry_estimate"):
+    if event.kind in ("preview", "progress", "snapshot", "source", "geometry_estimate", "preprocessing_cache"):
         try:
             q.put_nowait(event)
         except queue.Full:
@@ -100,6 +100,7 @@ def _worker_run(
     inspect_only: bool = False,
     resume_from: str | None = None,
     state_checkpoint: str | None = None,
+    preprocess_only: bool = False,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -113,7 +114,7 @@ def _worker_run(
     def emit(kind: str, payload: dict) -> bool:
         nonlocal seq
         seq += 1
-        return _put_event(event_q, JobEvent(job_id, seq, kind, payload), cancel_event)
+        return _put_event(event_q, JobEvent(job_id, seq, kind, payload), None if kind == 'cancelled' else cancel_event)
 
     try:
         config = ReconstructionConfig.from_dict(config_dict)
@@ -141,14 +142,29 @@ def _worker_run(
                        "input_image": preview,
                        "input_max": float(np.max(raw, where=np.isfinite(raw), initial=0)),
                        "input_stride": step, "input_view": "nearest-neighbour Bayer RGB" if bayer else color}
+            if inspect_only:
+                from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for
+                _, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
+                                                              should_cancel=cancel_event.is_set)
             emit("completed" if inspect_only else "source", payload)
             if inspect_only:
                 return
+        if preprocess_only:
+            from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path
+            emit('progress', {'stage': 'Preprocessing: validating capture', 'fraction': None, 'backend': 'cpu'})
+            selected = preprocess_source(source, config, should_cancel=cancel_event.is_set,
+                on_progress=lambda done, total: emit('progress', {'stage': 'Preprocessing: quality and shape',
+                    'fraction': done/max(total, 1), 'backend': 'cpu'}))
+            emit('completed', {'preprocessing_cache': cache_report(selected, default_cache_path(source))})
+            return
         if config.geometry_mode != "none":
             emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",
                               "device_report": {"reason": "Geometry processing uses CPU float64"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
+            if result.stage == 'cache_ready':
+                emit('preprocessing_cache', result.provenance.get('preprocessing_cache', {}))
+                return
             if result.stage == 'preprocessing':
                 if 'geometry_estimate' in info:
                     emit('geometry_estimate', info['geometry_estimate'])
@@ -211,6 +227,8 @@ def _worker_run(
             return
         emit("completed", result_payload(result))
 
+    except InterruptedError:
+        emit('cancelled', {'n_used': 0})
     except Exception as exc:
         emit(
             "error",
@@ -379,11 +397,14 @@ def start_stack_job(
     inspect_only: bool = False,
     resume_from: str | Path | None = None,
     state_checkpoint: str | Path | None = None,
+    preprocess_only: bool = False,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
-    if inspect_only and (resume_from is not None or state_checkpoint is not None):
-        raise ValueError('input inspection cannot use accumulator checkpoints')
+    if inspect_only and preprocess_only:
+        raise ValueError('choose inspection or preprocessing')
+    if (inspect_only or preprocess_only) and (resume_from is not None or state_checkpoint is not None):
+        raise ValueError('input inspection and preprocessing cannot use accumulator checkpoints')
     if state_checkpoint is not None and checkpoint_dir is not None:
         state, snapshot = Path(state_checkpoint), Path(checkpoint_dir) / f'{job_id}.npz'
         if state.resolve() == snapshot.resolve() or (state.exists() and snapshot.exists() and state.samefile(snapshot)):
@@ -406,6 +427,7 @@ def start_stack_job(
             inspect_only,
             None if resume_from is None else str(resume_from),
             None if state_checkpoint is None else str(state_checkpoint),
+            preprocess_only,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,

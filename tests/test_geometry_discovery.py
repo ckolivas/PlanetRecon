@@ -155,6 +155,10 @@ def test_estimates_reach_worker_without_mutating_active_config(tmp_path):
     frames = np.stack([source.read_raw(i) for i in range(source.n_frames())]).astype('u2')
     path = write_ser(tmp_path/'spin.ser', frames)
     cfg = ReconstructionConfig(device='cpu', threads=2, cadence_s=60/35, equatorial_radius_px=40)
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.preprocess_cache import preprocess_source
+    with SERSource(path) as capture:
+        preprocess_source(capture, cfg)
     handle = start_stack_job(path, cfg)
     events = []
     try:
@@ -162,7 +166,7 @@ def test_estimates_reach_worker_without_mutating_active_config(tmp_path):
         while handle.state not in ('completed', 'failed') and time.monotonic() < deadline:
             events.extend(handle.poll(.05))
         assert handle.state == 'completed'
-        estimates = [e.payload for e in events if e.kind == 'geometry_estimate']
+        estimates = [e.payload['geometry_estimate'] for e in events if e.kind == 'preprocessing_cache']
         final = result_from_payload(next(e.payload for e in events if e.kind == 'completed'))
         assert estimates and 'pole_pa_rad' in estimates[0]['suggestions']
         assert final.provenance['config'] == cfg.to_dict()

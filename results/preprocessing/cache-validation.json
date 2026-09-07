@@ -1,0 +1,28 @@
+{
+  "backend": "cuda",
+  "precision": "float64",
+  "channel_order": "RGB",
+  "shape": [
+    424,
+    656,
+    3
+  ],
+  "n_used": 3341,
+  "n_rejected": 408,
+  "cache_status": "ready",
+  "cache_digest": "fc500f6cd2c873a7eb7992278e6ff0dabaa5020ab9d9c6e2324bd4469a5fa46a",
+  "max_difference_from_previous_screened_stack_adu": 0.0,
+  "same_validity": true,
+  "capture": "2022-09-10-0649_2-GB-L-Jup_ZWO ASI224MC.ser",
+  "validation_date": "2026-09-08",
+  "selection": {
+    "n_total": 3749,
+    "accepted": 3341,
+    "quality": 81,
+    "shape": 348,
+    "quality_shape_overlap": 21,
+    "other": 0,
+    "excluded": 408
+  },
+  "scope": "Development validation: standalone sidecar reused in full capture CUDA reconstruction, compared with the previous automatic screened reconstruction."
+}

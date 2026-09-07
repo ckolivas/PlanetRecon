@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import sys
 from pathlib import Path
@@ -152,8 +153,9 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable accumulator state after each batch")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
+    st.add_argument('--preprocessing-cache', type=Path, help='read a specific preprocessing cache (default: beside capture)')
     st.add_argument('--no-frame-preselection', action='store_true',
-                    help='disable the default quality/planet-size preprocessing pass (for surface-detail crops)')
+                    help='ignore cached quality/shape decisions for this run')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
     st.add_argument("--cpu-memory-mib", type=int, help="Linux CPU process address-space cap in MiB, including mapped libraries")
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -192,6 +194,13 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--moon-radius", type=float, default=None)
     st.add_argument("--moon-vx", type=float, default=0.0)
     st.add_argument("--moon-vy", type=float, default=0.0)
+
+    pp = sub.add_parser('preprocess', help='independently measure quality/shape/geometry and cache the results')
+    pp.add_argument('--path', type=Path, required=True)
+    pp.add_argument('--cache', type=Path, help='cache output (default: capture filename plus .planetrecon-preprocess.npz)')
+    pp.add_argument('--config', type=Path, help='optional ReconstructionConfig JSON for calibration and geometry settings')
+    pp.add_argument('--bayer', choices=['mono', 'RGGB', 'BGGR', 'GRBG', 'GBRG'])
+    pp.add_argument('--cadence', type=float, help='seconds per frame when timestamps are absent')
 
     ex = sub.add_parser("export", help="export a saved result or full-resolution checkpoint")
     ex.add_argument("--path", type=Path, required=True)
@@ -344,6 +353,25 @@ def main(argv: list[str] | None = None) -> int:
             print(f"warning: {warning}")
         print(f"backend={backend.name} precision={backend.precision}")
         return 0 if not (args.device == "gpu" and report.fallback) else 2
+    if args.cmd == 'preprocess':
+        from dataclasses import replace
+        from planetrecon.io import open_source
+        from planetrecon.reconstruction import ReconstructionConfig
+        from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path
+        cfg = (ReconstructionConfig.from_dict(json.loads(args.config.read_text())) if args.config
+               else ReconstructionConfig(device='cpu', threads=applied_threads))
+        updates = {'threads': applied_threads}
+        if args.bayer is not None:
+            updates['bayer_override'] = args.bayer
+        if args.cadence is not None:
+            updates['cadence_s'] = args.cadence
+        cfg = replace(cfg, **updates)
+        with open_source(args.path, bayer_override=cfg.bayer_override, crop=cfg.crop,
+                         endian_override=cfg.endian_override, endian_convention=cfg.endian_convention,
+                         recover_complete_frames=cfg.recover_complete_frames) as source:
+            selected = preprocess_source(source, cfg, cache_path=args.cache)
+            print(json.dumps(cache_report(selected, args.cache or default_cache_path(source)), indent=2))
+        return 0
     if args.cmd == "stack":
         from planetrecon.io import open_source
         from planetrecon.pipeline.baseline import stack_source
@@ -402,8 +430,9 @@ def main(argv: list[str] | None = None) -> int:
         ) as source:
             result = stack_source(source, cfg, on_event=(
                 (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)
-                 if snapshot.stage != 'preprocessing' else None) if args.checkpoint else None),
-                resume_from=args.resume, state_checkpoint=args.state_checkpoint)
+                 if snapshot.stage not in ('preprocessing', 'cache_ready') else None) if args.checkpoint else None),
+                resume_from=args.resume, state_checkpoint=args.state_checkpoint,
+                preprocessing_cache=args.preprocessing_cache)
         npz = args.out / "stack.npz"
         save_snapshot(npz, result)
         if export_config:

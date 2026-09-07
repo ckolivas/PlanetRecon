@@ -9,6 +9,7 @@ from planetrecon.detector import cfa_labels
 from planetrecon.io.source import ArraySource
 from planetrecon.pipeline.baseline import stack_source
 from planetrecon.pipeline.preprocess import measure_frame, screen_source, sigma_selection
+from planetrecon.pipeline.preprocess_cache import preprocess_source
 from planetrecon.reconstruction import ReconstructionConfig
 
 
@@ -104,33 +105,34 @@ def test_processing_only_accumulates_selected_frames_after_full_scan(mode):
         if result.n_used:
             assert set(range(len(frames))).issubset(source.reads)
     cfg = config(geometry_mode=mode, field_rate_rad_s=0 if mode == 'field' else None)
-    result = stack_source(source, cfg, on_event=event)
+    selected = preprocess_source(source, cfg)
+    result = stack_source(source, cfg, on_event=event, preprocessing=selected)
     assert result.n_used == 30 and result.n_rejected == 1
     assert result.provenance['preprocessing']['n_accepted'] == 30
-    assert stages[0] == 'preprocessing' and stages[-1] == 'final'
+    assert stages[0] == 'cache_ready' and stages[-1] == 'final'
     expected = stack_source(ArraySource(frames[:30]), replace(cfg, frame_preselection=False))
     np.testing.assert_allclose(result.image, expected.image, atol=1e-10)
 
 
 def test_cancel_during_screening_never_starts_processing(tmp_path):
     stop = False
-    def progress(result, info):
+    def progress(done, total):
         nonlocal stop
-        if info['n_processed'] >= 5:
+        if done >= 5:
             stop = True
-    destination = tmp_path / 'state.npz'
-    result = stack_source(ArraySource(np.stack([planet()]*20)), config(),
-                          should_cancel=lambda: stop, on_event=progress, state_checkpoint=destination)
-    assert result.incomplete and result.stage == 'preprocessing' and result.n_used == 0
+    destination = tmp_path / 'measurements.npz'
+    with pytest.raises(InterruptedError):
+        preprocess_source(ArraySource(np.stack([planet()]*20)), config(),
+                          should_cancel=lambda: stop, on_progress=progress, cache_path=destination)
     assert not destination.exists()
 
 
 def test_rejected_explicit_reference_and_all_rejected_fail_clearly():
     frames = np.stack([planet()]*30 + [planet(blur=7)])
     with pytest.raises(ValueError, match='reference frame was rejected'):
-        stack_source(ArraySource(frames), config(reference_index=30))
+        stack_source(ArraySource(frames), config(reference_index=30), preprocessing=preprocess_source(ArraySource(frames), config()))
     with pytest.raises(ValueError, match='no usable frames remain after preprocessing'):
-        stack_source(ArraySource(np.zeros((3, 32, 32))), config())
+        stack_source(ArraySource(np.zeros((3, 32, 32))), config(), preprocessing=preprocess_source(ArraySource(np.zeros((3, 32, 32))), config()))
 
 
 def test_preprocessing_config_rejects_non_boolean():
@@ -163,6 +165,7 @@ def test_screened_translation_resume_retains_indices_and_counts(tmp_path):
         if result.stage != 'preprocessing' and info['n_processed'] >= 10:
             cancel = True
     with SERSource(path) as source:
+        preprocess_source(source, cfg)
         full = stack_source(source, cfg)
         partial = stack_source(source, cfg, state_checkpoint=state,
                                should_cancel=lambda: cancel, on_event=event)
@@ -180,14 +183,14 @@ def test_worker_reports_screening_without_blank_previews(tmp_path):
     from planetrecon.io.ser import write_ser
     from planetrecon.jobs import start_stack_job
     path = write_ser(tmp_path/'capture.ser', np.stack([planet()]*6).astype('u2'))
-    handle = start_stack_job(path, config())
+    handle = start_stack_job(path, config(), preprocess_only=True)
     events = []
     try:
         deadline = time.monotonic() + 15
         while handle.state not in ('failed', 'completed') and time.monotonic() < deadline:
             events.extend(handle.poll(.05))
         assert handle.state == 'completed'
-        assert any(e.kind == 'progress' and e.payload.get('stage', '').startswith('preprocessing') for e in events)
+        assert any(e.kind == 'progress' and e.payload.get('stage', '').lower().startswith('preprocessing') for e in events)
         assert not any(e.kind == 'preview' and e.payload.get('stage') == 'preprocessing' for e in events)
     finally:
         handle.close()

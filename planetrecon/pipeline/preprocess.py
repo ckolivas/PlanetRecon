@@ -99,6 +99,8 @@ class FrameSelection:
     measurements: np.ndarray
     summary: dict
     cancelled: bool = False
+    identity: dict | None = None
+    digest: str | None = None
 
 
 def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None):
@@ -128,6 +130,8 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
                         else:
                             *values, status = measure_frame(calibrated, source.color_mode())
                             metrics[index] = values
+                            if status == 'ok' and not np.isfinite(values).all():
+                                status = 'invalid'
             statuses[index] = status
             processed += 1
         if on_progress is not None:

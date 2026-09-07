@@ -123,9 +123,12 @@ class MainWindow:
         buttons = QHBoxLayout()
         self.open_btn = QPushButton('Open capture…')
         self.inspect_btn = QPushButton('Inspect input')
+        self.preprocess_btn = QPushButton('Preprocess')
+        self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
         self.cancel_btn = QPushButton('Cancel processing')
         for b, slot in ((self.open_btn, self._choose), (self.inspect_btn, self._inspect),
+                        (self.preprocess_btn, self._preprocess),
                         (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
             buttons.addWidget(b)
@@ -144,8 +147,19 @@ class MainWindow:
         self.source_label = QLabel(str(self.path) if self.path else 'Open a SER, AVI or observed HDF5 capture')
         self.source_label.setWordWrap(True)
         layout.addWidget(self.source_label)
+        self.preprocessing_info = {}
+        self.preprocessing_label = QLabel('No preprocessing measurements loaded.')
+        self.preprocessing_label.setWordWrap(True)
+        layout.addWidget(self.preprocessing_label)
         split = QSplitter()
         self.controls = ConfigControls(self.config)
+        self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
+        for key in ('bayer_override', 'endian_override', 'endian_convention', 'crop',
+                    'recover_complete_frames', 'reject_saturated', 'bias_path', 'dark_path',
+                    'flat_path', 'gain_e_per_adu', 'read_noise_e', 'saturate_adu'):
+            edit = self.controls.fields[key]
+            signal = edit.currentIndexChanged if isinstance(edit, QComboBox) else (edit.toggled if isinstance(edit, QCheckBox) else edit.textChanged)
+            signal.connect(self._preprocessing_settings_changed)
         self.controls.setMinimumWidth(360)
         self.device = self.controls.fields['device']
         split.addWidget(self.controls)
@@ -269,6 +283,7 @@ class MainWindow:
         busy = self.job is not None
         self.open_btn.setEnabled(not busy and not self.closing)
         self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
+        self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.controls.setEnabled(not busy and not self.closing)
         for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
@@ -281,6 +296,8 @@ class MainWindow:
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
             self.controls.clear_geometry_estimate()
+            self.preprocessing_info = {}
+            self._refresh_preprocessing()
             self.path = Path(name)
             self.checkpoint_path.clear()
             self.resume_check.setChecked(False)
@@ -289,6 +306,9 @@ class MainWindow:
 
     def _inspect(self):
         self._start(inspect_only=True)
+
+    def _preprocess(self):
+        self._start(inspect_only=False, preprocess_only=True)
 
     def _choose_checkpoint(self):
         name, _ = QFileDialog.getSaveFileName(self.window, 'Accumulator checkpoint',
@@ -299,13 +319,13 @@ class MainWindow:
     def _run(self):
         self._start(inspect_only=False)
 
-    def _start(self, inspect_only):
+    def _start(self, inspect_only, preprocess_only=False):
         if self.job is not None or self.path is None or self.closing:
             return
         try:
             cfg = self.controls.configuration()
             checkpoint_options = {}
-            if not inspect_only:
+            if not inspect_only and not preprocess_only:
                 path = self.checkpoint_path.text().strip()
                 if self.resume_check.isChecked() and not path:
                     raise ValueError('Select an accumulator checkpoint to resume')
@@ -313,8 +333,11 @@ class MainWindow:
                     checkpoint_options['state_checkpoint'] = Path(path)
                     if self.resume_check.isChecked():
                         checkpoint_options['resume_from'] = Path(path)
-            handle = (start_stack_job(self.path, cfg, inspect_only=True) if inspect_only
-                      else start_stack_job(self.path, cfg, **checkpoint_options))
+            if preprocess_only:
+                handle = start_stack_job(self.path, cfg, preprocess_only=True)
+            else:
+                handle = (start_stack_job(self.path, cfg, inspect_only=True) if inspect_only
+                          else start_stack_job(self.path, cfg, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             return
@@ -351,6 +374,8 @@ class MainWindow:
         self.input_image = payload['input_image']
         meta = payload['source_metadata']
         self.input_metadata = meta
+        if 'preprocessing_cache' in payload:
+            self._set_preprocessing(payload['preprocessing_cache'])
         self.input_max = payload.get('input_max')
         self.source_label.setText(f"{meta['path']} · {meta['width']}×{meta['height']} · "
                                   f"{meta['n_frames']} frames · {meta['color_mode']} · "
@@ -360,6 +385,32 @@ class MainWindow:
             self.details.setPlainText(json.dumps(meta, indent=2))
             self._fit_levels()
         self._draw()
+
+    def _refresh_preprocessing(self, checked=None):
+        info = self.preprocessing_info
+        if info.get('status') == 'ready':
+            usage = 'Will use cache' if self.controls.fields['frame_preselection'].isChecked() else 'Cache disabled for runs'
+            self.preprocessing_label.setText(
+                f"{usage}: {info['quality']} quality / {info['shape']} shape exclusions "
+                f"({info['quality_shape_overlap']} overlap), {info['other']} other; "
+                f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained.")
+        else:
+            self.preprocessing_label.setText(info.get('reason', 'No preprocessing cache. Run Preprocess; runs without a cache use no quality/shape filtering.'))
+
+    def _preprocessing_settings_changed(self, value=None):
+        if self.preprocessing_info.get('status') == 'ready':
+            self.preprocessing_info = {'status': 'unverified',
+                'reason': 'Input/calibration settings changed. Inspect input to validate the cache, or Preprocess again.'}
+            self.controls.clear_geometry_estimate()
+            self._refresh_preprocessing()
+
+    def _set_preprocessing(self, info):
+        if info.get('status') != 'disabled' or self.preprocessing_info.get('status') != 'ready':
+            self.preprocessing_info = info
+        self._refresh_preprocessing()
+        if info.get('status') == 'ready':
+            self.controls.prefill_geometry(info.get('geometry_estimate', {}),
+                                          allow_prefill=not self.checkpoint_path.text().strip())
 
     def _update_run_device(self, payload):
         backend = payload.get('backend')
@@ -375,7 +426,10 @@ class MainWindow:
 
     def _accept_result(self, payload):
         result = result_from_payload(payload)
-        estimate = result.provenance.get('preprocessing', {}).get('geometry_estimate')
+        if 'preprocessing_cache' in result.provenance:
+            self._set_preprocessing(result.provenance['preprocessing_cache'])
+        estimate = (None if 'preprocessing_cache' in result.provenance else
+                    result.provenance.get('preprocessing', {}).get('geometry_estimate'))
         if estimate is not None:
             self.controls.prefill_geometry(estimate, allow_prefill=not self.checkpoint_path.text().strip())
         self._update_run_device({'backend': result.backend, 'warnings': result.warnings,
@@ -419,6 +473,8 @@ class MainWindow:
             self.last_seq = event.seq
             if event.kind == 'source':
                 self._set_input(event.payload)
+            elif event.kind == 'preprocessing_cache':
+                self._set_preprocessing(event.payload)
             elif event.kind == 'geometry_estimate' and self.cancel_started is None:
                 self.controls.prefill_geometry(event.payload, allow_prefill=not self.checkpoint_path.text().strip())
             elif event.kind == 'snapshot':
@@ -439,6 +495,9 @@ class MainWindow:
                     if 'source_metadata' in event.payload:
                         self._set_input(event.payload)
                         self.status.setText('Input inspected. Configure settings and run.')
+                    elif 'preprocessing_cache' in event.payload:
+                        self._set_preprocessing(event.payload['preprocessing_cache'])
+                        self.status.setText('Preprocessing cached. Choose whether to use it, then run with any processing settings.')
                     else:
                         self._accept_result(event.payload)
                         self.status.setText('Processing complete; scientific result is ready to save.')

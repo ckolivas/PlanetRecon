@@ -290,8 +290,9 @@ def stack_source_geometry(
     resume_from=None,
     state_checkpoint=None,
     selection=None,
+    cache_status=None,
 ) -> ReconstructionResult:
-    if config.frame_preselection and selection is None:
+    if config.frame_preselection and cache_status is None:
         from planetrecon.pipeline.baseline import stack_source
         return stack_source(source, config, calibration=calibration, on_event=on_event,
                             should_cancel=should_cancel, resume_from=resume_from,
@@ -410,6 +411,7 @@ def stack_source_geometry(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    snapshot_provenance["preprocessing_cache"] = cache_status or {"status": "disabled"}
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
     next_index = 0
@@ -420,6 +422,8 @@ def stack_source_geometry(
         import json
         from dataclasses import asdict
         state_identity = resume.identity(source, config, calibration, should_cancel)
+        from planetrecon.pipeline.preprocess_cache import reconstruction_digest
+        state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         # Re-estimation is bounded in image count. Refuse continuation if any
         # fitted geometry or per-frame timing changed, even with identical sums.
         pose_hash = hashlib.sha256()
@@ -480,6 +484,8 @@ def stack_source_geometry(
             {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name},
         )
 
+    if config.frame_preselection:
+        emit("cache_ready", incomplete=True)
     for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True

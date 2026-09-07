@@ -68,12 +68,14 @@ and moving-moon masking. GPU `auto`/`gpu` probe live CUDA operators
 and fall back to CPU when the PyTorch build cannot run the device (Debian
 torch 2.6 does not support RTX 5070 / sm_120). Default CPU thread cap is 32.
 
-Capture runs now start with a [quality and planet-size preprocessing pass](docs/preprocessing.md):
+The separate **Preprocess** action [caches quality, shape and geometry measurements](docs/preprocessing.md):
 a noise-robust Laplacian quality estimate rejects frames below mean − 2σ,
 and apparent width/height reject frames outside mean ± 2σ before stacking.
 The detected silhouette axes account for tilt, phase and attached rings.
-Disable the Capture preprocessing checkbox (CLI `--no-frame-preselection`)
-for surface-detail crops without a complete visible planet.
+The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
+shows exclusion counts before processing. Runs never repeat the analysis automatically.
+Use `planetrecon preprocess --path capture.ser` from the CLI;
+`stack --no-frame-preselection` ignores cached decisions.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

@@ -36,7 +36,7 @@ class ConfigControls(QTabWidget):
         self._choice(capture, 'endian_convention', 'SER byte-order convention', ['ecosystem', 'spec'])
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
-        self._check(capture, 'frame_preselection', 'Preprocess: quality and size (2σ)')
+        self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
         self._integer(capture, 'reference_index', 'Reference frame (from 0)', 0, 2**31-1)
         self._number(capture, 'max_shift_px', 'Maximum shift (px)')
         self._number(capture, 'cadence_s', 'Cadence (s; blank = timestamps)')
@@ -213,6 +213,8 @@ class ConfigControls(QTabWidget):
     def prefill_geometry(self, estimate, *, allow_prefill=True):
         from planetrecon.reconstruction import ReconstructionConfig
         defaults = ReconstructionConfig()
+        applicable = estimate.get('applicable', True)
+        allow_prefill = allow_prefill and applicable
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
                    'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s'}
         if allow_prefill:
@@ -243,7 +245,8 @@ class ConfigControls(QTabWidget):
             applied.append(key)
         direction = estimate.get('surface_direction', 'unresolved')
         roll = estimate.get('roll_direction', 'unresolved')
-        usage = ('Prefills apply to the next run.' if allow_prefill else
+        usage = ('Geometry estimates need refreshing.' if not applicable else
+                 'Prefills apply to the next run.' if allow_prefill else
                  'Checkpoint settings retained; estimates are available in result metadata.')
         self.geometry_estimate_label.setText(
             f'Surface drift: {direction}; image roll: {roll}. {usage}\n'

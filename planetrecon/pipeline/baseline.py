@@ -53,6 +53,8 @@ def stack_source(
     should_cancel: CancelFn | None = None,
     resume_from=None,
     state_checkpoint=None,
+    preprocessing=None,
+    preprocessing_cache=None,
 ) -> ReconstructionResult:
     from contextlib import nullcontext
     from planetrecon.backends.memory import cuda_allocation_limit
@@ -68,7 +70,8 @@ def stack_source(
                 on_event(result, info)
         result = _stack_source(source, config, calibration=calibration, on_event=event if on_event else None,
                              should_cancel=should_cancel, resume_from=resume_from,
-                             state_checkpoint=state_checkpoint, memory_report=memory_report)
+                             state_checkpoint=state_checkpoint, memory_report=memory_report,
+                             preprocessing=preprocessing, preprocessing_cache=preprocessing_cache)
         if cpu_report is not None:
             result.provenance['cpu_memory_budget'] = cpu_report
         return result
@@ -83,6 +86,8 @@ def _stack_source(
     should_cancel: CancelFn | None = None,
     resume_from=None,
     state_checkpoint=None,
+    preprocessing=None,
+    preprocessing_cache=None,
     memory_report=None,
 ) -> ReconstructionResult:
     if resume_from is not None or state_checkpoint is not None:
@@ -99,53 +104,27 @@ def _stack_source(
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
     selection = None
+    cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
-        from planetrecon.pipeline.preprocess import screen_source
-        n = source.n_frames()
-        shape = source.frame_shape()
-        if n < 1 or min(shape[:2]) < 5:
-            raise ValueError('stack requires frames of at least 5 by 5 pixels')
-        if config.reference_index >= n:
-            raise ValueError('reference_index is outside the capture')
-        rgb = is_bayer(source.color_mode()) or len(shape) == 3
-        out_shape = (*shape[:2], 3) if rgb else shape[:2]
-        empty = np.zeros(out_shape, dtype=np.float64)
-        progress_result = ReconstructionResult(
-            image=empty, coverage=empty.copy(), validity=empty > 0,
-            units='e-' if calibration and calibration.gain_e_per_adu is not None else source.metadata().units,
-            channel_order='RGB' if rgb else 'mono', backend='cpu', precision='float64',
-            stage='preprocessing', incomplete=True,
-            provenance=capture_provenance(source, config, calibration),
-        )
-        def progress(processed, total):
-            if on_event is not None:
-                on_event(progress_result, {'n_processed': processed, 'n_total': total,
-                                          'n_used': 0, 'backend': 'cpu'})
-        progress(0, n)
-        selection = screen_source(source, config, calibration, should_cancel=should_cancel,
-                                  on_progress=progress)
-        progress_result.provenance['preprocessing'] = selection.summary
-        if selection.cancelled:
-            return progress_result
-        if not selection.accepted.any():
-            raise ValueError('no usable frames remain after preprocessing; a complete visible planet is required '
-                             '(disable frame preselection for surface-detail crops)')
-        if config.reference_index and not selection.accepted[config.reference_index]:
-            raise ValueError('selected reference frame was rejected by preprocessing; choose an accepted frame or automatic reference 0')
-        from planetrecon.geometry.discovery import discover_geometry
-        if on_event is not None:
-            on_event(progress_result, {'n_processed': n, 'n_total': n, 'n_used': 0,
-                                      'backend': 'cpu', 'phase': 'orientation and rotation'})
-        try:
-            estimate = discover_geometry(source, config, selection, calibration, should_cancel)
-        except InterruptedError:
-            return progress_result
-        selection.summary['geometry_estimate'] = estimate
-        if on_event is not None:
-            on_event(progress_result, {'n_processed': n, 'n_total': n, 'n_used': 0,
-                                      'backend': 'cpu', 'phase': 'orientation and rotation',
-                                      'geometry_estimate': estimate})
-        del progress_result, empty
+        from planetrecon.pipeline.preprocess_cache import load_cache, identity, cache_report, selection_digest
+        if preprocessing is not None:
+            if (preprocessing.cancelled or preprocessing.identity != identity(source, config, calibration, should_cancel)
+                    or preprocessing.digest != selection_digest(preprocessing)):
+                raise ValueError('preprocessing measurements do not match the input or configuration')
+            selection = preprocessing
+            cache_status = cache_report(selection, config=config)
+        else:
+            selection, cache_status = load_cache(source, config, calibration, path=preprocessing_cache,
+                                                should_cancel=should_cancel)
+            if cache_status['status'] in ('stale', 'invalid'):
+                raise ValueError(cache_status['reason'] + ' Run Preprocess again or disable cached preprocessing.')
+        if selection is not None:
+            if not selection.accepted.any():
+                raise ValueError('no usable frames remain after preprocessing')
+            if config.reference_index >= len(selection.accepted):
+                raise ValueError('reference_index is outside the capture')
+            if config.reference_index and not selection.accepted[config.reference_index]:
+                raise ValueError('selected reference frame was rejected by preprocessing; choose an accepted frame or automatic reference 0')
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
 
@@ -157,7 +136,7 @@ def _stack_source(
             should_cancel=should_cancel,
             resume_from=resume_from,
             state_checkpoint=state_checkpoint,
-            selection=selection,
+            selection=selection, cache_status=cache_status,
         )
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)
@@ -213,6 +192,7 @@ def _stack_source(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, config, calibration)
+    snapshot_provenance["preprocessing_cache"] = cache_status
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
     snapshot_provenance["registration"] = "Gaussian 1.5px amplitude correlation with subpixel peak fit"
@@ -222,6 +202,8 @@ def _stack_source(
     state_identity = None
     if resume_from is not None or state_checkpoint is not None:
         state_identity = resume.identity(source, config, calibration, should_cancel)
+        from planetrecon.pipeline.preprocess_cache import reconstruction_digest
+        state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -278,6 +260,8 @@ def _stack_source(
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
+    if config.frame_preselection:
+        emit("cache_ready", incomplete=True)
     for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True
