@@ -21,6 +21,7 @@ from planetrecon.rank import laplacian_score
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.result import ReconstructionResult
 from planetrecon.pipeline.provenance import capture_provenance
+from planetrecon.pipeline.colour import complete_bayer_rgb
 
 
 PreviewFn = Callable[[ReconstructionResult, dict], None]
@@ -217,6 +218,7 @@ def _stack_source(
             },
             warnings=list(warnings),
         )
+        complete_bayer_rgb(result)
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
@@ -347,6 +349,7 @@ def _stack_source(
         provenance=provenance,
         warnings=warnings,
     )
+    complete_bayer_rgb(result)
     emit(result.stage, incomplete=result.incomplete)
     return result
 

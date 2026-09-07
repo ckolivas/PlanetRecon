@@ -78,7 +78,7 @@ Older split NPZ/JSON checkpoints are rejected. CLI NPZ output includes validity,
 units and provenance.
 
 This is a translation-only baseline using integer phase correlation and
-normalised CFA backprojection, with unsupported colour samples marked invalid,
+normalised CFA backprojection followed by nearest-neighbour RGB completion,
 plus a W09 geometry-aware baseline for declared field rotation and/or a rigid
 oblate globe, and a W10 Saturn layered scene. Field attitude and surface
 longitude are separate operators; unseen longitudes are left at zero coverage
@@ -122,7 +122,9 @@ calibrated photometric model.
 
 Saturn results retain `layer_coverage` in worker previews/results and checkpoints.
 CLI NPZ files contain `layer_coverage__globe` and `layer_coverage__ring` arrays;
-these are spatial sample coverage, while `validity` remains per colour for CFA.
+these are spatial sample coverage. Bayer results also retain `cfa_direct_R`,
+`cfa_direct_G`, and `cfa_direct_B` layers with the original channel weights;
+`validity` describes the completed RGB output.
 Moon positions and velocities use the reference detector axes (+x right, +y down)
 and then follow field rotation. A moving moon requires known cadence or timestamps.
 
@@ -569,12 +571,18 @@ job produces an image; its old backend does not describe the new run. Restart th
 venv-launched GUI after updating source to load these UI changes.
 
 
-Bayer result previews select each channel's nearest supported sample on the
-full-resolution grid before shrinking the display. This prevents even preview
-strides from discarding every green site. The search is limited to one pixel
-(including diagonals); larger gaps remain magenta. Display coverage/validity refer
-to those selected samples. Full-resolution scientific images, masks and exports
-retain their original support without this display-only filling.
+Bayer processing produces a full-resolution RGB colour result for live updates,
+final snapshots and exports. After registering raw CFA samples, missing channels
+copy the nearest directly supported channel sample within one pixel (including
+diagonals). Measured values are preserved. Completion stays inside the observed
+footprint and respects Saturn's globe, ring and shadow region boundaries; regions
+without nearby colour support remain invalid. Output coverage for a completed
+channel is its source sample's weight, not a new independent observation. The
+`cfa_direct_R/G/B` coverage layers preserve the original weights, and
+`rgb_completion` provenance records the method and number of filled channels.
+Accumulator checkpoints retain raw sums. New results display directly; older
+sparse Bayer snapshots still use nearest-neighbour display sampling before
+preview reduction. Reprocess older captures to obtain complete RGB exports.
 
 
 Automatic display white and **Fit levels** use

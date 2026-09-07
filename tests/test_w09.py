@@ -313,8 +313,10 @@ def test_cfa_stays_on_detector_lattice():
     )
     result = stack_source(src, cfg)
     assert result.image.ndim == 3
-    # Detector-fixed CFA: each colour plane is supported only where samples landed.
-    assert np.any(result.coverage[..., 0] > 0) and np.any(result.coverage[..., 0] == 0)
+    # Direct CFA weights retain sample support; final colour fills nearby gaps.
+    direct = result.layer_coverage["cfa_direct_R"]
+    assert np.any(direct > 0) and np.any(direct == 0)
+    assert np.all(result.validity[direct > 0, 0])
     assert result.provenance["demosaic_first"]["label"] == "comparison"
 
 

@@ -22,6 +22,7 @@ from planetrecon.rank import laplacian_score
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.result import ReconstructionResult
 from planetrecon.pipeline.provenance import capture_provenance
+from planetrecon.pipeline.colour import complete_bayer_rgb
 
 
 PreviewFn = Callable[[ReconstructionResult, dict], None]
@@ -454,6 +455,7 @@ def stack_source_geometry(
             layer_coverage={"globe": globe_weight.copy(), "ring": ring_weight.copy()}
             if isinstance(model, SaturnSceneModel) else {},
         )
+        complete_bayer_rgb(result, target_regions)
         seq += 1
         on_event(
             result,
@@ -620,6 +622,7 @@ def stack_source_geometry(
         layer_coverage={"globe": globe_weight, "ring": ring_weight}
         if isinstance(model, SaturnSceneModel) else {},
     )
+    complete_bayer_rgb(result, target_regions)
     emit(result.stage, incomplete=result.incomplete)
     return result
 

@@ -14,7 +14,7 @@ def display_result_preview(result, max_side=512):
     """
     preview = result.copy_preview(max_side)
     color = result.provenance.get('color_mode', result.provenance.get('source', {}).get('color_mode'))
-    if not is_bayer(color) or result.image.ndim != 3:
+    if not is_bayer(color) or result.image.ndim != 3 or 'rgb_completion' in result.provenance:
         return preview
     step = preview.spatial_stride // result.spatial_stride
     h, w = result.image.shape[:2]

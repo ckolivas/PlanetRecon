@@ -392,7 +392,10 @@ def test_gui_bayer_override_and_per_channel_validity(gui, tmp_path):
     pump(app, lambda: win.job is None)
     r = win.last_result
     assert r.channel_order == 'RGB' and r.validity.shape == (9,12,3)
-    assert np.all(r.validity.sum(axis=2) == 1)
+    assert r.validity.all()
+    np.testing.assert_allclose(r.image, 40.)
+    direct = np.stack([r.layer_coverage[f"cfa_direct_{c}"] for c in "RGB"], axis=2)
+    assert np.all((direct > 0).sum(axis=2) == 1)
     win.view.setCurrentText('Validity')
     win.channel.setCurrentText('B')
     assert win._view_data()[0].shape == r.validity.shape
@@ -520,7 +523,9 @@ def test_cancel_restart_uses_new_settings_and_labels_previous_result(gui, tmp_pa
     assert not win.error.text() and r is not old and r.channel_order == 'RGB'
     assert r.provenance['config']['reference_index'] == 2
     assert r.provenance['config']['batch_frames'] == 3
-    np.testing.assert_allclose(r.image.sum(axis=2), frame*2, rtol=1e-12, atol=1e-10)
+    direct = np.stack([r.layer_coverage[f"cfa_direct_{c}"] > 0 for c in "RGB"], axis=2)
+    np.testing.assert_allclose((r.image * direct).sum(axis=2), frame*2, rtol=1e-12, atol=1e-10)
+    assert r.validity.all()
     assert 'Previous result' not in win.result_label.text()
     assert 'requested CPU' in win.run_device.text() and 'using CPU' in win.run_device.text()
 

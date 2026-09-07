@@ -51,7 +51,9 @@ def test_cfa_coverage_is_per_channel_and_adjoint(pattern):
     assert np.vdot(forward, data) == pytest.approx(np.vdot(latent, adjoint), abs=1e-12)
     result = stack_source(ArraySource(np.ones((1, 9, 11)), color_mode=pattern), cpu_config())
     assert result.validity.shape == result.image.shape
-    assert np.all(result.validity.sum(axis=2) == 1)
+    assert result.validity.all()
+    direct = np.stack([result.layer_coverage[f"cfa_direct_{c}"] for c in "RGB"], axis=2)
+    assert np.all((direct > 0).sum(axis=2) == 1)
     np.testing.assert_array_equal(result.validity, result.coverage > 0)
 
 
