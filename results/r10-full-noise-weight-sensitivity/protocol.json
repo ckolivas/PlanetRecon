@@ -1,0 +1,39 @@
+{
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    8.0,
+    4.0
+  ],
+  "crops": [
+    "feature",
+    "bland"
+  ],
+  "n_frames": 500,
+  "eval_size": 128,
+  "subsets": [
+    10,
+    100
+  ],
+  "budgets": [
+    256,
+    512
+  ],
+  "solver_tolerance": 1e-09,
+  "image_tolerance": 0.001,
+  "regularisation": {
+    "e1_lambda_rel": 0.03,
+    "e2a_lambda_rel": 0.03,
+    "e1_lambda_grad": 0.0,
+    "e2b_lambda_rel": 0.03,
+    "e2b_tv": 0.0,
+    "e2b_tv_eps": 1.0
+  },
+  "source_hash": "826c1962b281c97359d0ff4c060f257daa725017edef18dba781837e424d417e",
+  "runner_sha256": "a6464d53b8cfa8c5413296dac51dc4170a84cbd06c3bd01ee35722d35b027503",
+  "q3_authorized": false,
+  "design": "Unconstrained known-transfer E1, fixed regularisation and frame membership. Scalar frame-mean Poisson+read variance versus oracle per-pixel expected+read variance. Zero-start preconditioned CG independently checked at doubled budget. No claim of Poisson likelihood calibration, positivity/support or MFBD qualification."
+}
