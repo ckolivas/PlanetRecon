@@ -183,6 +183,10 @@ def evaluate_crop(
     extras: dict,
     reg: Regularisation = REG,
     p_grid: tuple[int, ...] = P_GRID,
+    *,
+    maxiter: int = C.E2A_FISTA_MAXITER,
+    require_convergence: bool = True,
+    return_reconstructions: bool = False,
 ) -> dict:
     n = crop.observed.shape[0]
     sigma2 = frame_noise_variance(crop.expected, extras["read_noise_e"])
@@ -209,11 +213,11 @@ def evaluate_crop(
         obs_s = crop.observed[idx]
         sig_s = sigma2[idx]
         e1_img = e1(otf_s, obs_s, sig_s, lam_e1)
-        e2_img, e2_info = e2a(otf_s, obs_s, sig_s, lam_e2, crop.support)
+        e2_img, e2_info = e2a(otf_s, obs_s, sig_s, lam_e2, crop.support, maxiter=maxiter)
         a1_img, a1_info = a1o(
-            otf_s, obs_s, sig_s, lam_e2, crop.support, shifts=crop.shifts[idx]
+            otf_s, obs_s, sig_s, lam_e2, crop.support, shifts=crop.shifts[idx], maxiter=maxiter
         )
-        if not e2_info["converged"] or not a1_info["converged"]:
+        if require_convergence and (not e2_info["converged"] or not a1_info["converged"]):
             raise RuntimeError(
                 f"{crop.name} p={p} constrained estimator did not converge: "
                 f"E2a={e2_info['rel_delta']:.3g}, A1o={a1_info['rel_delta']:.3g}"
@@ -256,7 +260,7 @@ def evaluate_crop(
                 and img_rel < C.E1_E2A0_IMAGE_REL_TOL
             )
             infos["E2a0"]["match_pass"] = match_pass
-            if not match_pass:
+            if require_convergence and not match_pass:
                 raise RuntimeError(
                     f"{crop.name} p={p} E2a0 failed to match E1: "
                     f"cg_info={e20_info['cg_info']}, E_H rel={rel:.3g}, "
@@ -304,7 +308,14 @@ def evaluate_crop(
     oval1_path = _oval1_pathology(metrics)
     rh = high_band_truth_fraction(crop.truth_e, crop.window, crop.mtf, crop.hmask)
 
-    return {
+    converged = all(
+        block["_info"]["E2a"]["converged"] and block["_info"]["A1o"]["converged"]
+        and block["_info"].get("E2a0", {}).get("match_pass", True)
+        for block in metrics.values()
+    )
+    result = {
+        "status": "valid" if converged else "incomplete",
+        "solver_maxiter": int(maxiter),
         "crop": crop.name,
         "R_H": float(rh),
         "high_band_illconditioned": bool(rh < C.RH_ILLCONDITIONED),
@@ -326,6 +337,9 @@ def evaluate_crop(
         "oval1": oval1_path,
         "regularisation": asdict(reg),
     }
+    if return_reconstructions:
+        result["_reconstructions"] = recon
+    return result
 
 
 def _jsonify_metrics(metrics: dict) -> dict:
