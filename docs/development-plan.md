@@ -1,6 +1,6 @@
 # Development plan
 
-Updated 2026-09-09 with constrained-curvature, cache and capture-intake evidence.
+Updated 2026-09-09 with coupled-inverse regressions and window/state diagnostics.
 This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
@@ -34,6 +34,12 @@ completed features and archived scientific results remain intact.
   saved iterate's error bound. An algebraic limit rules out qualifying that
   iterate using only this fixed-residual energy/global-ridge certificate family;
   it does not establish a lower bound on actual reconstruction error.
+  A positive periodic inverse now improves independent fixed-state residuals
+  (full 1.9818 to 0.0292; reduced 1.6232 to 0.1717), but its subsequent constrained
+  experiment from zero regresses: neither 25-frame cap passes, and both 500-frame
+  fits stop with bound 38.803. It is not adopted. Inner progress is now retained,
+  including interrupted directions. A geometry-derived window-average inverse
+  has dense controls only; broader state/boundary diagnostics are required next.
 - **P5 early work:** shared CPU/CUDA scene FFTs, bounded retained PSF spectra and
   exact iteration resume are implemented. In the three-frame benchmark, solve
   time was 20.37 s for the reference and 1.51 s for shared CUDA, with a 3.97e-15
@@ -50,6 +56,9 @@ completed features and archived scientific results remain intact.
   files are mono. OSC Saturn and both Mars files contain duplicate timestamps,
   so the current timing contract reports no valid duration. Independent group
   provenance and distribution permissions remain unknown; true mono Mars is absent.
+  Bounded raw-pixel checks found distinct frames in all 64 sampled equal-timestamp
+  pairs per affected capture. Timestamp duplication alone cannot justify deleting
+  a frame; no timing repair or cadence inference follows from these samples.
 - **P3/P4/P6–P8:** likelihood/phase qualification, scientific requalification,
   production integration, independent captures and release refresh remain.
   Q3 is not authorized. Windows/macOS runtime tests remain excluded.
@@ -65,7 +74,9 @@ See [current status](status.md), [operator evidence](../results/p1-scene-detecto
 and [Hessian-diagonal comparison](../results/p2-frozen-jacobi/DECISION.md),
 [Newton-CG endpoints](../results/p2-selection-endpoints-newton/DECISION.md),
 [retained-cache profile](../results/p5-retained-cache/DECISION.md) and
-[capture intake](capture-intake.md).
+[capture intake](capture-intake.md),
+[coupled fixed-state probes](../results/p2-periodic-probe/DECISION.md) and
+[constrained regression](../results/p2-selection-endpoints-periodic-newton/DECISION.md).
 
 ## Direction
 
@@ -318,8 +329,8 @@ Refresh bundled CPU/CUDA artifacts after substantive engine changes. Verify
 offline Linux execution without the development Python environment, scientific
 encodings, GUI controls, cancellation/resume and supported GPU fallback.
 
-Exercise and maintain the existing GitHub version-tag build matrix: Linux x64
-CPU/CUDA, Windows x64 CPU, and macOS Intel/Apple Silicon CPU. Check versions,
+Exercise and maintain the existing GitHub version-tag build matrix: Linux x 64
+CPU/CUDA, Windows x 64 CPU, and macOS Intel/Apple Silicon CPU. Check versions,
 source identity, bundled components, notices, SBOM, checksums and split CUDA
 assets. Windows/macOS runtime testing stays excluded as requested; native build
 success must not be described as runtime qualification.
@@ -360,12 +371,18 @@ full qualification is not supported by the current evidence.
    the algebraic floor rules out fixing certification only with a more accurate
    inner solve. Safeguarded Newton-CG now passes dense optima, feasibility,
    descent, incorrect-active-set and CPU/CUDA controls; its declared endpoint
-   experiment passes 25 frames but remains wall-limited at 500. Next examine a
-   non-diagonal preconditioner for the coupled blur curvature. Prove positivity
-   and test its application on reduced active sets against dense controls before
-   a new frozen-objective probe. An approximate inverse must never replace the
-   exact forward model or independent certificate. Record inner residual/product
-   progress as well as accepted updates before declaring another fit protocol.
+   experiment passes 25 frames but remains wall-limited at 500. A positive periodic
+   inverse then improved the fixed-state full/reduced linear residuals, but its
+   from-zero constrained experiment regressed at both 25 and 500 frames. It is not
+   adopted. Next compare diagonal, original periodic and the dense-verified
+   window-average inverse on early and near-solution states at both frame counts.
+   Include finite-boundary and active-mask sensitivity and independently checked
+   residuals. The window factor conserves observation density; it is not an
+   accuracy-tuned prior. See [the candidate's limits](scene-window-preconditioner.md).
+   Predeclare product/runtime limits before that diagnostic and only then consider
+   another fit. An approximate inverse must never replace the exact forward
+   model or independent certificate. Inner and unaccepted-direction traces are
+   now available to distinguish poor inner progress from outer budget exhaustion.
    Do not infer a solver winner or image accuracy from incomplete fits. Keep
    every alternative comparison, failed outcome and numerical threshold.
 2. Use the measured resource evidence to choose subsequent execution budgets.
