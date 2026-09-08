@@ -53,12 +53,13 @@ def linear_convolve_same_adjoint(image: np.ndarray, psf: np.ndarray) -> np.ndarr
     """Adjoint of :func:`linear_convolve_same` with respect to the image."""
     y = np.asarray(image, dtype=np.float64)
     h = np.asarray(psf, dtype=np.float64)
-    sl, full = _same_slices(y.shape, h.shape)
-    y_full = np.zeros(full, dtype=np.float64)
-    y_full[sl] = y
-    h_freq = np.fft.fft2(h, s=full)
-    acc = np.fft.ifft2(np.conj(h_freq) * np.fft.fft2(y_full)).real
-    return acc[: y.shape[0], : y.shape[1]]
+    # A[j,i] = h[j + floor((hsize-1)/2) - i]. Its transpose is
+    # convolution with the reversed kernel, cropped at ceil((hsize-1)/2).
+    # scipy chooses efficient padded FFT sizes; the previous explicit FFT on
+    # n+h-1 can have costly prime dimensions at full optical resolution.
+    acc = fftconvolve(y, h[::-1, ::-1], mode="full")
+    sy, sx = h.shape[0]//2, h.shape[1]//2
+    return np.asarray(acc[sy:sy+y.shape[0], sx:sx+y.shape[1]], dtype=np.float64)
 
 
 def spatial_convolve_same(
