@@ -1,0 +1,104 @@
+{
+  "rows": [
+    {
+      "fraction": 5,
+      "max_products": 750,
+      "accepted_updates": 13,
+      "updates_with_inner_trace": 13,
+      "updates_reaching_inner_target": 8,
+      "inner_terminal_residual_min": 0.03828817629772082,
+      "inner_terminal_residual_max": 0.23093834174777783,
+      "accepted_inner_products": 279,
+      "accepted_line_search_products": 13,
+      "unaccepted_inner_products_recorded": 0,
+      "safeguard_updates": 0,
+      "converged": true,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 3.57145970552619e-06,
+        "absolute_solution_error_bound": 0.2976216421271825,
+        "relative_solution_error_bound": 6.2945934617311704e-06,
+        "objective_gap_upper_bound": 5.314718511748842e-07,
+        "strong_convexity_lower_bound": 1.1999999999999999e-05,
+        "gradient_lipschitz_upper_bound": 0.013477282425514756
+      },
+      "reason": "certified"
+    },
+    {
+      "fraction": 5,
+      "max_products": 1500,
+      "accepted_updates": 13,
+      "updates_with_inner_trace": 13,
+      "updates_reaching_inner_target": 8,
+      "inner_terminal_residual_min": 0.03828817629772082,
+      "inner_terminal_residual_max": 0.23093834174777783,
+      "accepted_inner_products": 279,
+      "accepted_line_search_products": 13,
+      "unaccepted_inner_products_recorded": 0,
+      "safeguard_updates": 0,
+      "converged": true,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 3.57145970552619e-06,
+        "absolute_solution_error_bound": 0.2976216421271825,
+        "relative_solution_error_bound": 6.2945934617311704e-06,
+        "objective_gap_upper_bound": 5.314718511748842e-07,
+        "strong_convexity_lower_bound": 1.1999999999999999e-05,
+        "gradient_lipschitz_upper_bound": 0.013477282425514756
+      },
+      "reason": "certified"
+    },
+    {
+      "fraction": 100,
+      "max_products": 750,
+      "accepted_updates": 25,
+      "updates_with_inner_trace": 25,
+      "updates_reaching_inner_target": 6,
+      "inner_terminal_residual_min": 0.03985548527521771,
+      "inner_terminal_residual_max": 1.3965938016302588,
+      "accepted_inner_products": 691,
+      "accepted_line_search_products": 31,
+      "unaccepted_inner_products_recorded": 26,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.00011562248814385151,
+        "absolute_solution_error_bound": 192.7041469064192,
+        "relative_solution_error_bound": 0.004044792268214001,
+        "objective_gap_upper_bound": 0.011140466470479235,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355582
+      },
+      "reason": "product_budget"
+    },
+    {
+      "fraction": 100,
+      "max_products": 1500,
+      "accepted_updates": 48,
+      "updates_with_inner_trace": 48,
+      "updates_reaching_inner_target": 6,
+      "inner_terminal_residual_min": 0.03985548527521771,
+      "inner_terminal_residual_max": 2.0196376402038796,
+      "accepted_inner_products": 1427,
+      "accepted_line_search_products": 54,
+      "unaccepted_inner_products_recorded": 15,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 1.1252893052011983e-05,
+        "absolute_solution_error_bound": 18.754821753353305,
+        "relative_solution_error_bound": 0.00039365415322344224,
+        "objective_gap_upper_bound": 0.00010552300170001632,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355582
+      },
+      "reason": "product_budget"
+    }
+  ],
+  "inner_relative_target": 0.1,
+  "qualification_changed": false,
+  "scope": "Descriptive trace analysis; inner targets, residuals and active counts are not scene certificates. Missing historical inner traces are not inferred.",
+  "source_report_sha256": "44160d8b13797556eb21cfabaa105ff0f6639eebd328b79de0224214abdf98aa"
+}
