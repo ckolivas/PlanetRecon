@@ -7,7 +7,8 @@ from tools.audit_scene_selections import validate_case
 ROOT = Path(__file__).resolve().parents[1]/'results'
 
 
-@pytest.mark.parametrize('name', ['p5-full-count-profile', 'p2-full-selection-manifest'])
+@pytest.mark.parametrize('name', ['p5-full-count-profile', 'p2-full-selection-manifest',
+                                 'p5-parallel-reference', 'p2-selection-endpoints-reference'])
 def test_full_count_archived_json_integrity(name):
     root = ROOT/name
     for path, expected in json.loads((root/'checksums.json').read_text()).items():
@@ -35,3 +36,18 @@ def test_full_count_parity_and_cache_churn_are_preserved():
         assert after['peak_bytes'] <= 256*1024**2
         assert after['misses']-before['misses'] == (0 if row['count'] == 11 else 2*row['count'])
     assert report['q3_authorized'] is False
+
+
+def test_parallel_reference_and_incomplete_endpoint_scope():
+    parallel = json.loads((ROOT/'p5-parallel-reference/report.json').read_text())
+    assert parallel['status'] == 'valid' and parallel['source_input_unchanged']
+    for row in parallel['rows']:
+        assert row['normal_bitwise_equal'] and row['linear_bitwise_equal']
+        assert row['pending_frames']['peak_pending_frames'] <= row['workers']
+    root = ROOT/'p2-selection-endpoints-reference'
+    report = json.loads((root/'report.json').read_text())
+    assert report['complete'] and report['status'] == 'incomplete'
+    assert [r['numerical_passed'] for r in report['rows']] == [True, False]
+    failed = [json.loads(p.read_text()) for p in root.glob('incomplete-100-*.json')]
+    assert {r['maxiter'] for r in failed} == {750, 1500}
+    assert all(not r['converged'] and r['reason'] == 'wall_budget' for r in failed)

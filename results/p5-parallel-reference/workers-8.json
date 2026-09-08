@@ -1,0 +1,17 @@
+{
+  "workers": 8,
+  "normal_s": 35.580876253021415,
+  "linear_s": 17.111308104998898,
+  "data_psf_setup_s": 48.334543772012694,
+  "normal_bitwise_equal": true,
+  "linear_bitwise_equal": true,
+  "relative_distance_bound": 7318.504107852947,
+  "previous_bound_relative_difference": 0.0,
+  "pending_frames": {
+    "workers": 8,
+    "peak_pending_frames": 8,
+    "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+  },
+  "process_peak_rss_bytes": 3514109952,
+  "passed": true
+}
