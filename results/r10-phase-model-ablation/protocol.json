@@ -1,0 +1,29 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    4.0,
+    8.0
+  ],
+  "n_frames": 8,
+  "n_diam": 16,
+  "pupil_pad_factor": 8.0,
+  "eval_size": 32,
+  "exposure_samples": [
+    8,
+    16
+  ],
+  "modes": [
+    15,
+    35,
+    60
+  ],
+  "metric": "relative L2 norm over the full complex detector OTF",
+  "design": "Same physical screen and detector operator for exact midpoint, exposure average and projected midpoint; errors are not additive.",
+  "limits": "Reduced pupil and detector grids; no object optimization, ranking, independent assessment or Gate qualification."
+}

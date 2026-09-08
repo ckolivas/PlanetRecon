@@ -2400,3 +2400,18 @@ secant reaches 1.208 px error under these perturbations. This qualifies the
 bounded centroid mapping, not physical pupil tilt inference from measured image
 motion, the atmospheric solver, or Q3. Reproduce in a new directory with
 `.venv/bin/python tools/qualify_tilt_mapping.py --out NEW_DIRECTORY`.
+
+**W02/W03 phase-model ablation (2026-09-08):**
+`planetrecon.phase_audit` now separates exact midpoint/exposure mismatch from
+phase-basis truncation using the same physical screens and detector operator.
+The predeclared six-case, 48-frame reduced-grid study records median exposure
+error 0.003104 versus median 60-mode basis error 0.084345 (full complex OTF
+relative norms). Doubling exposure quadrature changes the transfer by at most
+0.000209. The records and bounded decision are in
+`results/r10-phase-model-ablation`; basis and exposure errors must not be added.
+Static-phase and independently varied-exposure controls pass. These completed
+calibration/ablation steps do not complete W01–W03 qualification: operator and
+constraint convergence, independent model assessment and affected-family
+requalification remain prerequisites for W11/Q3. Documented independent capture
+coverage remains necessary for W16. The requested baseline features and native
+tag-build automation remain available independently of those scientific gates.
