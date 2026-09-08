@@ -51,6 +51,7 @@ if __name__=='__main__':
                  'work_available':'solver' in fit}
             if row['work_available']:row.update(normal_work(fit))
             rows.append(row)
+    args.out.parent.mkdir(parents=True,exist_ok=True)
     write_json(args.out,{'rows':rows,'source_report_sha256':file_hash(report_path),
                         'source_protocol_sha256':file_hash(protocol_path),'analysis_source_sha256':file_hash(Path(__file__)),
                         'qualification_changed':False})
