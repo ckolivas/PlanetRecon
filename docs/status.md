@@ -2,16 +2,18 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
+Latest complete regression: 888 passed, 60 skipped. The new projection solver
+and cropped-FFT controls also pass with CUDA enabled (19 and 36 tests respectively).
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|
 | Capture baseline | SER/native AVI, mono/RGB/raw CFA output, translation, nearest-neighbour colour previews | Independent nights/cameras and matched conventional-stack comparisons remain |
 | Preprocessing | Separate optional cache, quality/shape exclusions, best retained reference, SER duration, apparent flattening, geometry hints | Spin may be unresolved; apparent flattening alone is not intrinsic shape |
 | Geometry | Field and surface motion, Saturn globe/rings, coverage, CPU resume | Physical inference and combined atmospheric/geometry accuracy remain experimental |
-| GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float 32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
+| GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
 | Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Shared CPU/CUDA operators pass all 500-frame parity; bounded parallel independent CPU verification is qualified; full reconstruction performance and production integration remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy estimators, constrained Newton-CG and coupled-inverse experiments | Extended model matches all 3,000 development frames; the 12-case, 11-frame pilot passes; reference, L-BFGS-B and diagonal Newton-CG pass 25 frames; periodic-inverse Newton-CG regresses at 25/500 frames and is not adopted; full-count convergence remains incomplete |
+| Scientific reconstruction | Legacy estimators, constrained Newton-CG, coupled-inverse and projection-phase experiments | Extended model matches all 3,000 development frames; the 12-case, 11-frame pilot passes; reference, L-BFGS-B and diagonal Newton-CG pass 25 frames; projection-phase/window solver also passes 25 frames but fails 500; full-count convergence remains incomplete |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
 | Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | Reference sensitivity/family/endpoint runners retain exact iterate/momentum resume and incomplete outcomes; alternative solver has completed-stage resume only |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
@@ -39,8 +41,19 @@ outputs do not establish convergence. A [retained-spectrum cache](../results/p5-
 passes full-count parity and reduces local product time about 11%; production
 defaults remain unchanged. The subsequent [periodic-inverse probes](../results/p2-periodic-probe/DECISION.md)
 improve fixed-state linear residuals but the [constrained fit regresses](../results/p2-selection-endpoints-periodic-newton/DECISION.md)
-at both 25 and 500 frames. A window-average inverse is dense-tested only; early/late
-state, active-mask and boundary sensitivity are next before another fit protocol.
+at both 25 and 500 frames. The [window/state diagnostic](../results/p2-window-state-probe/DECISION.md) now passes
+all twelve independent probes. Window weighting improves sampled Fourier energies
+and late-state reduced residuals, but unit-step projection remains material and
+no fitted scene is qualified. A separately implemented gradient-projection/CG
+candidate passes 19 CPU/CUDA controls and [both 25-frame caps](../results/p2-projection-ablation/DECISION.md)
+at 556 products. Its [500-frame extension fails](../results/p2-projection-full-count/DECISION.md)
+at both wall limits with bound 2.793714; identical outputs do not establish
+convergence. A new exact detector-crop FFT embedding passes 36 CPU/CUDA controls,
+including independent fitted-scene certificates; [full-count operator/resource qualification](../results/p5-cropped-fft/DECISION.md)
+now passes. Its 4 GiB retained spectra reduce local normal-product time from
+1.052 to 0.391 seconds (about 2.69 times faster) while preserving independent
+operator parity. Next compare the earlier reference/diagonal solvers under a new
+backend identity; production defaults and numerical criteria remain unchanged.
 
 Independent-data preparation: [seven-capture intake](../results/real-data/README.md)
 records whole-file hashes and unknown permissions without publishing pixels or
@@ -58,7 +71,7 @@ Remaining sequence: [development plan](development-plan.md).
 
 ## Resuming a full Gate-1 audit
 
-Use `tools/audit_full_gate 1.py --inputs ... --out ... --wall-budget-s 3600`
+Use `tools/audit_full_gate1.py --inputs ... --out ... --wall-budget-s 3600`
 and record `--background-workload`. Repeat the identical command with `--resume`
 to reuse completed numerical stages. Input hashes, package/tool source, solver,
 regularisation, budgets, protocol and crop identities must match exactly.

@@ -329,8 +329,8 @@ Refresh bundled CPU/CUDA artifacts after substantive engine changes. Verify
 offline Linux execution without the development Python environment, scientific
 encodings, GUI controls, cancellation/resume and supported GPU fallback.
 
-Exercise and maintain the existing GitHub version-tag build matrix: Linux x 64
-CPU/CUDA, Windows x 64 CPU, and macOS Intel/Apple Silicon CPU. Check versions,
+Exercise and maintain the existing GitHub version-tag build matrix: Linux x64
+CPU/CUDA, Windows x64 CPU, and macOS Intel/Apple Silicon CPU. Check versions,
 source identity, bundled components, notices, SBOM, checksums and split CUDA
 assets. Windows/macOS runtime testing stays excluded as requested; native build
 success must not be described as runtime qualification.
@@ -374,14 +374,20 @@ full qualification is not supported by the current evidence.
    experiment passes 25 frames but remains wall-limited at 500. A positive periodic
    inverse then improved the fixed-state full/reduced linear residuals, but its
    from-zero constrained experiment regressed at both 25 and 500 frames. It is not
-   adopted. Next compare diagonal, original periodic and the dense-verified
-   window-average inverse on early and near-solution states at both frame counts.
-   Include finite-boundary and active-mask sensitivity and independently checked
-   residuals. The window factor conserves observation density; it is not an
-   accuracy-tuned prior. See [the candidate's limits](scene-window-preconditioner.md).
-   Predeclare product/runtime limits before that diagnostic and only then consider
-   another fit. An approximate inverse must never replace the exact forward
-   model or independent certificate. Inner and unaccepted-direction traces are
+   adopted. The early/late window diagnostic now passes all twelve independent
+   probes; the window factor improves sampled Fourier energies and late reduced
+   residuals, while projection can remove a substantial part of a unit correction.
+   Neither fact proves a faster constrained fit. The completed ablation held
+   the window inverse fixed and compared old Newton against the new gradient-
+   projection/CG candidate at 25 frames and both original product caps. The latter
+   passes 19 small independent CPU/CUDA controls and both caps at 556 products.
+   Its full-count extension fails at both wall limits with bound 2.793714, worse
+   than the earlier incomplete reference/diagonal bounds. Do not adopt it or
+   treat identical cap outputs as convergence. See [the window/state decision](../results/p2-window-state-probe/DECISION.md),
+   [the 25-frame ablation](../results/p2-projection-ablation/DECISION.md) and
+   [the failed full-count extension](../results/p2-projection-full-count/DECISION.md).
+   An approximate inverse must never replace the exact forward model or independent
+   certificate. Inner and unaccepted-direction traces are
    now available to distinguish poor inner progress from outer budget exhaustion.
    Do not infer a solver winner or image accuracy from incomplete fits. Keep
    every alternative comparison, failed outcome and numerical threshold.
@@ -395,7 +401,19 @@ full qualification is not supported by the current evidence.
    The new 3 GiB fixed-admission cache passes all 500-frame parity and improves
    local per-product time by about 11%; adopt it only in a new study identity
    with the qualified 1 GiB headroom check. A larger LRU cache alone did not help.
-   This modest gain does not justify an unqualified solver or blind budget rise.
+   This modest gain does not justify an unqualified solver or blind budget rise. A new
+   exact detector-crop FFT embedding now passes 36 CPU/CUDA controls, including
+   independent fitted-scene certificates. Its bounds exclude circular aliases
+   only from retained samples; they preserve the original nonperiodic model.
+   Its [full-count profile passes](../results/p5-cropped-fft/DECISION.md), reducing
+   local normal-product time from 1.052 to 0.391 seconds with 4 GiB retention
+   (all spectra) and the declared 1 GiB additional headroom. The cropped 3 GiB
+   mode also passes at 0.436 seconds. Adopt only in a new audit study identity.
+   Next compare the earlier reference and diagonal Newton methods at the same
+   objective and independent criteria; retain the 25-frame control and full-count
+   doubled-budget checks. Use these measured costs and retained trajectories to
+   predeclare execution limits, recording any new budget as a new experiment.
+   The failed projection candidate is not established as the best full-count solver.
 3. Qualify the full 5/10/25/50/100% selection matrix across all seeds, seeing regimes
    and crops, with independent certificates and budget stability. The one-case
    endpoint comparison does not replace the complete family or settle the prior.
