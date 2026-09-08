@@ -451,7 +451,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
         max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
         endian_convention='spec', recover_complete_frames=True, reject_saturated=False, frame_preselection=True,
-        reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
+        stack_percent=25, reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
         gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',
         reference_epoch_s=1., field_angle0_rad=5., field_rate_rad_s=2., surface_rate_rad_s=3.,

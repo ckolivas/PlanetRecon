@@ -93,7 +93,11 @@ The detected silhouette axes account for tilt, phase and attached rings.
 The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
 shows exclusion counts before processing. Runs never repeat the analysis automatically.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
-`stack --no-frame-preselection` ignores cached decisions.
+`stack --no-frame-preselection` ignores cached decisions. After preprocessing,
+**Best retained frames (%)** (CLI: `stack --stack-percent 25`) selects the sharpest
+fraction of screened frames for the next run, without repeating preprocessing or
+adding sharpening. Lower percentages trade noise for less seeing blur; 100% is
+the default.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

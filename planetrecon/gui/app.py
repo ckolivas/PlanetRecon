@@ -154,6 +154,7 @@ class MainWindow:
         split = QSplitter()
         self.controls = ConfigControls(self.config)
         self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
+        self.controls.fields['stack_percent'].valueChanged.connect(self._refresh_preprocessing)
         for key in ('bayer_override', 'endian_override', 'endian_convention', 'crop',
                     'recover_complete_frames', 'reject_saturated', 'bias_path', 'dark_path',
                     'flat_path', 'gain_e_per_adu', 'read_noise_e', 'saturate_adu'):
@@ -393,13 +394,21 @@ class MainWindow:
         info = self.preprocessing_info
         if info.get('status') == 'ready':
             usage = 'Will use cache' if self.controls.fields['frame_preselection'].isChecked() else 'Cache disabled for runs'
+            percent = self.controls.fields['stack_percent'].value()
+            selected = (info['accepted'] * percent + 99) // 100
+            selection_text = (f' Next run: best {percent}% = {selected} screened frames before registration rejection.'
+                              if self.controls.fields['frame_preselection'].isChecked() else '')
             self.preprocessing_label.setText(
                 f"{usage}: {info['quality']} quality / {info['shape']} shape exclusions "
                 f"({info['quality_shape_overlap']} overlap), {info['other']} other; "
                 f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained. "
-                f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.")
+                f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.{selection_text}")
         else:
-            self.preprocessing_label.setText(info.get('reason', 'No preprocessing cache. Run Preprocess; runs without a cache use no quality/shape filtering.'))
+            reason = info.get('reason', 'No preprocessing cache. Run Preprocess; runs without a cache use no quality/shape filtering.')
+            if (self.controls.fields['frame_preselection'].isChecked()
+                    and self.controls.fields['stack_percent'].value() < 100):
+                reason += ' Best-frame percentage selection needs a matching cache; run Preprocess first.'
+            self.preprocessing_label.setText(reason)
 
     def _preprocessing_settings_changed(self, value=None):
         if self.preprocessing_info.get('status') == 'ready':

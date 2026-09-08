@@ -31,6 +31,7 @@ class ReconstructionConfig:
     recover_complete_frames: bool = False
     reject_saturated: bool = True
     frame_preselection: bool = True
+    stack_percent: int = 100
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -70,6 +71,8 @@ class ReconstructionConfig:
     saturate_adu: float | None = None
 
     def __post_init__(self) -> None:
+        if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:
+            raise ValueError('stack_percent must be an integer from 1 to 100')
         if type(self.frame_preselection) is not bool:
             raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):

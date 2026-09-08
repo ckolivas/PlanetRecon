@@ -161,3 +161,22 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
         'axis_note': 'Apparent major/minor axes; phase and rings included, physical equator not inferred.',
     }
     return FrameSelection(accepted, metrics, summary, stopped)
+
+
+def best_frame_mask(selection, percent):
+    """Rank screened frames without overwriting cached measurements or decisions.
+
+    Keep the requested percentage, rounded up. Equal scores retain earlier
+    frames first. Percentage refers to frames surviving quality/shape screening.
+    """
+    if type(percent) is not int or not 1 <= percent <= 100:
+        raise ValueError('stack_percent must be an integer from 1 to 100')
+    indices = np.flatnonzero(selection.accepted)
+    scores = selection.measurements[indices, 0]
+    if not np.isfinite(scores).all():
+        raise ValueError('retained preprocessing quality scores must be finite')
+    count = (len(indices) * percent + 99) // 100
+    order = np.argsort(-scores, kind='stable')
+    mask = np.zeros_like(selection.accepted)
+    mask[indices[order[:count]]] = True
+    return mask

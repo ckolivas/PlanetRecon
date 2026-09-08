@@ -7,7 +7,7 @@ beside the capture as `<capture filename>.planetrecon-preprocess.npz`.
 
 The **Use cached preprocessing (quality and shape)** checkbox independently
 controls whether later runs use those decisions. Processing never launches a
-new analysis automatically. Without a cache, runs apply only their existing
+new analysis automatically. At the default 100%, runs without a cache apply only their existing
 validity, saturation and registration checks. A stale or corrupt selected cache
 requires another Preprocess action or disabling cache use. Input files are not
 modified.
@@ -21,6 +21,7 @@ counts unverified until inspection or preprocessing validates them.
 ```sh
 .venv/bin/python -m planetrecon preprocess --path capture.ser
 .venv/bin/python -m planetrecon stack --path capture.ser --device gpu
+.venv/bin/python -m planetrecon stack --path capture.ser --device gpu --stack-percent 25
 .venv/bin/python -m planetrecon stack --path capture.ser --no-frame-preselection
 ```
 
@@ -33,6 +34,23 @@ Python callers can call `preprocess_source(source, config)` independently, then
 `stack_source(source, config, preprocessing=selection)` with its returned
 selection. File-backed sources also save/load the sidecar automatically. Set
 `ReconstructionConfig(frame_preselection=False)` to ignore preprocessing.
+
+## Selecting the sharpest frames
+
+After Preprocess, set **Best retained frames (%)** in the Capture tab to use a
+percentage of the frames that survived quality/shape screening. The CLI option
+is `stack --stack-percent 25`; Python uses `ReconstructionConfig(stack_percent=25)`.
+Frames are ranked by cached quality, highest first. Ties choose the earlier frame,
+and counts round up. The GUI shows the planned count before registration rejection.
+
+Lower percentages can reduce seeing blur at the cost of increased noise; this
+is frame selection, with no sharpening. The default remains 100%. A value below
+100 requires a matching cache, and changing the percentage does not repeat
+preprocessing or overwrite its measurements. Disabling cached preprocessing
+disables this percentage selection too. The same selection applies to CPU/GPU,
+Bayer/RGB/mono, and motion-compensated stacking. An explicit reference must remain
+in the selected subset; automatic reference uses its highest-quality frame.
+Resume requires the same percentage and selected frames as the saved run.
 
 ## Cache validity
 

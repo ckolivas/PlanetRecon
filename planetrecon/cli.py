@@ -156,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--preprocessing-cache', type=Path, help='read a specific preprocessing cache (default: beside capture)')
     st.add_argument('--no-frame-preselection', action='store_true',
                     help='ignore cached quality/shape decisions for this run')
+    st.add_argument('--stack-percent', type=int, default=100,
+                    help='best percentage of screened frames (1-100); below 100 requires preprocessing; ignored with --no-frame-preselection')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
     st.add_argument("--cpu-memory-mib", type=int, help="Linux CPU process address-space cap in MiB, including mapped libraries")
     st.add_argument("--crop", choices=("feature", "bland"), default="feature")
@@ -392,6 +394,7 @@ def main(argv: list[str] | None = None) -> int:
             threads=applied_threads,
             batch_frames=args.batch,
             frame_preselection=not args.no_frame_preselection,
+            stack_percent=args.stack_percent,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
             crop=args.crop,

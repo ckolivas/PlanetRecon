@@ -1,6 +1,7 @@
 """Hover help for capture configuration, expressed in the GUI's displayed units."""
 
 CONTROL_HELP = {
+    'stack_percent': 'Stack this percentage of frames surviving cached quality/shape screening, ranked from sharpest to softest. Lower percentages can reduce seeing blur but increase noise. Run Preprocess first. Changing this value reuses the measurements and affects the next run; 100 uses all screened frames. Ignored when cached preprocessing is disabled.',
     'frame_preselection': 'Use matching cached quality and shape decisions for this run. The separate Preprocess button creates or refreshes measurements and geometry estimates. Turning this off keeps all frames except existing validity, saturation and registration rejections.',
     'device': 'Choose CPU or CUDA GPU processing. Auto uses a supported GPU when available. Geometry processing uses CPU.',
     'threads': 'Maximum CPU worker threads for the next run, from 1 to 32.',

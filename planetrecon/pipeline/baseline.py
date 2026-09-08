@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Callable
+from dataclasses import replace
 
 import numpy as np
 from scipy.ndimage import shift as ndshift
@@ -118,13 +119,25 @@ def _stack_source(
                                                 should_cancel=should_cancel)
             if cache_status['status'] in ('stale', 'invalid'):
                 raise ValueError(cache_status['reason'] + ' Run Preprocess again or disable cached preprocessing.')
+        if config.stack_percent < 100 and selection is None:
+            raise ValueError('Best-frame selection requires a matching preprocessing cache. Run Preprocess first, or set best frames to 100%.')
+        if selection is not None and config.stack_percent < 100:
+            from planetrecon.pipeline.preprocess import best_frame_mask
+            accepted = best_frame_mask(selection, config.stack_percent)
+            detail = {'percent_of_screened_frames': config.stack_percent,
+                      'screened_frames': int(selection.accepted.sum()),
+                      'selected_frames': int(accepted.sum()),
+                      'additional_exclusions': int(selection.accepted.sum() - accepted.sum()),
+                      'ranking': 'cached quality descending; equal scores use earliest frame'}
+            selection = replace(selection, accepted=accepted,
+                                summary={**selection.summary, 'best_frame_selection': detail})
         if selection is not None:
             if not selection.accepted.any():
                 raise ValueError('no usable frames remain after preprocessing')
             if config.reference_index >= len(selection.accepted):
                 raise ValueError('reference_index is outside the capture')
             if config.reference_index and not selection.accepted[config.reference_index]:
-                raise ValueError('selected reference frame was rejected by preprocessing; choose an accepted frame or automatic reference 0')
+                raise ValueError('selected reference frame was rejected by preprocessing or best-frame selection; choose a retained frame or automatic reference 0')
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
 
