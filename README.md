@@ -27,7 +27,9 @@ Full-resolution legacy development solves remain incomplete. The new extended
 scene-to-detector model matches all 3,000 development frames, and its constrained
 reference solver now passes the [12-case development numerical pilot](results/p2-development-numerical-pilot/DECISION.md)
 using 11 of 500 frames per case, with shared CPU/CUDA transforms and iteration
-resume. Full selections and scientific prior/likelihood qualification remain;
+resume. Full 500-frame operator parity and bounded parallel CPU verification also
+pass; the 25-frame selected endpoint passes both tested solvers, while full-frame
+convergence and scientific prior/likelihood qualification remain;
 no current Gate-1/Q2 pass or Q3 authorization is claimed.
 
 ## Historical scientific results and application foundations

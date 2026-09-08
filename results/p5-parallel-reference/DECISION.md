@@ -1,7 +1,7 @@
 # Bounded parallel independent CPU verification
 
 2026-09-08. **The eight-worker normal and adjoint arrays are bit-for-bit equal
-to the one-worker ordered CPU sums on all500 frames.** The resulting constant
+to the one-worker ordered CPU sums on all 500 frames.** The resulting constant
 probe distance bound also matches the earlier serial profile (zero measured
 relative difference). This qualifies the bounded frame-parallel implementation
 for these independent verification operations, not a scientific reconstruction.
@@ -18,7 +18,7 @@ accumulator and worker workspaces. This is not a total process memory ceiling.
 The caller caps BLAS at two threads. Eight bounded tests cover mono/RGB/CFA
 parity, result order, solver/certificate agreement and worker exception handling.
 
-Data/PSF preparation took48.33s and the whole profile270.53s. The profile overlapped
+Data/PSF preparation took 48.33 s and the whole profile270.53 s. The profile overlapped
 endpoint studies; its observed timings do not establish an isolated or general
 speedup. The final result does support using this verifier in a new prospective
 study to reduce the measured serial-check bottleneck. Existing running studies

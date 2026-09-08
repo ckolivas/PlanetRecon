@@ -20,6 +20,6 @@ Source and input hashes were unchanged throughout generation.
 
 Tests cover deterministic ties, nested fractions, prior/count scaling, selection
 without truth datasets, nonfinite input rejection and changed selection rejection.
-All 60 numerical selection solves still require their own budget/certificate
+All 60 numerical selection cases still require their own budget/certificate
 checks; the next step is one bounded case across these fractions before multiplying
 its cost across the remaining development family. Q3 remains unauthorized.

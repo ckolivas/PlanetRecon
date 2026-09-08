@@ -1,7 +1,7 @@
-# Proposed development plan
+# Development plan
 
-Updated 2026-09-08, following commit `e3db720`. This proposes an updated sequence
-for subsequent implementation; it does not mark the remaining work complete.
+Updated 2026-09-08 with full-count resource and selected-frame endpoint evidence.
+This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
 
@@ -22,12 +22,16 @@ completed features and archived scientific results remain intact.
   independent CPU 1e-5 distance bound and doubled-budget image stability.
   This does not qualify the full 500-frame selection family or scientific quality.
   The single declared weak-prior extension again selected its weakest endpoint;
-  the prior optimum is unbracketed and the extension has stopped as declared.
+  the prior optimum is unbracketed and the extension has stopped as declared. The full
+  observed selection manifest is now frozen; the 25-frame endpoint passes both
+  solvers. Both remain incomplete at 500 frames under the declared budgets.
 - **P5 early work:** shared CPU/CUDA scene FFTs, bounded retained PSF spectra and
   exact iteration resume are implemented. In the three-frame benchmark, solve
   time was 20.37 s for the reference and 1.51 s for shared CUDA, with a 3.97e-15
   relative solution difference. This is a measured pilot, not a whole-job or
-  500-frame performance guarantee; translated exposure fast paths remain absent.
+  500-frame reconstruction performance guarantee. Full-count operator parity and
+  bounded parallel independent CPU verification now pass, with archived resource
+  profiles; translated exposure fast paths remain absent.
 - **P3/P4/P6–P8:** likelihood/phase qualification, scientific requalification,
   production integration, independent captures and release refresh remain.
   Q3 is not authorized. Windows/macOS runtime tests remain excluded.
@@ -35,7 +39,10 @@ completed features and archived scientific results remain intact.
 See [current status](status.md), [operator evidence](../results/p1-scene-detector-full/DECISION.md),
 [family evidence](../results/p2-development-numerical-pilot/DECISION.md),
 [prior endpoint decision](../results/p2-prior-extension/DECISION.md) and
-[performance evidence](../results/p5-shared-fft/DECISION.md).
+[performance evidence](../results/p5-shared-fft/DECISION.md),
+[full-count profile](../results/p5-full-count-profile/DECISION.md),
+[CPU verifier](../results/p5-parallel-reference/DECISION.md) and
+[endpoint comparison](../results/p2-selection-endpoints-comparison/DECISION.md).
 
 ## Direction
 
@@ -318,25 +325,37 @@ step. Keep code fixes, failed experiments and subsequent refinements traceable.
 Set runtime estimates after the P1/P2 pilot measurements; a calendar promise for
 full qualification is not supported by the current evidence.
 
-## Next implementation sequence after the development numerical pilot
+## Next implementation sequence after the full-count and endpoint work
 
-1. Measure setup, iteration, independent certificate and retained-spectrum costs
-   for complete frame counts. The bounded LRU holds all 11 pilot spectra but
-   cannot hold 500 at its current size; sequential eviction can erase its benefit.
-   Predeclare a bounded full-count profile before choosing batching, recomputation
-   or a larger cache. Preserve the exact objective and CPU reference checks.
-2. Freeze a prospective full-development selection protocol with the actual
-   selection fractions, observed-only weighting, numerical controls and resource
-   budgets. Use the fixed reference prior only for numerical comparisons; the
-   unbracketed weak-prior study does not establish a production coefficient.
-3. Resolve prior/likelihood/phase and exposure sensitivity under P3, including
+1. Finish known-transfer conditioning qualification at full selected-frame counts.
+   The frozen observed manifest contains all 60 development selections. The 5%
+   endpoint passes with both reference and alternative solvers; complete all-frame
+   numerical accuracy remains a separate requirement. Preserve every bounded
+   failure and do not treat an optimizer flag as a certificate. The next bounded
+   diagnostic should retain iteration/evaluation traces and examine conditioning
+   and preconditioning on the frozen objective before expanding the family or
+   raising all budgets. Keep the single alternative comparison and its limits.
+2. Use the measured resource evidence to choose subsequent execution budgets.
+   Shared CUDA passes full 500-frame operator parity, while the small GPU cache
+   churns at larger counts. A bounded parallel independent CPU verifier is now
+   implemented to address expensive certificate checks. Its full-count arrays
+   match serial CPU results bit-for-bit. Adopt it in a new study identity and
+   preserve historical states.
+3. Qualify the full 5/10/25/50/100% selection matrix across all seeds, seeing regimes
+   and crops, with independent certificates and budget stability. The one-case
+   endpoint comparison does not replace the complete family or settle the prior.
+4. Resolve prior/likelihood/phase and exposure sensitivity under P3, including
    identifiability and signal loss. Do not automatically extend the prior grid
    again or reuse the inspected pilot assessment as untouched final evaluation.
-4. Complete the full selection family, then repeat Gate-1/Q2 under the frozen
-   scientific protocol. Preserve negative and incomplete results before deciding
-   whether physical reconstruction should enter the production engine.
-5. Continue P6–P8 within their dependencies: application integration and Linux
+   Freeze a separate scientific assessment before Gate-1/Q2 requalification.
+5. Continue P6–P8 within their dependencies: production integration and Linux
    bundle refresh, independent conventional-stack comparisons, then release
    preparation. Capture sourcing and owner license/signing choices remain external.
 
-Each implementation and completed evidence step remains a separate commit.
+The initial full-count profile, observed selection manifest, endpoint reference
+and alternative protocols are committed separately. The alternative supports
+completed-stage resume only; the original solver retains exact iterate/momentum
+resume. Overlapping timing measurements are not isolated speed benchmarks.
+Each subsequent implementation and completed evidence step remains a separate
+commit. Full convergence and scientific qualification are still required before
+production adoption or Q3 claims.

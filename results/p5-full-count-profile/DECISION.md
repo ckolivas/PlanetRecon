@@ -1,6 +1,6 @@
 # Full-count resource and operator parity profile
 
-2026-09-08. **11, 100 and all500-frame probes pass independent CPU parity.**
+2026-09-08. **11, 100 and all 500-frame probes pass independent CPU parity.**
 Largest relative difference among normal operator, linear term and objective
 is8.84e-16, below the declared1e-10 tolerance. The probe is a fixed nonnegative
 constant scene derived from observed counts; it is not a converged reconstruction.
@@ -11,17 +11,17 @@ constant scene derived from observed counts; it is not a converged reconstructio
 |100|0.289 / 0.287|11.265|11.516|0.534|16.853|
 |500|2.428 / 2.359|90.486|101.851|2.664|122.102|
 
-Full500-frame data/PSF preparation took31.02s; the whole profile took455.64s.
+Full500-frame data/PSF preparation took 31.02 s; the whole profile took 455.64 s.
 These timings were observed under the current host workload, not on an isolated
 benchmark machine. CPU cost grew faster than frame count in this run; do not
 extrapolate it as a fixed per-frame cost. CUDA remains useful despite cache churn.
 
-The256MiB retained-spectrum cache holds all11 spectra. At100 and500 frames, both
+The256 MiB retained-spectrum cache holds all 11 spectra. At100 and500 frames, both
 normal passes miss every spectrum (200/1000 misses respectively). A larger
-resident GPU cache is not justified on this host: only about2.4GiB was free at
+resident GPU cache is not justified on this host: only about2.4 GiB was free at
 the preliminary check. No other applications were stopped or evicted.
-Peak Torch allocated memory was374,439,936bytes and process high-water RSS
-3,805,913,088bytes. Cache allocation, process RSS and total GPU memory are distinct.
+Peak Torch allocated memory was374,439,936 bytes and process high-water RSS
+3,805,913,088 bytes. Cache allocation, process RSS and total GPU memory are distinct.
 
 [Report](report.json), [protocol](protocol.json) and per-count records preserve
 timings, certificates, runtime/input/source identities and cache counters;

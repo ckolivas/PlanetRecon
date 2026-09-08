@@ -9,18 +9,23 @@ R10 roadmap; archived experiments and their original decisions remain unchanged.
 | Preprocessing | Separate optional cache, quality/shape exclusions, best retained reference, SER duration, apparent flattening, geometry hints | Spin may be unresolved; apparent flattening alone is not intrinsic shape |
 | Geometry | Field and surface motion, Saturn globe/rings, coverage, CPU resume | Physical inference and combined atmospheric/geometry accuracy remain experimental |
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
-| Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Reference physical solver has shared CPU/CUDA FFT pilot parity; full-count resource profiles and production integration remain |
+| Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Shared CPU/CUDA operators pass all 500-frame parity; bounded parallel independent CPU verification is qualified; full reconstruction performance and production integration remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; new solver has dense/noise/sensitivity controls and all 12 development cases pass an 11-frame numerical pilot; full selections and scientific prior/likelihood qualification remain |
+| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; dense/noise/sensitivity controls and the 12-case, 11-frame pilot pass; full 60-selection manifest is frozen and the 25-frame endpoint passes both solvers; all 500-frame fits remain incomplete in both tested solvers |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
-| Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | New sensitivity/family runners add atomic iterate/momentum resume, iteration-boundary deadlines and retained incomplete outcomes; historical runners remain stage-only |
+| Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | Reference sensitivity/family/endpoint runners retain exact iterate/momentum resume and incomplete outcomes; alternative solver has completed-stage resume only |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
 | Capture interpretation | IR642 Mars and L3 Mars are both OSC RGGB | True mono Mars and further independent captures still need sourcing and permission records |
 
 New operator evidence: [full-scene consistency decision](../results/p1-scene-detector-full/DECISION.md).
 Reference solver evidence: [qualified numerical/noise pilot](../results/p2-scene-noise-v2-qualified/DECISION.md).
 New numerical family: [12-case pilot decision](../results/p2-development-numerical-pilot/DECISION.md).
-Backend measurements: [shared CPU/CUDA transforms](../results/p5-shared-fft/DECISION.md).
+Backend measurements: [shared CPU/CUDA transforms](../results/p5-shared-fft/DECISION.md),
+[full-frame profile](../results/p5-full-count-profile/DECISION.md) and
+[bounded independent CPU verification](../results/p5-parallel-reference/DECISION.md).
+Full selections: [observed manifest](../results/p2-full-selection-manifest/DECISION.md) and
+[reference endpoints](../results/p2-selection-endpoints-reference/DECISION.md) and
+[optimizer comparison](../results/p2-selection-endpoints-comparison/DECISION.md).
 Scientific setting limits: [unbracketed prior](../results/p2-prior-extension/DECISION.md),
 [domain](../results/p2-domain-sensitivity/DECISION.md),
 [sampling](../results/p2-sampling-sensitivity/DECISION.md),
