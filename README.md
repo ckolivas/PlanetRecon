@@ -23,8 +23,10 @@ tables. Q2 is E2b plus all-frame blind D / D-tail and the 40% closure gate.
 The [current status matrix](docs/status.md) distinguishes implemented application
 features from numerical and scientific qualification. Follow the
 [updated development plan](docs/development-plan.md) for remaining work.
-Full-resolution development solves remain incomplete and the scene-to-detector
-model needs correction; no current Gate-1/Q2 pass or Q3 authorization is claimed.
+Full-resolution legacy development solves remain incomplete. The new extended
+scene-to-detector model matches all 3,000 development frames, and its constrained
+reference solver is undergoing qualification; no current Gate-1/Q2 pass or Q3
+authorization is claimed.
 
 ## Historical scientific results and application foundations
 

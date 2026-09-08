@@ -5,6 +5,30 @@ for subsequent implementation; it does not mark the remaining work complete.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
 
+## Execution progress (2026-09-08)
+
+- **P0 foundations delivered:** current status matrix, exact-identity durable
+  per-estimator checkpoints in the full Gate-1 runner, per-frame optical audits,
+  and a read-only compatibility bridge for the 30 immutable archived inputs.
+  Migration of other historical runners and within-solver restart remain.
+- **P1 reference delivered:** extended optical scene, exposure translations,
+  linear convolution, pixel sums, crop/mask and detector-coordinate CFA with exact
+  adjoints. Independent spatial/derivative controls pass. All 3,000 full-grid
+  development frames pass both per-frame and correlated-stack consistency checks.
+  This resolves the measured crop-periodic mismatch; real optical adequacy,
+  boundary-prior sensitivity and combined geometry/phase inference remain.
+- **P2 reference delivered:** matrix-free nonnegative solver with a proved
+  strong-convexity certificate and independent dense controls. A full 1152×1152
+  three-frame scalar-weight pilot certifies both budgets. Spatial weighting
+  exposed conditioning problems, retained as incomplete evidence; a same-objective
+  diagonal-majorizer refinement is being qualified. Full selections/family remain.
+- **P3–P8:** the dependency ordering and owner requirements below remain in force.
+  A fixed-prior, one-case noise pilot is diagnostic; it does not freeze the
+  likelihood, prior, phase model, boundary extent or scientific assessment.
+
+See [current status](status.md), [operator evidence](../results/p1-scene-detector-full/DECISION.md)
+and [initial solver pilot](../results/p2-scene-noise-v1/DECISION.md).
+
 ## Direction
 
 **Correct image formation, establish numerical accuracy on that model, then

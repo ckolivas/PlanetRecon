@@ -163,7 +163,10 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024),
     rows.sort(key=lambda r: (r['seed'], r['dr0'], r['crop']))
     complete = complete_family(rows, seeds, regimes) and not failures
     unchanged = (identity == source_hash() and runner_identity == file_hash(__file__)
-                 and (solver_path is None or solver_identity == file_hash(solver_path)))
+                 and (solver_path is None or solver_identity == file_hash(solver_path))
+                 and protocol['checkpoint_runner_sha256'] == file_hash(Path(__file__).with_name('experiment_stages.py'))
+                 and protocol['compatibility_source_sha256'] == file_hash(Path(__file__).with_name('input_compatibility.py'))
+                 and protocol['compatibility_bridge_sha256'] == file_hash(Path(__file__).resolve().parents[1]/'results/r10-full-grid-inputs/compatibility.json'))
     passed = complete and unchanged and all(r['budget_convergence_passed'] for r in rows)
     tables = {}
     if complete:
