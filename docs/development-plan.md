@@ -31,10 +31,16 @@ versus 0.963670 for all 3,341 screened frames. Keep both controls optional and
 the all-screened default. The [first local-energy weighting pilot](../results/real-data/jupiter-local-quality-pilot.json)
 is also complete: eight-seed spatial-blur controls improve RMS by about 40%,
 but the fixed 512-frame Jupiter comparison gains only 0.011% in RMS and loses
-fine-detail correlation. It is not adopted. Next measure detector-noise
-contributions to local quality energy using known-noise mono/Bayer controls,
-then test a noise-aware weighting candidate if that measurement supports it.
-Do not assume noise caused the real-image regression without evidence. Retain common colour weights, frame counts
+fine-detail correlation. It is not adopted. The [known-noise mono/Bayer controls](../results/real-data/local-quality-noise-controls.json)
+now confirm the composite-filter noise budget within 0.4%. Subtracting known
+noise improves spatial-blur control RMS by roughly 1–18% relative to the first
+local weighting candidate. However, a same-colour finite-difference MAD estimator
+mistakes sharp Bayer detail for noise, overestimating noise sigma by up to 2.5x.
+Do not adopt automatic noise subtraction. Next use a bounded Jupiter sensitivity
+comparison to determine whether accurate noise calibration could materially help.
+These native green-proxy experiments do not change the separate area-mean
+luminance quality score used in preprocessing. Do not assume noise caused the
+real-image regression without evidence. Retain common colour weights, frame counts
 and the best-frame anchor; do not add automatic sharpening or tune defaults from
 one capture. Extend to local mono/other-planet captures where meaningful comparisons
 are available. Keep experiments bounded and adopt only demonstrated output gains.
