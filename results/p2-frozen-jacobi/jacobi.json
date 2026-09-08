@@ -1,0 +1,295 @@
+{
+  "mode": "jacobi",
+  "probe": {
+    "reason": "probe_budget",
+    "iterations": 32,
+    "trace": [
+      {
+        "iteration": 1,
+        "hessian_evaluations": 1,
+        "elapsed_s": 1.3652003199968021,
+        "recursive_relative_residual": 1.231124464541182,
+        "direction_rayleigh": 0.00010063930779463407,
+        "scaled_direction_rayleigh": 14.171946316026325
+      },
+      {
+        "iteration": 2,
+        "hessian_evaluations": 2,
+        "elapsed_s": 2.7493980409926735,
+        "recursive_relative_residual": 1.134582415434736,
+        "direction_rayleigh": 0.000947871204240822,
+        "scaled_direction_rayleigh": 164.72719486909173
+      },
+      {
+        "iteration": 3,
+        "hessian_evaluations": 3,
+        "elapsed_s": 4.11570559500251,
+        "recursive_relative_residual": 1.8596748086870665,
+        "direction_rayleigh": 0.00024873979097279545,
+        "scaled_direction_rayleigh": 47.72408952871813
+      },
+      {
+        "iteration": 4,
+        "hessian_evaluations": 4,
+        "elapsed_s": 5.490645267011132,
+        "recursive_relative_residual": 2.250502490971122,
+        "direction_rayleigh": 0.00010705453353377323,
+        "scaled_direction_rayleigh": 20.200813929350126
+      },
+      {
+        "iteration": 5,
+        "hessian_evaluations": 5,
+        "elapsed_s": 6.875015858007828,
+        "recursive_relative_residual": 2.0431564795136117,
+        "direction_rayleigh": 9.92695049972206e-05,
+        "scaled_direction_rayleigh": 18.709847271183325
+      },
+      {
+        "iteration": 6,
+        "hessian_evaluations": 6,
+        "elapsed_s": 8.507829631009372,
+        "recursive_relative_residual": 1.9328766285919357,
+        "direction_rayleigh": 0.0001144185763504676,
+        "scaled_direction_rayleigh": 21.891145414044672
+      },
+      {
+        "iteration": 7,
+        "hessian_evaluations": 7,
+        "elapsed_s": 10.167950319009833,
+        "recursive_relative_residual": 2.1519901543105555,
+        "direction_rayleigh": 0.00010387312145029153,
+        "scaled_direction_rayleigh": 19.948979715866408
+      },
+      {
+        "iteration": 8,
+        "hessian_evaluations": 8,
+        "elapsed_s": 11.654837917012628,
+        "recursive_relative_residual": 2.377001860647127,
+        "direction_rayleigh": 7.997262609260244e-05,
+        "scaled_direction_rayleigh": 15.473913025038389
+      },
+      {
+        "iteration": 9,
+        "hessian_evaluations": 9,
+        "elapsed_s": 13.031757410004502,
+        "recursive_relative_residual": 2.43199984150162,
+        "direction_rayleigh": 6.282734946696009e-05,
+        "scaled_direction_rayleigh": 11.960905492659279
+      },
+      {
+        "iteration": 10,
+        "hessian_evaluations": 10,
+        "elapsed_s": 14.423407369002234,
+        "recursive_relative_residual": 2.3760434425141654,
+        "direction_rayleigh": 6.222646888101372e-05,
+        "scaled_direction_rayleigh": 11.677811518989435
+      },
+      {
+        "iteration": 11,
+        "hessian_evaluations": 11,
+        "elapsed_s": 15.824388875014847,
+        "recursive_relative_residual": 2.143014940174932,
+        "direction_rayleigh": 6.507536063099326e-05,
+        "scaled_direction_rayleigh": 11.962933639763605
+      },
+      {
+        "iteration": 12,
+        "hessian_evaluations": 12,
+        "elapsed_s": 17.209171393013094,
+        "recursive_relative_residual": 2.088422484208585,
+        "direction_rayleigh": 7.363751919809466e-05,
+        "scaled_direction_rayleigh": 13.16209869307168
+      },
+      {
+        "iteration": 13,
+        "hessian_evaluations": 13,
+        "elapsed_s": 18.574429044005228,
+        "recursive_relative_residual": 2.0425980280622245,
+        "direction_rayleigh": 7.680040527949263e-05,
+        "scaled_direction_rayleigh": 13.379688140777644
+      },
+      {
+        "iteration": 14,
+        "hessian_evaluations": 14,
+        "elapsed_s": 19.936717364005744,
+        "recursive_relative_residual": 2.247668425636272,
+        "direction_rayleigh": 6.527945296132975e-05,
+        "scaled_direction_rayleigh": 11.026635204577198
+      },
+      {
+        "iteration": 15,
+        "hessian_evaluations": 15,
+        "elapsed_s": 21.33286696000141,
+        "recursive_relative_residual": 2.613691360813735,
+        "direction_rayleigh": 5.380002326730019e-05,
+        "scaled_direction_rayleigh": 8.906930779463437
+      },
+      {
+        "iteration": 16,
+        "hessian_evaluations": 16,
+        "elapsed_s": 22.71917442898848,
+        "recursive_relative_residual": 2.8160757420419977,
+        "direction_rayleigh": 3.659831666907277e-05,
+        "scaled_direction_rayleigh": 6.001959992790814
+      },
+      {
+        "iteration": 17,
+        "hessian_evaluations": 17,
+        "elapsed_s": 24.09637156900135,
+        "recursive_relative_residual": 3.043895047897274,
+        "direction_rayleigh": 3.23673746225011e-05,
+        "scaled_direction_rayleigh": 5.227572039251488
+      },
+      {
+        "iteration": 18,
+        "hessian_evaluations": 18,
+        "elapsed_s": 25.453893814003095,
+        "recursive_relative_residual": 3.021267644341362,
+        "direction_rayleigh": 3.633426421156298e-05,
+        "scaled_direction_rayleigh": 5.817192856841236
+      },
+      {
+        "iteration": 19,
+        "hessian_evaluations": 19,
+        "elapsed_s": 26.82929959599278,
+        "recursive_relative_residual": 2.764972202854356,
+        "direction_rayleigh": 3.861703664779055e-05,
+        "scaled_direction_rayleigh": 6.080128975923837
+      },
+      {
+        "iteration": 20,
+        "hessian_evaluations": 20,
+        "elapsed_s": 28.212612350995187,
+        "recursive_relative_residual": 2.7461123570399466,
+        "direction_rayleigh": 3.425157527558033e-05,
+        "scaled_direction_rayleigh": 5.277598677623285
+      },
+      {
+        "iteration": 21,
+        "hessian_evaluations": 21,
+        "elapsed_s": 29.721933994005667,
+        "recursive_relative_residual": 2.9817657631569574,
+        "direction_rayleigh": 3.670506975360607e-05,
+        "scaled_direction_rayleigh": 5.536709235031105
+      },
+      {
+        "iteration": 22,
+        "hessian_evaluations": 22,
+        "elapsed_s": 31.125952413014602,
+        "recursive_relative_residual": 3.011744692857291,
+        "direction_rayleigh": 3.330597509643323e-05,
+        "scaled_direction_rayleigh": 4.91701329854834
+      },
+      {
+        "iteration": 23,
+        "hessian_evaluations": 23,
+        "elapsed_s": 32.48095875501167,
+        "recursive_relative_residual": 3.0248405807116923,
+        "direction_rayleigh": 3.0202707469236036e-05,
+        "scaled_direction_rayleigh": 4.332700520382796
+      },
+      {
+        "iteration": 24,
+        "hessian_evaluations": 24,
+        "elapsed_s": 33.84228215098847,
+        "recursive_relative_residual": 2.93972273523076,
+        "direction_rayleigh": 3.285953069636216e-05,
+        "scaled_direction_rayleigh": 4.605418551553323
+      },
+      {
+        "iteration": 25,
+        "hessian_evaluations": 25,
+        "elapsed_s": 35.22498922998784,
+        "recursive_relative_residual": 2.6227909092029056,
+        "direction_rayleigh": 3.660911547017132e-05,
+        "scaled_direction_rayleigh": 4.974928937291978
+      },
+      {
+        "iteration": 26,
+        "hessian_evaluations": 26,
+        "elapsed_s": 36.599573326006066,
+        "recursive_relative_residual": 2.2978760963139924,
+        "direction_rayleigh": 4.9927364517130705e-05,
+        "scaled_direction_rayleigh": 6.5153155198971335
+      },
+      {
+        "iteration": 27,
+        "hessian_evaluations": 27,
+        "elapsed_s": 37.96765078601311,
+        "recursive_relative_residual": 2.276151017334577,
+        "direction_rayleigh": 5.913313860463701e-05,
+        "scaled_direction_rayleigh": 7.349682054249641
+      },
+      {
+        "iteration": 28,
+        "hessian_evaluations": 28,
+        "elapsed_s": 39.36374939000234,
+        "recursive_relative_residual": 2.0577188818427774,
+        "direction_rayleigh": 6.532119466058619e-05,
+        "scaled_direction_rayleigh": 7.749094216059529
+      },
+      {
+        "iteration": 29,
+        "hessian_evaluations": 29,
+        "elapsed_s": 40.7347861030139,
+        "recursive_relative_residual": 2.025076332500375,
+        "direction_rayleigh": 7.463887810240935e-05,
+        "scaled_direction_rayleigh": 8.424635025975334
+      },
+      {
+        "iteration": 30,
+        "hessian_evaluations": 30,
+        "elapsed_s": 42.11305280099623,
+        "recursive_relative_residual": 1.9785578348992496,
+        "direction_rayleigh": 7.401751568602512e-05,
+        "scaled_direction_rayleigh": 7.996926673750913
+      },
+      {
+        "iteration": 31,
+        "hessian_evaluations": 31,
+        "elapsed_s": 43.49007223898661,
+        "recursive_relative_residual": 1.954988585219733,
+        "direction_rayleigh": 8.029570135264342e-05,
+        "scaled_direction_rayleigh": 8.364614794911011
+      },
+      {
+        "iteration": 32,
+        "hessian_evaluations": 32,
+        "elapsed_s": 44.857414781989064,
+        "recursive_relative_residual": 1.8264074087515096,
+        "direction_rayleigh": 8.945335324392476e-05,
+        "scaled_direction_rayleigh": 9.076091748524247
+      }
+    ],
+    "wall_s": 44.86770530499052,
+    "scene_updated": false
+  },
+  "bound": {
+    "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+    "objective_gap_upper_bound": 15.295736017898557,
+    "absolute_solution_error_bound": 7140.433230997159,
+    "relative_solution_error_bound": 0.14992196296087326,
+    "raw_objective_gap_upper_bound": 15.295736014726746,
+    "correction_linear_residual_norm": 0.007824804092061923,
+    "scalar_roundoff_guard": 2.239184427607472e-08,
+    "feasible": true
+  },
+  "product_relative_error": 3.041590888928943e-14,
+  "independent_check_s": 24.711784090992296,
+  "probe_complete": true,
+  "would_meet_distance_tolerance": false,
+  "cache": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 265789440,
+    "peak_bytes": 265789440,
+    "hits": 0,
+    "misses": 18000,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  },
+  "cpu_reference": {
+    "workers": 8,
+    "peak_pending_frames": 8,
+    "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+  },
+  "process_peak_rss_bytes": 5248458752
+}

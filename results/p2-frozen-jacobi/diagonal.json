@@ -1,0 +1,17 @@
+{
+  "wall_s": 29.164425767987268,
+  "min": 6e-07,
+  "max": 1.347141993858999e-05,
+  "majorizer_ratio_percentiles": {
+    "min": 1.0000000239296534,
+    "p50": 174.4103460366126,
+    "p95": 1183.9051431203845,
+    "max": 2008.6055316748523
+  },
+  "workers": {
+    "workers": 8,
+    "peak_pending_frames": 8,
+    "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+  },
+  "used_as_step_majorizer": false
+}

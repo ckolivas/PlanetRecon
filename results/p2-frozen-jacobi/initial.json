@@ -1,0 +1,18 @@
+{
+  "raw_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 0.004284259938154091,
+    "absolute_solution_error_bound": 7140.433230256819,
+    "relative_solution_error_bound": 0.14992196294532895,
+    "objective_gap_upper_bound": 15.29573601472675,
+    "strong_convexity_lower_bound": 6e-07,
+    "gradient_lipschitz_upper_bound": 0.014357792041355582
+  },
+  "gradient_relative_error": 3.8691813329871186e-11,
+  "active_fraction": 0.3349191766036184,
+  "ridge": 6e-07,
+  "majorizer_min": 6.00000014357792e-07,
+  "majorizer_max": 0.014357792041355587,
+  "scaled_condition_number_upper_bound": 23929.65340225931,
+  "setup_wall_s": 92.11602081800811
+}
