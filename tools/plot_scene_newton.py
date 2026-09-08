@@ -7,15 +7,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.plot_scene_endpoints import endpoint_bounds
 
 
-def plot(results, output):
+def plot(results, output, *, periodic=False):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5), layout='constrained')
+    fig, axes = plt.subplots(1, 2, figsize=(14 if periodic else 12, 5), layout='constrained')
     labels, bounds, colours = [], [], []
-    for method, folder in [('Reference', 'p2-selection-endpoints-reference'),
-                           ('L-BFGS-B', 'p2-selection-endpoints-lbfgsb'),
-                           ('Newton-CG', 'p2-selection-endpoints-newton')]:
+    methods = [('Reference', 'p2-selection-endpoints-reference'),
+               ('L-BFGS-B', 'p2-selection-endpoints-lbfgsb'),
+               ('Newton-CG', 'p2-selection-endpoints-newton')]
+    if periodic: methods.append(('Periodic\nNewton-CG', 'p2-selection-endpoints-periodic-newton'))
+    for method, folder in methods:
         for count, bound, passed in endpoint_bounds(results/folder):
             labels.append(f'{method}\n{count} frames'); bounds.append(bound)
             colours.append('#21735a' if passed else '#b67926')
@@ -25,7 +27,7 @@ def plot(results, output):
     axes[0].tick_params(axis='x', labelsize=8)
     axes[0].set_title('Independent CPU certificates\nWorst bound across the two declared caps')
     axes[0].set_ylabel('Relative scene-distance upper bound')
-    root = results/'p2-selection-endpoints-newton'
+    root = results/('p2-selection-endpoints-periodic-newton' if periodic else 'p2-selection-endpoints-newton')
     report = json.loads((root/'report.json').read_text())
     if not report['source_input_unchanged']: raise ValueError('changed source/input identity')
     for row in report['rows']:
@@ -35,7 +37,7 @@ def plot(results, output):
             axes[1].semilogy([v['hessian_products'] for v in trace],
                              [v['relative_solution_error_bound'] for v in trace],
                              label=f"{row['n_used']} frames, cap {fit['max_products']}")
-    axes[1].set_title('Accepted Newton-CG updates\nFinal certificates recomputed independently')
+    axes[1].set_title(('Periodic inverse: ' if periodic else '')+'accepted Newton-CG updates\nFinal certificates recomputed independently')
     axes[1].set_xlabel('Inner / line search / refresh Hessian products')
     axes[1].set_ylabel('Running relative distance bound')
     for axis in axes:
@@ -50,4 +52,5 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--results', type=Path, default=Path('results'))
     p.add_argument('--output', type=Path, required=True)
-    a = p.parse_args(); plot(a.results, a.output)
+    p.add_argument('--periodic', action='store_true')
+    a = p.parse_args(); plot(a.results, a.output, periodic=a.periodic)

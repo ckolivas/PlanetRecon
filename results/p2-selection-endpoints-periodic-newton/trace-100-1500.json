@@ -1,0 +1,1683 @@
+{
+  "trace": [
+    {
+      "iteration": 1,
+      "hessian_products": 2,
+      "inner_products": 1,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.05296284577169261,
+          "outer_iteration": 1,
+          "hessian_products": 1,
+          "elapsed_s": 2.360458884999389
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -12593577.047966667,
+      "active_fraction": 0.5455654211211622,
+      "relative_solution_error_bound": 1052.2512233248447,
+      "elapsed_s": 3.6064241040148772
+    },
+    {
+      "iteration": 2,
+      "hessian_products": 35,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.9973597329057148,
+          "outer_iteration": 2,
+          "hessian_products": 3,
+          "elapsed_s": 4.80478301900439
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.995892210863115,
+          "outer_iteration": 2,
+          "hessian_products": 4,
+          "elapsed_s": 6.004632074997062
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.992990116413823,
+          "outer_iteration": 2,
+          "hessian_products": 5,
+          "elapsed_s": 7.201247699995292
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.9841234777940482,
+          "outer_iteration": 2,
+          "hessian_products": 6,
+          "elapsed_s": 8.42255549901165
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.9634603630527584,
+          "outer_iteration": 2,
+          "hessian_products": 7,
+          "elapsed_s": 9.619300485996064
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.9241808786312254,
+          "outer_iteration": 2,
+          "hessian_products": 8,
+          "elapsed_s": 10.821783807012253
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.8602332133933168,
+          "outer_iteration": 2,
+          "hessian_products": 9,
+          "elapsed_s": 12.02319133101264
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.765721826665542,
+          "outer_iteration": 2,
+          "hessian_products": 10,
+          "elapsed_s": 13.218788239988498
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.6803036502819935,
+          "outer_iteration": 2,
+          "hessian_products": 11,
+          "elapsed_s": 14.414555355004268
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.5743910629382639,
+          "outer_iteration": 2,
+          "hessian_products": 12,
+          "elapsed_s": 15.61303897498874
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.5135977015763411,
+          "outer_iteration": 2,
+          "hessian_products": 13,
+          "elapsed_s": 16.80637097399449
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.44720358831739526,
+          "outer_iteration": 2,
+          "hessian_products": 14,
+          "elapsed_s": 18.01243550798972
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.42736590389030277,
+          "outer_iteration": 2,
+          "hessian_products": 15,
+          "elapsed_s": 19.241051960008917
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.40149086346086454,
+          "outer_iteration": 2,
+          "hessian_products": 16,
+          "elapsed_s": 20.46121377599775
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.38870678209251996,
+          "outer_iteration": 2,
+          "hessian_products": 17,
+          "elapsed_s": 21.679423989990028
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.38429074768864185,
+          "outer_iteration": 2,
+          "hessian_products": 18,
+          "elapsed_s": 22.88152912800433
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.3786879689650032,
+          "outer_iteration": 2,
+          "hessian_products": 19,
+          "elapsed_s": 24.082036111009074
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.37763404362845776,
+          "outer_iteration": 2,
+          "hessian_products": 20,
+          "elapsed_s": 25.277964979992248
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.3761495736301566,
+          "outer_iteration": 2,
+          "hessian_products": 21,
+          "elapsed_s": 26.473919537995243
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.3745039173106642,
+          "outer_iteration": 2,
+          "hessian_products": 22,
+          "elapsed_s": 27.676834293000866
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.3735255725498011,
+          "outer_iteration": 2,
+          "hessian_products": 23,
+          "elapsed_s": 28.876313212007517
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.37253052143532,
+          "outer_iteration": 2,
+          "hessian_products": 24,
+          "elapsed_s": 30.07999679198838
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.37129056531332516,
+          "outer_iteration": 2,
+          "hessian_products": 25,
+          "elapsed_s": 31.273569757991936
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.3697163114350809,
+          "outer_iteration": 2,
+          "hessian_products": 26,
+          "elapsed_s": 32.46674429599079
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.36815886082745747,
+          "outer_iteration": 2,
+          "hessian_products": 27,
+          "elapsed_s": 33.658183015999384
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.36634023642174485,
+          "outer_iteration": 2,
+          "hessian_products": 28,
+          "elapsed_s": 34.85105351699167
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.3643384054183896,
+          "outer_iteration": 2,
+          "hessian_products": 29,
+          "elapsed_s": 36.047362653014716
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.36203641500710576,
+          "outer_iteration": 2,
+          "hessian_products": 30,
+          "elapsed_s": 37.23753742300323
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.3593114391190214,
+          "outer_iteration": 2,
+          "hessian_products": 31,
+          "elapsed_s": 38.43176053100615
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.35617344612926477,
+          "outer_iteration": 2,
+          "hessian_products": 32,
+          "elapsed_s": 39.632532860996434
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.3524638929624334,
+          "outer_iteration": 2,
+          "hessian_products": 33,
+          "elapsed_s": 40.87705015699612
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.3484595295287763,
+          "outer_iteration": 2,
+          "hessian_products": 34,
+          "elapsed_s": 42.06706382500124
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -118945.8824529172,
+      "active_fraction": 0.4800404331140351,
+      "relative_solution_error_bound": 412.5787672801399,
+      "elapsed_s": 43.256959174002986
+    },
+    {
+      "iteration": 3,
+      "hessian_products": 68,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.818620104656432,
+          "outer_iteration": 3,
+          "hessian_products": 36,
+          "elapsed_s": 44.45072063000407
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.8019949987674513,
+          "outer_iteration": 3,
+          "hessian_products": 37,
+          "elapsed_s": 45.6449708660075
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.7993516839953334,
+          "outer_iteration": 3,
+          "hessian_products": 38,
+          "elapsed_s": 46.843350384006044
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.7984966093548933,
+          "outer_iteration": 3,
+          "hessian_products": 39,
+          "elapsed_s": 48.03774464200251
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.7972934590889614,
+          "outer_iteration": 3,
+          "hessian_products": 40,
+          "elapsed_s": 49.233808838995174
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.7944057866264802,
+          "outer_iteration": 3,
+          "hessian_products": 41,
+          "elapsed_s": 50.44343374000164
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.7886883948633447,
+          "outer_iteration": 3,
+          "hessian_products": 42,
+          "elapsed_s": 51.71898256300483
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.7802647659212858,
+          "outer_iteration": 3,
+          "hessian_products": 43,
+          "elapsed_s": 52.91172750099213
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.769883709307932,
+          "outer_iteration": 3,
+          "hessian_products": 44,
+          "elapsed_s": 54.103096884995466
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.7573789068926068,
+          "outer_iteration": 3,
+          "hessian_products": 45,
+          "elapsed_s": 55.29492450901307
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.7462865975850046,
+          "outer_iteration": 3,
+          "hessian_products": 46,
+          "elapsed_s": 56.491446302999975
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.7223794285537056,
+          "outer_iteration": 3,
+          "hessian_products": 47,
+          "elapsed_s": 57.69043131399667
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.6907778827920544,
+          "outer_iteration": 3,
+          "hessian_products": 48,
+          "elapsed_s": 58.892477215995314
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.6392030233576783,
+          "outer_iteration": 3,
+          "hessian_products": 49,
+          "elapsed_s": 60.086157590994844
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.5904189000596971,
+          "outer_iteration": 3,
+          "hessian_products": 50,
+          "elapsed_s": 61.28424857399659
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.5362314511782211,
+          "outer_iteration": 3,
+          "hessian_products": 51,
+          "elapsed_s": 62.48745154001517
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.48275971514800875,
+          "outer_iteration": 3,
+          "hessian_products": 52,
+          "elapsed_s": 63.69282869499875
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.4485913358009969,
+          "outer_iteration": 3,
+          "hessian_products": 53,
+          "elapsed_s": 64.90875640901504
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.42792229621967814,
+          "outer_iteration": 3,
+          "hessian_products": 54,
+          "elapsed_s": 66.09643952999613
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.4254814095304153,
+          "outer_iteration": 3,
+          "hessian_products": 55,
+          "elapsed_s": 67.28894518900779
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.42767374268974945,
+          "outer_iteration": 3,
+          "hessian_products": 56,
+          "elapsed_s": 68.47688350800308
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.43837052441905733,
+          "outer_iteration": 3,
+          "hessian_products": 57,
+          "elapsed_s": 69.67392311201547
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.45207082118026326,
+          "outer_iteration": 3,
+          "hessian_products": 58,
+          "elapsed_s": 70.88423205600702
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.46744855648550065,
+          "outer_iteration": 3,
+          "hessian_products": 59,
+          "elapsed_s": 72.08530806199997
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.48307774879153725,
+          "outer_iteration": 3,
+          "hessian_products": 60,
+          "elapsed_s": 73.27154504499049
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.4956812569700489,
+          "outer_iteration": 3,
+          "hessian_products": 61,
+          "elapsed_s": 74.45521752900095
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.5068023745012334,
+          "outer_iteration": 3,
+          "hessian_products": 62,
+          "elapsed_s": 75.65755640898715
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.5133378298660798,
+          "outer_iteration": 3,
+          "hessian_products": 63,
+          "elapsed_s": 76.86128337099217
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.5199938192056418,
+          "outer_iteration": 3,
+          "hessian_products": 64,
+          "elapsed_s": 78.05952976300614
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.526305248487242,
+          "outer_iteration": 3,
+          "hessian_products": 65,
+          "elapsed_s": 79.26272649900056
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.5319169476262079,
+          "outer_iteration": 3,
+          "hessian_products": 66,
+          "elapsed_s": 80.45273287600139
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.5349677701544359,
+          "outer_iteration": 3,
+          "hessian_products": 67,
+          "elapsed_s": 81.6609534540039
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -17109.708748007473,
+      "active_fraction": 0.4623145387883772,
+      "relative_solution_error_bound": 339.3529525947447,
+      "elapsed_s": 82.90345491201151
+    },
+    {
+      "iteration": 4,
+      "hessian_products": 101,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.6539153702782133,
+          "outer_iteration": 4,
+          "hessian_products": 69,
+          "elapsed_s": 84.1186498090101
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.5995725554247312,
+          "outer_iteration": 4,
+          "hessian_products": 70,
+          "elapsed_s": 85.31937170898891
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.5855994218407169,
+          "outer_iteration": 4,
+          "hessian_products": 71,
+          "elapsed_s": 86.51169992500218
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.575397589293296,
+          "outer_iteration": 4,
+          "hessian_products": 72,
+          "elapsed_s": 87.70016579001094
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.5697158081787366,
+          "outer_iteration": 4,
+          "hessian_products": 73,
+          "elapsed_s": 88.89320944598876
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.5669756835022142,
+          "outer_iteration": 4,
+          "hessian_products": 74,
+          "elapsed_s": 90.0931617509923
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.5645193951207905,
+          "outer_iteration": 4,
+          "hessian_products": 75,
+          "elapsed_s": 91.28885036200518
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.5611862154381833,
+          "outer_iteration": 4,
+          "hessian_products": 76,
+          "elapsed_s": 92.49243892799132
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.5578369878980384,
+          "outer_iteration": 4,
+          "hessian_products": 77,
+          "elapsed_s": 93.68010876901099
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.5531118853678827,
+          "outer_iteration": 4,
+          "hessian_products": 78,
+          "elapsed_s": 94.87395781901432
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.5465549735873023,
+          "outer_iteration": 4,
+          "hessian_products": 79,
+          "elapsed_s": 96.07189165698946
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.5406618842820126,
+          "outer_iteration": 4,
+          "hessian_products": 80,
+          "elapsed_s": 97.26799477598979
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.530106452134727,
+          "outer_iteration": 4,
+          "hessian_products": 81,
+          "elapsed_s": 98.46509310900001
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.5214501487694362,
+          "outer_iteration": 4,
+          "hessian_products": 82,
+          "elapsed_s": 99.65981997500057
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.5110050052233776,
+          "outer_iteration": 4,
+          "hessian_products": 83,
+          "elapsed_s": 100.85390510899015
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.49434644347636064,
+          "outer_iteration": 4,
+          "hessian_products": 84,
+          "elapsed_s": 102.04908562201308
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.4788630964124253,
+          "outer_iteration": 4,
+          "hessian_products": 85,
+          "elapsed_s": 103.2422499860113
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.4520637034122682,
+          "outer_iteration": 4,
+          "hessian_products": 86,
+          "elapsed_s": 104.43456095599686
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.4267837257837409,
+          "outer_iteration": 4,
+          "hessian_products": 87,
+          "elapsed_s": 105.63509137398796
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.39335078604223767,
+          "outer_iteration": 4,
+          "hessian_products": 88,
+          "elapsed_s": 106.84043592400849
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.3640067797706197,
+          "outer_iteration": 4,
+          "hessian_products": 89,
+          "elapsed_s": 108.03650699398713
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.3492745376461602,
+          "outer_iteration": 4,
+          "hessian_products": 90,
+          "elapsed_s": 109.2275120659906
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.34036072073923196,
+          "outer_iteration": 4,
+          "hessian_products": 91,
+          "elapsed_s": 110.43339130599634
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.33263626641691746,
+          "outer_iteration": 4,
+          "hessian_products": 92,
+          "elapsed_s": 111.62820559801185
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.32930632816775335,
+          "outer_iteration": 4,
+          "hessian_products": 93,
+          "elapsed_s": 112.82500767800957
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.32954862818150193,
+          "outer_iteration": 4,
+          "hessian_products": 94,
+          "elapsed_s": 114.02577681999537
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.3318093415309101,
+          "outer_iteration": 4,
+          "hessian_products": 95,
+          "elapsed_s": 115.22868271099287
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.3352972264068518,
+          "outer_iteration": 4,
+          "hessian_products": 96,
+          "elapsed_s": 116.44293785601621
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.33861013354583996,
+          "outer_iteration": 4,
+          "hessian_products": 97,
+          "elapsed_s": 117.63315512498957
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.34315435684851564,
+          "outer_iteration": 4,
+          "hessian_products": 98,
+          "elapsed_s": 118.82592448499054
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.348211769587736,
+          "outer_iteration": 4,
+          "hessian_products": 99,
+          "elapsed_s": 120.023067541013
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.3559639835347935,
+          "outer_iteration": 4,
+          "hessian_products": 100,
+          "elapsed_s": 121.23031726901536
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -10706.116218918887,
+      "active_fraction": 0.4533541495339912,
+      "relative_solution_error_bound": 191.17945595944056,
+      "elapsed_s": 122.43132481101202
+    },
+    {
+      "iteration": 5,
+      "hessian_products": 134,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.6531859753522486,
+          "outer_iteration": 5,
+          "hessian_products": 102,
+          "elapsed_s": 123.64326526000514
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.6127631862447293,
+          "outer_iteration": 5,
+          "hessian_products": 103,
+          "elapsed_s": 124.83743272701395
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.5894868931684144,
+          "outer_iteration": 5,
+          "hessian_products": 104,
+          "elapsed_s": 126.03841230500257
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.5811284660349089,
+          "outer_iteration": 5,
+          "hessian_products": 105,
+          "elapsed_s": 127.24524282099446
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.5766498738298513,
+          "outer_iteration": 5,
+          "hessian_products": 106,
+          "elapsed_s": 128.44094191899057
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.5724917201566915,
+          "outer_iteration": 5,
+          "hessian_products": 107,
+          "elapsed_s": 129.63028958500945
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.5682923116023992,
+          "outer_iteration": 5,
+          "hessian_products": 108,
+          "elapsed_s": 130.83052659401437
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.564552564945206,
+          "outer_iteration": 5,
+          "hessian_products": 109,
+          "elapsed_s": 132.0786765269877
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.560665942649785,
+          "outer_iteration": 5,
+          "hessian_products": 110,
+          "elapsed_s": 133.26126197300619
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.557446492960637,
+          "outer_iteration": 5,
+          "hessian_products": 111,
+          "elapsed_s": 134.44881995298783
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.554439541446408,
+          "outer_iteration": 5,
+          "hessian_products": 112,
+          "elapsed_s": 135.6428250730096
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.5509678665831519,
+          "outer_iteration": 5,
+          "hessian_products": 113,
+          "elapsed_s": 136.8371024299995
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.5458701886034254,
+          "outer_iteration": 5,
+          "hessian_products": 114,
+          "elapsed_s": 138.02687477099244
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.5394708347271414,
+          "outer_iteration": 5,
+          "hessian_products": 115,
+          "elapsed_s": 139.22080865700264
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.5334887216902622,
+          "outer_iteration": 5,
+          "hessian_products": 116,
+          "elapsed_s": 140.42296059100772
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.5260682352103098,
+          "outer_iteration": 5,
+          "hessian_products": 117,
+          "elapsed_s": 141.6138840049971
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.5163893882424598,
+          "outer_iteration": 5,
+          "hessian_products": 118,
+          "elapsed_s": 142.80266165401554
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.5053043877211709,
+          "outer_iteration": 5,
+          "hessian_products": 119,
+          "elapsed_s": 144.03099217600538
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.49348834055451357,
+          "outer_iteration": 5,
+          "hessian_products": 120,
+          "elapsed_s": 145.2474661699962
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.48052277296716905,
+          "outer_iteration": 5,
+          "hessian_products": 121,
+          "elapsed_s": 146.44327246400644
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.4685976248841728,
+          "outer_iteration": 5,
+          "hessian_products": 122,
+          "elapsed_s": 147.6675060930138
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.45348683531060724,
+          "outer_iteration": 5,
+          "hessian_products": 123,
+          "elapsed_s": 148.85467162000714
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.44134871417111393,
+          "outer_iteration": 5,
+          "hessian_products": 124,
+          "elapsed_s": 150.04546786900028
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.4389750668867511,
+          "outer_iteration": 5,
+          "hessian_products": 125,
+          "elapsed_s": 151.23132047700346
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.4378223027834761,
+          "outer_iteration": 5,
+          "hessian_products": 126,
+          "elapsed_s": 152.42671403000713
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.4395202165829374,
+          "outer_iteration": 5,
+          "hessian_products": 127,
+          "elapsed_s": 153.62049500300782
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.4424371303850309,
+          "outer_iteration": 5,
+          "hessian_products": 128,
+          "elapsed_s": 154.81656162798754
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.4481091700943258,
+          "outer_iteration": 5,
+          "hessian_products": 129,
+          "elapsed_s": 156.0186617980071
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.45354433313905806,
+          "outer_iteration": 5,
+          "hessian_products": 130,
+          "elapsed_s": 157.2318096839881
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.4617961736833235,
+          "outer_iteration": 5,
+          "hessian_products": 131,
+          "elapsed_s": 158.44171303100302
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.4720272101396934,
+          "outer_iteration": 5,
+          "hessian_products": 132,
+          "elapsed_s": 159.635463662009
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.48441511732557735,
+          "outer_iteration": 5,
+          "hessian_products": 133,
+          "elapsed_s": 160.836945240997
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -342.29241571019975,
+      "active_fraction": 0.4590186403508772,
+      "relative_solution_error_bound": 265.621541218879,
+      "elapsed_s": 162.032496069005
+    },
+    {
+      "iteration": 6,
+      "hessian_products": 167,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.3917326371257475,
+          "outer_iteration": 6,
+          "hessian_products": 135,
+          "elapsed_s": 163.22522688200115
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.3440190968950224,
+          "outer_iteration": 6,
+          "hessian_products": 136,
+          "elapsed_s": 164.42049328100984
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.32725382194078123,
+          "outer_iteration": 6,
+          "hessian_products": 137,
+          "elapsed_s": 165.61578134298907
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.32555197198766916,
+          "outer_iteration": 6,
+          "hessian_products": 138,
+          "elapsed_s": 166.81110634701326
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.3239859473000526,
+          "outer_iteration": 6,
+          "hessian_products": 139,
+          "elapsed_s": 168.0122196029988
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.32171966821670306,
+          "outer_iteration": 6,
+          "hessian_products": 140,
+          "elapsed_s": 169.21097640000517
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.31992139292696625,
+          "outer_iteration": 6,
+          "hessian_products": 141,
+          "elapsed_s": 170.4089582549932
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.3156961656054886,
+          "outer_iteration": 6,
+          "hessian_products": 142,
+          "elapsed_s": 171.59923142299522
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.3121143220731908,
+          "outer_iteration": 6,
+          "hessian_products": 143,
+          "elapsed_s": 172.80101726201246
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.30830192689669483,
+          "outer_iteration": 6,
+          "hessian_products": 144,
+          "elapsed_s": 173.99553768901387
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.3034776742434443,
+          "outer_iteration": 6,
+          "hessian_products": 145,
+          "elapsed_s": 175.19225518300664
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.2984485571508223,
+          "outer_iteration": 6,
+          "hessian_products": 146,
+          "elapsed_s": 176.39388965099351
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.2935040909465758,
+          "outer_iteration": 6,
+          "hessian_products": 147,
+          "elapsed_s": 177.58952837900142
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.28808917509779775,
+          "outer_iteration": 6,
+          "hessian_products": 148,
+          "elapsed_s": 178.7894610390067
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.2839914864273986,
+          "outer_iteration": 6,
+          "hessian_products": 149,
+          "elapsed_s": 179.986062890006
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.2777999500925408,
+          "outer_iteration": 6,
+          "hessian_products": 150,
+          "elapsed_s": 181.17748327099252
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.27200898453207634,
+          "outer_iteration": 6,
+          "hessian_products": 151,
+          "elapsed_s": 182.3752212249965
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.26486005732056056,
+          "outer_iteration": 6,
+          "hessian_products": 152,
+          "elapsed_s": 183.56806809199043
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.256811861264763,
+          "outer_iteration": 6,
+          "hessian_products": 153,
+          "elapsed_s": 184.7623931769922
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.24747458590253785,
+          "outer_iteration": 6,
+          "hessian_products": 154,
+          "elapsed_s": 185.95674817200052
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.2380131553921987,
+          "outer_iteration": 6,
+          "hessian_products": 155,
+          "elapsed_s": 187.15466596200713
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.2281283123963097,
+          "outer_iteration": 6,
+          "hessian_products": 156,
+          "elapsed_s": 188.35534936600015
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.218945143175829,
+          "outer_iteration": 6,
+          "hessian_products": 157,
+          "elapsed_s": 189.60778808098985
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.21514172030162146,
+          "outer_iteration": 6,
+          "hessian_products": 158,
+          "elapsed_s": 190.80239227600396
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.2084883030819959,
+          "outer_iteration": 6,
+          "hessian_products": 159,
+          "elapsed_s": 191.99222517601447
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.2055051352648733,
+          "outer_iteration": 6,
+          "hessian_products": 160,
+          "elapsed_s": 193.18377361499006
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.20520779012357837,
+          "outer_iteration": 6,
+          "hessian_products": 161,
+          "elapsed_s": 194.38128328000312
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.20732666286950036,
+          "outer_iteration": 6,
+          "hessian_products": 162,
+          "elapsed_s": 195.57140877700294
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.20966347668657195,
+          "outer_iteration": 6,
+          "hessian_products": 163,
+          "elapsed_s": 196.76071931101615
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.2125277403833949,
+          "outer_iteration": 6,
+          "hessian_products": 164,
+          "elapsed_s": 197.95210645798943
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.21640661162135766,
+          "outer_iteration": 6,
+          "hessian_products": 165,
+          "elapsed_s": 199.14908100498724
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.22018651773231623,
+          "outer_iteration": 6,
+          "hessian_products": 166,
+          "elapsed_s": 200.35352109599626
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -8877.207565157318,
+      "active_fraction": 0.47208230537280704,
+      "relative_solution_error_bound": 76.76276517392533,
+      "elapsed_s": 201.55943923498853
+    },
+    {
+      "iteration": 7,
+      "hessian_products": 200,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.7964672378578382,
+          "outer_iteration": 7,
+          "hessian_products": 168,
+          "elapsed_s": 202.74759944499237
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.7729106924747218,
+          "outer_iteration": 7,
+          "hessian_products": 169,
+          "elapsed_s": 203.93521230499027
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.765834775502777,
+          "outer_iteration": 7,
+          "hessian_products": 170,
+          "elapsed_s": 205.14277151800343
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.7581523204135681,
+          "outer_iteration": 7,
+          "hessian_products": 171,
+          "elapsed_s": 206.37591838900698
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.7531471388185917,
+          "outer_iteration": 7,
+          "hessian_products": 172,
+          "elapsed_s": 207.6144924290129
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.7508787964012008,
+          "outer_iteration": 7,
+          "hessian_products": 173,
+          "elapsed_s": 208.8146246969991
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.7500340946372469,
+          "outer_iteration": 7,
+          "hessian_products": 174,
+          "elapsed_s": 210.01050319400383
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.7476563841715378,
+          "outer_iteration": 7,
+          "hessian_products": 175,
+          "elapsed_s": 211.20633303798968
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.7465735848479713,
+          "outer_iteration": 7,
+          "hessian_products": 176,
+          "elapsed_s": 212.4074898120016
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.7400312759662404,
+          "outer_iteration": 7,
+          "hessian_products": 177,
+          "elapsed_s": 213.6047446599987
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.7354771633420848,
+          "outer_iteration": 7,
+          "hessian_products": 178,
+          "elapsed_s": 214.80542687600246
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.7268188084040884,
+          "outer_iteration": 7,
+          "hessian_products": 179,
+          "elapsed_s": 216.00622696601204
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.7196176540133027,
+          "outer_iteration": 7,
+          "hessian_products": 180,
+          "elapsed_s": 217.205806175014
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.7133447531361705,
+          "outer_iteration": 7,
+          "hessian_products": 181,
+          "elapsed_s": 218.40639868500875
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.7069220836523752,
+          "outer_iteration": 7,
+          "hessian_products": 182,
+          "elapsed_s": 219.61093046999304
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.6983249155784091,
+          "outer_iteration": 7,
+          "hessian_products": 183,
+          "elapsed_s": 220.82480323201162
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.6910994422313596,
+          "outer_iteration": 7,
+          "hessian_products": 184,
+          "elapsed_s": 222.0234811929986
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.6839904144368109,
+          "outer_iteration": 7,
+          "hessian_products": 185,
+          "elapsed_s": 223.21065293901484
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.6725486447667005,
+          "outer_iteration": 7,
+          "hessian_products": 186,
+          "elapsed_s": 224.40503666599398
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.6653166467943705,
+          "outer_iteration": 7,
+          "hessian_products": 187,
+          "elapsed_s": 225.60062896399177
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.656564949684641,
+          "outer_iteration": 7,
+          "hessian_products": 188,
+          "elapsed_s": 226.79801485000644
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.6449829147524452,
+          "outer_iteration": 7,
+          "hessian_products": 189,
+          "elapsed_s": 227.98345964300097
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.636152544076756,
+          "outer_iteration": 7,
+          "hessian_products": 190,
+          "elapsed_s": 229.17182507598773
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.6337481854363429,
+          "outer_iteration": 7,
+          "hessian_products": 191,
+          "elapsed_s": 230.36490362300538
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.6285853346246167,
+          "outer_iteration": 7,
+          "hessian_products": 192,
+          "elapsed_s": 231.56011123099597
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.6282264920126652,
+          "outer_iteration": 7,
+          "hessian_products": 193,
+          "elapsed_s": 232.74861036101356
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.6221627357761914,
+          "outer_iteration": 7,
+          "hessian_products": 194,
+          "elapsed_s": 233.9499482900137
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.6231808381535128,
+          "outer_iteration": 7,
+          "hessian_products": 195,
+          "elapsed_s": 235.15535366299446
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.63008446761,
+          "outer_iteration": 7,
+          "hessian_products": 196,
+          "elapsed_s": 236.4020893269917
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.643113391006173,
+          "outer_iteration": 7,
+          "hessian_products": 197,
+          "elapsed_s": 237.59329607500695
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.655578611620453,
+          "outer_iteration": 7,
+          "hessian_products": 198,
+          "elapsed_s": 238.7867487159965
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.6675390732323583,
+          "outer_iteration": 7,
+          "hessian_products": 199,
+          "elapsed_s": 239.9813216709881
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -379.05729321171566,
+      "active_fraction": 0.46070299650493424,
+      "relative_solution_error_bound": 111.83253006245258,
+      "elapsed_s": 241.18230410700198
+    },
+    {
+      "iteration": 8,
+      "hessian_products": 233,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "inner_trace": [
+        {
+          "iteration": 1,
+          "recursive_relative_residual": 0.5094555510257113,
+          "outer_iteration": 8,
+          "hessian_products": 201,
+          "elapsed_s": 242.42228290700587
+        },
+        {
+          "iteration": 2,
+          "recursive_relative_residual": 0.4604057444079074,
+          "outer_iteration": 8,
+          "hessian_products": 202,
+          "elapsed_s": 243.6212075999938
+        },
+        {
+          "iteration": 3,
+          "recursive_relative_residual": 0.44248391392281455,
+          "outer_iteration": 8,
+          "hessian_products": 203,
+          "elapsed_s": 244.8224633820064
+        },
+        {
+          "iteration": 4,
+          "recursive_relative_residual": 0.438216633171237,
+          "outer_iteration": 8,
+          "hessian_products": 204,
+          "elapsed_s": 246.00989496300463
+        },
+        {
+          "iteration": 5,
+          "recursive_relative_residual": 0.43412237864037384,
+          "outer_iteration": 8,
+          "hessian_products": 205,
+          "elapsed_s": 247.20026017300552
+        },
+        {
+          "iteration": 6,
+          "recursive_relative_residual": 0.4313094203676272,
+          "outer_iteration": 8,
+          "hessian_products": 206,
+          "elapsed_s": 248.39237590300036
+        },
+        {
+          "iteration": 7,
+          "recursive_relative_residual": 0.4290933879176177,
+          "outer_iteration": 8,
+          "hessian_products": 207,
+          "elapsed_s": 249.61766714698751
+        },
+        {
+          "iteration": 8,
+          "recursive_relative_residual": 0.4257347772442492,
+          "outer_iteration": 8,
+          "hessian_products": 208,
+          "elapsed_s": 250.80936016899068
+        },
+        {
+          "iteration": 9,
+          "recursive_relative_residual": 0.42557098688468753,
+          "outer_iteration": 8,
+          "hessian_products": 209,
+          "elapsed_s": 252.0154639229877
+        },
+        {
+          "iteration": 10,
+          "recursive_relative_residual": 0.4220227377363595,
+          "outer_iteration": 8,
+          "hessian_products": 210,
+          "elapsed_s": 253.21289904299192
+        },
+        {
+          "iteration": 11,
+          "recursive_relative_residual": 0.4183970576240482,
+          "outer_iteration": 8,
+          "hessian_products": 211,
+          "elapsed_s": 254.41818491899176
+        },
+        {
+          "iteration": 12,
+          "recursive_relative_residual": 0.41415305537833763,
+          "outer_iteration": 8,
+          "hessian_products": 212,
+          "elapsed_s": 255.72374875700916
+        },
+        {
+          "iteration": 13,
+          "recursive_relative_residual": 0.40652678027162986,
+          "outer_iteration": 8,
+          "hessian_products": 213,
+          "elapsed_s": 256.92311260299175
+        },
+        {
+          "iteration": 14,
+          "recursive_relative_residual": 0.4010811564888657,
+          "outer_iteration": 8,
+          "hessian_products": 214,
+          "elapsed_s": 258.1235962070059
+        },
+        {
+          "iteration": 15,
+          "recursive_relative_residual": 0.39686511905987126,
+          "outer_iteration": 8,
+          "hessian_products": 215,
+          "elapsed_s": 259.3261017719924
+        },
+        {
+          "iteration": 16,
+          "recursive_relative_residual": 0.3920642201851139,
+          "outer_iteration": 8,
+          "hessian_products": 216,
+          "elapsed_s": 260.52613174400176
+        },
+        {
+          "iteration": 17,
+          "recursive_relative_residual": 0.3882445487392648,
+          "outer_iteration": 8,
+          "hessian_products": 217,
+          "elapsed_s": 261.7190926900075
+        },
+        {
+          "iteration": 18,
+          "recursive_relative_residual": 0.38588566484992476,
+          "outer_iteration": 8,
+          "hessian_products": 218,
+          "elapsed_s": 262.91765449999366
+        },
+        {
+          "iteration": 19,
+          "recursive_relative_residual": 0.3808648008513916,
+          "outer_iteration": 8,
+          "hessian_products": 219,
+          "elapsed_s": 264.11605918599525
+        },
+        {
+          "iteration": 20,
+          "recursive_relative_residual": 0.3746937986921125,
+          "outer_iteration": 8,
+          "hessian_products": 220,
+          "elapsed_s": 265.31779138799175
+        },
+        {
+          "iteration": 21,
+          "recursive_relative_residual": 0.36708295539360436,
+          "outer_iteration": 8,
+          "hessian_products": 221,
+          "elapsed_s": 266.50543149298755
+        },
+        {
+          "iteration": 22,
+          "recursive_relative_residual": 0.35797443586202593,
+          "outer_iteration": 8,
+          "hessian_products": 222,
+          "elapsed_s": 267.71115212899167
+        },
+        {
+          "iteration": 23,
+          "recursive_relative_residual": 0.35130717845422954,
+          "outer_iteration": 8,
+          "hessian_products": 223,
+          "elapsed_s": 268.93036878001294
+        },
+        {
+          "iteration": 24,
+          "recursive_relative_residual": 0.34893685712870015,
+          "outer_iteration": 8,
+          "hessian_products": 224,
+          "elapsed_s": 270.15541038199444
+        },
+        {
+          "iteration": 25,
+          "recursive_relative_residual": 0.34450814926235396,
+          "outer_iteration": 8,
+          "hessian_products": 225,
+          "elapsed_s": 271.3416892160021
+        },
+        {
+          "iteration": 26,
+          "recursive_relative_residual": 0.34159468623334716,
+          "outer_iteration": 8,
+          "hessian_products": 226,
+          "elapsed_s": 272.53466675800155
+        },
+        {
+          "iteration": 27,
+          "recursive_relative_residual": 0.3398759991166033,
+          "outer_iteration": 8,
+          "hessian_products": 227,
+          "elapsed_s": 273.73377431501285
+        },
+        {
+          "iteration": 28,
+          "recursive_relative_residual": 0.33736219676087353,
+          "outer_iteration": 8,
+          "hessian_products": 228,
+          "elapsed_s": 274.9426297250029
+        },
+        {
+          "iteration": 29,
+          "recursive_relative_residual": 0.33789088072509066,
+          "outer_iteration": 8,
+          "hessian_products": 229,
+          "elapsed_s": 276.26136187600787
+        },
+        {
+          "iteration": 30,
+          "recursive_relative_residual": 0.3355012576255021,
+          "outer_iteration": 8,
+          "hessian_products": 230,
+          "elapsed_s": 277.46111011100584
+        },
+        {
+          "iteration": 31,
+          "recursive_relative_residual": 0.33568149108316503,
+          "outer_iteration": 8,
+          "hessian_products": 231,
+          "elapsed_s": 278.661641365994
+        },
+        {
+          "iteration": 32,
+          "recursive_relative_residual": 0.33555960136426644,
+          "outer_iteration": 8,
+          "hessian_products": 232,
+          "elapsed_s": 279.8648296869942
+        }
+      ],
+      "step_kind": "newton",
+      "quadratic_objective_change": -1689.7237786359074,
+      "active_fraction": 0.45407050952576755,
+      "relative_solution_error_bound": 38.80301347369484,
+      "elapsed_s": 281.08399582700804
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "rows": [
+    {
+      "fraction": 5,
+      "max_products": 750,
+      "accepted_updates": 23,
+      "updates_with_inner_trace": 23,
+      "updates_reaching_inner_target": 2,
+      "inner_terminal_residual_min": 0.04226114434117465,
+      "inner_terminal_residual_max": 1.0745454369926262,
+      "accepted_inner_products": 696,
+      "accepted_line_search_products": 23,
+      "unaccepted_inner_products_recorded": 29,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.003945588195920562,
+        "absolute_solution_error_bound": 328.7990163267135,
+        "relative_solution_error_bound": 0.006954384456284151,
+        "objective_gap_upper_bound": 0.6486527588244865,
+        "strong_convexity_lower_bound": 1.1999999999999999e-05,
+        "gradient_lipschitz_upper_bound": 0.013477282425514756
+      },
+      "reason": "product_budget"
+    },
+    {
+      "fraction": 5,
+      "max_products": 1500,
+      "accepted_updates": 46,
+      "updates_with_inner_trace": 46,
+      "updates_reaching_inner_target": 2,
+      "inner_terminal_residual_min": 0.04226114434117465,
+      "inner_terminal_residual_max": 1.1026835805580983,
+      "accepted_inner_products": 1432,
+      "accepted_line_search_products": 46,
+      "unaccepted_inner_products_recorded": 18,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.0002233120340822801,
+        "absolute_solution_error_bound": 18.609336173523346,
+        "relative_solution_error_bound": 0.00039358158417727616,
+        "objective_gap_upper_bound": 0.0020778443569152267,
+        "strong_convexity_lower_bound": 1.1999999999999999e-05,
+        "gradient_lipschitz_upper_bound": 0.013477282425514756
+      },
+      "reason": "product_budget"
+    },
+    {
+      "fraction": 100,
+      "max_products": 750,
+      "accepted_updates": 8,
+      "updates_with_inner_trace": 8,
+      "updates_reaching_inner_target": 1,
+      "inner_terminal_residual_min": 0.05296284577169261,
+      "inner_terminal_residual_max": 0.6675390732323583,
+      "accepted_inner_products": 225,
+      "accepted_line_search_products": 8,
+      "unaccepted_inner_products_recorded": 32,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 1.13073069604063,
+        "absolute_solution_error_bound": 1884551.1600677168,
+        "relative_solution_error_bound": 38.803013473693824,
+        "objective_gap_upper_bound": 1065459.9224737731,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355582
+      },
+      "reason": "wall_budget"
+    },
+    {
+      "fraction": 100,
+      "max_products": 1500,
+      "accepted_updates": 8,
+      "updates_with_inner_trace": 8,
+      "updates_reaching_inner_target": 1,
+      "inner_terminal_residual_min": 0.05296284577169261,
+      "inner_terminal_residual_max": 0.6675390732323583,
+      "accepted_inner_products": 225,
+      "accepted_line_search_products": 8,
+      "unaccepted_inner_products_recorded": 16,
+      "safeguard_updates": 0,
+      "converged": false,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 1.13073069604063,
+        "absolute_solution_error_bound": 1884551.1600677168,
+        "relative_solution_error_bound": 38.803013473693824,
+        "objective_gap_upper_bound": 1065459.9224737731,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355582
+      },
+      "reason": "wall_budget"
+    }
+  ],
+  "inner_relative_target": 0.1,
+  "qualification_changed": false,
+  "scope": "Descriptive trace analysis; inner targets, residuals and active counts are not scene certificates. Missing historical inner traces are not inferred.",
+  "source_report_sha256": "dc108b11492cec594509b987103d6f9bbd78f8b5c06bc24b0e069e95efa86939"
+}
