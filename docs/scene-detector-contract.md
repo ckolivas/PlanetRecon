@@ -75,3 +75,20 @@ agreement with the stored mean is a consistency test, not a claim that simulated
 optics are adequate for real captures. Full reconstruction accuracy/information
 loss criteria must be frozen before evaluating an approximation or trimming a
 usable field. No automatic crop trimming is authorized by this contract.
+
+## Reference solver certificate
+
+`tools/scene_quadratic.py` implements the explicit matrix-free objective above,
+with likelihood averaged over frames. Weights are frozen inverse variances.
+Its initial iterate is zero unless an explicit initialization is supplied; every
+margin is included. A strictly positive ridge gives strong convexity at least
+`ridge`. The gradient Lipschitz upper bound uses nonnegative operator row/column
+sums plus the ridge and the nonperiodic difference bound (8×smoothness).
+
+For a feasible scene, choose the normal-cone vector so the residual is the
+gradient at positive cells and min(gradient,0) at exact zero cells. Strong
+convexity gives distance-to-optimum ≤ norm(residual)/ridge and objective gap ≤
+norm(residual)²/(2×ridge). These bounds apply to this discrete regularized
+objective; they do not bound distance to the physical truth. The reported
+relative bound divides by max(norm(scene),1). No optical-support or identifiability
+claim follows from this certificate. Exhausted budgets remain incomplete.
