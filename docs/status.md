@@ -9,16 +9,22 @@ R10 roadmap; archived experiments and their original decisions remain unchanged.
 | Preprocessing | Separate optional cache, quality/shape exclusions, best retained reference, SER duration, apparent flattening, geometry hints | Spin may be unresolved; apparent flattening alone is not intrinsic shape |
 | Geometry | Field and surface motion, Saturn globe/rings, coverage, CPU resume | Physical inference and combined atmospheric/geometry accuracy remain experimental |
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
-| Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Physical solver is CPU; corrected-operator backend parity and whole-job benchmarks remain |
+| Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Reference physical solver has shared CPU/CUDA FFT pilot parity; full-count resource profiles and production integration remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; new solver has dense controls and four full-optical-grid three-frame pilots; complete family qualification remains |
+| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; new solver has dense/noise/sensitivity controls and all 12 development cases pass an 11-frame numerical pilot; full selections and scientific prior/likelihood qualification remain |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
-| Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | No within-solve restart or hard wall deadline; extend to other runners as migrated |
+| Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | New sensitivity/family runners add atomic iterate/momentum resume, iteration-boundary deadlines and retained incomplete outcomes; historical runners remain stage-only |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
 | Capture interpretation | IR642 Mars and L3 Mars are both OSC RGGB | True mono Mars and further independent captures still need sourcing and permission records |
 
 New operator evidence: [full-scene consistency decision](../results/p1-scene-detector-full/DECISION.md).
 Reference solver evidence: [qualified numerical/noise pilot](../results/p2-scene-noise-v2-qualified/DECISION.md).
+New numerical family: [12-case pilot decision](../results/p2-development-numerical-pilot/DECISION.md).
+Backend measurements: [shared CPU/CUDA transforms](../results/p5-shared-fft/DECISION.md).
+Scientific setting limits: [unbracketed prior](../results/p2-prior-extension/DECISION.md),
+[domain](../results/p2-domain-sensitivity/DECISION.md),
+[sampling](../results/p2-sampling-sensitivity/DECISION.md),
+[photon normalization](../results/p2-photons-sensitivity/DECISION.md).
 Legacy solver evidence: [full-grid decision](../results/r10-full-grid-summary/DECISION.md).
 Remaining sequence: [development plan](development-plan.md).
 
@@ -45,3 +51,16 @@ import closure. It checks the original certificate, current physics/sampling and
 input manifest; it never rewrites HDF5 or refreshes pass flags. This lets new
 reconstruction modules change without declaring their results qualified. Changes
 to a generation/validation dependency still require a new reviewed comparison.
+
+## Resuming the new extended-scene studies
+
+`tools/audit_scene_sensitivity.py` and `tools/audit_scene_family.py` accept
+`--resume` with the identical command and output directory. Their atomic solver
+states include both iterate and momentum, plus checksummed identity metadata.
+A changed cap, tolerance, solver, source, input, protocol or runtime rejects reuse.
+Each doubled-budget fit starts independently. Deadline failures preserve separate
+incomplete records; resuming continues their iteration state. An exhausted
+iteration cap remains an incomplete scientific outcome, not an automatic retry.
+Deadlines are checked between iterations/stages; a running transform or I/O is
+not forcibly interrupted. Cache limits cover retained PSF spectra, not total RAM
+or VRAM. No GUI physical-solver integration follows from these audit pilots.

@@ -7,28 +7,35 @@ completed features and archived scientific results remain intact.
 
 ## Execution progress (2026-09-08)
 
-- **P0 foundations delivered:** current status matrix, exact-identity durable
-  per-estimator checkpoints in the full Gate-1 runner, per-frame optical audits,
-  and a read-only compatibility bridge for the 30 immutable archived inputs.
-  Migration of other historical runners and within-solver restart remain.
-- **P1 reference delivered:** extended optical scene, exposure translations,
-  linear convolution, pixel sums, crop/mask and detector-coordinate CFA with exact
-  adjoints. Independent spatial/derivative controls pass. All 3,000 full-grid
-  development frames pass both per-frame and correlated-stack consistency checks.
-  This resolves the measured crop-periodic mismatch; real optical adequacy,
-  boundary-prior sensitivity and combined geometry/phase inference remain.
-- **P2 reference delivered:** matrix-free nonnegative solver with a proved
-  strong-convexity certificate and independent dense controls. A full 1152×1152
-  three-frame pilot now certifies both budgets for noiseless/observed data and
-  scalar/spatial variance weights. Conditioning failures are retained; a proved
-  diagonal majorizer resolves the bottleneck at measured budgets. Full selections,
-  prior/domain sensitivity and family qualification remain.
-- **P3–P8:** the dependency ordering and owner requirements below remain in force.
-  A fixed-prior, one-case noise pilot is diagnostic; it does not freeze the
-  likelihood, prior, phase model, boundary extent or scientific assessment.
+- **P0:** stage checkpoints plus atomic iterate/momentum resume now cover the new
+  solver and sensitivity/family runners. Exact identities bind input, protocol,
+  runtime and source. Deadline failures retain resumable states and separate
+  incomplete records. Historical runners still need migration where used.
+- **P1:** the extended scene operator matches all 3,000 development frames.
+  The finite optical influence domain with a 64-detector-pixel margin reproduces
+  the full-domain constrained solution to rounding in the pilot, with an exact
+  support argument for this zero-centred ridge objective. Using only the detector
+  crop changes the result by 36.4%; arbitrary margin removal is unsafe.
+- **P2:** dense numerical controls, noise pilots, observed-only prior selection,
+  domain/cell/photon normalization studies, and the complete **12-case, 11-frame
+  numerical pilot** pass their declared checks. All 24 family fits satisfy the
+  independent CPU 1e-5 distance bound and doubled-budget image stability.
+  This does not qualify the full 500-frame selection family or scientific quality.
+  The single declared weak-prior extension again selected its weakest endpoint;
+  the prior optimum is unbracketed and the extension has stopped as declared.
+- **P5 early work:** shared CPU/CUDA scene FFTs, bounded retained PSF spectra and
+  exact iteration resume are implemented. In the three-frame benchmark, solve
+  time was 20.37 s for the reference and 1.51 s for shared CUDA, with a 3.97e-15
+  relative solution difference. This is a measured pilot, not a whole-job or
+  500-frame performance guarantee; translated exposure fast paths remain absent.
+- **P3/P4/P6–P8:** likelihood/phase qualification, scientific requalification,
+  production integration, independent captures and release refresh remain.
+  Q3 is not authorized. Windows/macOS runtime tests remain excluded.
 
-See [current status](status.md), [operator evidence](../results/p1-scene-detector-full/DECISION.md)
-and [qualified numerical pilot](../results/p2-scene-noise-v2-qualified/DECISION.md).
+See [current status](status.md), [operator evidence](../results/p1-scene-detector-full/DECISION.md),
+[family evidence](../results/p2-development-numerical-pilot/DECISION.md),
+[prior endpoint decision](../results/p2-prior-extension/DECISION.md) and
+[performance evidence](../results/p5-shared-fft/DECISION.md).
 
 ## Direction
 
@@ -311,16 +318,25 @@ step. Keep code fixes, failed experiments and subsequent refinements traceable.
 Set runtime estimates after the P1/P2 pilot measurements; a calendar promise for
 full qualification is not supported by the current evidence.
 
-## Next implementation sequence after the optical-grid pilots
+## Next implementation sequence after the development numerical pilot
 
-1. Specify domain/prior/sampling and photon-normalization sensitivity, with
-   development selection separated from final assessment. The current ridge is
-   a numerical pilot setting, not a selected scientific prior.
-2. Profile repeated scene transforms and bounded PSF caches; small CPU/CUDA parity
-   work may proceed under P5's existing early-operator exception. Measured pilot
-   costs do not support blindly multiplying current execution into full families.
-3. Qualify the frozen known-transfer objective across complete development
-   selections, then repeat noise/phase/exposure controls and Gate-1/Q2 as above.
+1. Measure setup, iteration, independent certificate and retained-spectrum costs
+   for complete frame counts. The bounded LRU holds all 11 pilot spectra but
+   cannot hold 500 at its current size; sequential eviction can erase its benefit.
+   Predeclare a bounded full-count profile before choosing batching, recomputation
+   or a larger cache. Preserve the exact objective and CPU reference checks.
+2. Freeze a prospective full-development selection protocol with the actual
+   selection fractions, observed-only weighting, numerical controls and resource
+   budgets. Use the fixed reference prior only for numerical comparisons; the
+   unbracketed weak-prior study does not establish a production coefficient.
+3. Resolve prior/likelihood/phase and exposure sensitivity under P3, including
+   identifiability and signal loss. Do not automatically extend the prior grid
+   again or reuse the inspected pilot assessment as untouched final evaluation.
+4. Complete the full selection family, then repeat Gate-1/Q2 under the frozen
+   scientific protocol. Preserve negative and incomplete results before deciding
+   whether physical reconstruction should enter the production engine.
+5. Continue P6–P8 within their dependencies: application integration and Linux
+   bundle refresh, independent conventional-stack comparisons, then release
+   preparation. Capture sourcing and owner license/signing choices remain external.
 
-The existing application and release tracks remain available independently; no
-new independent capture corpus or license/signing choices were supplied here.
+Each implementation and completed evidence step remains a separate commit.

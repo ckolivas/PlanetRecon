@@ -25,8 +25,10 @@ features from numerical and scientific qualification. Follow the
 [updated development plan](docs/development-plan.md) for remaining work.
 Full-resolution legacy development solves remain incomplete. The new extended
 scene-to-detector model matches all 3,000 development frames, and its constrained
-reference solver is undergoing qualification; no current Gate-1/Q2 pass or Q3
-authorization is claimed.
+reference solver now passes the [12-case development numerical pilot](results/p2-development-numerical-pilot/DECISION.md)
+using 11 of 500 frames per case, with shared CPU/CUDA transforms and iteration
+resume. Full selections and scientific prior/likelihood qualification remain;
+no current Gate-1/Q2 pass or Q3 authorization is claimed.
 
 ## Historical scientific results and application foundations
 
@@ -155,8 +157,8 @@ later real-data tests. They are gitignored. Prompts 1 and 2 do not read them.
 ## Run
 
 From the repository root (Python 3 with numpy, scipy, h5py, tifffile, pytest). Default
-scientific execution is CPU-only, while capture commands expose CPU/auto/GPU
-selection. The default per-process thread cap is 32, reduced by
+scientific commands use CPU; the extended-scene audit tools also support CUDA.
+Capture commands expose CPU/auto/GPU selection. The default per-process thread cap is 32, reduced by
 `PLANETRECON_THREADS` or `--threads`; some FFT stages use one thread. Worker counts
 are separate limits, not an overall 32-thread budget:
 
