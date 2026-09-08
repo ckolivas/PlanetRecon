@@ -41,9 +41,17 @@ is now complete: both half/full provisional noise subtraction worsen both paired
 metrics; full subtraction increases RMS by 5.1% and loses 0.0533 fine-detail
 correlation. Increasing quality smoothing also harms low-noise spatial-blur
 controls. Neither approach is adopted; stop this weighting/smoothing sweep.
-Next test one local-alignment refinement of the independent 64-frame template,
-keeping stack frames, weights and best-frame origin fixed. Validate the candidate
-in the full application only if the paired pilot improves both image metrics.
+The [independent local-template refinement](../results/real-data/jupiter-local-template-refinement.json)
+also completed: RMS improves 0.164%, but fine-detail correlation declines by
+0.000141. It fails the declared two-metric gate and is not adopted; no full run
+or additional template iterations are warranted.
+Next test whether a narrower nonnegative colour-sampling footprint can reduce
+resampling blur. Start with known-truth subpixel-shift controls for mono and all
+four Bayer layouts, with fixed frame counts, noise and colour intensities.
+Require preserved constant colour, valid channel coverage and no noise-only
+regression before a single paired Jupiter pilot. Keep original measurements,
+common colour weights, the best-frame coordinate anchor and no sharpening;
+do not introduce a new default until the actual application output improves.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

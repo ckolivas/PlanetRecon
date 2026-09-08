@@ -1,0 +1,81 @@
+{
+  "scope": "One bounded independent-template refinement, development comparison only.",
+  "method": "Re-read the same 64 training frames, disjoint from the same 512 stack frames. Estimate global and production guarded local displacement against the original averaged template. Average once-pulled native green proxies with support normalization, then restore the fixed best-frame anchor origin by global correlation. Run the same dense raw CFA accumulation, scalar weights and 512 frames against the refined template. No output sharpening, weight changes or additional frame rejection.",
+  "baseline": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.272628639389776,
+      0.1286365787321331
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.2229557562671,
+        20.5490760175857
+      ],
+      [
+        233.29185427984584,
+        17.536015687093933
+      ],
+      [
+        232.98166922665388,
+        50.90501241455017
+      ]
+    ],
+    "relative_rmse": 0.005690950605278034,
+    "highpass_correlation_sigma3": 0.8879318710956717,
+    "registration_method": "Production normalized confidence-gated local patch matcher; experimental backend override, not the snapshot global-only registration description.",
+    "mode": "local-baseline",
+    "noise_variance_fraction": 0.0,
+    "template_noise_subtraction": false,
+    "n_template": 64,
+    "reference_index": 1638,
+    "wall_s": 36.88640449900049
+  },
+  "candidate": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.273511307676447,
+      0.1263511822728432
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.21668114775446,
+        21.32766285550585
+      ],
+      [
+        233.28614669259204,
+        18.36015069811955
+      ],
+      [
+        232.97862896650776,
+        51.34591228255247
+      ]
+    ],
+    "relative_rmse": 0.005681593043367702,
+    "highpass_correlation_sigma3": 0.8877909459934303,
+    "registration_method": "Production normalized confidence-gated local patch matcher; experimental backend override, not the snapshot global-only registration description.",
+    "mode": "one-local-template-refinement",
+    "n_template": 64,
+    "reference_index": 1638,
+    "recenter_xy": [
+      -0.0015503755546972392,
+      -0.005775410172658202
+    ],
+    "wall_s": 67.66987428899938,
+    "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+    "script_sha256": "dbf1f0839551b81be0ac8a12d332db39504d64366dbbdaeb1490f42bc4d98a4e"
+  },
+  "relative_rmse_change_percent": -0.16442880213461963,
+  "detail_correlation_change": -0.00014092510224139598,
+  "decision": "Not adopted: RMS improves slightly but fine-detail correlation declines. Does not meet the predeclared gate requiring both paired metrics to improve. Do not run full-capture validation or further template iterations for this candidate.",
+  "private_artifacts": "out/local-template-refinement/",
+  "script_sha256": "dbf1f0839551b81be0ac8a12d332db39504d64366dbbdaeb1490f42bc4d98a4e"
+}
