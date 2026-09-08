@@ -88,6 +88,35 @@ stacking. An explicit reference must remain in the subset; automatic reference
 uses its highest-quality frame. Resume requires the same mode, percentage and
 selected frames.
 
+## Optional local seeing alignment
+
+After Preprocess, enable **Local patch alignment (experimental)** in Capture
+(or CLI `stack --local-alignment`). It applies only with cached preprocessing
+and Motion model **none**. It keeps the same selected frames and uses the
+highest-quality selected frame as the coordinate anchor. Up to 64 of the
+best selected frames form a cleaner alignment template; input colour samples
+are resampled only once at the combined global and local displacement.
+
+The matcher compares normalized, band-limited texture in overlapping 65-pixel
+patches spaced 32 pixels apart, within a ±3-pixel search. Weak, poorly correlated,
+ambiguous and search-boundary matches fall back towards global alignment.
+One-dimensional stripe texture cannot constrain both displacement axes and is
+excluded. A deformation that collapses or folds image coordinates falls back
+to global alignment for that frame. These filters affect registration proxies only; no sharpening is
+applied to output images. Frames smaller than 71 pixels on either side, or with
+fewer than four screened frames, retain global alignment with a warning.
+
+CPU and CUDA use equivalent float64 calculations. The CUDA implementation batches
+patch comparisons and supports dense mono/RGB/CFA backprojection; runtime CUDA
+failures retain prior sums and continue on CPU. Resume preserves the stored
+template and requires matching selection, calibration, settings and input.
+Cancellation during template construction produces no partial accumulator state.
+
+This remains optional: the full Jupiter comparison shows a modest improvement
+and roughly three times the processing time in this local development run.
+A conventional stack is a comparison image, not ground truth, and this does not
+establish a universal benefit or complete scientific qualification.
+
 ## Cache validity
 
 Input inspection and preprocessing report capture duration from the first and

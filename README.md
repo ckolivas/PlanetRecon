@@ -106,6 +106,14 @@ Neither repeats preprocessing nor adds sharpening. These optional controls help
 evaluate the aim of improving reconstruction using more frames; they do not
 replace that aim with conventional frame rejection.
 
+**Local patch alignment (experimental)** (`stack --local-alignment`) corrects
+small seeing distortions using normalized texture patches and an averaged
+registration template anchored to the best selected frame. It preserves the
+selected frame count and adds no sharpening. It requires cached preprocessing
+and Motion model **none**; ambiguous patches keep global alignment. The measured
+Jupiter improvement is small and processing is slower, so global alignment
+remains the default.
+
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER
 headers/trailers, and retain calibrated units. Progress counts processed frames,

@@ -158,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
                     help='ignore cached quality/shape decisions for this run')
     st.add_argument('--stack-percent', type=int, default=100,
                     help='optional upper quality-range or ranked frame-count percentage (1-100; default all); below 100 requires preprocessing; ignored with --no-frame-preselection')
+    st.add_argument('--local-alignment', action='store_true',
+                    help='experimental normalized local patch alignment; requires preprocessing and no geometry motion model')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
                     help='quality_range: 50 keeps scores above (capture best + worst)/2; frame_count: ranked percentage of screened frames')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
@@ -398,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
             frame_preselection=not args.no_frame_preselection,
             stack_percent=args.stack_percent,
             frame_selection_mode=args.selection_mode,
+            local_alignment=args.local_alignment,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
             crop=args.crop,

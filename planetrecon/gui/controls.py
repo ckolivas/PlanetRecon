@@ -37,6 +37,8 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
+        self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
+        self.fields['frame_preselection'].toggled.connect(self._mode_changed)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
                      ['quality_range', 'frame_count'])
         mode = self.fields['frame_selection_mode']
@@ -169,6 +171,9 @@ class ConfigControls(QTabWidget):
         form.addRow(label, edit)
 
     def _mode_changed(self):
+        self.fields['local_alignment'].setEnabled(
+            self.fields['frame_preselection'].isChecked()
+            and self.fields['geometry_mode'].currentData() == 'none')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     @staticmethod
@@ -184,6 +189,11 @@ class ConfigControls(QTabWidget):
             sun_lon_rad=None, sun_lat_rad=None, moon_x=None, moon_y=None, moon_radius_px=None,
             ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         for key, edit in self.fields.items():
+            if key == 'local_alignment' and (
+                    not self.fields['frame_preselection'].isChecked()
+                    or self.fields['geometry_mode'].currentData() != 'none'):
+                values[key] = False
+                continue
             if not saturn and key in saturn_defaults:
                 values[key] = saturn_defaults[key]
                 continue

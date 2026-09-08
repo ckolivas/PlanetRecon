@@ -33,6 +33,7 @@ class ReconstructionConfig:
     frame_preselection: bool = True
     stack_percent: int = 100
     frame_selection_mode: str = 'quality_range'
+    local_alignment: bool = False
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -76,6 +77,10 @@ class ReconstructionConfig:
             raise ValueError('stack_percent must be an integer from 1 to 100')
         if self.frame_selection_mode not in ('quality_range', 'frame_count'):
             raise ValueError('unknown frame_selection_mode')
+        if type(self.local_alignment) is not bool:
+            raise ValueError('local_alignment must be a bool')
+        if self.local_alignment and (self.geometry_mode != 'none' or not self.frame_preselection):
+            raise ValueError('local alignment requires cached preprocessing and geometry_mode=none')
         if type(self.frame_preselection) is not bool:
             raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):

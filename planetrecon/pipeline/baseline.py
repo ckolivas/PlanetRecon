@@ -119,6 +119,8 @@ def _stack_source(
                                                 should_cancel=should_cancel)
             if cache_status['status'] in ('stale', 'invalid'):
                 raise ValueError(cache_status['reason'] + ' Run Preprocess again or disable cached preprocessing.')
+        if config.local_alignment and selection is None:
+            raise ValueError('Local alignment requires a matching cache. Run Preprocess first.')
         if config.stack_percent < 100 and selection is None:
             raise ValueError('Best-frame selection requires a matching preprocessing cache. Run Preprocess first, or set best frames to 100%.')
         if selection is not None and config.stack_percent < 100:
@@ -224,6 +226,8 @@ def _stack_source(
         state_identity = resume.identity(source, config, calibration, should_cancel)
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
+        if config.local_alignment:
+            state_identity['local_registration_version'] = 1
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -246,6 +250,36 @@ def _stack_source(
         report.selected, report.fallback, report.reason = "cpu", True, message
         report.execution_history.append("cpu")
         warnings.append(message)
+
+    local_matcher = None
+    if config.local_alignment:
+        from planetrecon.pipeline.local_align import LocalRegistration, build_template, cpu_backproject
+        accepted = np.flatnonzero(selection.accepted)
+        order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
+        candidates = accepted[order[:64]]
+        enabled = min(h, w) >= 71 and len(candidates) >= 4
+        snapshot_provenance['local_alignment'] = {
+            'version': 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
+            'window_px': 65, 'step_px': 32, 'maximum_residual_px': 3,
+            'anchor_index': reference_index,
+            'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
+        }
+        if enabled:
+            if resume_from is None:
+                def read_plane(index):
+                    calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+                    return _alignment_plane(calibrated, color)
+                try:
+                    reference = build_template(reference, candidates, read_plane,
+                                               backend.phase_correlation, config.max_shift_px, should_cancel)
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
+                    reference = build_template(reference, candidates, read_plane,
+                                               backend.phase_correlation, config.max_shift_px, should_cancel)
+            local_matcher = LocalRegistration(reference)
+            snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
+        else:
+            warnings.append('local_alignment_unavailable: global alignment retained for a small frame or fewer than four screened frames')
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -319,12 +353,22 @@ def _stack_source(
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
+            if local_matcher is not None:
+                local_matcher.use_cuda = backend.name == 'cuda'
+                try:
+                    shift = local_matcher.displacement(plane, shift)
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
+                    local_matcher.use_cuda = False
+                    shift = local_matcher.displacement(plane, shift)
             projected = None
             if backend.name == "cuda":
                 try:
                     projected = backend.backproject(calibrated, shift, color)
                 except RuntimeError as exc:
                     cpu_fallback(exc)
+            if projected is None and local_matcher is not None:
+                projected = cpu_backproject(calibrated, shift, color)
             if projected is not None:
                 add, wt, demo, support = projected
                 accum += score * add

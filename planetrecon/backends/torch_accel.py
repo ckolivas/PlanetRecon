@@ -48,6 +48,26 @@ class TorchBackend(Backend):
     @classmethod
     def _pull(cls, image, shift_xy):
         """Exact pixel-coordinate bilinear pull with zero exterior support."""
+        if np.ndim(shift_xy[0]) or np.ndim(shift_xy[1]):
+            sx = torch.as_tensor(shift_xy[0], device=image.device, dtype=torch.float64)
+            sy = torch.as_tensor(shift_xy[1], device=image.device, dtype=torch.float64)
+            h, w = image.shape[:2]
+            if sx.shape != (h, w) or sy.shape != (h, w):
+                raise ValueError('dense displacement must match the detector shape')
+            if not bool(torch.isfinite(sx).all() & torch.isfinite(sy).all()):
+                raise ValueError('dense displacement must be finite')
+            y = torch.arange(h, device=image.device, dtype=torch.float64)[:, None] + sy
+            x = torch.arange(w, device=image.device, dtype=torch.float64)[None, :] + sx
+            iy, ix = torch.floor(y).long(), torch.floor(x).long()
+            fy, fx = y-iy, x-ix
+            result = torch.zeros_like(image)
+            for dy, wy in ((0, 1-fy), (1, fy)):
+                for dx, wx in ((0, 1-fx), (1, fx)):
+                    yy, xx = iy+dy, ix+dx
+                    weight = wy*wx*((yy >= 0) & (yy < h) & (xx >= 0) & (xx < w))
+                    if image.ndim == 3: weight = weight[..., None]
+                    result += image[yy.clamp(0, h-1), xx.clamp(0, w-1)]*weight
+            return result
         import math
         sx,sy=map(float,shift_xy); ix,iy=math.floor(sx),math.floor(sy)
         fx,fy=sx-ix,sy-iy
