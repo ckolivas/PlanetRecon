@@ -1,0 +1,41 @@
+{
+  "mode": "retain-first-3gib",
+  "passed": true,
+  "relative_errors": {
+    "normal": 8.754415411238796e-16,
+    "linear": 8.840122461060283e-16,
+    "objective": 0.0
+  },
+  "setup_s": 2.1993472019967157,
+  "normal_s": [
+    1.2053587049886119,
+    1.204790112999035,
+    1.2019959070021287
+  ],
+  "objective_s": 0.7925341660156846,
+  "cache_before_products": {
+    "limit_bytes": 3221225472,
+    "resident_bytes": 3207192576,
+    "peak_bytes": 3207192576,
+    "hits": 181,
+    "misses": 819,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 181
+  },
+  "cache_after_products_and_objective": {
+    "limit_bytes": 3221225472,
+    "resident_bytes": 3207192576,
+    "peak_bytes": 3207192576,
+    "hits": 905,
+    "misses": 2095,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 181
+  },
+  "gpu_free_before_bytes": 7913013248,
+  "gpu_total_bytes": 12343050240,
+  "torch_peak_allocated_bytes": 3333562368,
+  "torch_peak_reserved_bytes": 3569352704,
+  "process_peak_rss_bytes": 4237426688
+}

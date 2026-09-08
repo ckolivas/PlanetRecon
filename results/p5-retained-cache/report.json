@@ -1,0 +1,145 @@
+{
+  "status": "valid",
+  "source_input_unchanged": true,
+  "cpu": {
+    "data_psf_setup_s": 26.79860001799534,
+    "quadratic_setup_s": 35.67598176901811,
+    "normal_s": 22.51515561697306,
+    "objective_s": 11.10050040401984,
+    "workers": {
+      "workers": 8,
+      "peak_pending_frames": 8,
+      "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+    }
+  },
+  "spectrum_storage": {
+    "fft_shape": [
+      1536,
+      1440
+    ],
+    "per_spectrum_bytes": 17719296,
+    "all_spectra_bytes": 8859648000,
+    "scope": "Shared spatial PSF spectra in complex128; excludes workspaces, scene arrays and CUDA runtime."
+  },
+  "rows": [
+    {
+      "mode": "lru-256mib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 8.754415411238796e-16,
+        "linear": 8.840122461060283e-16,
+        "objective": 0.0
+      },
+      "setup_s": 2.428503286006162,
+      "normal_s": [
+        1.3430763189971913,
+        1.3580226350168232,
+        1.3523871839861386
+      ],
+      "objective_s": 1.0213857649941929,
+      "cache_before_products": {
+        "limit_bytes": 268435456,
+        "resident_bytes": 265789440,
+        "peak_bytes": 265789440,
+        "hits": 0,
+        "misses": 1000,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 268435456,
+        "resident_bytes": 265789440,
+        "peak_bytes": 265789440,
+        "hits": 0,
+        "misses": 3000,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "gpu_free_before_bytes": 7952859136,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 374439936,
+      "torch_peak_reserved_bytes": 417333248,
+      "process_peak_rss_bytes": 4211712000
+    },
+    {
+      "mode": "lru-3gib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 8.754415411238796e-16,
+        "linear": 8.840122461060283e-16,
+        "objective": 0.0
+      },
+      "setup_s": 2.377924403990619,
+      "normal_s": [
+        1.3574217800050974,
+        1.3475009910180233,
+        1.3558565059793182
+      ],
+      "objective_s": 1.0182353860000148,
+      "cache_before_products": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 0,
+        "misses": 1000,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 0,
+        "misses": 3000,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "gpu_free_before_bytes": 7913799680,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 3315843072,
+      "torch_peak_reserved_bytes": 3550478336,
+      "process_peak_rss_bytes": 4237426688
+    },
+    {
+      "mode": "retain-first-3gib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 8.754415411238796e-16,
+        "linear": 8.840122461060283e-16,
+        "objective": 0.0
+      },
+      "setup_s": 2.1993472019967157,
+      "normal_s": [
+        1.2053587049886119,
+        1.204790112999035,
+        1.2019959070021287
+      ],
+      "objective_s": 0.7925341660156846,
+      "cache_before_products": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 181,
+        "misses": 819,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 905,
+        "misses": 2095,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "gpu_free_before_bytes": 7913013248,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 3333562368,
+      "torch_peak_reserved_bytes": 3569352704,
+      "process_peak_rss_bytes": 4237426688
+    }
+  ],
+  "failures": [],
+  "wall_s": 118.52995227399515,
+  "scope": "Cache retention/operator profile only; no reconstruction or scientific qualification.",
+  "q3_authorized": false
+}
