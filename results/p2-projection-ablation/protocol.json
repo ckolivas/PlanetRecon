@@ -1,0 +1,99 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_projection_ablation.py": "1c35cc0462c77eeed9938f3a2fb7fbeae300f035ae0adcd1e0b1aee5c3deeada",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-gradient-projection.md": "bf9d77225c7ee56d06fb0b4f5aae343f7119c740954a570225a50d3b16e00589",
+      "docs/scene-projection-ablation-protocol.md": "6ba4c456f258167c351cfa9bce533934674af3b73e9339ff17143f2204d90619",
+      "tools/audit_scene_selections.py": "9f95ee5790fb46d265dfb572aa8345148a4acf4189d0415916af2eaeb930a9e9",
+      "tools/scene_conditioning.py": "fda0a139937d3e233bc89e514b524c5013a43ce3f07b2e93b668598865d72a8d",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_gradient_projection.py": "ad376fc8d47eb0f2433a0606b3cee8de5dbacec163be31f5f0e2288d60b79692",
+      "tools/scene_parallel_reference.py": "90d48d9eb362d8f346750af3eca03db6cb20b7b011486e5f9468c7d63237dc68",
+      "tools/scene_periodic_preconditioner.py": "c41990b8c48d7a3b486ebd334074f372ab3b24041b586a68bbd7b261ae107ff2",
+      "tools/scene_projected_newton.py": "936840a40295ba4e21fd9b90ab38335a443b165400cdec55e212aed34321d6fa",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_retained_cache.py": "d982838fd0eb89ab56ede4e16caa7880af66ae32f5134a34ee0a23f3754e4ab6",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c",
+      "tools/scene_window_preconditioner.py": "cfac5b5503b0e7eee892725cb4da12bc00364fce1ae187c56439f1ad691d9f48"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "manifest_sha256": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+  "selection": {
+    "fraction": 5,
+    "indices": [
+      10,
+      242,
+      253,
+      277,
+      283,
+      290,
+      291,
+      292,
+      293,
+      294,
+      295,
+      297,
+      298,
+      299,
+      300,
+      301,
+      303,
+      306,
+      307,
+      308,
+      311,
+      313,
+      316,
+      318,
+      328
+    ],
+    "n_used": 25,
+    "observed_electron_sum": 485333085.0222802,
+    "mean_observed_scalar_variance": 1188.8952271051764,
+    "mean_ridge": 1.1999999999999999e-05
+  },
+  "case": [
+    1001,
+    4.0,
+    "feature"
+  ],
+  "modes": [
+    "window_newton",
+    "window_projection"
+  ],
+  "budgets": [
+    750,
+    1500
+  ],
+  "sum_native_strength": 0.0003,
+  "margin": 64,
+  "cell_factor": 1,
+  "tolerance": 1e-05,
+  "image_tolerance": 0.0001,
+  "fit_budget_s": 300.0,
+  "wall_budget_s": 1200.0,
+  "device": "cuda",
+  "threads": 2,
+  "cpu_frame_workers": 8,
+  "cache_bytes": 3221225472,
+  "headroom_bytes": 1073741824,
+  "inner_steps": 32,
+  "projection_steps": 8,
+  "exact_iteration_resume": false,
+  "scope": "One-case 25-frame outer-constraint ablation; no full-family or scientific qualification.",
+  "q3_authorized": false
+}

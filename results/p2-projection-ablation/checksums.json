@@ -1,0 +1,16 @@
+{
+  "DECISION.md": "6b8b3383bffc29233344e456149ec85352bbec5c2f61a182509a52e9865e5b8a",
+  "comparison.png": "58129b0ecdf25738daf2340b7ffca4204a151b0110031aa4256ac589e2acb3d7",
+  "inner-trace-window_newton-1500.json": "89464dc113f40b8031698765e06076f461d5c010c47e528f05d21f75c5939c53",
+  "inner-trace-window_newton-750.json": "0fbe2aea8105bc4e32347977fc1273f484478f56af5fa6571d850becf97e1e4f",
+  "inner-trace-window_projection-1500.json": "68052b5696b8410fdc8686d80507878153e69bba569fcf0be5c5d753d0e2203f",
+  "inner-trace-window_projection-750.json": "c2616c333a921a849efd5e52b07fb1e4ab0fb11fe5b9c4204fdf3b1d0b822121",
+  "protocol.json": "edfa0fe5967bf68ae9143eec41c9e3331e16576fecdb2bae053d5913e1a36f44",
+  "report.json": "99259a5a324a086cb63d8502f54d2f01e984734511dd4a52a1f4767f83b03e69",
+  "trace-window_newton-1500.json": "28eacbb513cefd75307c6e519a1f3a08e1eeb8c59f39827e5201c485e9146033",
+  "trace-window_newton-750.json": "07534c3234051bbc96f145b3bd1534f2b2ecfdea7f11b037caf2b7dd3fdf419c",
+  "trace-window_projection-1500.json": "9279c0b0a8da60df476c7173fc1a480cfd6b270ad15f851ad4f222f4b10f28b6",
+  "trace-window_projection-750.json": "d5ea363646b78269c2843823471df83a496d83c35d791be226fcc5cba0c58bbc",
+  "window_newton.json": "f8b1abe28449603a6f6d69f253a89070b96ea74ce1a1c17082d002df11646bfe",
+  "window_projection.json": "142adeb485d8cd438327fc6dc4f439796b6bcab893cd869ffce324e860f11c02"
+}
