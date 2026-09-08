@@ -482,6 +482,8 @@ do not satisfy the remaining strict convergence checks. Per-pixel weighting
 worsened the tested reconstructions under the current crop-forward model.
 See [`results/r10-full-grid-summary/DECISION.md`](results/r10-full-grid-summary/DECISION.md)
 for the measured results and the remaining acceptance steps.
+The proposed sequence for all remaining scientific, application and release work
+is in [`docs/development-plan.md`](docs/development-plan.md).
 
 The bounded W03 audit and decision are in
 [`results/r10-development-audit/DECISION.md`](results/r10-development-audit/DECISION.md).
