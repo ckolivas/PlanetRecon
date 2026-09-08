@@ -8,7 +8,7 @@ def fixture():
                 'fractions': [5], 'sum_native_strength': .0003, 'margin': 64, 'cell_factor': 1,
                 'budgets': [750], 'tolerance': 1e-5, 'image_tolerance': 1e-4}
     report = {'source_input_unchanged': True, 'rows': [{'fraction': 5, 'numerical_passed': True,
-              'indices': [1], 'mean_ridge': .0003, 'observed_electron_sum': 5., 'runs': [
+              'relative_changes': {'latent':0.,'detector':0.}, 'indices': [1], 'mean_ridge': .0003, 'observed_electron_sum': 5., 'runs': [
               {'maxiter': 750, 'converged': True, 'objective': 1., 'reference_certificate': {
                   'feasible': True, 'relative_solution_error_bound': 1e-6, 'objective_gap_upper_bound': 1e-4}}]}]}
     return protocol, report
@@ -66,3 +66,25 @@ def test_absent_certified_pairs_are_explicit():
     result = compare(a, b, p, p)
     assert result['certified_pair_count'] == 0
     assert result['rows'][0]['fits'][0]['objective_absolute_difference'] is None
+
+
+def test_explicit_iteration_unit_is_not_mistaken_for_product_cap():
+    p,a=fixture();p['budget_unit']='iterations'
+    result=compare(a,a,p,p)
+    assert result['candidate_endpoints_passed'] and result['certified_pair_count']==1
+    assert result['reference_budget_unit']=='iterations'
+
+
+@pytest.mark.parametrize('changes',[{}, {'latent':1e-3,'detector':0.},
+                                   {'latent':0.,'detector':float('nan')},
+                                   {'latent':-1.,'detector':0.}])
+def test_stale_pass_flag_cannot_hide_missing_or_failed_image_stability(changes):
+    p,a=fixture();b=copy.deepcopy(a);b['rows'][0]['relative_changes']=changes
+    result=compare(a,b,p,p)
+    assert not result['candidate_endpoints_passed']
+    assert result['rows'][0]['fits'][0]['both_independently_certified']
+
+
+def test_unknown_cap_unit_is_not_silently_inferred():
+    p,a=fixture();p['budget_unit']='seconds'
+    with pytest.raises(ValueError,match='budget unit'):compare(a,a,p,p)

@@ -1,6 +1,7 @@
 """Compare same-objective endpoint certificates without promoting incomplete fits."""
 import argparse
 import json
+import math
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -14,8 +15,12 @@ def compare(reference, candidate, reference_protocol, candidate_protocol):
         raise ValueError('same observations, selections, domain, prior and numerical criteria required')
     if not reference['source_input_unchanged'] or not candidate['source_input_unchanged']:
         raise ValueError('study source/input identities changed')
-    fields = ['max_products' if 'budget_unit' in p else 'maxiter'
-              for p in (reference_protocol, candidate_protocol)]
+    def budget_field(protocol):
+        unit=protocol.get('budget_unit','outer iterations')
+        if unit in ('iterations','outer iterations'): return 'maxiter'
+        if isinstance(unit,str) and 'hessian products' in unit.lower(): return 'max_products'
+        raise ValueError('unsupported solver budget unit')
+    fields=[budget_field(p) for p in (reference_protocol,candidate_protocol)]
     rows = []
     for fraction in reference_protocol['fractions']:
         blocks = []
@@ -27,7 +32,11 @@ def compare(reference, candidate, reference_protocol, candidate_protocol):
         if a and b and any(a[k] != b[k] for k in ('indices', 'mean_ridge', 'observed_electron_sum')):
             raise ValueError('actual numerical inputs differ')
         def qualified(block, field):
-            return bool(block and block['numerical_passed']
+            changes={} if block is None else block.get('relative_changes',{})
+            stable=all(math.isfinite(changes.get(k,float('inf'))) and
+                       0<=changes.get(k,float('inf'))<=reference_protocol['image_tolerance']
+                       for k in ('latent','detector'))
+            return bool(block and block['numerical_passed'] and stable
                         and [f[field] for f in block['runs']] == reference_protocol['budgets']
                         and all(f.get('converged') and f.get('reference_certificate', {}).get('feasible')
                                 and f['reference_certificate']['relative_solution_error_bound'] <= reference_protocol['tolerance']
