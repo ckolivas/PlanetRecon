@@ -42,3 +42,17 @@ def test_selection_ignores_assessment_and_rejects_incomplete_candidates():
     rows[0]['numerical_passed']=False
     with pytest.raises(ValueError,match='all candidates'):
         select_candidate(rows)
+
+
+def test_exact_psf_influence_domain_preserves_regularized_solution():
+    rng=np.random.default_rng(902)
+    psf=rng.uniform(size=(4,4));psf/=psf.sum()
+    full=SceneDetectorOperator((12,12),(psf,),1,(4,4),(4,4))
+    compact=SceneDetectorOperator((8,8),(psf,),1,(2,2),(4,4))
+    y=rng.normal(.5,1.,(4,4))
+    a,ia=solve(SceneQuadratic([full],[y],[1.],ridge=.03),tolerance=1e-8)
+    b,ib=solve(SceneQuadratic([compact],[y],[1.],ridge=.03),tolerance=1e-8)
+    assert ia['converged'] and ib['converged']
+    np.testing.assert_allclose(a[2:10,2:10],b,atol=1e-8)
+    outside=a.copy();outside[2:10,2:10]=0
+    assert np.linalg.norm(outside)<=ia['absolute_solution_error_bound']+1e-12

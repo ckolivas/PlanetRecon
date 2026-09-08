@@ -81,3 +81,13 @@ def test_solver_objective_gradient_certificate_parity():
     assert ia['converged'] and ib['converged']
     assert np.linalg.norm(a-b) <= ia['absolute_solution_error_bound']+ib['absolute_solution_error_bound']
     assert ref.certificate(b)['relative_solution_error_bound'] <= 1e-7
+
+
+@pytest.mark.parametrize('pattern',[None,'RGGB','BGGR','GRBG','GBRG'])
+def test_full_rgb_and_all_bayer_patterns(pattern):
+    rng=np.random.default_rng(351)
+    op=SceneDetectorOperator((8,10,3),(np.ones((3,4))/12,),2,(1,1),(3,4),cfa_pattern=pattern,cfa_offset_xy=(1,1))
+    batch=SceneFFTBatch([op])
+    x=rng.normal(size=op.scene_shape);y=rng.normal(size=op.output_shape)
+    np.testing.assert_allclose(batch.forward(x)[0],op.forward(x),atol=1e-12)
+    np.testing.assert_allclose(batch.adjoint([y]),op.adjoint(y),atol=1e-12)
