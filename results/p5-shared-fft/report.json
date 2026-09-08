@@ -1,0 +1,274 @@
+{
+  "status": "valid",
+  "source_input_unchanged": true,
+  "rows": [
+    {
+      "mode": "reference",
+      "passed": true,
+      "kernels": {
+        "forward": {
+          "first_s": 0.33492582297185436,
+          "warm_median_s": 0.43773564498405904
+        },
+        "adjoint": {
+          "first_s": 0.3512099939980544,
+          "warm_median_s": 0.35888401299598627
+        },
+        "normal": {
+          "first_s": 0.6481813990103547,
+          "warm_median_s": 0.6272324760211632
+        }
+      },
+      "relative_errors": {
+        "forward": 0.0,
+        "adjoint": 0.0,
+        "normal": 0.0,
+        "image": 0.0,
+        "objective": 0.0
+      },
+      "solve": {
+        "solver": "extended_scene_projected_acceleration_v3",
+        "converged": true,
+        "status": "valid",
+        "reason": "certified",
+        "scaling": "diagonal",
+        "majorizer_min": 0.001000000000015204,
+        "majorizer_max": 0.01520401795617336,
+        "n_iter": 30,
+        "maxiter": 300,
+        "tolerance": 1e-05,
+        "objective": 966526.5479069691,
+        "wall_s": 20.36805246199947,
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584768013,
+        "absolute_solution_error_bound": 0.28860983584768013,
+        "relative_solution_error_bound": 6.902852845328906e-06,
+        "objective_gap_upper_bound": 4.1647818674012435e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.01520401795617336
+      },
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584768013,
+        "absolute_solution_error_bound": 0.28860983584768013,
+        "relative_solution_error_bound": 6.902852845328906e-06,
+        "objective_gap_upper_bound": 4.1647818674012435e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.01520401795617336
+      },
+      "setup_s": 1.3085552440024912,
+      "mode_wall_s": 28.69080484198639,
+      "process_peak_rss_bytes": 417853440,
+      "cache": null,
+      "torch_peak_allocated_bytes": null,
+      "gpu_name": null
+    },
+    {
+      "mode": "cpu-no-cache",
+      "passed": true,
+      "kernels": {
+        "forward": {
+          "first_s": 0.26389951299643144,
+          "warm_median_s": 0.15109339999617077
+        },
+        "adjoint": {
+          "first_s": 0.1833297680132091,
+          "warm_median_s": 0.13988256000448018
+        },
+        "normal": {
+          "first_s": 0.22757631301647052,
+          "warm_median_s": 0.32887733000097796
+        }
+      },
+      "relative_errors": {
+        "forward": 0.0,
+        "adjoint": 5.106318920142732e-16,
+        "normal": 3.36027988209218e-16,
+        "image": 3.830553576664306e-15,
+        "objective": 0.0
+      },
+      "solve": {
+        "solver": "extended_scene_projected_acceleration_v3",
+        "converged": true,
+        "status": "valid",
+        "reason": "certified",
+        "scaling": "diagonal",
+        "majorizer_min": 0.001000000000015204,
+        "majorizer_max": 0.015204017956173361,
+        "n_iter": 30,
+        "maxiter": 300,
+        "tolerance": 1e-05,
+        "objective": 966526.5479069691,
+        "wall_s": 10.408468453999376,
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584753165,
+        "absolute_solution_error_bound": 0.28860983584753164,
+        "relative_solution_error_bound": 6.9028528453253525e-06,
+        "objective_gap_upper_bound": 4.164781867396958e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.015204017956173361
+      },
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.000288609835847145,
+        "absolute_solution_error_bound": 0.288609835847145,
+        "relative_solution_error_bound": 6.9028528453161054e-06,
+        "objective_gap_upper_bound": 4.1647818673858e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.01520401795617336
+      },
+      "setup_s": 0.5855770060152281,
+      "mode_wall_s": 14.540306891023647,
+      "process_peak_rss_bytes": 473337856,
+      "cache": {
+        "limit_bytes": 0,
+        "resident_bytes": 0,
+        "peak_bytes": 0,
+        "hits": 0,
+        "misses": 153,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "torch_peak_allocated_bytes": null,
+      "gpu_name": null
+    },
+    {
+      "mode": "cpu-cache",
+      "passed": true,
+      "kernels": {
+        "forward": {
+          "first_s": 0.15344107101554982,
+          "warm_median_s": 0.09777435500291176
+        },
+        "adjoint": {
+          "first_s": 0.11117268801899627,
+          "warm_median_s": 0.1124574470159132
+        },
+        "normal": {
+          "first_s": 0.1976475300034508,
+          "warm_median_s": 0.30138194700703025
+        }
+      },
+      "relative_errors": {
+        "forward": 0.0,
+        "adjoint": 5.106318920142732e-16,
+        "normal": 3.36027988209218e-16,
+        "image": 3.830553576664306e-15,
+        "objective": 0.0
+      },
+      "solve": {
+        "solver": "extended_scene_projected_acceleration_v3",
+        "converged": true,
+        "status": "valid",
+        "reason": "certified",
+        "scaling": "diagonal",
+        "majorizer_min": 0.001000000000015204,
+        "majorizer_max": 0.015204017956173361,
+        "n_iter": 30,
+        "maxiter": 300,
+        "tolerance": 1e-05,
+        "objective": 966526.5479069691,
+        "wall_s": 10.096473943995079,
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584753165,
+        "absolute_solution_error_bound": 0.28860983584753164,
+        "relative_solution_error_bound": 6.9028528453253525e-06,
+        "objective_gap_upper_bound": 4.164781867396958e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.015204017956173361
+      },
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.000288609835847145,
+        "absolute_solution_error_bound": 0.288609835847145,
+        "relative_solution_error_bound": 6.9028528453161054e-06,
+        "objective_gap_upper_bound": 4.1647818673858e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.01520401795617336
+      },
+      "setup_s": 0.3223379539849702,
+      "mode_wall_s": 13.570582218992058,
+      "process_peak_rss_bytes": 537632768,
+      "cache": {
+        "limit_bytes": 268435456,
+        "resident_bytes": 71746560,
+        "peak_bytes": 71746560,
+        "hits": 150,
+        "misses": 3,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "torch_peak_allocated_bytes": null,
+      "gpu_name": null
+    },
+    {
+      "mode": "cuda-cache",
+      "passed": true,
+      "kernels": {
+        "forward": {
+          "first_s": 0.14926516098785214,
+          "warm_median_s": 0.010692617011955008
+        },
+        "adjoint": {
+          "first_s": 0.01585738599533215,
+          "warm_median_s": 0.00876244599930942
+        },
+        "normal": {
+          "first_s": 0.018780924001475796,
+          "warm_median_s": 0.0166624549892731
+        }
+      },
+      "relative_errors": {
+        "forward": 6.150044355109882e-16,
+        "adjoint": 6.1235969624984845e-16,
+        "normal": 7.447266269038761e-16,
+        "image": 3.9658214610931845e-15,
+        "objective": 2.4089420425964363e-16
+      },
+      "solve": {
+        "solver": "extended_scene_projected_acceleration_v3",
+        "converged": true,
+        "status": "valid",
+        "reason": "certified",
+        "scaling": "diagonal",
+        "majorizer_min": 0.001000000000015204,
+        "majorizer_max": 0.015204017956173358,
+        "n_iter": 30,
+        "maxiter": 300,
+        "tolerance": 1e-05,
+        "objective": 966526.5479069692,
+        "wall_s": 1.5090660429850686,
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584792386,
+        "absolute_solution_error_bound": 0.2886098358479239,
+        "relative_solution_error_bound": 6.902852845334734e-06,
+        "objective_gap_upper_bound": 4.164781867408278e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.015204017956173358
+      },
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 0.00028860983584716866,
+        "absolute_solution_error_bound": 0.28860983584716865,
+        "relative_solution_error_bound": 6.902852845316671e-06,
+        "objective_gap_upper_bound": 4.164781867386482e-05,
+        "strong_convexity_lower_bound": 0.001,
+        "gradient_lipschitz_upper_bound": 0.01520401795617336
+      },
+      "setup_s": 0.045417315006488934,
+      "mode_wall_s": 3.64456839900231,
+      "process_peak_rss_bytes": 1504759808,
+      "cache": {
+        "limit_bytes": 268435456,
+        "resident_bytes": 71746560,
+        "peak_bytes": 71746560,
+        "hits": 150,
+        "misses": 3,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+      },
+      "torch_peak_allocated_bytes": 215474176,
+      "gpu_name": "NVIDIA GeForce RTX 5070"
+    }
+  ],
+  "wall_s": 65.0316194310144,
+  "q3_authorized": false,
+  "scope": "One three-frame full-optical-domain pilot, scalar data-derived variance; no full family or production GPU claim."
+}

@@ -1,0 +1,61 @@
+{
+  "mode": "reference",
+  "passed": true,
+  "kernels": {
+    "forward": {
+      "first_s": 0.33492582297185436,
+      "warm_median_s": 0.43773564498405904
+    },
+    "adjoint": {
+      "first_s": 0.3512099939980544,
+      "warm_median_s": 0.35888401299598627
+    },
+    "normal": {
+      "first_s": 0.6481813990103547,
+      "warm_median_s": 0.6272324760211632
+    }
+  },
+  "relative_errors": {
+    "forward": 0.0,
+    "adjoint": 0.0,
+    "normal": 0.0,
+    "image": 0.0,
+    "objective": 0.0
+  },
+  "solve": {
+    "solver": "extended_scene_projected_acceleration_v3",
+    "converged": true,
+    "status": "valid",
+    "reason": "certified",
+    "scaling": "diagonal",
+    "majorizer_min": 0.001000000000015204,
+    "majorizer_max": 0.01520401795617336,
+    "n_iter": 30,
+    "maxiter": 300,
+    "tolerance": 1e-05,
+    "objective": 966526.5479069691,
+    "wall_s": 20.36805246199947,
+    "feasible": true,
+    "kkt_residual_norm": 0.00028860983584768013,
+    "absolute_solution_error_bound": 0.28860983584768013,
+    "relative_solution_error_bound": 6.902852845328906e-06,
+    "objective_gap_upper_bound": 4.1647818674012435e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.01520401795617336
+  },
+  "reference_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 0.00028860983584768013,
+    "absolute_solution_error_bound": 0.28860983584768013,
+    "relative_solution_error_bound": 6.902852845328906e-06,
+    "objective_gap_upper_bound": 4.1647818674012435e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.01520401795617336
+  },
+  "setup_s": 1.3085552440024912,
+  "mode_wall_s": 28.69080484198639,
+  "process_peak_rss_bytes": 417853440,
+  "cache": null,
+  "torch_peak_allocated_bytes": null,
+  "gpu_name": null
+}

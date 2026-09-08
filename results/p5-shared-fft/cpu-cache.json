@@ -1,0 +1,68 @@
+{
+  "mode": "cpu-cache",
+  "passed": true,
+  "kernels": {
+    "forward": {
+      "first_s": 0.15344107101554982,
+      "warm_median_s": 0.09777435500291176
+    },
+    "adjoint": {
+      "first_s": 0.11117268801899627,
+      "warm_median_s": 0.1124574470159132
+    },
+    "normal": {
+      "first_s": 0.1976475300034508,
+      "warm_median_s": 0.30138194700703025
+    }
+  },
+  "relative_errors": {
+    "forward": 0.0,
+    "adjoint": 5.106318920142732e-16,
+    "normal": 3.36027988209218e-16,
+    "image": 3.830553576664306e-15,
+    "objective": 0.0
+  },
+  "solve": {
+    "solver": "extended_scene_projected_acceleration_v3",
+    "converged": true,
+    "status": "valid",
+    "reason": "certified",
+    "scaling": "diagonal",
+    "majorizer_min": 0.001000000000015204,
+    "majorizer_max": 0.015204017956173361,
+    "n_iter": 30,
+    "maxiter": 300,
+    "tolerance": 1e-05,
+    "objective": 966526.5479069691,
+    "wall_s": 10.096473943995079,
+    "feasible": true,
+    "kkt_residual_norm": 0.00028860983584753165,
+    "absolute_solution_error_bound": 0.28860983584753164,
+    "relative_solution_error_bound": 6.9028528453253525e-06,
+    "objective_gap_upper_bound": 4.164781867396958e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.015204017956173361
+  },
+  "reference_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 0.000288609835847145,
+    "absolute_solution_error_bound": 0.288609835847145,
+    "relative_solution_error_bound": 6.9028528453161054e-06,
+    "objective_gap_upper_bound": 4.1647818673858e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.01520401795617336
+  },
+  "setup_s": 0.3223379539849702,
+  "mode_wall_s": 13.570582218992058,
+  "process_peak_rss_bytes": 537632768,
+  "cache": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 71746560,
+    "peak_bytes": 71746560,
+    "hits": 150,
+    "misses": 3,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  },
+  "torch_peak_allocated_bytes": null,
+  "gpu_name": null
+}

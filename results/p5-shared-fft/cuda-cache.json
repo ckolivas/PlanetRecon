@@ -1,0 +1,68 @@
+{
+  "mode": "cuda-cache",
+  "passed": true,
+  "kernels": {
+    "forward": {
+      "first_s": 0.14926516098785214,
+      "warm_median_s": 0.010692617011955008
+    },
+    "adjoint": {
+      "first_s": 0.01585738599533215,
+      "warm_median_s": 0.00876244599930942
+    },
+    "normal": {
+      "first_s": 0.018780924001475796,
+      "warm_median_s": 0.0166624549892731
+    }
+  },
+  "relative_errors": {
+    "forward": 6.150044355109882e-16,
+    "adjoint": 6.1235969624984845e-16,
+    "normal": 7.447266269038761e-16,
+    "image": 3.9658214610931845e-15,
+    "objective": 2.4089420425964363e-16
+  },
+  "solve": {
+    "solver": "extended_scene_projected_acceleration_v3",
+    "converged": true,
+    "status": "valid",
+    "reason": "certified",
+    "scaling": "diagonal",
+    "majorizer_min": 0.001000000000015204,
+    "majorizer_max": 0.015204017956173358,
+    "n_iter": 30,
+    "maxiter": 300,
+    "tolerance": 1e-05,
+    "objective": 966526.5479069692,
+    "wall_s": 1.5090660429850686,
+    "feasible": true,
+    "kkt_residual_norm": 0.00028860983584792386,
+    "absolute_solution_error_bound": 0.2886098358479239,
+    "relative_solution_error_bound": 6.902852845334734e-06,
+    "objective_gap_upper_bound": 4.164781867408278e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.015204017956173358
+  },
+  "reference_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 0.00028860983584716866,
+    "absolute_solution_error_bound": 0.28860983584716865,
+    "relative_solution_error_bound": 6.902852845316671e-06,
+    "objective_gap_upper_bound": 4.164781867386482e-05,
+    "strong_convexity_lower_bound": 0.001,
+    "gradient_lipschitz_upper_bound": 0.01520401795617336
+  },
+  "setup_s": 0.045417315006488934,
+  "mode_wall_s": 3.64456839900231,
+  "process_peak_rss_bytes": 1504759808,
+  "cache": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 71746560,
+    "peak_bytes": 71746560,
+    "hits": 150,
+    "misses": 3,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  },
+  "torch_peak_allocated_bytes": 215474176,
+  "gpu_name": "NVIDIA GeForce RTX 5070"
+}

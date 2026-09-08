@@ -1,0 +1,8 @@
+{
+  "cpu-cache.json": "271684ae190be879178bfe945bd7cc88d354a883b41140959188c7f2d622f246",
+  "cpu-no-cache.json": "e61717f4f6e5c6e303d7dde580e5448a503f8fe406bff3bafe79f0bba739f96f",
+  "cuda-cache.json": "8e700f9a01211eea00632a75dc313baa2d2f84f4822779b84178a8f81034964a",
+  "protocol.json": "0ac92c8c71ce3bb7bbeef1bd88724cb41a9b381ea923b4f6183f33f127912567",
+  "reference.json": "c22783fd3f8f1b502f31e6f5a9485df08f8b97d0c809faa4b45c45bfe3803e1f",
+  "report.json": "4040e7772c1bd77edabc00e4a553fa48b604e31edbdea852d79d8f39ad0d9c35"
+}
