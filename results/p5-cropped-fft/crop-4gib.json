@@ -1,0 +1,63 @@
+{
+  "mode": "crop-4gib",
+  "passed": true,
+  "relative_errors": {
+    "normal": 9.59822523672981e-16,
+    "linear": 8.489149950090874e-16,
+    "objective": 0.0,
+    "maximum_frame_forward": 4.3786900124719164e-16
+  },
+  "setup_s": 0.873448720027227,
+  "normal_s": [
+    0.3909029510105029,
+    0.38999908400001004,
+    0.3936598130094353
+  ],
+  "objective_s": 0.18557615601457655,
+  "forward_s": 0.16753306999453343,
+  "cache_before_products": {
+    "limit_bytes": 4294967296,
+    "resident_bytes": 4202496000,
+    "peak_bytes": 4202496000,
+    "hits": 500,
+    "misses": 500,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 500,
+    "padding": "exact_detector_crop_v1",
+    "fft_shape": [
+      1024,
+      1024
+    ],
+    "full_fft_shape": [
+      1536,
+      1440
+    ],
+    "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+  },
+  "cache_after_products_and_objective": {
+    "limit_bytes": 4294967296,
+    "resident_bytes": 4202496000,
+    "peak_bytes": 4202496000,
+    "hits": 3000,
+    "misses": 500,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 500,
+    "padding": "exact_detector_crop_v1",
+    "fft_shape": [
+      1024,
+      1024
+    ],
+    "full_fft_shape": [
+      1536,
+      1440
+    ],
+    "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+  },
+  "gpu_free_before_bytes": 7613186048,
+  "gpu_total_bytes": 12343050240,
+  "torch_peak_allocated_bytes": 4253155328,
+  "torch_peak_reserved_bytes": 5299503104,
+  "process_peak_rss_bytes": 4366696448
+}

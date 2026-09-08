@@ -1,0 +1,200 @@
+{
+  "status": "valid",
+  "source_input_unchanged": true,
+  "cpu": {
+    "data_psf_setup_s": 22.109063459996833,
+    "quadratic_setup_s": 31.039370729995426,
+    "normal_s": 19.082621487992583,
+    "objective_s": 9.595814533997327,
+    "forward_s": 10.099848701996962,
+    "workers": {
+      "workers": 8,
+      "peak_pending_frames": 8,
+      "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+    }
+  },
+  "spectrum_storage": {
+    "fft_shape": [
+      1536,
+      1440
+    ],
+    "per_spectrum_bytes": 17719296,
+    "all_spectra_bytes": 8859648000,
+    "scope": "Shared spatial PSF spectra in complex128; excludes workspaces, scene arrays and CUDA runtime."
+  },
+  "rows": [
+    {
+      "mode": "full-3gib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 1.1142857248720748e-15,
+        "linear": 8.840122461060283e-16,
+        "objective": 0.0,
+        "maximum_frame_forward": 4.905158399721137e-16
+      },
+      "setup_s": 1.9999233959824778,
+      "normal_s": [
+        1.0522785760113038,
+        1.0520720549975522,
+        1.051359147997573
+      ],
+      "objective_s": 0.7173628930177074,
+      "forward_s": 0.697308825008804,
+      "cache_before_products": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 181,
+        "misses": 819,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 1086,
+        "misses": 2414,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "gpu_free_before_bytes": 7653097472,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 3333562368,
+      "torch_peak_reserved_bytes": 3569352704,
+      "process_peak_rss_bytes": 4322856960
+    },
+    {
+      "mode": "crop-3gib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 9.59822523672981e-16,
+        "linear": 8.489149950090874e-16,
+        "objective": 0.0,
+        "maximum_frame_forward": 4.3786900124719164e-16
+      },
+      "setup_s": 0.9358270249795169,
+      "normal_s": [
+        0.43525262697949074,
+        0.4385089180141222,
+        0.43565811100415885
+      ],
+      "objective_s": 0.26327059700270183,
+      "forward_s": 0.25025663399719633,
+      "cache_before_products": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3219111936,
+        "peak_bytes": 3219111936,
+        "hits": 383,
+        "misses": 617,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 383,
+        "padding": "exact_detector_crop_v1",
+        "fft_shape": [
+          1024,
+          1024
+        ],
+        "full_fft_shape": [
+          1536,
+          1440
+        ],
+        "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3219111936,
+        "peak_bytes": 3219111936,
+        "hits": 2298,
+        "misses": 1202,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 383,
+        "padding": "exact_detector_crop_v1",
+        "fft_shape": [
+          1024,
+          1024
+        ],
+        "full_fft_shape": [
+          1536,
+          1440
+        ],
+        "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+      },
+      "gpu_free_before_bytes": 7613710336,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 3278176256,
+      "torch_peak_reserved_bytes": 4083154944,
+      "process_peak_rss_bytes": 4365910016
+    },
+    {
+      "mode": "crop-4gib",
+      "passed": true,
+      "relative_errors": {
+        "normal": 9.59822523672981e-16,
+        "linear": 8.489149950090874e-16,
+        "objective": 0.0,
+        "maximum_frame_forward": 4.3786900124719164e-16
+      },
+      "setup_s": 0.873448720027227,
+      "normal_s": [
+        0.3909029510105029,
+        0.38999908400001004,
+        0.3936598130094353
+      ],
+      "objective_s": 0.18557615601457655,
+      "forward_s": 0.16753306999453343,
+      "cache_before_products": {
+        "limit_bytes": 4294967296,
+        "resident_bytes": 4202496000,
+        "peak_bytes": 4202496000,
+        "hits": 500,
+        "misses": 500,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 500,
+        "padding": "exact_detector_crop_v1",
+        "fft_shape": [
+          1024,
+          1024
+        ],
+        "full_fft_shape": [
+          1536,
+          1440
+        ],
+        "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+      },
+      "cache_after_products_and_objective": {
+        "limit_bytes": 4294967296,
+        "resident_bytes": 4202496000,
+        "peak_bytes": 4202496000,
+        "hits": 3000,
+        "misses": 500,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 500,
+        "padding": "exact_detector_crop_v1",
+        "fft_shape": [
+          1024,
+          1024
+        ],
+        "full_fft_shape": [
+          1536,
+          1440
+        ],
+        "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+      },
+      "gpu_free_before_bytes": 7613186048,
+      "gpu_total_bytes": 12343050240,
+      "torch_peak_allocated_bytes": 4253155328,
+      "torch_peak_reserved_bytes": 5299503104,
+      "process_peak_rss_bytes": 4366696448
+    }
+  ],
+  "failures": [],
+  "wall_s": 104.66755963701871,
+  "scope": "Cache retention/operator profile only; no reconstruction or scientific qualification.",
+  "q3_authorized": false
+}

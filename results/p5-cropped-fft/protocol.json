@@ -1,0 +1,56 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/profile_scene_retained_cache.py": "a5513cedbf6f1cbf6e220302761627015d5044f9a7991039678784a9cdea75cb",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-cropped-fft-protocol.md": "f177a91ef8a9e037eebc611753810e1ed8a4b493ea1c163586dfa4d99387ab10",
+      "docs/scene-cropped-fft.md": "69b834565bbec8716c5ab8c3020c316758f31740fe6e66d7cb088a320e8b9ca4",
+      "docs/scene-retained-cache-protocol.md": "4e3f8d538a355242e9f3b49a322104d187747483aadde714e64d9d43ce299450",
+      "tools/scene_cropped_fft.py": "ebd642f4f8187d11a77002343deaa9d5445db39c92b54114ee0a8a69ed1ec4b9",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_parallel_reference.py": "90d48d9eb362d8f346750af3eca03db6cb20b7b011486e5f9468c7d63237dc68",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_retained_cache.py": "d982838fd0eb89ab56ede4e16caa7880af66ae32f5134a34ee0a23f3754e4ab6",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "modes": [
+    {
+      "name": "full-3gib",
+      "cache_bytes": 3221225472
+    },
+    {
+      "name": "crop-3gib",
+      "cache_bytes": 3221225472
+    },
+    {
+      "name": "crop-4gib",
+      "cache_bytes": 4294967296
+    }
+  ],
+  "count": 500,
+  "crop": "feature",
+  "margin": 64,
+  "sum_native_strength": 0.0003,
+  "threads": 2,
+  "cpu_frame_workers": 8,
+  "headroom_bytes": 1073741824,
+  "wall_budget_s": 600,
+  "relative_tolerance": 1e-10,
+  "probe": "observed brightness times (1+0.25 Rademacher), seed 7171",
+  "scope": "Cache retention/operator profile only; no reconstruction or scientific qualification.",
+  "q3_authorized": false
+}
