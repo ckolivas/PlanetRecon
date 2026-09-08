@@ -1,0 +1,9 @@
+{
+  "feasible": true,
+  "kkt_residual_norm": 2.818387851358766e-07,
+  "absolute_solution_error_bound": 0.4697313085597944,
+  "relative_solution_error_bound": 9.859417126271778e-06,
+  "objective_gap_upper_bound": 6.619425067238902e-08,
+  "strong_convexity_lower_bound": 6e-07,
+  "gradient_lipschitz_upper_bound": 0.014357792041355582
+}

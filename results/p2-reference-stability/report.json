@@ -1,0 +1,1487 @@
+{
+  "status": "valid",
+  "source_input_unchanged": true,
+  "lower_cap_reused": true,
+  "lower_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 2.818387851358766e-07,
+    "absolute_solution_error_bound": 0.4697313085597944,
+    "relative_solution_error_bound": 9.859417126271778e-06,
+    "objective_gap_upper_bound": 6.619425067238902e-08,
+    "strong_convexity_lower_bound": 6e-07,
+    "gradient_lipschitz_upper_bound": 0.014357792041355582
+  },
+  "upper_fit": {
+    "solver": "extended_scene_projected_acceleration_v4",
+    "converged": true,
+    "status": "valid",
+    "reason": "certified",
+    "scaling": "diagonal",
+    "majorizer_min": 6.00000014357792e-07,
+    "majorizer_max": 0.014357792041355595,
+    "n_iter": 1410,
+    "resume_from_iteration": 0,
+    "maxiter": 3000,
+    "tolerance": 1e-05,
+    "objective": 8860.350525280539,
+    "wall_s": 617.8127608969808,
+    "cumulative_solver_wall_s": 617.8127612499811,
+    "feasible": true,
+    "kkt_residual_norm": 2.818387851334762e-07,
+    "absolute_solution_error_bound": 0.4697313085557937,
+    "relative_solution_error_bound": 9.859417126187805e-06,
+    "objective_gap_upper_bound": 6.619425067126148e-08,
+    "strong_convexity_lower_bound": 6e-07,
+    "gradient_lipschitz_upper_bound": 0.014357792041355595,
+    "trace": [
+      {
+        "iteration": 10,
+        "feasible": true,
+        "kkt_residual_norm": 0.3815542429858035,
+        "absolute_solution_error_bound": 635923.7383096725,
+        "relative_solution_error_bound": 10.862134378988648,
+        "objective_gap_upper_bound": 121319.70028372464,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 20,
+        "feasible": true,
+        "kkt_residual_norm": 0.184470888652366,
+        "absolute_solution_error_bound": 307451.48108727665,
+        "relative_solution_error_bound": 6.077623161340484,
+        "objective_gap_upper_bound": 28357.92396682801,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 30,
+        "feasible": true,
+        "kkt_residual_norm": 0.11631402965364342,
+        "absolute_solution_error_bound": 193856.7160894057,
+        "relative_solution_error_bound": 4.020138522275356,
+        "objective_gap_upper_bound": 11274.127911890533,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 40,
+        "feasible": true,
+        "kkt_residual_norm": 0.06831068625955737,
+        "absolute_solution_error_bound": 113851.14376592895,
+        "relative_solution_error_bound": 2.3822249355427663,
+        "objective_gap_upper_bound": 3888.624881043067,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 50,
+        "feasible": true,
+        "kkt_residual_norm": 0.04050570543233932,
+        "absolute_solution_error_bound": 67509.50905389887,
+        "relative_solution_error_bound": 1.413752198357011,
+        "objective_gap_upper_bound": 1367.260143809536,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 60,
+        "feasible": true,
+        "kkt_residual_norm": 0.023765410263391715,
+        "absolute_solution_error_bound": 39609.01710565286,
+        "relative_solution_error_bound": 0.8297782128620276,
+        "objective_gap_upper_bound": 470.66227082277027,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 70,
+        "feasible": true,
+        "kkt_residual_norm": 0.024009802191508445,
+        "absolute_solution_error_bound": 40016.33698584741,
+        "relative_solution_error_bound": 0.8388058850051986,
+        "objective_gap_upper_bound": 480.3921677294698,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 80,
+        "feasible": true,
+        "kkt_residual_norm": 0.015801950054934524,
+        "absolute_solution_error_bound": 26336.583424890876,
+        "relative_solution_error_bound": 0.5525515611504738,
+        "objective_gap_upper_bound": 208.08468794887102,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 90,
+        "feasible": true,
+        "kkt_residual_norm": 0.013416253290745386,
+        "absolute_solution_error_bound": 22360.42215124231,
+        "relative_solution_error_bound": 0.46941257910824885,
+        "objective_gap_upper_bound": 149.99654363453033,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 100,
+        "feasible": true,
+        "kkt_residual_norm": 0.009789599313416063,
+        "absolute_solution_error_bound": 16315.99885569344,
+        "relative_solution_error_bound": 0.3426041038131054,
+        "objective_gap_upper_bound": 79.86354559769688,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 110,
+        "feasible": true,
+        "kkt_residual_norm": 0.004691838851964834,
+        "absolute_solution_error_bound": 7819.73141994139,
+        "relative_solution_error_bound": 0.1642075629811182,
+        "objective_gap_upper_bound": 18.344459844005577,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 120,
+        "feasible": true,
+        "kkt_residual_norm": 0.006294279654085017,
+        "absolute_solution_error_bound": 10490.466090141696,
+        "relative_solution_error_bound": 0.22029025269796484,
+        "objective_gap_upper_bound": 33.01496363652384,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 130,
+        "feasible": true,
+        "kkt_residual_norm": 0.004070212568862214,
+        "absolute_solution_error_bound": 6783.687614770358,
+        "relative_solution_error_bound": 0.14244397716571844,
+        "objective_gap_upper_bound": 13.805525296436624,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 140,
+        "feasible": true,
+        "kkt_residual_norm": 0.004401160187618541,
+        "absolute_solution_error_bound": 7335.266979364235,
+        "relative_solution_error_bound": 0.15401516932676185,
+        "objective_gap_upper_bound": 16.141842497565392,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 150,
+        "feasible": true,
+        "kkt_residual_norm": 0.0035660844233396955,
+        "absolute_solution_error_bound": 5943.474038899492,
+        "relative_solution_error_bound": 0.1247826168226673,
+        "objective_gap_upper_bound": 10.597465095321674,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 160,
+        "feasible": true,
+        "kkt_residual_norm": 0.0027435626078874853,
+        "absolute_solution_error_bound": 4572.604346479143,
+        "relative_solution_error_bound": 0.0959954758432399,
+        "objective_gap_upper_bound": 6.272613152831983,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 170,
+        "feasible": true,
+        "kkt_residual_norm": 0.002665536403359532,
+        "absolute_solution_error_bound": 4442.560672265887,
+        "relative_solution_error_bound": 0.0932610883947013,
+        "objective_gap_upper_bound": 5.920903598029058,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 180,
+        "feasible": true,
+        "kkt_residual_norm": 0.002406749727768579,
+        "absolute_solution_error_bound": 4011.249546280965,
+        "relative_solution_error_bound": 0.08420412331341351,
+        "objective_gap_upper_bound": 4.827036876761775,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 190,
+        "feasible": true,
+        "kkt_residual_norm": 0.002030897865760912,
+        "absolute_solution_error_bound": 3384.829776268187,
+        "relative_solution_error_bound": 0.07105453976522665,
+        "objective_gap_upper_bound": 3.437121784293523,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 200,
+        "feasible": true,
+        "kkt_residual_norm": 0.0018439273602538888,
+        "absolute_solution_error_bound": 3073.2122670898148,
+        "relative_solution_error_bound": 0.06451516437561337,
+        "objective_gap_upper_bound": 2.8333900915773955,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 210,
+        "feasible": true,
+        "kkt_residual_norm": 0.0015189586162931185,
+        "absolute_solution_error_bound": 2531.597693821864,
+        "relative_solution_error_bound": 0.05314705316523839,
+        "objective_gap_upper_bound": 1.9226960650092542,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 220,
+        "feasible": true,
+        "kkt_residual_norm": 0.0014462142887010972,
+        "absolute_solution_error_bound": 2410.3571478351623,
+        "relative_solution_error_bound": 0.050602674843257124,
+        "objective_gap_upper_bound": 1.7429464740360174,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 230,
+        "feasible": true,
+        "kkt_residual_norm": 0.0013366789285601875,
+        "absolute_solution_error_bound": 2227.7982142669794,
+        "relative_solution_error_bound": 0.046769817304056265,
+        "objective_gap_upper_bound": 1.4889254650473425,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 240,
+        "feasible": true,
+        "kkt_residual_norm": 0.0012072611165983745,
+        "absolute_solution_error_bound": 2012.101860997291,
+        "relative_solution_error_bound": 0.042240457625652525,
+        "objective_gap_upper_bound": 1.2145661697086283,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 250,
+        "feasible": true,
+        "kkt_residual_norm": 0.0010978071898869392,
+        "absolute_solution_error_bound": 1829.6786498115655,
+        "relative_solution_error_bound": 0.038409277906006005,
+        "objective_gap_upper_bound": 1.0043171884728819,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 260,
+        "feasible": true,
+        "kkt_residual_norm": 0.0009958283551420673,
+        "absolute_solution_error_bound": 1659.7139252367788,
+        "relative_solution_error_bound": 0.03483974182163515,
+        "objective_gap_upper_bound": 0.8263950940874627,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 270,
+        "feasible": true,
+        "kkt_residual_norm": 0.0009083431664388684,
+        "absolute_solution_error_bound": 1513.905277398114,
+        "relative_solution_error_bound": 0.031777692889728246,
+        "objective_gap_upper_bound": 0.6875727566801582,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 280,
+        "feasible": true,
+        "kkt_residual_norm": 0.0008331475686991415,
+        "absolute_solution_error_bound": 1388.579281165236,
+        "relative_solution_error_bound": 0.029146133765917136,
+        "objective_gap_upper_bound": 0.5784457260244089,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 290,
+        "feasible": true,
+        "kkt_residual_norm": 0.0007663826687709865,
+        "absolute_solution_error_bound": 1277.3044479516443,
+        "relative_solution_error_bound": 0.026810048807384718,
+        "objective_gap_upper_bound": 0.4894519958271164,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 300,
+        "feasible": true,
+        "kkt_residual_norm": 0.0007059198006093051,
+        "absolute_solution_error_bound": 1176.5330010155087,
+        "relative_solution_error_bound": 0.024694856886052656,
+        "objective_gap_upper_bound": 0.41526897074356767,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 310,
+        "feasible": true,
+        "kkt_residual_norm": 0.0006481210339523057,
+        "absolute_solution_error_bound": 1080.2017232538428,
+        "relative_solution_error_bound": 0.022673119144123646,
+        "objective_gap_upper_bound": 0.3500507288761715,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 320,
+        "feasible": true,
+        "kkt_residual_norm": 0.0005946443773015487,
+        "absolute_solution_error_bound": 991.0739621692479,
+        "relative_solution_error_bound": 0.020802658836863764,
+        "objective_gap_upper_bound": 0.2946682795469555,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 330,
+        "feasible": true,
+        "kkt_residual_norm": 0.000548975726865046,
+        "absolute_solution_error_bound": 914.9595447750767,
+        "relative_solution_error_bound": 0.019205294352145068,
+        "objective_gap_upper_bound": 0.2511452905725046,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 340,
+        "feasible": true,
+        "kkt_residual_norm": 0.0005082764866234609,
+        "absolute_solution_error_bound": 847.1274777057682,
+        "relative_solution_error_bound": 0.01778165796794561,
+        "objective_gap_upper_bound": 0.21528748904524106,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 350,
+        "feasible": true,
+        "kkt_residual_norm": 0.0004702368819051174,
+        "absolute_solution_error_bound": 783.728136508529,
+        "relative_solution_error_bound": 0.016450935051388976,
+        "objective_gap_upper_bound": 0.18426893758653948,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 360,
+        "feasible": true,
+        "kkt_residual_norm": 0.0004337615137085105,
+        "absolute_solution_error_bound": 722.9358561808508,
+        "relative_solution_error_bound": 0.01517482904094025,
+        "objective_gap_upper_bound": 0.15679087564558195,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 370,
+        "feasible": true,
+        "kkt_residual_norm": 0.00040163572966148907,
+        "absolute_solution_error_bound": 669.3928827691485,
+        "relative_solution_error_bound": 0.014050825228819728,
+        "objective_gap_upper_bound": 0.13442604945059727,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 380,
+        "feasible": true,
+        "kkt_residual_norm": 0.0003726954916910102,
+        "absolute_solution_error_bound": 621.1591528183503,
+        "relative_solution_error_bound": 0.013038242864510928,
+        "objective_gap_upper_bound": 0.11575160793900323,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 390,
+        "feasible": true,
+        "kkt_residual_norm": 0.00034481866652722305,
+        "absolute_solution_error_bound": 574.6977775453718,
+        "relative_solution_error_bound": 0.012062876311061019,
+        "objective_gap_upper_bound": 0.09908326065467689,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 400,
+        "feasible": true,
+        "kkt_residual_norm": 0.0003185139749535731,
+        "absolute_solution_error_bound": 530.8566249226218,
+        "relative_solution_error_bound": 0.011142543924216321,
+        "objective_gap_upper_bound": 0.08454262686727115,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 410,
+        "feasible": true,
+        "kkt_residual_norm": 0.00029515197808094486,
+        "absolute_solution_error_bound": 491.91996346824146,
+        "relative_solution_error_bound": 0.010325198164686208,
+        "objective_gap_upper_bound": 0.07259557513757879,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 420,
+        "feasible": true,
+        "kkt_residual_norm": 0.00027433246275304277,
+        "absolute_solution_error_bound": 457.2207712550713,
+        "relative_solution_error_bound": 0.009596833724950056,
+        "objective_gap_upper_bound": 0.06271525010012467,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 430,
+        "feasible": true,
+        "kkt_residual_norm": 0.0002548237608232666,
+        "absolute_solution_error_bound": 424.70626803877764,
+        "relative_solution_error_bound": 0.008914354074671138,
+        "objective_gap_upper_bound": 0.05411262423342781,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 440,
+        "feasible": true,
+        "kkt_residual_norm": 0.00023638291159082611,
+        "absolute_solution_error_bound": 393.97151931804353,
+        "relative_solution_error_bound": 0.008269249016120512,
+        "objective_gap_upper_bound": 0.046564067410130264,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 450,
+        "feasible": true,
+        "kkt_residual_norm": 0.00021950311956689365,
+        "absolute_solution_error_bound": 365.8385326114894,
+        "relative_solution_error_bound": 0.00767876263410397,
+        "objective_gap_upper_bound": 0.04015134958299834,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 460,
+        "feasible": true,
+        "kkt_residual_norm": 0.00020443441056299498,
+        "absolute_solution_error_bound": 340.7240176049917,
+        "relative_solution_error_bound": 0.007151634819202328,
+        "objective_gap_upper_bound": 0.03482785685186599,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 470,
+        "feasible": true,
+        "kkt_residual_norm": 0.00019037333976830407,
+        "absolute_solution_error_bound": 317.28889961384016,
+        "relative_solution_error_bound": 0.006659755011711378,
+        "objective_gap_upper_bound": 0.030201673745448455,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 480,
+        "feasible": true,
+        "kkt_residual_norm": 0.00017729630743093202,
+        "absolute_solution_error_bound": 295.49384571822003,
+        "relative_solution_error_bound": 0.006202295612788042,
+        "objective_gap_upper_bound": 0.02619498385720297,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 490,
+        "feasible": true,
+        "kkt_residual_norm": 0.00016535833619303608,
+        "absolute_solution_error_bound": 275.59722698839346,
+        "relative_solution_error_bound": 0.005784679274873326,
+        "objective_gap_upper_bound": 0.022786149457107625,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 500,
+        "feasible": true,
+        "kkt_residual_norm": 0.0001545683470685682,
+        "absolute_solution_error_bound": 257.613911780947,
+        "relative_solution_error_bound": 0.005407218442916971,
+        "objective_gap_upper_bound": 0.019909478262924465,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 510,
+        "feasible": true,
+        "kkt_residual_norm": 0.00014454710139457882,
+        "absolute_solution_error_bound": 240.91183565763137,
+        "relative_solution_error_bound": 0.005056647116016809,
+        "objective_gap_upper_bound": 0.017411553767978875,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 520,
+        "feasible": true,
+        "kkt_residual_norm": 0.0001348921047649557,
+        "absolute_solution_error_bound": 224.82017460825952,
+        "relative_solution_error_bound": 0.004718885900093869,
+        "objective_gap_upper_bound": 0.015163233273266487,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 530,
+        "feasible": true,
+        "kkt_residual_norm": 0.00012584902813738745,
+        "absolute_solution_error_bound": 209.7483802289791,
+        "relative_solution_error_bound": 0.004402530070030506,
+        "objective_gap_upper_bound": 0.013198314902604114,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 540,
+        "feasible": true,
+        "kkt_residual_norm": 0.00011746818697365269,
+        "absolute_solution_error_bound": 195.78031162275448,
+        "relative_solution_error_bound": 0.004109340739917,
+        "objective_gap_upper_bound": 0.011498979125730856,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 550,
+        "feasible": true,
+        "kkt_residual_norm": 0.00010955483255734154,
+        "absolute_solution_error_bound": 182.59138759556924,
+        "relative_solution_error_bound": 0.0038325059145465556,
+        "objective_gap_upper_bound": 0.010001884447222617,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 560,
+        "feasible": true,
+        "kkt_residual_norm": 0.00010198448300091507,
+        "absolute_solution_error_bound": 169.97413833485845,
+        "relative_solution_error_bound": 0.003567671543148063,
+        "objective_gap_upper_bound": 0.008667362310803279,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 570,
+        "feasible": true,
+        "kkt_residual_norm": 9.471439451459601e-05,
+        "absolute_solution_error_bound": 157.85732419099335,
+        "relative_solution_error_bound": 0.0033133426761605103,
+        "objective_gap_upper_bound": 0.007475680440222113,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 580,
+        "feasible": true,
+        "kkt_residual_norm": 8.793481308761188e-05,
+        "absolute_solution_error_bound": 146.55802181268646,
+        "relative_solution_error_bound": 0.0030761745955664344,
+        "objective_gap_upper_bound": 0.006443776127294364,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 590,
+        "feasible": true,
+        "kkt_residual_norm": 8.159697119657269e-05,
+        "absolute_solution_error_bound": 135.99495199428782,
+        "relative_solution_error_bound": 0.002854460999754033,
+        "objective_gap_upper_bound": 0.005548388090378595,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 600,
+        "feasible": true,
+        "kkt_residual_norm": 7.566330180210364e-05,
+        "absolute_solution_error_bound": 126.10550300350607,
+        "relative_solution_error_bound": 0.0026468872983251685,
+        "objective_gap_upper_bound": 0.004770779366330183,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 610,
+        "feasible": true,
+        "kkt_residual_norm": 7.016170062459132e-05,
+        "absolute_solution_error_bound": 116.93616770765222,
+        "relative_solution_error_bound": 0.0024544288916809264,
+        "objective_gap_upper_bound": 0.0041022201954456486,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 620,
+        "feasible": true,
+        "kkt_residual_norm": 6.508592758925494e-05,
+        "absolute_solution_error_bound": 108.47654598209157,
+        "relative_solution_error_bound": 0.0022768670468015424,
+        "objective_gap_upper_bound": 0.0035301483084614472,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 630,
+        "feasible": true,
+        "kkt_residual_norm": 6.052397573641393e-05,
+        "absolute_solution_error_bound": 100.87329289402322,
+        "relative_solution_error_bound": 0.002117279676122722,
+        "objective_gap_upper_bound": 0.0030526263657850187,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 640,
+        "feasible": true,
+        "kkt_residual_norm": 5.639886433505911e-05,
+        "absolute_solution_error_bound": 93.99810722509852,
+        "relative_solution_error_bound": 0.001972973646660047,
+        "objective_gap_upper_bound": 0.0026506932485703353,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 650,
+        "feasible": true,
+        "kkt_residual_norm": 5.251029604612429e-05,
+        "absolute_solution_error_bound": 87.51716007687382,
+        "relative_solution_error_bound": 0.0018369420296808908,
+        "objective_gap_upper_bound": 0.002297775992376347,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 660,
+        "feasible": true,
+        "kkt_residual_norm": 4.887731170349711e-05,
+        "absolute_solution_error_bound": 81.4621861724952,
+        "relative_solution_error_bound": 0.0017098510034492236,
+        "objective_gap_upper_bound": 0.00199082633280068,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 670,
+        "feasible": true,
+        "kkt_residual_norm": 4.563314586318501e-05,
+        "absolute_solution_error_bound": 76.05524310530835,
+        "relative_solution_error_bound": 0.0015963615910156142,
+        "objective_gap_upper_bound": 0.0017353200011422662,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 680,
+        "feasible": true,
+        "kkt_residual_norm": 4.270289169400367e-05,
+        "absolute_solution_error_bound": 71.17148615667278,
+        "relative_solution_error_bound": 0.0014938535090639163,
+        "objective_gap_upper_bound": 0.0015196141325248397,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 690,
+        "feasible": true,
+        "kkt_residual_norm": 3.992938020608996e-05,
+        "absolute_solution_error_bound": 66.54896701014994,
+        "relative_solution_error_bound": 0.00139682871794159,
+        "objective_gap_upper_bound": 0.0013286295030354074,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 700,
+        "feasible": true,
+        "kkt_residual_norm": 3.7261024521856274e-05,
+        "absolute_solution_error_bound": 62.10170753642713,
+        "relative_solution_error_bound": 0.0013034826643005227,
+        "objective_gap_upper_bound": 0.001156986623681979,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 710,
+        "feasible": true,
+        "kkt_residual_norm": 3.474006659819635e-05,
+        "absolute_solution_error_bound": 57.90011099699392,
+        "relative_solution_error_bound": 0.0012152931118142,
+        "objective_gap_upper_bound": 0.0010057268560392646,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 720,
+        "feasible": true,
+        "kkt_residual_norm": 3.239162052668037e-05,
+        "absolute_solution_error_bound": 53.98603421113395,
+        "relative_solution_error_bound": 0.001133138600324169,
+        "objective_gap_upper_bound": 0.0008743475669537175,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 730,
+        "feasible": true,
+        "kkt_residual_norm": 3.0183286824852052e-05,
+        "absolute_solution_error_bound": 50.30547804142009,
+        "relative_solution_error_bound": 0.0010558856754601634,
+        "objective_gap_upper_bound": 0.0007591923362927396,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 740,
+        "feasible": true,
+        "kkt_residual_norm": 2.8149675546189715e-05,
+        "absolute_solution_error_bound": 46.9161259103162,
+        "relative_solution_error_bound": 0.0009847450349476654,
+        "objective_gap_upper_bound": 0.0006603368611297928,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 750,
+        "feasible": true,
+        "kkt_residual_norm": 2.631338918187784e-05,
+        "absolute_solution_error_bound": 43.855648636463066,
+        "relative_solution_error_bound": 0.0009205073259931934,
+        "objective_gap_upper_bound": 0.0005769953751974715,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 760,
+        "feasible": true,
+        "kkt_residual_norm": 2.464445502638101e-05,
+        "absolute_solution_error_bound": 41.07409171063502,
+        "relative_solution_error_bound": 0.0008621239961120981,
+        "objective_gap_upper_bound": 0.0005061243029560968,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 770,
+        "feasible": true,
+        "kkt_residual_norm": 2.307023017213333e-05,
+        "absolute_solution_error_bound": 38.45038362022222,
+        "relative_solution_error_bound": 0.0008070537971065586,
+        "objective_gap_upper_bound": 0.000443529600162676,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 780,
+        "feasible": true,
+        "kkt_residual_norm": 2.15476238503937e-05,
+        "absolute_solution_error_bound": 35.91270641732283,
+        "relative_solution_error_bound": 0.0007537893016792595,
+        "objective_gap_upper_bound": 0.00038691674466504616,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 790,
+        "feasible": true,
+        "kkt_residual_norm": 2.0126471460693267e-05,
+        "absolute_solution_error_bound": 33.544119101155445,
+        "relative_solution_error_bound": 0.000704073881155373,
+        "objective_gap_upper_bound": 0.0003375623778817505,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 800,
+        "feasible": true,
+        "kkt_residual_norm": 1.8824970475022885e-05,
+        "absolute_solution_error_bound": 31.37495079170481,
+        "relative_solution_error_bound": 0.0006585441397060441,
+        "objective_gap_upper_bound": 0.00029531626115456944,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 810,
+        "feasible": true,
+        "kkt_residual_norm": 1.758116793948321e-05,
+        "absolute_solution_error_bound": 29.30194656580535,
+        "relative_solution_error_bound": 0.0006150328198038274,
+        "objective_gap_upper_bound": 0.00025758122176359354,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 820,
+        "feasible": true,
+        "kkt_residual_norm": 1.6393452257000045e-05,
+        "absolute_solution_error_bound": 27.32242042833341,
+        "relative_solution_error_bound": 0.0005734835553142068,
+        "objective_gap_upper_bound": 0.00022395439741878324,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 830,
+        "feasible": true,
+        "kkt_residual_norm": 1.5255492020295366e-05,
+        "absolute_solution_error_bound": 25.425820033825612,
+        "relative_solution_error_bound": 0.000533674865632049,
+        "objective_gap_upper_bound": 0.00019394169731774634,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 840,
+        "feasible": true,
+        "kkt_residual_norm": 1.4179179606279858e-05,
+        "absolute_solution_error_bound": 23.63196601046643,
+        "relative_solution_error_bound": 0.0004960227790788569,
+        "objective_gap_upper_bound": 0.00016754094525595222,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 850,
+        "feasible": true,
+        "kkt_residual_norm": 1.318380274976629e-05,
+        "absolute_solution_error_bound": 21.97300458294382,
+        "relative_solution_error_bound": 0.00046120202845566243,
+        "objective_gap_upper_bound": 0.000144843879120621,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 860,
+        "feasible": true,
+        "kkt_residual_norm": 1.2272049739815487e-05,
+        "absolute_solution_error_bound": 20.453416233025813,
+        "relative_solution_error_bound": 0.00042930665468712717,
+        "objective_gap_upper_bound": 0.00012550267068042116,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 870,
+        "feasible": true,
+        "kkt_residual_norm": 1.1432840702911724e-05,
+        "absolute_solution_error_bound": 19.054734504852874,
+        "relative_solution_error_bound": 0.00039994905316387334,
+        "objective_gap_upper_bound": 0.0001089248721151292,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 880,
+        "feasible": true,
+        "kkt_residual_norm": 1.0677379199578568e-05,
+        "absolute_solution_error_bound": 17.795631999297616,
+        "relative_solution_error_bound": 0.00037352114913067307,
+        "objective_gap_upper_bound": 9.500535547632756e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 890,
+        "feasible": true,
+        "kkt_residual_norm": 9.993589661641152e-06,
+        "absolute_solution_error_bound": 16.65598276940192,
+        "relative_solution_error_bound": 0.00034960050694014306,
+        "objective_gap_upper_bound": 8.32265286043841e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 900,
+        "feasible": true,
+        "kkt_residual_norm": 9.363032265759127e-06,
+        "absolute_solution_error_bound": 15.605053776265214,
+        "relative_solution_error_bound": 0.0003275420545465518,
+        "objective_gap_upper_bound": 7.305531100803875e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 910,
+        "feasible": true,
+        "kkt_residual_norm": 8.766440738032844e-06,
+        "absolute_solution_error_bound": 14.610734563388073,
+        "relative_solution_error_bound": 0.00030667180941497494,
+        "objective_gap_upper_bound": 6.404206934453486e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 920,
+        "feasible": true,
+        "kkt_residual_norm": 8.197132289829673e-06,
+        "absolute_solution_error_bound": 13.661887149716122,
+        "relative_solution_error_bound": 0.00028675599112731794,
+        "objective_gap_upper_bound": 5.599414814747354e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 930,
+        "feasible": true,
+        "kkt_residual_norm": 7.658080542919114e-06,
+        "absolute_solution_error_bound": 12.763467571531857,
+        "relative_solution_error_bound": 0.0002678986248375372,
+        "objective_gap_upper_bound": 4.88718313348636e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 940,
+        "feasible": true,
+        "kkt_residual_norm": 7.150938808542362e-06,
+        "absolute_solution_error_bound": 11.918231347570604,
+        "relative_solution_error_bound": 0.0002501575481880442,
+        "objective_gap_upper_bound": 4.261327153626438e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 950,
+        "feasible": true,
+        "kkt_residual_norm": 6.671731105732091e-06,
+        "absolute_solution_error_bound": 11.11955184288682,
+        "relative_solution_error_bound": 0.000233393672295074,
+        "objective_gap_upper_bound": 3.7093329955994295e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 960,
+        "feasible": true,
+        "kkt_residual_norm": 6.21672605122981e-06,
+        "absolute_solution_error_bound": 10.361210085383018,
+        "relative_solution_error_bound": 0.0002174764648503841,
+        "objective_gap_upper_bound": 3.2206402330032824e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 970,
+        "feasible": true,
+        "kkt_residual_norm": 5.787099566528133e-06,
+        "absolute_solution_error_bound": 9.645165944213556,
+        "relative_solution_error_bound": 0.0002024470630592712,
+        "objective_gap_upper_bound": 2.7908767827425093e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 980,
+        "feasible": true,
+        "kkt_residual_norm": 5.387886281448267e-06,
+        "absolute_solution_error_bound": 8.979810469080446,
+        "relative_solution_error_bound": 0.00018848159108399926,
+        "objective_gap_upper_bound": 2.419109881818203e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 990,
+        "feasible": true,
+        "kkt_residual_norm": 5.028491984494859e-06,
+        "absolute_solution_error_bound": 8.380819974158099,
+        "relative_solution_error_bound": 0.00017590908682969092,
+        "objective_gap_upper_bound": 2.1071443031774202e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1000,
+        "feasible": true,
+        "kkt_residual_norm": 4.691786906888622e-06,
+        "absolute_solution_error_bound": 7.81964484481437,
+        "relative_solution_error_bound": 0.000164130308569575,
+        "objective_gap_upper_bound": 1.8344053649709586e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1010,
+        "feasible": true,
+        "kkt_residual_norm": 4.380431257054309e-06,
+        "absolute_solution_error_bound": 7.300718761757182,
+        "relative_solution_error_bound": 0.00015323831678714002,
+        "objective_gap_upper_bound": 1.5990148331481996e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1020,
+        "feasible": true,
+        "kkt_residual_norm": 4.09635307284337e-06,
+        "absolute_solution_error_bound": 6.827255121405616,
+        "relative_solution_error_bound": 0.00014330055881134338,
+        "objective_gap_upper_bound": 1.3983423747827766e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1030,
+        "feasible": true,
+        "kkt_residual_norm": 3.833718069886834e-06,
+        "absolute_solution_error_bound": 6.389530116478056,
+        "relative_solution_error_bound": 0.00013411293671878425,
+        "objective_gap_upper_bound": 1.2247828532814027e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1040,
+        "feasible": true,
+        "kkt_residual_norm": 3.585080281409438e-06,
+        "absolute_solution_error_bound": 5.975133802349064,
+        "relative_solution_error_bound": 0.0001254149719696181,
+        "objective_gap_upper_bound": 1.0710667186792314e-05,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1050,
+        "feasible": true,
+        "kkt_residual_norm": 3.349787446400232e-06,
+        "absolute_solution_error_bound": 5.582979077333721,
+        "relative_solution_error_bound": 0.00011718384669206423,
+        "objective_gap_upper_bound": 9.350896613383823e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1060,
+        "feasible": true,
+        "kkt_residual_norm": 3.12831383781719e-06,
+        "absolute_solution_error_bound": 5.213856396361984,
+        "relative_solution_error_bound": 0.00010943615202186123,
+        "objective_gap_upper_bound": 8.155289556565432e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1070,
+        "feasible": true,
+        "kkt_residual_norm": 2.920082901254322e-06,
+        "absolute_solution_error_bound": 4.86680483542387,
+        "relative_solution_error_bound": 0.00010215171862351624,
+        "objective_gap_upper_bound": 7.10573679183155e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1080,
+        "feasible": true,
+        "kkt_residual_norm": 2.7247774121174754e-06,
+        "absolute_solution_error_bound": 4.541295686862459,
+        "relative_solution_error_bound": 9.531944921731661e-05,
+        "objective_gap_upper_bound": 6.187009954654672e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1090,
+        "feasible": true,
+        "kkt_residual_norm": 2.54291816104474e-06,
+        "absolute_solution_error_bound": 4.2381969350745665,
+        "relative_solution_error_bound": 8.895756240780554e-05,
+        "objective_gap_upper_bound": 5.388693978142635e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1100,
+        "feasible": true,
+        "kkt_residual_norm": 2.374330443892188e-06,
+        "absolute_solution_error_bound": 3.9572174064869805,
+        "relative_solution_error_bound": 8.305994668811407e-05,
+        "objective_gap_upper_bound": 4.697870880661063e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1110,
+        "feasible": true,
+        "kkt_residual_norm": 2.2172566276473346e-06,
+        "absolute_solution_error_bound": 3.6954277127455577,
+        "relative_solution_error_bound": 7.756511578085381e-05,
+        "objective_gap_upper_bound": 4.09685579403836e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1120,
+        "feasible": true,
+        "kkt_residual_norm": 2.0695002536200254e-06,
+        "absolute_solution_error_bound": 3.4491670893667092,
+        "relative_solution_error_bound": 7.239623218080012e-05,
+        "objective_gap_upper_bound": 3.5690260831111247e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1130,
+        "feasible": true,
+        "kkt_residual_norm": 1.9298169663485605e-06,
+        "absolute_solution_error_bound": 3.2163616105809343,
+        "relative_solution_error_bound": 6.75097652771448e-05,
+        "objective_gap_upper_bound": 3.103494603005634e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1140,
+        "feasible": true,
+        "kkt_residual_norm": 1.7982695943510397e-06,
+        "absolute_solution_error_bound": 2.9971159905850664,
+        "relative_solution_error_bound": 6.290791295619724e-05,
+        "objective_gap_upper_bound": 2.694811278306211e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1150,
+        "feasible": true,
+        "kkt_residual_norm": 1.6754048647646837e-06,
+        "absolute_solution_error_bound": 2.792341441274473,
+        "relative_solution_error_bound": 5.860980105365685e-05,
+        "objective_gap_upper_bound": 2.33915121739764e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1160,
+        "feasible": true,
+        "kkt_residual_norm": 1.5617067395734722e-06,
+        "absolute_solution_error_bound": 2.6028445659557873,
+        "relative_solution_error_bound": 5.463235971678119e-05,
+        "objective_gap_upper_bound": 2.0324399503576708e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1170,
+        "feasible": true,
+        "kkt_residual_norm": 1.4571983116452211e-06,
+        "absolute_solution_error_bound": 2.4286638527420354,
+        "relative_solution_error_bound": 5.097639675433809e-05,
+        "objective_gap_upper_bound": 1.769522432884736e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1180,
+        "feasible": true,
+        "kkt_residual_norm": 1.3611903159532233e-06,
+        "absolute_solution_error_bound": 2.2686505265887056,
+        "relative_solution_error_bound": 4.761779994297593e-05,
+        "objective_gap_upper_bound": 1.544032563537363e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1190,
+        "feasible": true,
+        "kkt_residual_norm": 1.2723746629806586e-06,
+        "absolute_solution_error_bound": 2.120624438301098,
+        "relative_solution_error_bound": 4.451080905793053e-05,
+        "objective_gap_upper_bound": 1.3491144024959537e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1200,
+        "feasible": true,
+        "kkt_residual_norm": 1.1893863163898883e-06,
+        "absolute_solution_error_bound": 1.9823105273164807,
+        "relative_solution_error_bound": 4.160767174078492e-05,
+        "objective_gap_upper_bound": 1.178866508012923e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1210,
+        "feasible": true,
+        "kkt_residual_norm": 1.1113878319267136e-06,
+        "absolute_solution_error_bound": 1.8523130532111896,
+        "relative_solution_error_bound": 3.8879092113040514e-05,
+        "objective_gap_upper_bound": 1.0293190941289676e-06,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1220,
+        "feasible": true,
+        "kkt_residual_norm": 1.041329975548752e-06,
+        "absolute_solution_error_bound": 1.7355499592479202,
+        "relative_solution_error_bound": 3.642829525577363e-05,
+        "objective_gap_upper_bound": 9.036400983136372e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1230,
+        "feasible": true,
+        "kkt_residual_norm": 9.729114965699348e-07,
+        "absolute_solution_error_bound": 1.6215191609498913,
+        "relative_solution_error_bound": 3.403484785002465e-05,
+        "objective_gap_upper_bound": 7.887973167982919e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1240,
+        "feasible": true,
+        "kkt_residual_norm": 9.08011617138115e-07,
+        "absolute_solution_error_bound": 1.5133526952301917,
+        "relative_solution_error_bound": 3.176448973290579e-05,
+        "objective_gap_upper_bound": 6.870709140481457e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1250,
+        "feasible": true,
+        "kkt_residual_norm": 8.479163620508281e-07,
+        "absolute_solution_error_bound": 1.4131939367513804,
+        "relative_solution_error_bound": 2.966220923701919e-05,
+        "objective_gap_upper_bound": 5.991351308612593e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1260,
+        "feasible": true,
+        "kkt_residual_norm": 7.92046769199112e-07,
+        "absolute_solution_error_bound": 1.3200779486651866,
+        "relative_solution_error_bound": 2.770775284552332e-05,
+        "objective_gap_upper_bound": 5.227817371656262e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1270,
+        "feasible": true,
+        "kkt_residual_norm": 7.395465416677888e-07,
+        "absolute_solution_error_bound": 1.2325775694463148,
+        "relative_solution_error_bound": 2.5871165183208417e-05,
+        "objective_gap_upper_bound": 4.557742394106555e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1280,
+        "feasible": true,
+        "kkt_residual_norm": 6.89928186487237e-07,
+        "absolute_solution_error_bound": 1.1498803108120617,
+        "relative_solution_error_bound": 2.4135392544431105e-05,
+        "objective_gap_upper_bound": 3.9666741875797307e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1290,
+        "feasible": true,
+        "kkt_residual_norm": 6.429133510387586e-07,
+        "absolute_solution_error_bound": 1.0715222517312644,
+        "relative_solution_error_bound": 2.2490697465757305e-05,
+        "objective_gap_upper_bound": 3.444479807865717e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1300,
+        "feasible": true,
+        "kkt_residual_norm": 5.986688742514315e-07,
+        "absolute_solution_error_bound": 0.9977814570857192,
+        "relative_solution_error_bound": 2.0942916381195292e-05,
+        "objective_gap_upper_bound": 2.986703508312303e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1310,
+        "feasible": true,
+        "kkt_residual_norm": 5.575453021030015e-07,
+        "absolute_solution_error_bound": 0.9292421701716692,
+        "relative_solution_error_bound": 1.9504312250254893e-05,
+        "objective_gap_upper_bound": 2.59047303247606e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1320,
+        "feasible": true,
+        "kkt_residual_norm": 5.196504947714469e-07,
+        "absolute_solution_error_bound": 0.8660841579524114,
+        "relative_solution_error_bound": 1.8178658284464788e-05,
+        "objective_gap_upper_bound": 2.2503053059684127e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1330,
+        "feasible": true,
+        "kkt_residual_norm": 4.847144377832217e-07,
+        "absolute_solution_error_bound": 0.8078573963053695,
+        "relative_solution_error_bound": 1.695650870837825e-05,
+        "objective_gap_upper_bound": 1.9579007182958722e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1340,
+        "feasible": true,
+        "kkt_residual_norm": 4.5234988836476327e-07,
+        "absolute_solution_error_bound": 0.7539164806079388,
+        "relative_solution_error_bound": 1.5824316813080486e-05,
+        "objective_gap_upper_bound": 1.7051701791967817e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1350,
+        "feasible": true,
+        "kkt_residual_norm": 4.223278966446676e-07,
+        "absolute_solution_error_bound": 0.7038798277411127,
+        "relative_solution_error_bound": 1.4774073368078265e-05,
+        "objective_gap_upper_bound": 1.4863404357025755e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1360,
+        "feasible": true,
+        "kkt_residual_norm": 3.9456394321894496e-07,
+        "absolute_solution_error_bound": 0.6576065720315749,
+        "relative_solution_error_bound": 1.3802821678204768e-05,
+        "objective_gap_upper_bound": 1.297339210737357e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1370,
+        "feasible": true,
+        "kkt_residual_norm": 3.6891281636456937e-07,
+        "absolute_solution_error_bound": 0.6148546939409489,
+        "relative_solution_error_bound": 1.2905481880850506e-05,
+        "objective_gap_upper_bound": 1.1341388839836541e-07,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1380,
+        "feasible": true,
+        "kkt_residual_norm": 3.450741298447921e-07,
+        "absolute_solution_error_bound": 0.5751235497413202,
+        "relative_solution_error_bound": 1.2071545724772021e-05,
+        "objective_gap_upper_bound": 9.923012924011705e-08,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1390,
+        "feasible": true,
+        "kkt_residual_norm": 3.2271601997442213e-07,
+        "absolute_solution_error_bound": 0.5378600332907035,
+        "relative_solution_error_bound": 1.1289403798929838e-05,
+        "objective_gap_upper_bound": 8.678802462344303e-08,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1400,
+        "feasible": true,
+        "kkt_residual_norm": 3.0164723474397114e-07,
+        "absolute_solution_error_bound": 0.5027453912399519,
+        "relative_solution_error_bound": 1.0552365635409612e-05,
+        "objective_gap_upper_bound": 7.58258785239037e-08,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      },
+      {
+        "iteration": 1410,
+        "feasible": true,
+        "kkt_residual_norm": 2.818387851334762e-07,
+        "absolute_solution_error_bound": 0.4697313085557937,
+        "relative_solution_error_bound": 9.859417126187805e-06,
+        "objective_gap_upper_bound": 6.619425067126148e-08,
+        "strong_convexity_lower_bound": 6e-07,
+        "gradient_lipschitz_upper_bound": 0.014357792041355595
+      }
+    ],
+    "reference_certificate": {
+      "feasible": true,
+      "kkt_residual_norm": 2.818387851358766e-07,
+      "absolute_solution_error_bound": 0.4697313085597944,
+      "relative_solution_error_bound": 9.859417126271778e-06,
+      "objective_gap_upper_bound": 6.619425067238902e-08,
+      "strong_convexity_lower_bound": 6e-07,
+      "gradient_lipschitz_upper_bound": 0.014357792041355582
+    }
+  },
+  "relative_changes": {
+    "latent": 0.0,
+    "detector": 0.0
+  },
+  "failures": [],
+  "wall_s": 717.1737322229892,
+  "cache": {
+    "limit_bytes": 4294967296,
+    "resident_bytes": 4202496000,
+    "peak_bytes": 4202496000,
+    "hits": 777500,
+    "misses": 500,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 500,
+    "padding": "exact_detector_crop_v1",
+    "fft_shape": [
+      1024,
+      1024
+    ],
+    "full_fft_shape": [
+      1536,
+      1440
+    ],
+    "padding_scope": "Only discarded convolution samples may fold; retained forward crop and its adjoint are unchanged in exact arithmetic."
+  },
+  "process_peak_rss_bytes": 4714283008,
+  "scope": "One full-count reference stability endpoint; no full-family or scientific qualification.",
+  "q3_authorized": false
+}
