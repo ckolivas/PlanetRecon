@@ -70,6 +70,23 @@ def source_times_s(
     return np.arange(n, dtype=np.float64) * dt, origin
 
 
+def capture_timing(source: FrameSource, *, cadence_s: float | None = None) -> dict:
+    """Observed first-to-last frame-start span, without inventing missing time."""
+    try:
+        times, origin = source_times_s(source, cadence_s=cadence_s)
+    except ValueError as exc:
+        return {'status': 'invalid', 'duration_s': None, 'reason': str(exc)}
+    if not times.size or origin == 'inferred':
+        return {'status': 'unavailable', 'duration_s': None,
+                'reason': 'No frame timestamps or supplied cadence.' if times.size else 'Empty capture.'}
+    intervals = np.diff(times)
+    return {'status': 'available', 'origin': origin, 'duration_s': float(times[-1]-times[0]),
+            'n_frames': len(times), 'median_cadence_s': float(np.median(intervals)) if intervals.size else None,
+            'minimum_interval_s': float(intervals.min()) if intervals.size else None,
+            'maximum_interval_s': float(intervals.max()) if intervals.size else None,
+            'definition': 'First-to-last frame-start timestamp; final exposure length is not included.'}
+
+
 def build_frame_poses(
     times_s: np.ndarray,
     *,

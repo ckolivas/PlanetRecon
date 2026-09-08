@@ -36,6 +36,16 @@ selection. File-backed sources also save/load the sidecar automatically. Set
 
 ## Cache validity
 
+Input inspection and preprocessing report capture duration from the first and
+last per-frame timestamp. For SER, integer 100 ns trailer ticks are subtracted
+before conversion to seconds, preserving small intervals at large absolute
+epochs. Irregular cadence and dropped-frame gaps remain part of the duration;
+the last exposure's unknown length is not added. Measured timestamps take
+precedence over a supplied cadence. Missing timestamps require an explicit
+cadence to estimate seconds; duplicate or reversed times show an invalid timing
+report instead of a guessed duration. A single timestamp has zero span.
+The GUI capture line, SER metadata and preprocessing report expose this timing.
+
 Cache identity hashes **all observed pixels**, frame layout/colour, bit depth,
 timestamps and actual calibration tables/settings. It distinguishes indexed
 subsets of the same source. Thread count, device, batch size and reconstruction

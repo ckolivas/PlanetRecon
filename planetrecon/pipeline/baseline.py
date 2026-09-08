@@ -112,7 +112,7 @@ def _stack_source(
                     or preprocessing.digest != selection_digest(preprocessing)):
                 raise ValueError('preprocessing measurements do not match the input or configuration')
             selection = preprocessing
-            cache_status = cache_report(selection, config=config)
+            cache_status = cache_report(selection, config=config, source=source)
         else:
             selection, cache_status = load_cache(source, config, calibration, path=preprocessing_cache,
                                                 should_cancel=should_cancel)

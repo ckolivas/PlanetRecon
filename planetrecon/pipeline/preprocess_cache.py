@@ -80,7 +80,7 @@ def exclusion_counts(selection):
             'other': len(set(reasons['invalid']) | set(reasons['saturated'])), 'excluded': total}
 
 
-def cache_report(selection, path=None, config=None):
+def cache_report(selection, path=None, config=None, source=None):
     estimate = selection.summary.get('geometry_estimate', {})
     if config is not None:
         original = selection.summary.get('geometry_analysis_config', {})
@@ -96,9 +96,14 @@ def cache_report(selection, path=None, config=None):
         if config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {}):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
                         'notes': [*estimate.get('notes', []), 'Cached whole-silhouette flattening is not used for Saturn globe geometry.']}
+    timing = selection.summary.get('timing', {})
+    if source is not None:
+        from planetrecon.geometry.pose import capture_timing
+        timing = capture_timing(source, cadence_s=config.cadence_s if config is not None else None)
     return {'status': 'ready', 'path': None if path is None else str(path),
             'digest': selection.digest, **exclusion_counts(selection),
             'best_reference_index': selection.best_reference_index,
+            'timing': timing,
             'geometry_estimate': estimate}
 
 
@@ -152,7 +157,7 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
             raise ValueError('invalid or incomplete cache measurements')
         if selection.identity != identity(source, config, calibration, should_cancel):
             return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
-        return selection, cache_report(selection, path, config)
+        return selection, cache_report(selection, path, config, source)
     except (ValueError, OSError, KeyError, TypeError, BadZipFile) as exc:
         return None, {'status': 'invalid', 'reason': f'Preprocessing cache unavailable: {exc}'}
 
@@ -181,6 +186,8 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         selection = screen_source(source, config, calibration, should_cancel=should_cancel, on_progress=on_progress)
         if selection.cancelled:
             raise InterruptedError('preprocessing cancelled')
+        from planetrecon.geometry.pose import capture_timing
+        selection.summary['timing'] = capture_timing(source, cadence_s=config.cadence_s)
         selection.summary['geometry_estimate'] = discover_geometry(source, config, selection, calibration, should_cancel)
         selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
         selection.identity = identity(source, config, calibration, should_cancel)

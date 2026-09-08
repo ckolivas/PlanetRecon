@@ -274,6 +274,7 @@ class SERSource(FrameSource):
         self._timestamp_offset = SER_HEADER_SIZE + image_bytes if self._has_trailer else None
 
     def metadata(self) -> ObservationMetadata:
+        from planetrecon.geometry.pose import capture_timing
         color = self.color_mode()
         endian = "little" if self._little() else "big"
         extras = {
@@ -287,6 +288,8 @@ class SERSource(FrameSource):
             "ser_operator_version": FieldValue(C.SER_OPERATOR_VERSION, "inferred"),
             "declared_frames": FieldValue(self._n_declared, "header"),
             "recovered_complete_frames": FieldValue(self._n != self._n_declared, "inferred"),
+            "capture_timing": FieldValue(capture_timing(self), "measured",
+                                         "Derived from per-frame SER trailer timestamps when available."),
         }
         if self.bayer_override:
             extras["bayer_override"] = FieldValue(self.bayer_override, "user")

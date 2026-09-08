@@ -130,6 +130,7 @@ def _worker_run(
         if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
             import numpy as np
             from planetrecon.detector import is_bayer, nearest_debayer_preview
+            from planetrecon.geometry.pose import capture_timing
 
             raw = source.read_raw(0)
             color = source.color_mode()
@@ -139,6 +140,7 @@ def _worker_run(
             bayer = is_bayer(color)
             preview = nearest_debayer_preview(raw, color, stride=step) if bayer else np.array(raw[::step, ::step], copy=True)
             payload = {"source_metadata": source.metadata().as_dict(),
+                       "capture_timing": capture_timing(source, cadence_s=config.cadence_s),
                        "input_image": preview,
                        "input_max": float(np.max(raw, where=np.isfinite(raw), initial=0)),
                        "input_stride": step, "input_view": "nearest-neighbour Bayer RGB" if bayer else color}

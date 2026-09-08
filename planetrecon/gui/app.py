@@ -377,9 +377,12 @@ class MainWindow:
         if 'preprocessing_cache' in payload:
             self._set_preprocessing(payload['preprocessing_cache'])
         self.input_max = payload.get('input_max')
+        timing = payload.get('capture_timing', meta.get('extras', {}).get('capture_timing', {}).get('value', {}))
+        duration = (f"{timing['duration_s']:.6g} s ({timing.get('origin', 'measured')})"
+                    if timing.get('status') == 'available' else 'unavailable')
         self.source_label.setText(f"{meta['path']} · {meta['width']}×{meta['height']} · "
                                   f"{meta['n_frames']} frames · {meta['color_mode']} · "
-                                  f"{meta['bit_depth']} bit · input view: {payload['input_view']}")
+                                  f"{meta['bit_depth']} bit · duration: {duration} · input view: {payload['input_view']}")
         if self.inspecting:
             self.view.setCurrentText('Input')
             self.details.setPlainText(json.dumps(meta, indent=2))
