@@ -104,7 +104,7 @@ def run(path, manifest_path, directory, *, method='newton', resume=False):
                     fits.append(info); outputs.append(x)
                     print(method,fraction,cap,'bound=',info['reference_certificate']['relative_solution_error_bound'],flush=True)
                 except TimeoutError as exc:
-                    fits.append({'max_products': cap, 'converged': False, 'reason': str(exc)})
+                    fits.append({'maxiter' if method=='reference' else 'max_products': cap, 'converged': False, 'reason': str(exc)})
             changes = {}
             if len(outputs) == 2:
                 changes['latent'] = float(np.linalg.norm(outputs[0]-outputs[1])/max(np.linalg.norm(outputs[1]), 1.))
