@@ -254,3 +254,139 @@ def scalar_noise_mismatch(
         "true_var_dynamic_range": dynamic,
         "n_pixels": float(true_var.size),
     }
+
+
+def translate_cells(image: np.ndarray, shift_xy, *, adjoint=False) -> np.ndarray:
+    """Zero-extended bilinear flux deposition and its exact transpose."""
+    x = np.asarray(image, dtype=np.float64)
+    sx, sy = map(float, shift_xy)
+    if not np.isfinite([sx, sy]).all():
+        raise ValueError('translation must be finite')
+    ix, iy = int(np.floor(sx)), int(np.floor(sy))
+    fx, fy = sx-ix, sy-iy
+    out = np.zeros_like(x)
+    h, w = x.shape[:2]
+    for dx, wx in ((ix, 1-fx), (ix+1, fx)):
+        for dy, wy in ((iy, 1-fy), (iy+1, fy)):
+            if wx*wy == 0 or abs(dx) >= w or abs(dy) >= h:
+                continue
+            src = (slice(max(0, -dy), min(h, h-dy)), slice(max(0, -dx), min(w, w-dx)))
+            dst = (slice(max(0, dy), min(h, h+dy)), slice(max(0, dx), min(w, w+dx)))
+            if adjoint:
+                out[src] += wx*wy*x[dst]
+            else:
+                out[dst] += wx*wy*x[src]
+    return out
+
+
+@dataclass(frozen=True)
+class SceneDetectorOperator:
+    """Extended optical scene → exposure → detector integration/crop/mask/CFA.
+
+    See docs/scene-detector-contract.md. Arrays are copied and made read-only so
+    an operator cannot silently change during a solve. RGB channels share a PSF;
+    chromatic PSFs and non-translation geometry are not yet implemented here.
+    """
+    scene_shape: tuple
+    psfs: tuple
+    bin_factor: int
+    origin_xy: tuple
+    detector_shape: tuple
+    flux: float = 1.
+    shifts_xy: tuple | None = None
+    exposure_weights: tuple | None = None
+    valid_mask: np.ndarray | None = None
+    cfa_pattern: str | None = None
+    cfa_offset_xy: tuple = (0, 0)
+
+    def __post_init__(self):
+        shape = tuple(self.scene_shape)
+        if len(shape) not in (2, 3) or (len(shape) == 3 and shape[2] != 3):
+            raise ValueError('scene must be HxW or HxWx3')
+        if any(int(v) != v or v < 1 for v in shape):
+            raise ValueError('scene dimensions must be positive integers')
+        b = self.bin_factor
+        if int(b) != b or b < 1 or shape[0] % b or shape[1] % b:
+            raise ValueError('scene must be divisible by positive integer bin factor')
+        origin, det = tuple(self.origin_xy), tuple(self.detector_shape)
+        if len(origin) != 2 or len(det) != 2 or any(int(v) != v for v in (*origin, *det)):
+            raise ValueError('crop dimensions and origin must be integers')
+        ox, oy = origin
+        if min(origin) < 0 or min(det) < 1 or oy+det[0] > shape[0]//b or ox+det[1] > shape[1]//b:
+            raise ValueError('detector crop outside scene')
+        if not np.isfinite(self.flux) or self.flux <= 0:
+            raise ValueError('flux must be finite and positive')
+        kernels = tuple(np.array(p, dtype=np.float64, copy=True) for p in self.psfs)
+        if not kernels or any(p.ndim != 2 or not p.size or not np.isfinite(p).all()
+                              or p.min() < 0 or not np.isclose(p.sum(), 1., atol=1e-12, rtol=1e-10)
+                              for p in kernels):
+            raise ValueError('PSFs must be finite nonnegative unit-energy 2D kernels')
+        shifts = tuple((0., 0.) for _ in kernels) if self.shifts_xy is None else tuple(tuple(s) for s in self.shifts_xy)
+        weights = tuple(1./len(kernels) for _ in kernels) if self.exposure_weights is None else tuple(self.exposure_weights)
+        if len(shifts) != len(kernels) or any(len(s) != 2 for s in shifts) or not np.isfinite(shifts).all():
+            raise ValueError('one finite xy shift per exposure sample is required')
+        if len(weights) != len(kernels) or not np.isfinite(weights).all() or min(weights) < 0 or not np.isclose(sum(weights), 1., atol=1e-12, rtol=0):
+            raise ValueError('exposure weights must be nonnegative and sum to one')
+        mask = np.ones(det, dtype=bool) if self.valid_mask is None else np.array(self.valid_mask, copy=True)
+        if mask.shape != det or mask.dtype != np.bool_:
+            raise ValueError('valid mask must be a boolean detector-shaped array')
+        if self.cfa_pattern is not None and (len(shape) != 3 or self.cfa_pattern not in ('RGGB', 'BGGR', 'GRBG', 'GBRG')):
+            raise ValueError('CFA requires RGB scene and valid Bayer pattern')
+        if len(self.cfa_offset_xy) != 2 or any(int(v) != v for v in self.cfa_offset_xy):
+            raise ValueError('CFA parity offset must be integer xy')
+        for name, value in (('scene_shape', tuple(map(int, shape))), ('psfs', kernels),
+                            ('bin_factor', int(b)), ('origin_xy', tuple(map(int, origin))),
+                            ('detector_shape', tuple(map(int, det))), ('shifts_xy', shifts),
+                            ('exposure_weights', weights), ('valid_mask', mask),
+                            ('cfa_offset_xy', tuple(map(int, self.cfa_offset_xy)))):
+            object.__setattr__(self, name, value)
+        for arr in (*kernels, mask):
+            arr.flags.writeable = False
+
+    @property
+    def output_shape(self):
+        return self.detector_shape + ((3,) if len(self.scene_shape) == 3 and self.cfa_pattern is None else ())
+
+    def _channels(self, image, operation):
+        if image.ndim == 2:
+            return operation(image)
+        return np.stack([operation(image[..., c]) for c in range(3)], axis=-1)
+
+    def _cfa_indices(self):
+        y, x = np.indices(self.detector_shape)
+        ox, oy = np.add(self.origin_xy, self.cfa_offset_xy)
+        tile = np.array(['RGB'.index(c) for c in self.cfa_pattern]).reshape(2, 2)
+        return tile[(y+oy) % 2, (x+ox) % 2]
+
+    def forward(self, scene):
+        scene = np.asarray(scene, dtype=np.float64)
+        if scene.shape != self.scene_shape:
+            raise ValueError('wrong scene shape')
+        optical = np.zeros_like(scene)
+        for psf, shift, weight in zip(self.psfs, self.shifts_xy, self.exposure_weights):
+            optical += weight*self._channels(translate_cells(scene, shift), lambda x: linear_convolve_same(x, psf))
+        detector = self.flux*self._channels(optical, lambda x: bin_box(x, self.bin_factor))
+        ox, oy = self.origin_xy
+        h, w = self.detector_shape
+        result = detector[oy:oy+h, ox:ox+w]
+        if self.cfa_pattern is not None:
+            result = np.take_along_axis(result, self._cfa_indices()[..., None], axis=2)[..., 0]
+        return result * (self.valid_mask[..., None] if result.ndim == 3 else self.valid_mask)
+
+    def adjoint(self, residual):
+        residual = np.asarray(residual, dtype=np.float64)
+        if residual.shape != self.output_shape:
+            raise ValueError('wrong detector shape')
+        residual = residual * (self.valid_mask[..., None] if residual.ndim == 3 else self.valid_mask)
+        if self.cfa_pattern is not None:
+            rgb = np.zeros(self.detector_shape+(3,))
+            np.put_along_axis(rgb, self._cfa_indices()[..., None], residual[..., None], axis=2)
+            residual = rgb
+        det_shape = (self.scene_shape[0]//self.bin_factor, self.scene_shape[1]//self.bin_factor)
+        optical = self._channels(residual, lambda x: bin_box_adjoint(
+            crop_xy_adjoint(x, self.origin_xy, det_shape), self.bin_factor))
+        result = np.zeros(self.scene_shape)
+        for psf, shift, weight in zip(self.psfs, self.shifts_xy, self.exposure_weights):
+            acc = self._channels(optical, lambda x: linear_convolve_same_adjoint(x, psf))
+            result += self.flux*weight*translate_cells(acc, shift, adjoint=True)
+        return result
