@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from types import SimpleNamespace
 from planetrecon.operators import SceneDetectorOperator
 from tools.scene_quadratic import SceneQuadratic
 from tools.scene_periodic_preconditioner import PeriodicScenePreconditioner, _spectrum_term
@@ -60,3 +59,30 @@ def test_unsupported_cells_and_translations_rejected():
         _spectrum_term(CellBasisOperator(op,2),np.ones((4,4)))
     shifted=SceneDetectorOperator((4,4),(np.ones((1,1)),),1,(0,0),(4,4),shifts_xy=((.1,0.),))
     with pytest.raises(ValueError,match='translations'): _spectrum_term(shifted,np.ones((4,4)))
+
+
+@pytest.mark.parametrize('reduced',[False,True])
+def test_approximate_inverse_does_not_replace_finite_detector_system(reduced):
+    from tools.scene_preconditioned_probe import probe
+    rng=np.random.default_rng(904);shape=(6,6)
+    h=rng.uniform(size=(3,4));h/=h.sum()
+    op=SceneDetectorOperator(shape,(h,),2,(1,1),(2,2),valid_mask=np.array([[1,0],[1,1]],bool))
+    p=SceneQuadratic([op],[np.ones((2,2))],[rng.uniform(.5,2.,size=(2,2))],ridge=.01,smoothness=.02)
+    pre=PeriodicScenePreconditioner(p,workers=1)
+    free=rng.uniform(size=shape)>.3 if reduced else np.ones(shape,bool)
+    rhs=np.where(free,rng.normal(size=shape),0.)
+    basis=np.eye(36).reshape((36,)+shape)
+    hessian=np.stack([p.normal(e).ravel() for e in basis],axis=1)
+    f=free.ravel();expected=np.linalg.solve(hessian[np.ix_(f,f)],rhs.ravel()[f])
+    x,info=probe(p.normal,rhs,pre,free=free,steps=100)
+    assert info['reason']=='linear_residual_small'
+    np.testing.assert_allclose(x.ravel()[f],expected,rtol=1e-9,atol=1e-10)
+    assert np.linalg.norm(pre(rhs).ravel()[f]-expected) > .1
+
+
+def test_bayer_green_density_differs_from_red_and_blue():
+    op=SceneDetectorOperator((4,4,3),(np.ones((1,1)),),1,(0,0),(4,4),cfa_pattern='RGGB')
+    p=SceneQuadratic([op],[np.zeros((4,4))],[1.],ridge=.1)
+    pre=PeriodicScenePreconditioner(p,workers=1)
+    actual=pre(np.ones((4,4,3)))
+    np.testing.assert_allclose(actual,np.broadcast_to(1/(np.array([.25,.5,.25])+.1),(4,4,3)))
