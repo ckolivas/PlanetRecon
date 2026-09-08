@@ -1,0 +1,33 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "image_size": 8,
+  "support_radii": [
+    0.26,
+    1.0
+  ],
+  "regularizers": [
+    0.03
+  ],
+  "budgets": [
+    32,
+    128,
+    512
+  ],
+  "initializations": [
+    "zero",
+    "positive_pattern"
+  ],
+  "solver_tolerance": 1e-06,
+  "oracle_relative_image_tolerance": 0.0001,
+  "oracle_relative_objective_gap_tolerance": 1e-08,
+  "operator_relative_tolerance": 1e-11,
+  "oracle": "Dense spatial convolution, real trigonometric basis, SLSQP positivity constraints",
+  "limits": "Small known-transfer quadratic only; no TV, atmospheric fit, real-capture qualification or gate authorization.",
+  "design_revision": "v3 checks warm stationarity projection after v2 isolated cold-projection failures. Replace constant initialization, whose DC difference vanishes at the first step, with a positive cosine pattern. Initial pre-v2 12-case attempt was stopped for cost; no completed-family claim."
+}

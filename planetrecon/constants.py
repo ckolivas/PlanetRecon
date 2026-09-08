@@ -31,7 +31,7 @@ ROADMAP_REVISION = "R10"
 SIMULATOR_OPERATOR_VERSION = "1.0"
 # Estimator projection/quadratic contract. W01 replaces clip-then-support with
 # Dykstra projection onto positivity ∩ spectral support.
-ESTIMATOR_OPERATOR_VERSION = "1.3"
+ESTIMATOR_OPERATOR_VERSION = "1.4"
 DEV_SEEDS = (1001, 1002, 1003)
 EVAL_SEEDS = tuple(range(2001, 2013))
 EXT_SEEDS = tuple(range(2013, 2025))

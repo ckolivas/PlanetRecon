@@ -2425,3 +2425,16 @@ iteration exhaustion and count unconverged inner projections. E2a0 also records
 actual CG iterations and the measured normal-equation residual. The 57 targeted
 solver, W01 and Q2 tests pass. Existing scientific artifacts retain their original
 operator identity; this correction alone does not requalify any gate.
+
+**W01 independent-oracle continuation (2026-09-08):** the reproducible
+`planetrecon.constraint_audit` qualifies 16 composed operator/adjoint controls
+against direct matrices (maximum relative error 9.330e-16). Six small quadratic
+cases compare with a dense spatial SLSQP oracle across budgets and starts.
+The v2 audit isolated cold stationarity-projection failures despite accurate
+images; version 1.4 rebases the existing dual state for that check without
+relaxing tolerances. All three band-limited cases then pass from both starts at
+128 iterations, with maximum relative oracle image error 5.839e-6. Full-support
+controls remain incomplete at 512. Protocols, failures, noise-map controls and
+the bounded decision are preserved in `results/r10-constraint-operator-audit-v2`
+and `results/r10-constraint-operator-audit-v3`. This advances W01 without claiming
+complete convergence qualification or authorizing Q3.

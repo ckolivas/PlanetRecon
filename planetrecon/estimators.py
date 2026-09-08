@@ -309,7 +309,11 @@ def e2a(
         grad = np.fft.ifft2((den * np.fft.fft2(image) - num) * support).real
         if tv_mu > 0.0:
             grad += float(tv_mu) * isotropic_tv_grad(image, tv_eps)
-        projected, info = project_positivity_support(image - step * grad, support)
+        # These duals belong to the most recent gradient-step projection.
+        # Rebasing them onto this nearby target avoids a cold projection that
+        # can exhaust its budget even when the outer point is already optimal.
+        projected, info = project_positivity_support(image - step * grad, support,
+                                                    p=dual_p, q=dual_q)
         residual = float(np.linalg.norm(projected - image) / max(np.linalg.norm(image), 1e-12))
         return residual, info, grad
 
