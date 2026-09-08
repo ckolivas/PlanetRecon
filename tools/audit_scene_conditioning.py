@@ -31,7 +31,7 @@ def frozen_checkpoint(path, original_protocol, selection):
     return state
 
 
-def run(path, checkpoint, directory, *, device='cuda'):
+def run(path, checkpoint, directory, *, device='cuda', jacobi=False):
     from planetrecon.runtime import apply_thread_limits
     from planetrecon.physics_audit import peak_rss_bytes
     apply_thread_limits(2)
@@ -48,6 +48,8 @@ def run(path, checkpoint, directory, *, device='cuda'):
             Path('tools/scene_quadratic.py'), Path('tools/scene_parallel_reference.py'),
             Path('tools/scene_iteration_state.py'), Path('tools/scene_conditioning.py'),
             Path('tools/audit_scene_selections.py'), Path('docs/scene-conditioning-protocol.md')]
+    if jacobi:
+        deps += [Path('tools/scene_hessian_diagonal.py'), Path('docs/scene-jacobi-protocol.md')]
     identity = identities(deps)
     if identity['package_source_hash'] != original['identities']['package_source_hash']:
         raise ValueError('original package source changed')
@@ -55,7 +57,8 @@ def run(path, checkpoint, directory, *, device='cuda'):
     protocol = {'identities': identity, 'input_sha256': file_hash(path),
                 'checkpoint_sha256': file_hash(checkpoint), 'original_protocol_sha256': file_hash(original_path),
                 'manifest_sha256': file_hash(manifest_path), 'initial_iteration': 142,
-                'modes': ['identity', 'majorizer'], 'probe_steps': 32, 'wall_budget_s': 600.,
+                'modes': ['jacobi'] if jacobi else ['identity', 'majorizer'],
+                'probe_steps': 32, 'wall_budget_s': 600.,
                 'threads': 2, 'cpu_frame_workers': 8, 'device': device, 'cache_bytes': 256*1024**2,
                 'product_relative_tolerance': 1e-10, 'original_distance_tolerance': 1e-5,
                 'scene_updated': False, 'q3_authorized': False,
@@ -81,13 +84,28 @@ def run(path, checkpoint, directory, *, device='cuda'):
                    'setup_wall_s': time.monotonic()-started}
         write_json(directory/'initial.json', initial)
         if gradient_error > 1e-10: raise ValueError('independent gradient parity failed')
+        jacobi_diagonal = None
+        if jacobi:
+            from tools.scene_hessian_diagonal import hessian_diagonal
+            diagonal_started = time.monotonic()
+            jacobi_diagonal, diagonal_workers = hessian_diagonal(problem, workers=8)
+            if not np.isfinite(jacobi_diagonal).all() or np.any(jacobi_diagonal <= 0):
+                raise ValueError('invalid positive Hessian diagonal')
+            ratio = problem.majorizer/jacobi_diagonal
+            write_json(directory/'diagonal.json', {
+                'wall_s': time.monotonic()-diagonal_started,
+                'min': float(jacobi_diagonal.min()), 'max': float(jacobi_diagonal.max()),
+                'majorizer_ratio_percentiles': dict(zip(['min', 'p50', 'p95', 'max'],
+                                                       map(float, np.percentile(ratio, [0, 50, 95, 100])))),
+                'workers': diagonal_workers, 'used_as_step_majorizer': False})
         for mode in protocol['modes']:
             trace = []
             def callback(row, y):
                 trace.append(row)
                 write_json(directory/f'trace-{mode}.json', {'mode': mode, 'trace': trace,
                                                           'recursive_residuals_are_certificates': False})
-            diagonal = np.ones(problem.shape) if mode == 'identity' else problem.majorizer
+            diagonal = (jacobi_diagonal if mode == 'jacobi' else
+                        np.ones(problem.shape) if mode == 'identity' else problem.majorizer)
             y, info = probe_cg(problem.normal, residual, diagonal, steps=32, deadline=deadline, callback=callback)
             stream = BytesIO(); np.savez_compressed(stream, correction=y)
             atomic_write(directory/f'correction-{mode}.npz', stream.getvalue())
@@ -112,7 +130,7 @@ def run(path, checkpoint, directory, *, device='cuda'):
                  and file_hash(checkpoint) == protocol['checkpoint_sha256']
                  and file_hash(original_path) == protocol['original_protocol_sha256']
                  and file_hash(manifest_path) == protocol['manifest_sha256'])
-    passed = unchanged and not failures and len(rows) == 2 and all(r['probe_complete'] and r['product_relative_error'] <= 1e-10 for r in rows)
+    passed = unchanged and not failures and len(rows) == len(protocol['modes']) and all(r['probe_complete'] and r['product_relative_error'] <= 1e-10 for r in rows)
     report = {'status': 'valid' if passed else 'incomplete', 'source_input_unchanged': unchanged,
               'initial': initial, 'rows': rows, 'failures': failures, 'wall_s': time.monotonic()-started,
               'scene_updated': False, 'q3_authorized': False, 'scope': protocol['scope']}
@@ -124,5 +142,6 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--input', type=Path, required=True); p.add_argument('--checkpoint', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True); p.add_argument('--device', choices=('cpu', 'cuda'), default='cuda')
+    p.add_argument('--jacobi', action='store_true', help='Run the prospectively declared Hessian-diagonal probe only')
     a = p.parse_args()
-    sys.exit(0 if run(a.input, a.checkpoint, a.out, device=a.device)['status'] == 'valid' else 1)
+    sys.exit(0 if run(a.input, a.checkpoint, a.out, device=a.device, jacobi=a.jacobi)['status'] == 'valid' else 1)
