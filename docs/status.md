@@ -26,6 +26,12 @@ Backend measurements: [shared CPU/CUDA transforms](../results/p5-shared-fft/DECI
 Full selections: [observed manifest](../results/p2-full-selection-manifest/DECISION.md) and
 [reference endpoints](../results/p2-selection-endpoints-reference/DECISION.md) and
 [optimizer comparison](../results/p2-selection-endpoints-comparison/DECISION.md).
+Conditioning: [fixed-iterate bounds](../results/p2-frozen-conditioning/DECISION.md)
+and [three-scaling comparison](../results/p2-frozen-jacobi/DECISION.md). All three
+32-product probes pass independent CPU/CUDA checks but leave the distance bound
+at 0.149922. Better inner correction alone cannot certify this saved iterate with
+the tested bound family. Constrained solver progress remains necessary; none of
+these diagnostics updates a scene or qualifies the incomplete 500-frame fits.
 Scientific setting limits: [unbracketed prior](../results/p2-prior-extension/DECISION.md),
 [domain](../results/p2-domain-sensitivity/DECISION.md),
 [sampling](../results/p2-sampling-sensitivity/DECISION.md),

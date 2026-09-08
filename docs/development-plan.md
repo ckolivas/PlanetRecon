@@ -1,6 +1,6 @@
 # Development plan
 
-Updated 2026-09-08 with full-count resource and selected-frame endpoint evidence.
+Updated 2026-09-08 with full-count endpoint and frozen-iterate conditioning evidence.
 This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
@@ -25,6 +25,11 @@ completed features and archived scientific results remain intact.
   the prior optimum is unbracketed and the extension has stopped as declared. The full
   observed selection manifest is now frozen; the 25-frame endpoint passes both
   solvers. Both remain incomplete at 500 frames under the declared budgets.
+  Three frozen-iterate 32-product probes (identity, existing majorizer and true
+  Hessian diagonal) now pass independent CPU/CUDA checks but do not tighten the
+  saved iterate's error bound. An algebraic limit rules out qualifying that
+  iterate using only this fixed-residual energy/global-ridge certificate family;
+  it does not establish a lower bound on actual reconstruction error.
 - **P5 early work:** shared CPU/CUDA scene FFTs, bounded retained PSF spectra and
   exact iteration resume are implemented. In the three-frame benchmark, solve
   time was 20.37 s for the reference and 1.51 s for shared CUDA, with a 3.97e-15
@@ -42,7 +47,9 @@ See [current status](status.md), [operator evidence](../results/p1-scene-detecto
 [performance evidence](../results/p5-shared-fft/DECISION.md),
 [full-count profile](../results/p5-full-count-profile/DECISION.md),
 [CPU verifier](../results/p5-parallel-reference/DECISION.md) and
-[endpoint comparison](../results/p2-selection-endpoints-comparison/DECISION.md).
+[endpoint comparison](../results/p2-selection-endpoints-comparison/DECISION.md),
+[fixed-iterate certificate limits](../results/p2-frozen-conditioning/DECISION.md)
+and [Hessian-diagonal comparison](../results/p2-frozen-jacobi/DECISION.md).
 
 ## Direction
 
@@ -331,16 +338,25 @@ full qualification is not supported by the current evidence.
    The frozen observed manifest contains all 60 development selections. The 5%
    endpoint passes with both reference and alternative solvers; complete all-frame
    numerical accuracy remains a separate requirement. Preserve every bounded
-   failure and do not treat an optimizer flag as a certificate. The next bounded
-   diagnostic should retain iteration/evaluation traces and examine conditioning
-   and preconditioning on the frozen objective before expanding the family or
-   raising all budgets. Keep the single alternative comparison and its limits.
+   failure and do not treat an optimizer flag as a certificate. The bounded
+   diagnostic has now retained iteration/product traces and compared three
+   diagonal scalings on the same frozen iterate. None tightened its bound, and
+   the algebraic floor rules out fixing certification only with a more accurate
+   inner solve. Next implement a safeguarded constrained curvature update:
+   account for active bounds, release cells with violating gradients, and retain
+   a valid projected-step fallback. First verify dense constrained optima,
+   feasibility, descent and independent residual bounds, including incorrect
+   initial active sets. Only then declare a bounded 25/500-frame same-objective
+   comparison with explicit product counts, wall budget and original tolerance.
+   Do not adopt an unconstrained correction as a scene or infer a solver winner
+   from these 32-product traces. Keep every alternative comparison and its limits.
 2. Use the measured resource evidence to choose subsequent execution budgets.
    Shared CUDA passes full 500-frame operator parity, while the small GPU cache
    churns at larger counts. A bounded parallel independent CPU verifier is now
    implemented to address expensive certificate checks. Its full-count arrays
-   match serial CPU results bit-for-bit. Adopt it in a new study identity and
-   preserve historical states.
+   match serial CPU results bit-for-bit. The frozen-iterate studies have now
+   adopted it under new identities while preserving historical states. Retain
+   these worker and cache scopes in subsequent prospective execution budgets.
 3. Qualify the full 5/10/25/50/100% selection matrix across all seeds, seeing regimes
    and crops, with independent certificates and budget stability. The one-case
    endpoint comparison does not replace the complete family or settle the prior.
