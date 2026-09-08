@@ -1,0 +1,83 @@
+{
+  "scope": "One paired development comparison; conventional stack is not ground truth. No application adoption.",
+  "baseline": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.272628639389776,
+      0.1286365787321331
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.2229557562671,
+        20.5490760175857
+      ],
+      [
+        233.29185427984584,
+        17.536015687093933
+      ],
+      [
+        232.98166922665388,
+        50.90501241455017
+      ]
+    ],
+    "relative_rmse": 0.005690950605278034,
+    "highpass_correlation_sigma3": 0.8879318710956717,
+    "registration_method": "Fixed independent template, production confidence-gated local patch matcher; verified baseline image and coverage reproduced bitwise during noise-sensitivity study.",
+    "mode": "local-baseline",
+    "noise_variance_fraction": 0.0,
+    "template_noise_subtraction": false,
+    "n_template": 64,
+    "reference_index": 1638,
+    "wall_s": 36.88640449900049
+  },
+  "candidate": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.274013081635538,
+      0.13178382611335773
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.23165795836175,
+        19.359606276395283
+      ],
+      [
+        233.2964330199447,
+        16.713873470502413
+      ],
+      [
+        232.9761455671565,
+        51.29587812260284
+      ]
+    ],
+    "relative_rmse": 0.005855435769963382,
+    "highpass_correlation_sigma3": 0.8493160829558066,
+    "registration_method": "Fixed independent template, production confidence-gated local patch matcher",
+    "mode": "independent-structure-gated-footprint",
+    "n_template": 64,
+    "reference_index": 1638,
+    "wall_s": 61.680858666999484,
+    "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+    "script_sha256": "1b181453adb60ef7d2fedaea314c56941f72666027387af77604edbf67d7da26",
+    "gate_mean": 0.5933653071790151
+  },
+  "relative_rmse_change_percent": 2.890293311152581,
+  "detail_correlation_change": -0.038615788139865104,
+  "setup": "Same 512 screened frames, original reference frame 1638, disjoint fixed 64-frame template, dense local displacement estimator and scalar frame weights as the previous pilot. Application source hash unchanged. Build two gate averages from alternating entries of the same 64 template indices using global registration into the existing template coordinates. Neither the reference PNG nor evaluation frames determine the gate. Raw CFA accumulation uses common nonnegative kernel weights and support; no sharpening or extra frame rejection.",
+  "validation": "Production source identity asserted. Candidate used all 512 frames with CUDA and exactly preserved the baseline validity mask. Independent CPU/CUDA kernel parity and mono/all-Bayer constant-colour/noise controls are recorded in sampling-footprint-controls.json.",
+  "decision": "Rejected: both paired image metrics regress, despite the known-shift control gains. Do not integrate, run full-capture validation or sweep footprint radii. The experiment demonstrates that reliable structure in an averaged template alone is insufficient to justify narrower sampling on this capture; it does not establish a unique cause of the real-image regression.",
+  "next": "Improve the registration signal itself: compare the current green-only proxy against an all-colour luminance proxy, using identical frames, anchor and accumulation weights. First test known translations with low-contrast/noisy Bayer scenes and differing channel brightness/blur; retain constant-colour and CPU/CUDA checks. Only test Jupiter if the controls support a candidate.",
+  "scripts": {
+    "tools/probe_sampling_footprint.py": "24e92b58a5ba69504e27c58287d4576edecbf4a7b8b6efa4ab99195304500416",
+    "out/sampling-footprint/jupiter.py": "1b181453adb60ef7d2fedaea314c56941f72666027387af77604edbf67d7da26"
+  },
+  "private_artifacts": "out/sampling-footprint/"
+}

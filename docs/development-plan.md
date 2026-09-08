@@ -52,10 +52,16 @@ agreement between two independent 32-frame templates retains radius-1 sampling
 in flat/noise-only regions. Across mono and all four Bayer layouts it reduces
 textured/mixed-scene error about 19–35%, preserves constant colours and direct
 channel support, and leaves flat/noise-only controls unchanged. CPU/CUDA sampling
-agrees within 1.4e-15. Next run one fixed 512-frame Jupiter comparison using this
-gate, the existing independent template and the same raw samples/weights/anchor.
-Only proceed to application validation if both paired image metrics improve;
-keep global alignment/all screened frames as defaults and no sharpening.
+agrees within 1.4e-15. The [fixed Jupiter pilot](../results/real-data/jupiter-gated-sampling.json)
+is complete: RMS worsens by 2.89% and fine-detail correlation falls by 0.0386.
+The gate is not adopted; do not run a full-capture validation or sweep radii.
+Next compare the green-only registration proxy with an all-colour luminance
+proxy, keeping frame selection, best-frame origin and accumulation weights fixed.
+Start with known translations in low-contrast/noisy Bayer scenes, including
+unequal channel brightness and blur. Test real Jupiter only if registration
+accuracy improves without breaking constant-colour or noise controls. Preserve
+the current global/all-screened defaults, local ambiguity/fold guards and no
+sharpening. Do not confuse gains on ideal sharp controls with real-image gains.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts
