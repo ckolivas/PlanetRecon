@@ -31,6 +31,7 @@ def run(path, manifest_path, directory, *, device='cpu', resume=False):
                 'budgets': [750, 1500], 'tolerance': 1e-5, 'image_tolerance': 1e-4,
                 'device': device, 'threads': 2, 'cache_bytes': 256*1024**2,
                 'fit_budget_s': 300., 'wall_budget_s': 1200., 'history_pairs': 8, 'max_line_search': 20,
+                'background_workload': 'May overlap the reference endpoint pilot and bounded verification jobs; wall times are not isolated speed comparisons.',
                 'scope': 'One alternative numerical endpoint pilot; no full-family or scientific qualification; stage resume only.',
                 'q3_authorized': False}
     directory = open_study(directory, protocol, resume=resume)

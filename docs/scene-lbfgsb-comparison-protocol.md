@@ -27,6 +27,9 @@ Retain actual iterations, function/gradient evaluations, wall/RSS/cache metrics,
 and all incomplete outcomes. Do not auto-tune history, caps or tolerances from
 the result. Timings are workload-dependent observations, not an isolated speed
 benchmark; compare objective and independent certificates first.
+The reference and alternative pilots may overlap (at most two study workers,
+four CPU threads in total). Record that overlap with each study; do not infer
+an isolated speedup or a workload-independent iteration throughput from it.
 
 L-BFGS internal history is not serialized. Only completed-stage resume is supported;
 resuming does not retry a recorded incomplete fit. No exact iteration-resume or
