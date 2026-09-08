@@ -28,9 +28,13 @@ The [matched local midpoint comparison](../results/real-data/jupiter-local-midpo
 is complete with identical source, template candidates and anchor: 1,645 frames
 lower matched RMS to 0.00513695, but fine-detail correlation falls to 0.961536
 versus 0.963670 for all 3,341 screened frames. Keep both controls optional and
-the all-screened default. Next test whether local quality/reliability weighting
-can improve contributions from additional frames. Use controlled spatially varying
-blur/noise before real-image adoption. Retain common colour weights, frame counts
+the all-screened default. The [first local-energy weighting pilot](../results/real-data/jupiter-local-quality-pilot.json)
+is also complete: eight-seed spatial-blur controls improve RMS by about 40%,
+but the fixed 512-frame Jupiter comparison gains only 0.011% in RMS and loses
+fine-detail correlation. It is not adopted. Next measure detector-noise
+contributions to local quality energy using known-noise mono/Bayer controls,
+then test a noise-aware weighting candidate if that measurement supports it.
+Do not assume noise caused the real-image regression without evidence. Retain common colour weights, frame counts
 and the best-frame anchor; do not add automatic sharpening or tune defaults from
 one capture. Extend to local mono/other-planet captures where meaningful comparisons
 are available. Keep experiments bounded and adopt only demonstrated output gains.

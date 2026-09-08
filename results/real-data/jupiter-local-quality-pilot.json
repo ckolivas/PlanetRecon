@@ -1,0 +1,294 @@
+{
+  "scope": "Development-only local-quality hypothesis; not adopted into the application.",
+  "method": "Smoothed squared Laplacian energy normalized by frame/reference means; multiply existing global frame weights by a common-colour factor clipped to [0.25,4], reverting to unity for local correlation <=0.5.",
+  "controlled_setup": "Eight seeds per case, independent 16-frame template, 48 evaluation frames, noise sigma 4 ADU. Spatial-blur case alternates complementary sigma 0.5/2 pixel regions; uniform case sigma 0.5; flat case has no texture. Truth used only for error measurement.",
+  "controls": {
+    "spatial_blur": {
+      "seeds": 8,
+      "mean_rmse_ratio": 0.5959899767727108,
+      "minimum_ratio": 0.5832181961903657,
+      "maximum_ratio": 0.6105341468307747
+    },
+    "uniform_blur": {
+      "seeds": 8,
+      "mean_rmse_ratio": 0.999554191956634,
+      "minimum_ratio": 0.9995021169253069,
+      "maximum_ratio": 0.9996193426999606
+    },
+    "flat_noise": {
+      "seeds": 8,
+      "mean_rmse_ratio": 0.9999999999999999,
+      "minimum_ratio": 0.9999999999999977,
+      "maximum_ratio": 1.0000000000000022
+    }
+  },
+  "control_rows": [
+    {
+      "case": "spatial_blur",
+      "seed": 0,
+      "global_rmse": 8.411279674037395,
+      "local_rmse": 5.052054821159927,
+      "ratio": 0.6006285627089311,
+      "mean_bias": -0.015484367083439823
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 1,
+      "global_rmse": 8.5377635412197,
+      "local_rmse": 5.092095562316786,
+      "ratio": 0.5964203081676506,
+      "mean_bias": -0.008013503547244175
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 2,
+      "global_rmse": 8.61208974715084,
+      "local_rmse": 5.161407249261605,
+      "ratio": 0.5993211172664761,
+      "mean_bias": 0.018695232119547666
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 3,
+      "global_rmse": 8.626550665214275,
+      "local_rmse": 5.072824411156406,
+      "ratio": 0.58804783140173,
+      "mean_bias": -0.03196415227492672
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 4,
+      "global_rmse": 8.647066196803241,
+      "local_rmse": 5.279329183054498,
+      "ratio": 0.6105341468307747,
+      "mean_bias": 0.007575265058687902
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 5,
+      "global_rmse": 8.89180860594903,
+      "local_rmse": 5.185864576031564,
+      "ratio": 0.5832181961903657,
+      "mean_bias": -0.0009683528384134609
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 6,
+      "global_rmse": 8.644553279714216,
+      "local_rmse": 5.12243839457676,
+      "ratio": 0.5925625337514381,
+      "mean_bias": -0.02828675445722023
+    },
+    {
+      "case": "spatial_blur",
+      "seed": 7,
+      "global_rmse": 8.579105463564687,
+      "local_rmse": 5.123331265640237,
+      "ratio": 0.5971871178643201,
+      "mean_bias": -0.0009007198629266436
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 0,
+      "global_rmse": 3.079852990493871,
+      "local_rmse": 3.0784029743960724,
+      "ratio": 0.9995291930808794,
+      "mean_bias": -0.010310047798178693
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 1,
+      "global_rmse": 3.1166132061586893,
+      "local_rmse": 3.115184967758514,
+      "ratio": 0.999541733829096,
+      "mean_bias": -0.0030723101142605914
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 2,
+      "global_rmse": 3.1469973739126824,
+      "local_rmse": 3.145636622845009,
+      "ratio": 0.9995676033672752,
+      "mean_bias": 0.00797674897729853
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 3,
+      "global_rmse": 3.1414586764154353,
+      "local_rmse": 3.140106564796535,
+      "ratio": 0.9995695911491528,
+      "mean_bias": -0.014535638408617926
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 4,
+      "global_rmse": 3.142044901299295,
+      "local_rmse": 3.140693820156025,
+      "ratio": 0.9995699994157591,
+      "mean_bias": 0.010346364064422622
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 5,
+      "global_rmse": 3.2300487560534044,
+      "local_rmse": 3.2288192144149295,
+      "ratio": 0.9996193426999606,
+      "mean_bias": -0.00348195376564569
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 6,
+      "global_rmse": 3.1379130765359102,
+      "local_rmse": 3.136350762725245,
+      "ratio": 0.9995021169253069,
+      "mean_bias": -0.018181333386648145
+    },
+    {
+      "case": "uniform_blur",
+      "seed": 7,
+      "global_rmse": 3.134375450693258,
+      "local_rmse": 3.132914691268212,
+      "ratio": 0.9995339551856421,
+      "mean_bias": 0.00400735397858866
+    },
+    {
+      "case": "flat_noise",
+      "seed": 0,
+      "global_rmse": 0.5790903077220775,
+      "local_rmse": 0.5790903077220777,
+      "ratio": 1.0000000000000004,
+      "mean_bias": -0.006087810921289851
+    },
+    {
+      "case": "flat_noise",
+      "seed": 1,
+      "global_rmse": 0.5789266481822688,
+      "local_rmse": 0.5789266481822692,
+      "ratio": 1.0000000000000007,
+      "mean_bias": -0.0011222464314586899
+    },
+    {
+      "case": "flat_noise",
+      "seed": 2,
+      "global_rmse": 0.5788110443521562,
+      "local_rmse": 0.5788110443521552,
+      "ratio": 0.9999999999999982,
+      "mean_bias": 0.005627360914596345
+    },
+    {
+      "case": "flat_noise",
+      "seed": 3,
+      "global_rmse": 0.5743171882386093,
+      "local_rmse": 0.5743171882386093,
+      "ratio": 1.0,
+      "mean_bias": -0.0004325730076488759
+    },
+    {
+      "case": "flat_noise",
+      "seed": 4,
+      "global_rmse": 0.5744195655058044,
+      "local_rmse": 0.5744195655058031,
+      "ratio": 0.9999999999999977,
+      "mean_bias": 0.013248994040180638
+    },
+    {
+      "case": "flat_noise",
+      "seed": 5,
+      "global_rmse": 0.5713663654582894,
+      "local_rmse": 0.5713663654582898,
+      "ratio": 1.0000000000000007,
+      "mean_bias": 0.0014707036735100846
+    },
+    {
+      "case": "flat_noise",
+      "seed": 6,
+      "global_rmse": 0.5780946985594322,
+      "local_rmse": 0.5780946985594335,
+      "ratio": 1.0000000000000022,
+      "mean_bias": -0.012012146225079835
+    },
+    {
+      "case": "flat_noise",
+      "seed": 7,
+      "global_rmse": 0.5795536750786142,
+      "local_rmse": 0.5795536750786142,
+      "ratio": 1.0,
+      "mean_bias": 0.0053430581686692395
+    }
+  ],
+  "cpu_control_script_sha256": "05753460c5ca32eed9a409e48a1f692b62e2391ccbae4121607c0582379cf9dc",
+  "jupiter_script_sha256": "1debbac7883fc76774ff8c9a20447bab439914a33dea4d942f4e6bb8ecc41a4d",
+  "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+  "jupiter": {
+    "evaluation_frames": 512,
+    "template_frames": 64,
+    "template_disjoint": true,
+    "baseline": {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -24.272628639389776,
+        0.1286365787321331
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.2229557562671,
+          20.5490760175857
+        ],
+        [
+          233.29185427984584,
+          17.536015687093933
+        ],
+        [
+          232.98166922665388,
+          50.90501241455017
+        ]
+      ],
+      "relative_rmse": 0.005690950605278034,
+      "highpass_correlation_sigma3": 0.8879318710956717,
+      "registration_method": "Normalized local patches with disjoint 64-frame template; optional local-energy weighting according to mode.",
+      "mode": "local-baseline",
+      "n_template": 64,
+      "reference_index": 1638,
+      "wall_s": 39.105971275999764
+    },
+    "candidate": {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -24.271118623994358,
+        0.1278778990167466
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.27405850493278,
+          12.988344167335075
+        ],
+        [
+          233.34103073844085,
+          9.176054025986254
+        ],
+        [
+          233.02722998574544,
+          44.636465842991896
+        ]
+      ],
+      "relative_rmse": 0.005690323826518231,
+      "highpass_correlation_sigma3": 0.8873764845781907,
+      "registration_method": "Normalized local patches with disjoint 64-frame template; optional local-energy weighting according to mode.",
+      "mode": "local-quality",
+      "n_template": 64,
+      "reference_index": 1638,
+      "wall_s": 57.71954506600014
+    }
+  },
+  "relative_rmse_reduction": 0.00011013603935006167,
+  "fine_detail_correlation_change": -0.0005553865174809935,
+  "decision": "Do not adopt. Controlled spatial-blur RMS improves by about 40%, but real Jupiter RMS improves only about 0.011% while fine-detail correlation decreases. Investigate detector-noise contributions to local quality energy before another weighting candidate; do not claim that noise explains this result without measuring it."
+}

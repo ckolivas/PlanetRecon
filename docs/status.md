@@ -34,6 +34,15 @@ none. It uses a cleaner template anchored to the best selected frame, rejects
 ambiguous texture and falls back globally for coordinate folds. The improvement
 is modest and processing is slower; global alignment remains the default.
 
+The [matched local midpoint comparison](../results/real-data/jupiter-local-midpoint.json)
+retains 1,645 frames with the same source, template and anchor. It lowers RMS to
+0.00513695 but reduces fine-detail correlation to 0.961536. Defaults remain unchanged.
+The [first local-energy weighting hypothesis](../results/real-data/jupiter-local-quality-pilot.json)
+passes stylized spatial-blur controls but fails to show a useful paired Jupiter
+gain: about 0.011% lower RMS and lower fine-detail correlation. It remains a private
+prototype, not an application feature. Detector-noise contributions to its quality
+measure are the next question to investigate.
+
 SER capture-settings headers now supply exposure automatically (Jupiter 20 ms;
 Mars 3 ms; local Saturn 13–33 ms). Blank Exposure uses metadata; manual seconds
 override it, including zero. Geometry preprocessing and midpoint poses use the
