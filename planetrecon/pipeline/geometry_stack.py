@@ -85,7 +85,9 @@ def prepare_geometry(
     planes: list[np.ndarray] | None = None,
     *,
     sample_indices: list[int] | None = None,
+    reference_index: int | None = None,
 ) -> tuple[list[FramePose], SceneModel, dict, list[str]]:
+    reference_index = config.reference_index if reference_index is None else reference_index
     times, time_origin = source_times_s(source, cadence_s=config.cadence_s)
     if times.size == 0:
         raise ValueError("geometry requires at least one frame")
@@ -103,7 +105,7 @@ def prepare_geometry(
         raise ValueError("geometry in seconds requires measured timestamps or an explicit cadence_s")
     if planes is None:
         color = source.color_mode()
-        sample_indices = sorted({0, source.n_frames() // 2, source.n_frames() - 1, config.reference_index})
+        sample_indices = sorted({0, source.n_frames() // 2, source.n_frames() - 1, reference_index})
         planes = [_alignment_plane(np.asarray(source.read_raw(i), dtype=np.float64), color) for i in sample_indices]
     if sample_indices is None:
         sample_indices = list(range(len(planes)))
@@ -115,7 +117,7 @@ def prepare_geometry(
         raise ValueError("sample_indices must be unique increasing frame indices")
     if not all(np.all(np.isfinite(plane)) for plane in planes):
         raise ValueError("geometry sample planes must be finite")
-    anchor = sample_indices.index(config.reference_index) if config.reference_index in sample_indices else 0
+    anchor = sample_indices.index(reference_index) if reference_index in sample_indices else 0
     saturn_fit = None
     if config.geometry_mode == "saturn":
         if config.sub_obs_lat_rad is None:
@@ -161,7 +163,7 @@ def prepare_geometry(
                 annulus = np.hypot(xp - cx, yp - cy) > radius + 1.0
                 angle_planes = [np.where(annulus, plane, 0.0) for plane in planes]
                 angle_radius = config.ring_outer_radius_px or radius
-            estimates = [estimate_field_angle(angle_planes[0], plane, cx, cy, angle_radius)
+            estimates = [estimate_field_angle(angle_planes[anchor], plane, cx, cy, angle_radius)
                          for plane in angle_planes]
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
@@ -363,11 +365,13 @@ def stack_source_geometry(
 
     sample_idx = []
     sample_planes = []
-    candidates = sorted({0, n // 2, n - 1, config.reference_index})
+    chosen_reference = (config.reference_index if config.reference_index or selection is None else
+                        selection.best_reference_index)
+    candidates = sorted({0, n // 2, n - 1, chosen_reference})
     if selection is not None:
         accepted_indices = np.flatnonzero(selection.accepted)
         candidates = sorted({int(accepted_indices[0]), int(accepted_indices[len(accepted_indices)//2]),
-                             int(accepted_indices[-1]), config.reference_index})
+                             int(accepted_indices[-1]), chosen_reference})
     for index in candidates:
         if should_cancel is not None and should_cancel():
             return cancelled_before_geometry()
@@ -375,7 +379,7 @@ def stack_source_geometry(
             continue
         frame = usable_frame(source.read_raw(index))
         if frame is None:
-            if index == config.reference_index and config.reference_index != 0:
+            if index == chosen_reference and (selection is not None or config.reference_index != 0):
                 raise ValueError("selected reference frame is invalid or saturated")
             continue
         sample_idx.append(index)
@@ -396,7 +400,7 @@ def stack_source_geometry(
     if not sample_planes:
         raise ValueError("no usable frames remain for geometry estimation")
     poses, model, diagnostics, geo_warnings = prepare_geometry(
-        source, config, planes=sample_planes, sample_indices=sample_idx,
+        source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
     )
     ref_pose = _reference_pose(poses, config)
     anchor_index = diagnostics['reference_index']

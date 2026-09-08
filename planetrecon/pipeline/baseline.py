@@ -172,14 +172,16 @@ def _stack_source(
 
     reference = None
     reference_index = None
-    if config.reference_index:
-        raw_ref = source.read_raw(config.reference_index)
+    chosen_reference = (config.reference_index if config.reference_index else
+                        selection.best_reference_index if selection is not None else None)
+    if chosen_reference is not None:
+        raw_ref = source.read_raw(chosen_reference)
         calibrated_ref, ref_info = apply_calibration(raw_ref, calibration)
         if (not np.all(np.isfinite(calibrated_ref)) or
                 (config.reject_saturated and (_saturated(raw_ref, meta.bit_depth) or ref_info["saturated"]))):
             raise ValueError("selected reference frame is invalid or saturated")
         reference = _alignment_plane(calibrated_ref, color)
-        reference_index = config.reference_index
+        reference_index = chosen_reference
     n_used = 0
     n_rejected = 0
     warnings = list(report.warnings)

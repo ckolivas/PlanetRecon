@@ -117,9 +117,22 @@ Saturn retains its existing region-masked globe-texture weighting to avoid
 mixing illumination boundaries. Raw CFA backprojection and final RGB completion
 remain the image formation steps; no sharpening is added.
 
-Automatic reference selection starts from an accepted frame. An explicitly
+Automatic reference selection uses the **highest-quality retained frame** from
+the preprocessing cache, in both ordinary and geometry processing. Ties choose
+the earliest original frame index. The GUI and CLI cache report show this index;
+existing caches already contain the required scores and need no new pass.
+The reference is loaded before processing the first batch, even if it occurs
+later in the capture, and remains the same across checkpoint continuation.
+With no cache or cache use disabled, automatic selection uses the first usable
+frame. The Capture reference value `0` selects this automatic behaviour. An explicitly
 selected nonzero reference that fails screening produces a clear error. Geometry
 estimation samples accepted frames across the capture and retains original times.
+
+The [Jupiter reference check](../results/preprocessing/best-reference-validation.json)
+selects original frame **1947** (counting from zero). CUDA stacking and CPU surface
+processing use it before their first batch. Re-estimating geometry with this
+reference still leaves Jupiter's rotation unresolved; reference selection alone
+does not supply a reliable spin rate.
 
 Preprocessing runs on CPU using bounded source batches and four scalar
 measurements per frame; reconstruction still uses the requested backend. The
@@ -167,7 +180,8 @@ checks do not substitute for full-capture runs.
 
 ## Geometry suggestions
 
-Accepted frames also supply three aligned averages (up to 32 frames each,
+Accepted frames also supply three averages aligned to the highest-quality
+retained frame (up to 32 frames each, plus the reference if outside those groups,
 reduced to at most 256 pixels per side) for a small-angle projected-sphere
 motion fit. Translation, depth-dependent surface drift and image roll are fit
 jointly with SciPy's robust least-squares solver. Consistent, significant motion

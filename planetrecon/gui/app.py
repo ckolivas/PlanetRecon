@@ -393,7 +393,8 @@ class MainWindow:
             self.preprocessing_label.setText(
                 f"{usage}: {info['quality']} quality / {info['shape']} shape exclusions "
                 f"({info['quality_shape_overlap']} overlap), {info['other']} other; "
-                f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained.")
+                f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained. "
+                f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.")
         else:
             self.preprocessing_label.setText(info.get('reason', 'No preprocessing cache. Run Preprocess; runs without a cache use no quality/shape filtering.'))
 

@@ -95,6 +95,7 @@ def cache_report(selection, path=None, config=None):
                 break
     return {'status': 'ready', 'path': None if path is None else str(path),
             'digest': selection.digest, **exclusion_counts(selection),
+            'best_reference_index': selection.best_reference_index,
             'geometry_estimate': estimate}
 
 

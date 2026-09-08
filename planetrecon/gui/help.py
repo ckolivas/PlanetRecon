@@ -13,7 +13,7 @@ CONTROL_HELP = {
     'endian_convention': 'Interpret the SER byte-order flag using the common ecosystem convention or the written SER specification.',
     'recover_complete_frames': 'Recover complete frames from a truncated SER capture. Incomplete frame data is discarded.',
     'reject_saturated': 'Reject frames with more than 5% of samples at the detector ceiling, or any sample at an explicitly set saturation threshold.',
-    'reference_index': 'Frame used as the alignment reference, numbered from zero. The default zero can advance to the first usable frame.',
+    'reference_index': 'Frame used as the alignment reference, numbered from zero. Zero selects the highest-quality retained frame when cached preprocessing is enabled, otherwise the first usable frame. A nonzero value selects that frame explicitly.',
     'max_shift_px': 'Reject a frame if its estimated translation exceeds this distance in either axis, in pixels.',
     'cadence_s': 'Time between frame starts in seconds. Leave blank to use available capture timestamps.',
     'exposure_s': 'Exposure duration per frame in seconds. Geometry uses the exposure midpoint and checks motion during the exposure.',

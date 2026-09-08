@@ -70,8 +70,8 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
 
 
 def discover_geometry(source, config, selection, calibration=None, should_cancel=None):
-    """Three short, aligned averages across accepted frames; at most 96 reads."""
-    report = {'method': 'projected spherical texture motion v1', 'suggestions': {},
+    """Three short averages aligned to the best retained frame; at most 97 reads."""
+    report = {'method': 'projected spherical texture motion v2', 'suggestions': {},
               'status': 'unresolved', 'notes': [], 'sample_indices': []}
     accepted = np.flatnonzero(selection.accepted)
     if len(accepted) < 12:
@@ -84,29 +84,32 @@ def discover_geometry(source, config, selection, calibration=None, should_cancel
         return report
     report['time_origin'] = time_origin
     averages, sample_times, centres = [], [], []
-    scale = None
+    def read_plane(index):
+        if should_cancel and should_cancel():
+            raise InterruptedError('geometry discovery cancelled')
+        frame, _ = apply_calibration(source.read_raw(int(index)), calibration)
+        plane, bin_scale = measurement_plane(frame, source.color_mode())
+        factor = min(1., 256 / max(plane.shape))
+        if factor < 1:
+            yy, xx = np.meshgrid(np.arange(int(plane.shape[0]*factor))/factor,
+                                 np.arange(int(plane.shape[1]*factor))/factor, indexing='ij')
+            plane = map_coordinates(plane, (yy, xx), order=1, mode='nearest')
+        return plane, bin_scale, bin_scale / factor
+    reference_index = selection.best_reference_index
+    report['reference_index'] = reference_index
+    anchor, bin_scale, scale = read_plane(reference_index)
     for group in np.array_split(accepted, 3):
         # Compact windows avoid averaging away the very motion being measured.
         middle = len(group)//2
         window = group[max(0, middle-64):middle+64]
         chosen = np.sort(window[np.argsort(selection.measurements[window, 0], kind='stable')[-32:]])
         report['sample_indices'].append(chosen.tolist())
-        total = None
+        total = np.zeros_like(anchor)
         for index in chosen:
-            if should_cancel and should_cancel():
-                raise InterruptedError('geometry discovery cancelled')
-            frame, _ = apply_calibration(source.read_raw(int(index)), calibration)
-            plane, bin_scale = measurement_plane(frame, source.color_mode())
-            factor = min(1., 256 / max(plane.shape))
-            if factor < 1:
-                yy, xx = np.meshgrid(np.arange(int(plane.shape[0]*factor))/factor,
-                                     np.arange(int(plane.shape[1]*factor))/factor, indexing='ij')
-                plane = map_coordinates(plane, (yy, xx), order=1, mode='nearest')
-            scale = bin_scale / factor
-            if total is None:
-                anchor = plane
-                total = plane.copy()
+            if index == reference_index:
+                total += anchor
             else:
+                plane, _, _ = read_plane(index)
                 dx, dy = phase_correlation_shift(anchor, plane)
                 total += shift(plane, (-dy, -dx), order=1, prefilter=False, mode='nearest')
         average = total / len(chosen)

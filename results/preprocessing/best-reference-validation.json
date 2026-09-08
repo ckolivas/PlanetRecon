@@ -1,0 +1,24 @@
+{
+  "none": {
+    "backend": "cuda",
+    "reference_index": 1947,
+    "used": 19,
+    "rejected": 13
+  },
+  "surface": {
+    "backend": "cpu",
+    "reference_index": 1947,
+    "used": 19,
+    "rejected": 13
+  },
+  "max_image_difference_adu": 6.724576451233588e-11,
+  "validation_date": "2026-09-08",
+  "capture": "2022-09-10-0649_2-GB-L-Jup_ZWO ASI224MC.ser",
+  "scope": "Reference selection and initial two-batch CPU/CUDA parity using the full capture preprocessing cache; not a full reconstruction quality comparison",
+  "geometry_discovery": {
+    "method": "projected spherical texture motion v2",
+    "reference_index": 1947,
+    "status": "unresolved",
+    "surface_resolved": false
+  }
+}

@@ -102,6 +102,12 @@ class FrameSelection:
     identity: dict | None = None
     digest: str | None = None
 
+    @property
+    def best_reference_index(self) -> int | None:
+        """Sharpest retained observation; equal scores choose the earliest."""
+        indices = np.flatnonzero(self.accepted & np.isfinite(self.measurements[:, 0]))
+        return int(indices[np.argmax(self.measurements[indices, 0])]) if indices.size else None
+
 
 def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None):
     """Read in bounded batches, retaining only scalar measurements per frame."""
