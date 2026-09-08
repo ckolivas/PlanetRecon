@@ -46,3 +46,27 @@ measurements, not isolated speed records. The three new captures contain 27,689,
 while reconstruction used the explicitly reported uniform samples. Full new
 capture reconstruction is not claimed. See the paired JSON files and
 `results/gpu/rtx5070-local.json` for counts, timings and residuals.
+
+## Capture intake, 2026-09-09
+
+`intake-2026-09-09.json` now binds all seven local SER files by whole-file SHA256,
+with anonymous identifiers, explicit effective colour, timestamp diagnostics and
+unknown report/fixture pixel permissions. It contains no image pixels, private
+filenames or observer/instrument metadata. See the [intake procedure](../../docs/capture-intake.md).
+
+| Capture | Frames | Effective data | Valid timestamp span |
+|---|---:|---|---:|
+| Jupiter | 3,749 | RGGB | 74.996 s |
+| OSC Saturn | 17,934 | RGGB | unavailable: 499 duplicate intervals |
+| Saturn R | 27,689 | mono | 360.001 s |
+| Saturn G | 24,000 | mono | 359.991 s |
+| Saturn B | 10,909 | mono | 360.000 s |
+| Mars IR642 | 116,691 | RGGB, user correction | unavailable: 55,034 duplicate intervals |
+| Mars L3 | 116,629 | RGGB, user confirmation | unavailable: 49,361 duplicate intervals |
+
+No reversed intervals were found. Valid spans measure first-to-last frame starts,
+excluding final exposure duration. Duplicate timestamps remain invalid for the
+current motion timing contract; no cadence or rotation correction was invented.
+Separate R/G/B files do not by themselves establish independent cameras/nights.
+Those group fields remain unknown, and true mono Mars remains absent. The new G/B
+inventory records do not claim reconstruction, geometry or release qualification.

@@ -1,0 +1,255 @@
+{
+  "status": "hashed_inventory",
+  "records": [
+    {
+      "id": "osc-jupiter",
+      "target": "Jupiter",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 3749,
+      "width": 656,
+      "height": 424,
+      "bit_depth": 8,
+      "header_colour": "RGGB",
+      "effective_colour": "RGGB",
+      "interpretation_evidence": "SER header only",
+      "timing": {
+        "status": "available",
+        "origin": "measured",
+        "duration_s": 74.996,
+        "n_frames": 3749,
+        "median_cadence_s": 0.019999999999999574,
+        "minimum_interval_s": 0.0030000000000001137,
+        "maximum_interval_s": 0.036999999999999034,
+        "definition": "First-to-last frame-start timestamp; final exposure length is not included."
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 0,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 1042792026,
+      "capture_sha256": "93cad16b4632f4dc810adae35295ae15a0a30241d2407988b17ebb0fec4ea057",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "osc-saturn",
+      "target": "Saturn",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 17934,
+      "width": 512,
+      "height": 320,
+      "bit_depth": 8,
+      "header_colour": "RGGB",
+      "effective_colour": "RGGB",
+      "interpretation_evidence": "SER header only",
+      "timing": {
+        "status": "invalid",
+        "duration_s": null,
+        "reason": "timestamps must be strictly increasing (duplicates or reversed times)"
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 499,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 2938450210,
+      "capture_sha256": "b4d8a790ef713565204e72df1695294722baff9816bfe6e3f9ea9b968771bb59",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "mono-saturn-r",
+      "target": "Saturn",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 27689,
+      "width": 696,
+      "height": 404,
+      "bit_depth": 8,
+      "header_colour": "mono",
+      "effective_colour": "mono",
+      "interpretation_evidence": "SER header only",
+      "timing": {
+        "status": "available",
+        "origin": "measured",
+        "duration_s": 360.001,
+        "n_frames": 27689,
+        "median_cadence_s": 0.01300000000000523,
+        "minimum_interval_s": 0.000999999999990564,
+        "maximum_interval_s": 0.05499999999994998,
+        "definition": "First-to-last frame-start timestamp; final exposure length is not included."
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 0,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 7785925466,
+      "capture_sha256": "cdf0a1158f6798106daa96f59f13b52228dcf4ecb00719f960406fc2f2089930",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "mono-saturn-g",
+      "target": "Saturn",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 24000,
+      "width": 696,
+      "height": 404,
+      "bit_depth": 8,
+      "header_colour": "mono",
+      "effective_colour": "mono",
+      "interpretation_evidence": "SER header only",
+      "timing": {
+        "status": "available",
+        "origin": "measured",
+        "duration_s": 359.991,
+        "n_frames": 24000,
+        "median_cadence_s": 0.015000000000000568,
+        "minimum_interval_s": 0.0019999999999527063,
+        "maximum_interval_s": 0.05000000000001137,
+        "definition": "First-to-last frame-start timestamp; final exposure length is not included."
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 0,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 6748608178,
+      "capture_sha256": "9dc6d4627c559cbe4a9fb3df58401534a257a00ea167565c4c63276596d56f28",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "mono-saturn-b",
+      "target": "Saturn",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 10909,
+      "width": 696,
+      "height": 404,
+      "bit_depth": 8,
+      "header_colour": "mono",
+      "effective_colour": "mono",
+      "interpretation_evidence": "SER header only",
+      "timing": {
+        "status": "available",
+        "origin": "measured",
+        "duration_s": 360.0,
+        "n_frames": 10909,
+        "median_cadence_s": 0.03300000000001546,
+        "minimum_interval_s": 0.001999999999981128,
+        "maximum_interval_s": 0.06700000000000728,
+        "definition": "First-to-last frame-start timestamp; final exposure length is not included."
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 0,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 3067523706,
+      "capture_sha256": "8c096b023e380e7761664413cd8a17e891ee02d3570fbc6f648b0bbc890f4fc8",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "osc-mars-ir642",
+      "target": "Mars",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 116691,
+      "width": 332,
+      "height": 296,
+      "bit_depth": 8,
+      "header_colour": "RGGB",
+      "effective_colour": "RGGB",
+      "interpretation_evidence": "User correction: IR642 and L3 Mars are both one-shot colour Bayer data",
+      "timing": {
+        "status": "invalid",
+        "duration_s": null,
+        "reason": "timestamps must be strictly increasing (duplicates or reversed times)"
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 55034,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 11468391658,
+      "capture_sha256": "c067c506b7ffd0655dac3c83458d4084ed50299d99799bfac20f5fcb112870e8",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    },
+    {
+      "id": "osc-mars-l3",
+      "target": "Mars",
+      "night_group": null,
+      "camera_group": null,
+      "frames": 116629,
+      "width": 332,
+      "height": 296,
+      "bit_depth": 8,
+      "header_colour": "RGGB",
+      "effective_colour": "RGGB",
+      "interpretation_evidence": "User correction: IR642 and L3 Mars are both one-shot colour Bayer data",
+      "timing": {
+        "status": "invalid",
+        "duration_s": null,
+        "reason": "timestamps must be strictly increasing (duplicates or reversed times)"
+      },
+      "timestamp_diagnostics": {
+        "duplicate_intervals": 49361,
+        "reversed_intervals": 0,
+        "nonpositive_ticks": 0
+      },
+      "file_bytes": 11462298298,
+      "capture_sha256": "c11c025c2c4bb5c6e2732085066ff9e845dabe2ca149db2b0a95bb9b9f0e7b67",
+      "permissions": {
+        "report_pixels": "unknown",
+        "redistribute_fixture": "unknown"
+      },
+      "permission_evidence": null
+    }
+  ],
+  "scientific_qualification": false,
+  "scope": "Intake metadata only; no reconstruction, independence, geometry or scientific qualification. Unknown permissions remain unknown. Metadata-only records do not identify image contents.",
+  "generator_identity": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "tools/inventory_captures.py": "f7eeca685d05e7b91c75d216018d918ff3d04dd8785a68e73f0935d7076da5f4"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  }
+}
