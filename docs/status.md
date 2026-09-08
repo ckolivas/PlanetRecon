@@ -2,12 +2,23 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 946 passed, 64 skipped. The new projection solver
+Latest complete regression: 984 passed, 65 skipped. The new frame-percentage
+selection passes all 19 focused tests with CUDA enabled, including colour,
+geometry, cache reuse and resume checks. The new projection solver
 and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
+
+Application image improvement: **Best retained frames (%)** now selects the
+sharpest screened frames using the existing cache, in the GUI and CLI. In the
+[unsharpened Jupiter comparison](../results/real-data/jupiter-best-percent.json),
+50% reduced matched RMS from 0.5310% to 0.5035% (about 5.2% relative improvement),
+while fine-detail correlation changed from 0.96187 to 0.96149. At 25%, both
+metrics worsened. The default remains 100%; percentage selection exposes the
+sharpness/noise trade-off rather than imposing a universal optimum. Next target
+local seeing deformation that a single global translation cannot correct.
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|
-| Capture baseline | SER/native AVI, mono/RGB/raw CFA output, translation, nearest-neighbour colour previews | Independent nights/cameras and matched conventional-stack comparisons remain |
+| Capture baseline | SER/native AVI, mono/RGB/raw CFA output, translation, nearest-neighbour colour previews; best-frame percentage selection from cached quality in GUI/CLI | Independent nights/cameras and matched conventional-stack comparisons remain |
 | Preprocessing | Separate optional cache, quality/shape exclusions, best retained reference, SER duration, apparent flattening, geometry hints | Spin may be unresolved; apparent flattening alone is not intrinsic shape |
 | Geometry | Field and surface motion, Saturn globe/rings, coverage, CPU resume | Physical inference and combined atmospheric/geometry accuracy remain experimental |
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
@@ -65,9 +76,10 @@ all 12 cases and 60 observed selections, one case at a time in manifest order.
 [Case 0 (seed 1001, Dr0=4, feature crop)](../results/p2-selection-family/case-00/DECISION.md)
 now passes all five selections at both caps, with identical latent/detector
 images and independent bounds below 1e-5. The cumulative check counts 1/12 cases
-and 5/60 selections passed. Case 1 (the same seed/seeing, bland crop) is now
-running in `out/p2-selection-family/case-01`; check its process and final report
-before starting another scientific case. The [family report checker](scene-selection-family-summary.md) now
+and 9/60 selections with passing records after the interrupted case 1. Its four
+completed selections are preserved, but the 500-frame stages have no committed
+independent CPU certificate. No scientific case is active; further broad matrix
+execution is deferred while application image improvements take priority. The [family report checker](scene-selection-family-summary.md) now
 revalidates all 60 selections and shared identities, with 33 additional tests
 passing. It retains missing/failed cases and refuses to overwrite earlier summaries.
 Work accounting now validates only the solvers used by each report, allowing

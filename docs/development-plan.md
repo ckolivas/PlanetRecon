@@ -109,6 +109,26 @@ SER timing, geometry/resume, scientific export, local CUDA support and native
 tag-build automation are existing foundations. They need regression protection
 and qualification where incomplete, not wholesale reimplementation.
 
+## Current priority: application image quality
+
+The user's latest direction prioritizes changes that improve reconstructed
+application images. Best-frame percentage selection is implemented in the GUI
+and CLI, reusing cached quality measurements. The unsharpened Jupiter comparison
+at 25/50/100% found a 5.2% relative reduction in matched RMS at 50%, with slightly
+lower fine-detail correlation; 25% worsened both metrics. Keep sharpening separate
+and retain 100% as the default. Next implement and evaluate local registration
+against the global-translation baseline, using real Jupiter and controlled
+spatially varying motion. Adopt changes only when image detail improves without
+introducing colour, boundary or noise artifacts; do not expand bookkeeping tools.
+
+The second numerical case was interrupted without a terminal report; its four
+completed selection records are preserved and its full-count endpoint remains
+incomplete. Leave the remaining broad numerical matrix pending. Resume that work when it is needed
+for a specific image-reconstruction candidate. Do not add standalone progress,
+accounting or reporting tools as development milestones. The scientific
+qualification requirements below remain requirements for advanced claims;
+they do not block improvements to the existing capture-stacking application.
+
 ## Delivery order
 
 | Phase | Work and deliverable | Completion condition |
@@ -431,10 +451,10 @@ full qualification is not supported by the current evidence.
    certificates. The runner gates execution on the archived stability check and
    binds source/input/runtime identities. Preserve every attempt, including failed
    fits and incomplete cases; require all 60 selections for a family pass.
-   Case 0 has passed all five selections and is archived with a cumulative
-   summary (1/12 cases, 5/60 selections). Case 1 is running in
-   `out/p2-selection-family/case-01`; verify completion before another scientific
-   invocation. Archive its outcome and use the
+   Case 0 passed all five selections; case 1 was interrupted after four passing
+   selections (1/12 complete cases, 9/60 selections). Its 500-frame optimizer trace
+   has no committed independent CPU certificate and is not a pass. Further matrix
+   execution is deferred in favor of the application-image priority above. Use the
    [tested report checker](scene-selection-family-summary.md) to write an immutable
    cumulative summary. Continue with the next missing case in manifest order;
    do not rerun completed failures or extend their budgets implicitly.

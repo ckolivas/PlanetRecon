@@ -1,7 +1,10 @@
 # Complete observed-selection numerical family
 
-Current cumulative evidence: [summary through case 0](summary-through-00.json).
-**1 of 12 cases and 5 of 60 selections pass. The complete family is incomplete.**
+Current cumulative evidence: [summary through case 1](summary-through-01.json).
+**1 of 12 cases and 9 of 60 selections have passing records. The complete family is incomplete.**
+
+Further broad matrix execution is deferred under the user's application-image
+priority. No scientific run is currently active.
 
 Each case uses the frozen observed 5/10/25/50/100% selections and independent
 reference fits at 1500/3000 iteration caps. Both fresh CPU error certificates
@@ -11,7 +14,7 @@ most 1e-4. No thresholds or historical failed outcomes have changed.
 | Case | Seed | Dr0 | Crop | State |
 |---:|---:|---:|---|---|
 | 0 | 1001 | 4 | feature | [All five selections pass](case-00/DECISION.md) |
-| 1 | 1001 | 4 | bland | Running; no final qualification yet |
+| 1 | 1001 | 4 | bland | [Interrupted after four passing selections](case-01/DECISION.md) |
 | 2 | 1001 | 8 | feature | Pending |
 | 3 | 1001 | 8 | bland | Pending |
 | 4 | 1002 | 4 | feature | Pending |

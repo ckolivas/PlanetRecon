@@ -1,0 +1,105 @@
+{
+  "scope": "Local unsharpened Jupiter development comparison; reference is not truth; no default percentage is selected automatically.",
+  "rows": [
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 3341,
+      "n_rejected": 408,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -18.21416053738681,
+        -4.505965536240993
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.23601907149109,
+          21.156023648318566
+        ],
+        [
+          233.27890903186542,
+          20.76071939810086
+        ],
+        [
+          232.98640477654462,
+          52.373815691394576
+        ]
+      ],
+      "relative_rmse": 0.005310286026217639,
+      "highpass_correlation_sigma3": 0.9618748827472856,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+      "stack_percent": 100,
+      "wall_s": 156.72232735199998,
+      "cached_screened_frames": 3341,
+      "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0"
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 1671,
+      "n_rejected": 2078,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -18.212780258463994,
+        -4.514244290832946
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.3640967819652,
+          -27.24138290611165
+        ],
+        [
+          233.25374627119135,
+          -13.692993819195623
+        ],
+        [
+          232.7705381093656,
+          45.488221748387744
+        ]
+      ],
+      "relative_rmse": 0.005034985180832391,
+      "highpass_correlation_sigma3": 0.9614865960034279,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+      "stack_percent": 50,
+      "wall_s": 74.19052273699992,
+      "cached_screened_frames": 3341,
+      "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0"
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 836,
+      "n_rejected": 2913,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -18.21194061104788,
+        -4.517957730013553
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.34550159446366,
+          -36.536337189499754
+        ],
+        [
+          233.1636312695904,
+          -15.055321248861663
+        ],
+        [
+          232.59126993743956,
+          53.69859394532075
+        ]
+      ],
+      "relative_rmse": 0.005439707799077595,
+      "highpass_correlation_sigma3": 0.9461695279913529,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+      "stack_percent": 25,
+      "wall_s": 31.638678252999966,
+      "cached_screened_frames": 3341,
+      "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0"
+    }
+  ],
+  "application_source_hash": "8223453b4a530751c7dcf56f35e9107058861901b60dcf2942319d5415115788",
+  "comparison_source_sha256": "4c4415ddaade44c2be026fb4355772df555a1dadd63fe551de9c6bb044f32153",
+  "matched_rmse_reduction_50_vs_100": 0.051842941044239144,
+  "decision": "Expose user selection; keep 100% default. On this capture 50% lowers matched RMS by about 5.2%, while fine-detail correlation is slightly lower. 25% worsens both metrics. This is not evidence of a universal optimum."
+}
