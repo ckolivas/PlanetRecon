@@ -24,8 +24,11 @@ resolve their real-image regression. The adopted optional matcher excludes
 one-dimensional texture and rejects collapsing/folding coordinate fields.
 Thirty focused CPU/CUDA controls pass, alongside 1,039 default regression tests.
 
-Next compare all-screened and optional midpoint-cutoff stacking under this same
-local matcher and reference, then test whether local quality/reliability weighting
+The [matched local midpoint comparison](../results/real-data/jupiter-local-midpoint.json)
+is complete with identical source, template candidates and anchor: 1,645 frames
+lower matched RMS to 0.00513695, but fine-detail correlation falls to 0.961536
+versus 0.963670 for all 3,341 screened frames. Keep both controls optional and
+the all-screened default. Next test whether local quality/reliability weighting
 can improve contributions from additional frames. Use controlled spatially varying
 blur/noise before real-image adoption. Retain common colour weights, frame counts
 and the best-frame anchor; do not add automatic sharpening or tune defaults from
