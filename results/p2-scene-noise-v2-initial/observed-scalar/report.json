@@ -1,0 +1,67 @@
+{
+  "status": "valid",
+  "scope": "Numerical pilot only; prior/domain/noise sensitivity and complete development selections remain unqualified.",
+  "numerical_pilot_passed": true,
+  "q3_authorized": false,
+  "source_input_unchanged": true,
+  "indices": [
+    0,
+    249,
+    499
+  ],
+  "scene_shape": [
+    1152,
+    1152
+  ],
+  "detector_shape": [
+    128,
+    128
+  ],
+  "runs": [
+    {
+      "solver": "extended_scene_projected_acceleration_v2",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "scaling": "diagonal",
+      "majorizer_min": 0.0010000000000152062,
+      "majorizer_max": 0.015206157498974405,
+      "n_iter": 30,
+      "maxiter": 100,
+      "tolerance": 1e-05,
+      "objective": 966537.5190265365,
+      "wall_s": 33.48561322799651,
+      "feasible": true,
+      "kkt_residual_norm": 0.00028884270647618835,
+      "absolute_solution_error_bound": 0.28884270647618837,
+      "relative_solution_error_bound": 6.9083537745509916e-06,
+      "objective_gap_upper_bound": 4.171505454224475e-05,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    },
+    {
+      "solver": "extended_scene_projected_acceleration_v2",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "scaling": "diagonal",
+      "majorizer_min": 0.0010000000000152062,
+      "majorizer_max": 0.015206157498974405,
+      "n_iter": 30,
+      "maxiter": 200,
+      "tolerance": 1e-05,
+      "objective": 966537.5190265365,
+      "wall_s": 35.0561436220014,
+      "feasible": true,
+      "kkt_residual_norm": 0.00028884270647618835,
+      "absolute_solution_error_bound": 0.28884270647618837,
+      "relative_solution_error_bound": 6.9083537745509916e-06,
+      "objective_gap_upper_bound": 4.171505454224475e-05,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    }
+  ],
+  "image_relative_change": 0.0,
+  "wall_s": 73.1958267549926,
+  "process_peak_rss_bytes": 400207872
+}

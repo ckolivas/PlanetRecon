@@ -92,3 +92,13 @@ norm(residual)²/(2×ridge). These bounds apply to this discrete regularized
 objective; they do not bound distance to the physical truth. The reported
 relative bound divides by max(norm(scene),1). No optical-support or identifiability
 claim follows from this certificate. Exhausted budgets remain incomplete.
+
+The v2 solver uses a diagonal majorizer to avoid limiting every scene cell by the
+largest spatial-noise curvature. For the nonnegative data Hessian H,
+diag(H·1)−H is a graph Laplacian and is positive semidefinite. The nonperiodic
+smoothness term is majorized by twice its diagonal degree. Adding the ridge
+therefore bounds the full Hessian. Optimizing in coordinates sqrt(diagonal)×scene
+preserves positivity and the objective. The certificate is still evaluated in the
+original scene coordinates with the original ridge, independently of scaling.
+Dense tests check both the majorizer's positive-semidefinite difference and
+agreement of global/diagonal methods with the same constrained optimum.

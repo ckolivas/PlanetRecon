@@ -1,0 +1,67 @@
+{
+  "status": "incomplete",
+  "scope": "Numerical pilot only; prior/domain/noise sensitivity and complete development selections remain unqualified.",
+  "numerical_pilot_passed": false,
+  "q3_authorized": false,
+  "source_input_unchanged": true,
+  "indices": [
+    0,
+    249,
+    499
+  ],
+  "scene_shape": [
+    1152,
+    1152
+  ],
+  "detector_shape": [
+    128,
+    128
+  ],
+  "runs": [
+    {
+      "solver": "extended_scene_projected_acceleration_v2",
+      "converged": false,
+      "status": "incomplete",
+      "reason": "iteration_budget",
+      "scaling": "diagonal",
+      "majorizer_min": 0.0010000000016048359,
+      "majorizer_max": 1.6048357881472226,
+      "n_iter": 100,
+      "maxiter": 100,
+      "tolerance": 1e-05,
+      "objective": 934456.2700157014,
+      "wall_s": 95.29561682001804,
+      "feasible": true,
+      "kkt_residual_norm": 0.015450455967808412,
+      "absolute_solution_error_bound": 15.450455967808411,
+      "relative_solution_error_bound": 0.00038173701204488765,
+      "objective_gap_upper_bound": 0.11935829480659328,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 1.9183487907115446
+    },
+    {
+      "solver": "extended_scene_projected_acceleration_v2",
+      "converged": false,
+      "status": "incomplete",
+      "reason": "iteration_budget",
+      "scaling": "diagonal",
+      "majorizer_min": 0.0010000000016048359,
+      "majorizer_max": 1.6048357881472226,
+      "n_iter": 200,
+      "maxiter": 200,
+      "tolerance": 1e-05,
+      "objective": 934456.1922818786,
+      "wall_s": 137.06617492300575,
+      "feasible": true,
+      "kkt_residual_norm": 0.0007909248919210462,
+      "absolute_solution_error_bound": 0.7909248919210462,
+      "relative_solution_error_bound": 1.9541519478831602e-05,
+      "objective_gap_upper_bound": 0.0003127810923301593,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 1.9183487907115446
+    }
+  ],
+  "image_relative_change": 0.00027625055742382256,
+  "wall_s": 236.85699636201025,
+  "process_peak_rss_bytes": 399077376
+}

@@ -1,0 +1,21 @@
+{
+  "expected-scalar/progress-100.json": "bb1af80bc5bbc8f5927e1e59d41e002e9989fbe0b3a02f18bccb36b198530831",
+  "expected-scalar/progress-200.json": "bb1af80bc5bbc8f5927e1e59d41e002e9989fbe0b3a02f18bccb36b198530831",
+  "expected-scalar/protocol.json": "98fda54541822bf88404776354313895a5fe384aeacdc80f9ed8f58d2f918b58",
+  "expected-scalar/report.json": "195d44789ee599a58cef5ec8c9b97c3c5f9ec9d4c52c5632db3ae5e7a03925a7",
+  "expected-spatial/progress-100.json": "1fc5b25c43d4dca27c57e3d8165b56b2aa7115f57ef3ad684c77f4e6eb1da394",
+  "expected-spatial/progress-200.json": "6e712d1f8fe75092446455e3be018748b4129d80a4a453c489b43c65ffed178e",
+  "expected-spatial/protocol.json": "4c734dc1c7210a81cf3efab5a78eda81db9f5b9ebd73c77f5cef6e8f3ab4fcd9",
+  "expected-spatial/report.json": "ca9b9b70d1193261ff266b58b1b405668c023617e00cb032fad27ec7250d391c",
+  "extension-protocol.json": "efacebb90f8b94687e82c5caf39649253b7f02313b4dbcb5650ed570635d3daf",
+  "observed-scalar/progress-100.json": "46a751600ba07d3fc93efe004f78b96179d284f4c14b82f79acd6b88d1556fa5",
+  "observed-scalar/progress-200.json": "46a751600ba07d3fc93efe004f78b96179d284f4c14b82f79acd6b88d1556fa5",
+  "observed-scalar/protocol.json": "33d7f618374a24fb77439e0ea6bd02ffb0bc31478935ede071fd1bd899d72881",
+  "observed-scalar/report.json": "71a73512c8571f3dec2772b7a79ff341a1e7f99cb45e79426ad94bb8c50247d7",
+  "observed-spatial/progress-100.json": "586f2a23707469fb1706498390b9edfbfa1e3858d0c3445b64bbf772db1cfddf",
+  "observed-spatial/progress-200.json": "321870d8bb67f0d3b56b2e5f01a9cf8f95067b0148c754aa4dec405470772180",
+  "observed-spatial/protocol.json": "747b73a770df44ab827973d5c3727329738f54f373818adbec6000304b279e6b",
+  "observed-spatial/report.json": "009c5a9cee5e68c06480bc9b6164f32c085fb9d19a7d01f3b48b42a3c0d6851c",
+  "protocol.json": "a0429acc941b51744b89d11d1cbb35162159c336bbb84eb4cabacd216c6c9cbf",
+  "report.json": "fb167f723cae54587b1f6103ab9cb66ea4c7b80b11544832e7c7bfe97aab1ced"
+}

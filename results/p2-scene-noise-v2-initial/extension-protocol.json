@@ -1,0 +1,27 @@
+{
+  "question": "After diagonal scaling, do spatial-weight solutions certify and remain stable at measured adequate budgets?",
+  "cases": [
+    "expected/spatial",
+    "observed/spatial"
+  ],
+  "budgets": [
+    300,
+    600
+  ],
+  "tolerance": 1e-05,
+  "image_stability_tolerance": 0.0001,
+  "wall_budget_s_per_case": 600,
+  "reason": "The same-objective diagonal majorizer resolved the global step bottleneck. Noiseless certifies at 120; observed bound falls by about 0.7 per 10 iterations after 100, forecasting certificate near 220. 300/600 supplies margin and an independent doubled-cap comparison.",
+  "unchanged": [
+    "objective",
+    "ridge",
+    "domain",
+    "data selection",
+    "zero start",
+    "variance maps",
+    "solver",
+    "certificate tolerance"
+  ],
+  "decision": "Require both certified solutions and image stability; stop and retain incomplete evidence if this targeted budget fails. No larger family or automatic further increase.",
+  "q3_authorized": false
+}
