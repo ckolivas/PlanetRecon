@@ -1,0 +1,477 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "77cab1f3342d7269885764022df8b869cb248753b5dc22ea5be2e7ebe9f18882",
+  "cases": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=4.6778e-27",
+          "value": 4.677813134451408e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=8.0326e-10",
+          "value": 8.032638356410356e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=4.9778e-04",
+          "value": 0.0004977774836390248
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.4763e-02",
+          "value": 0.014763100892542928
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.3162/0.3159 rel=0.001",
+          "value": 0.0008751774337331391
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=131.66/130.16 rel=0.011",
+          "value": 0.01142793944870842
+        }
+      ],
+      "wall_s": 18.524322092998773,
+      "cumulative_process_peak_rss_bytes_linux": 638091264
+    },
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=5.8238e-27",
+          "value": 5.823788341193427e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=4.0971e-10",
+          "value": 4.0970941101798624e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=1.9147e-04",
+          "value": 0.00019147479097526358
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.4763e-02",
+          "value": 0.014763100892542928
+        }
+      ],
+      "wall_s": 12.974041173991282,
+      "cumulative_process_peak_rss_bytes_linux": 650760192
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=6.3560e-27",
+          "value": 6.3559993157305376e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=5.0577e-10",
+          "value": 5.057667179289695e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=6.4012e-04",
+          "value": 0.0006401237685898162
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.6026e-02",
+          "value": 0.016026032453368665
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.1173/0.1175 rel=0.001",
+          "value": 0.0014653342587239721
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=417.76/413.05 rel=0.011",
+          "value": 0.011280523083079407
+        }
+      ],
+      "wall_s": 20.267801279987907,
+      "cumulative_process_peak_rss_bytes_linux": 651964416
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=4.6064e-27",
+          "value": 4.606390436506142e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=3.2537e-10",
+          "value": 3.253731964020976e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=3.7615e-04",
+          "value": 0.0003761508970434331
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.6026e-02",
+          "value": 0.016026032453368665
+        }
+      ],
+      "wall_s": 12.537177963997237,
+      "cumulative_process_peak_rss_bytes_linux": 651964416
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=3.3106e-27",
+          "value": 3.3106181207395585e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=7.2781e-10",
+          "value": 7.278134068240014e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=4.4875e-04",
+          "value": 0.000448751942550345
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.0364e-02",
+          "value": 0.010364021144248047
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.3493/0.3497 rel=0.001",
+          "value": 0.0011980278855778005
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=204.38/197.97 rel=0.031",
+          "value": 0.031334297507662305
+        }
+      ],
+      "wall_s": 18.658227580977837,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=4.1112e-27",
+          "value": 4.1112178953989e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=1.9088e-10",
+          "value": 1.9088066814377137e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=1.6443e-04",
+          "value": 0.00016442517370667396
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.0364e-02",
+          "value": 0.010364021144248047
+        }
+      ],
+      "wall_s": 10.7756324489892,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=4.9883e-27",
+          "value": 4.988293811298277e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=8.4247e-10",
+          "value": 8.424652113958673e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=4.5605e-04",
+          "value": 0.0004560467447463703
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.2399e-02",
+          "value": 0.012398982232913592
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.1347/0.1346 rel=0.001",
+          "value": 0.0008698983451790809
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=648.40/628.02 rel=0.031",
+          "value": 0.03143264015001913
+        }
+      ],
+      "wall_s": 17.062446943018585,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=3.6155e-27",
+          "value": 3.615488491716773e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=4.3331e-10",
+          "value": 4.3330756062475004e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=2.6227e-04",
+          "value": 0.0002622718877636175
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=1.2399e-02",
+          "value": 0.012398982232913592
+        }
+      ],
+      "wall_s": 10.02170673001092,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=3.4859e-27",
+          "value": 3.485892464228254e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=7.6222e-10",
+          "value": 7.622210729758142e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=3.2307e-04",
+          "value": 0.0003230715241017814
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=2.8267e-02",
+          "value": 0.02826689278809553
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.3817/0.3821 rel=0.001",
+          "value": 0.0011898798458710564
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=203.74/196.52 rel=0.035",
+          "value": 0.03545303293058232
+        }
+      ],
+      "wall_s": 15.625757461995818,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=6.2641e-27",
+          "value": 6.2641257155902084e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=2.2946e-10",
+          "value": 2.2945742480450205e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=1.2978e-04",
+          "value": 0.00012977727376103695
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=2.8267e-02",
+          "value": 0.02826689278809553
+        }
+      ],
+      "wall_s": 10.88128942399635,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "feature",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=4.1881e-27",
+          "value": 4.1881027764373326e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=5.8958e-10",
+          "value": 5.895754639072204e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=6.1397e-04",
+          "value": 0.0006139693269761752
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=2.7764e-02",
+          "value": 0.02776436563199121
+        },
+        {
+          "name": "lowfreq_strehl_subharmonics",
+          "passed": true,
+          "message": "Strehl levels 4/5=0.1403/0.1400 rel=0.002",
+          "value": 0.0020589724419618487
+        },
+        {
+          "name": "lowfreq_tilt_subharmonics",
+          "passed": true,
+          "message": "tilt-2nd levels 4/5=646.18/623.30 rel=0.035",
+          "value": 0.03541352933322739
+        }
+      ],
+      "wall_s": 17.197851817996707,
+      "cumulative_process_peak_rss_bytes_linux": 652029952
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "bland",
+      "checks": [
+        {
+          "name": "padding_doubling",
+          "passed": true,
+          "message": "E_H(pad 64 vs 128)=3.8447e-27",
+          "value": 3.844730566230506e-27
+        },
+        {
+          "name": "exposure_quadrature_doubling",
+          "passed": true,
+          "message": "E_H(J 8 vs 16)=4.2939e-10",
+          "value": 4.2938981159395355e-10
+        },
+        {
+          "name": "grid_doubling",
+          "passed": true,
+          "message": "E_H(n_diam 64 vs 128, same field)=2.3230e-04",
+          "value": 0.00023230086601758448
+        },
+        {
+          "name": "tilt_grid_doubling",
+          "passed": true,
+          "message": "centroid relative change=2.7764e-02",
+          "value": 0.02776436563199121
+        }
+      ],
+      "wall_s": 9.889211194007657,
+      "cumulative_process_peak_rss_bytes_linux": 652062720
+    }
+  ],
+  "wall_s": 174.42124754399993,
+  "all_controls_passed": true
+}

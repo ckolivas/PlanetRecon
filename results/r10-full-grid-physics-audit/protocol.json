@@ -1,0 +1,44 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    4.0,
+    8.0
+  ],
+  "crops": [
+    "feature",
+    "bland"
+  ],
+  "eval_size": 128,
+  "pupil_samples": [
+    64,
+    128
+  ],
+  "detector_padding": [
+    64,
+    128
+  ],
+  "exposure_quadrature": [
+    8,
+    16
+  ],
+  "subharmonic_levels": [
+    4,
+    5
+  ],
+  "low_frequency_independent_screens": 16,
+  "limits": "Single-frame image quadrature/padding/grid controls and 16-screen low-frequency moments; not a complete reconstruction or gap family.",
+  "tolerances": {
+    "padding": 0.005,
+    "grid": 0.02,
+    "exposure": 0.005,
+    "tilt_grid": 0.05,
+    "strehl_low_frequency": 0.02,
+    "tilt_low_frequency": 0.1
+  }
+}

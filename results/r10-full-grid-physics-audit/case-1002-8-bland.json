@@ -1,0 +1,33 @@
+{
+  "seed": 1002,
+  "dr0": 8.0,
+  "crop": "bland",
+  "checks": [
+    {
+      "name": "padding_doubling",
+      "passed": true,
+      "message": "E_H(pad 64 vs 128)=3.6155e-27",
+      "value": 3.615488491716773e-27
+    },
+    {
+      "name": "exposure_quadrature_doubling",
+      "passed": true,
+      "message": "E_H(J 8 vs 16)=4.3331e-10",
+      "value": 4.3330756062475004e-10
+    },
+    {
+      "name": "grid_doubling",
+      "passed": true,
+      "message": "E_H(n_diam 64 vs 128, same field)=2.6227e-04",
+      "value": 0.0002622718877636175
+    },
+    {
+      "name": "tilt_grid_doubling",
+      "passed": true,
+      "message": "centroid relative change=1.2399e-02",
+      "value": 0.012398982232913592
+    }
+  ],
+  "wall_s": 10.02170673001092,
+  "cumulative_process_peak_rss_bytes_linux": 652029952
+}

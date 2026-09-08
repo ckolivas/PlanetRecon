@@ -2475,3 +2475,11 @@ stationary phases at the final pair; historical optimizer flags cannot replace
 that check. Early failed iterations do not invalidate a later converged pair.
 These corrections require regeneration of affected MFBD evidence; historical
 phase-fit claims are not reused as current qualification.
+
+**Full-grid physical convergence controls (2026-09-08):** all 60 declared
+padding, pupil-grid, exposure-quadrature and low-frequency moment checks pass
+across all three development seeds, both seeing regimes and both 128x128 crops.
+The audit took 174.42 s with 621.86 MiB cumulative Linux process peak RSS.
+`results/r10-full-grid-physics-audit` retains protocol, measurements and scoped
+decision. Complete reconstruction-gap families and atmospheric acceptance remain
+separate from these successful discretization controls.

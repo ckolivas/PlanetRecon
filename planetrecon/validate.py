@@ -554,7 +554,9 @@ def check_lowfreq_ranking(cfg: SimConfig | None = None) -> list[Check]:
     ]
 
 
-def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
+def check_padding_and_grid(cfg: SimConfig | None = None, *, crop_name: str = 'feature') -> list[Check]:
+    if crop_name not in ('feature', 'bland'):
+        raise ValueError('crop must be feature or bland')
     cfg = cfg or make_config(1001, 8.0)
     checks = []
     window = eval_window(cfg.eval_size)
@@ -583,7 +585,7 @@ def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
         img = scale * (local_cfg.texp_s / C.T0_S) * bin_box(
             img4, local_cfg.bin_factor
         )
-        ox, oy = scene.feature_origin
+        ox, oy = getattr(scene, f'{crop_name}_origin')
         crop = img[oy : oy + local_cfg.eval_size, ox : ox + local_cfg.eval_size]
         psf_det = center_crop(
             bin_box(diffraction_limited_psf(pupil), local_cfg.bin_factor),
@@ -605,6 +607,10 @@ def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
             eh_pad,
         )
     )
+    c_refined, _, _, _ = feature_expected(64, 64, 2*cfg.exposure_samples_j)
+    eh_exposure = relative_high_band(c64, c_refined, window, mtf, mask)
+    checks.append(_ok('exposure_quadrature_doubling', eh_exposure < C.EH_EXPOSURE_TOL,
+                      f'E_H(J {cfg.exposure_samples_j} vs {2*cfg.exposure_samples_j})={eh_exposure:.4e}', eh_exposure))
 
     # Same random field: fine screen downsampled by 2, same physical extraction.
     cfg_fine = make_config(
@@ -669,7 +675,7 @@ def check_padding_and_grid(cfg: SimConfig | None = None) -> list[Check]:
     def crop_expected(scene, psf4, scale, cfg):
         img4 = fftconvolve(scene.latent_4x, psf4, mode="same")
         img = scale * (cfg.texp_s / C.T0_S) * bin_box(img4, cfg.bin_factor)
-        ox, oy = scene.feature_origin
+        ox, oy = getattr(scene, f'{crop_name}_origin')
         return img[oy : oy + cfg.eval_size, ox : ox + cfg.eval_size]
 
     img_f = crop_expected(scene_f, psf_f, scale_f, cfg_fine)
