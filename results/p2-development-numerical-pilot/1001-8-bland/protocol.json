@@ -1,0 +1,70 @@
+{
+  "family": {
+    "question": "Do all 12 development seed/regime/crop cases certify the frozen 11-frame numerical objective?",
+    "identities": {
+      "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+      "dependencies": {
+        "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+        "tools/audit_scene_family.py": "a88f67571c715d5075813879370adb4ce6aeeb6f81edea3e9cc4ad47f129a19d",
+        "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+        "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+        "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+        "docs/scene-family-pilot-protocol.md": "0fb2b05a4e04b1f9f7243ebc4737f33eb0488597402a1cee8b8fe784dbe35845",
+        "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+        "tools/scene_iteration_state.py": "a62333a8a724669b4743aecf9ceb46f5d8822f5c7f7f9bff8b185833992bc912",
+        "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+        "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c"
+      },
+      "runtime": {
+        "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+        "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+        "numpy": "2.5.2",
+        "scipy": "1.18.1",
+        "h5py": "3.16.0",
+        "torch": "2.13.0+cu132"
+      }
+    },
+    "input_sha256": {
+      "gate1_Dr0-4_seed-01001.h5": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+      "gate1_Dr0-8_seed-01001.h5": "1a8eb699a03d8f0322444b301e6996d7739afb04f3b50bd7d8e1a09333a13233",
+      "gate1_Dr0-4_seed-01002.h5": "f0f30633e7ba2f00f63d153fbf0af69a04d9a721050180f6924b08a94f13370f",
+      "gate1_Dr0-8_seed-01002.h5": "79ad73843fbd348615408e2f2f448cf312cd62090345a9768699a064a19229aa",
+      "gate1_Dr0-4_seed-01003.h5": "272d9d0a8512c1b765eac0312311d54f39824987cee5f07b7a6101482cdb463f",
+      "gate1_Dr0-8_seed-01003.h5": "f1bdb2e3e5605b5e4d69d99fb0f25da486d376945b6210e89b9b29f73208e316"
+    },
+    "indices": [
+      0,
+      55,
+      111,
+      166,
+      222,
+      249,
+      277,
+      333,
+      388,
+      444,
+      499
+    ],
+    "sum_native_strength": 0.0003,
+    "margin": 64,
+    "cell_factor": 1,
+    "variance": "max(observed frame mean,0)+read variance",
+    "initialization": "zero",
+    "budgets": [
+      750,
+      1500
+    ],
+    "tolerance": 1e-05,
+    "image_tolerance": 0.0001,
+    "workers": 2,
+    "threads_per_worker": 2,
+    "cache_bytes": 268435456,
+    "device": "cuda",
+    "case_budget_s": 900.0,
+    "family_budget_s": 3600.0,
+    "q3_authorized": false,
+    "scope": "Complete development PILOT matrix, 11 of 500 frames; not complete frame selections, prior qualification, Gate-1, Q2 or production acceptance."
+  },
+  "input_sha256": "1a8eb699a03d8f0322444b301e6996d7739afb04f3b50bd7d8e1a09333a13233",
+  "crop": "bland"
+}
