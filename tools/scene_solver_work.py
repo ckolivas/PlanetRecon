@@ -5,6 +5,24 @@ calls and independent CPU verification are separate. Counts are not wall-time or
 accuracy equivalence between solvers.
 """
 
+
+def required_solver_sources(report):
+    """Require only implementations actually used by the recorded fits."""
+    sources = {
+        'extended_scene_projected_acceleration_v4': 'tools/scene_quadratic.py',
+        'extended_scene_projected_newton_cg_v2': 'tools/scene_projected_newton.py',
+    }
+    required = set()
+    for block in report['rows']:
+        for fit in block['runs']:
+            solver = fit.get('solver')
+            if solver is None:
+                continue  # A deadline may have prevented this stage from starting.
+            if solver not in sources:
+                raise ValueError('unsupported solver version for exact work accounting')
+            required.add(sources[solver])
+    return sorted(required)
+
 def normal_work(fit):
     solver=fit.get('solver')
     if solver=='extended_scene_projected_acceleration_v4':
@@ -41,7 +59,7 @@ if __name__=='__main__':
     report_path=args.directory/'report.json';protocol_path=args.directory/'protocol.json'
     report=json.loads(report_path.read_text());protocol=json.loads(protocol_path.read_text())
     if not report['source_input_unchanged']: raise ValueError('unchanged source/input study required')
-    for name in ('tools/scene_quadratic.py','tools/scene_projected_newton.py'):
+    for name in required_solver_sources(report):
         if protocol['identities']['dependencies'].get(name)!=file_hash(Path(name)):
             raise ValueError('work accounting requires the tested solver source: '+name)
     rows=[]
