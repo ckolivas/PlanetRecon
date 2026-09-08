@@ -1,0 +1,1093 @@
+{
+  "status": "valid",
+  "source_input_unchanged": true,
+  "initial": {
+    "raw_certificate": {
+      "feasible": true,
+      "kkt_residual_norm": 0.004284259938154091,
+      "absolute_solution_error_bound": 7140.433230256819,
+      "relative_solution_error_bound": 0.14992196294532895,
+      "objective_gap_upper_bound": 15.29573601472675,
+      "strong_convexity_lower_bound": 6e-07,
+      "gradient_lipschitz_upper_bound": 0.014357792041355582
+    },
+    "gradient_relative_error": 3.8691813329871186e-11,
+    "active_fraction": 0.3349191766036184,
+    "free_fraction": 0.6652607164884868,
+    "ridge": 6e-07,
+    "majorizer_max": 0.014357792041355587,
+    "gpu_free_before_bytes": 7515144192,
+    "gpu_total_bytes": 12343050240
+  },
+  "rows": [
+    {
+      "mode": "full-diagonal",
+      "probe": {
+        "reason": "product_budget",
+        "iterations": 32,
+        "trace": [
+          {
+            "iteration": 1,
+            "hessian_products": 1,
+            "elapsed_s": 1.1877435029891785,
+            "recursive_relative_residual": 1.186939074137045,
+            "direction_rayleigh": 3.818675929263065e-05
+          },
+          {
+            "iteration": 2,
+            "hessian_products": 2,
+            "elapsed_s": 2.386772318976,
+            "recursive_relative_residual": 1.228106035125157,
+            "direction_rayleigh": 0.00039318339820720513
+          },
+          {
+            "iteration": 3,
+            "hessian_products": 3,
+            "elapsed_s": 3.5851160689780954,
+            "recursive_relative_residual": 2.3455724727941805,
+            "direction_rayleigh": 6.184879062812029e-05
+          },
+          {
+            "iteration": 4,
+            "hessian_products": 4,
+            "elapsed_s": 4.8424524040019605,
+            "recursive_relative_residual": 2.3082172533101093,
+            "direction_rayleigh": 3.177110210133975e-05
+          },
+          {
+            "iteration": 5,
+            "hessian_products": 5,
+            "elapsed_s": 6.057188495993614,
+            "recursive_relative_residual": 1.880375230149302,
+            "direction_rayleigh": 3.921251271851285e-05
+          },
+          {
+            "iteration": 6,
+            "hessian_products": 6,
+            "elapsed_s": 7.235966009990079,
+            "recursive_relative_residual": 1.8594366363858192,
+            "direction_rayleigh": 4.895574241330758e-05
+          },
+          {
+            "iteration": 7,
+            "hessian_products": 7,
+            "elapsed_s": 8.42281838998315,
+            "recursive_relative_residual": 2.23378624617039,
+            "direction_rayleigh": 3.8141587181514436e-05
+          },
+          {
+            "iteration": 8,
+            "hessian_products": 8,
+            "elapsed_s": 9.610061952000251,
+            "recursive_relative_residual": 2.550608211881279,
+            "direction_rayleigh": 2.8992504752322607e-05
+          },
+          {
+            "iteration": 9,
+            "hessian_products": 9,
+            "elapsed_s": 10.800162214989541,
+            "recursive_relative_residual": 2.309781183256174,
+            "direction_rayleigh": 2.6498736601619814e-05
+          },
+          {
+            "iteration": 10,
+            "hessian_products": 10,
+            "elapsed_s": 11.999027862999355,
+            "recursive_relative_residual": 2.166367852770602,
+            "direction_rayleigh": 3.089452964514957e-05
+          },
+          {
+            "iteration": 11,
+            "hessian_products": 11,
+            "elapsed_s": 13.189278587000445,
+            "recursive_relative_residual": 1.86491148356997,
+            "direction_rayleigh": 4.1749342517976157e-05
+          },
+          {
+            "iteration": 12,
+            "hessian_products": 12,
+            "elapsed_s": 14.37984062198666,
+            "recursive_relative_residual": 1.841687180361587,
+            "direction_rayleigh": 5.057211205603223e-05
+          },
+          {
+            "iteration": 13,
+            "hessian_products": 13,
+            "elapsed_s": 15.57667195299291,
+            "recursive_relative_residual": 1.9520243796867407,
+            "direction_rayleigh": 6.147322121859261e-05
+          },
+          {
+            "iteration": 14,
+            "hessian_products": 14,
+            "elapsed_s": 16.766379551991122,
+            "recursive_relative_residual": 2.2173579762673605,
+            "direction_rayleigh": 5.59838250952495e-05
+          },
+          {
+            "iteration": 15,
+            "hessian_products": 15,
+            "elapsed_s": 17.946738956990885,
+            "recursive_relative_residual": 2.5286753145995213,
+            "direction_rayleigh": 4.819991093005985e-05
+          },
+          {
+            "iteration": 16,
+            "hessian_products": 16,
+            "elapsed_s": 19.132928632985568,
+            "recursive_relative_residual": 2.6768704967261887,
+            "direction_rayleigh": 3.5754940797571436e-05
+          },
+          {
+            "iteration": 17,
+            "hessian_products": 17,
+            "elapsed_s": 20.32552354899235,
+            "recursive_relative_residual": 2.834083207553051,
+            "direction_rayleigh": 3.477600216799664e-05
+          },
+          {
+            "iteration": 18,
+            "hessian_products": 18,
+            "elapsed_s": 21.522646704979707,
+            "recursive_relative_residual": 2.702633691104305,
+            "direction_rayleigh": 4.508489910148571e-05
+          },
+          {
+            "iteration": 19,
+            "hessian_products": 19,
+            "elapsed_s": 22.715817456977675,
+            "recursive_relative_residual": 2.6218222949771515,
+            "direction_rayleigh": 4.60627732296398e-05
+          },
+          {
+            "iteration": 20,
+            "hessian_products": 20,
+            "elapsed_s": 23.96969479499967,
+            "recursive_relative_residual": 2.905437751071417,
+            "direction_rayleigh": 4.192209666280799e-05
+          },
+          {
+            "iteration": 21,
+            "hessian_products": 21,
+            "elapsed_s": 25.15281771798618,
+            "recursive_relative_residual": 3.002297108402581,
+            "direction_rayleigh": 3.85644625544115e-05
+          },
+          {
+            "iteration": 22,
+            "hessian_products": 22,
+            "elapsed_s": 26.34178580599837,
+            "recursive_relative_residual": 3.2102076668564985,
+            "direction_rayleigh": 3.234561204702257e-05
+          },
+          {
+            "iteration": 23,
+            "hessian_products": 23,
+            "elapsed_s": 27.531567173980875,
+            "recursive_relative_residual": 3.125593995071129,
+            "direction_rayleigh": 3.095235052063308e-05
+          },
+          {
+            "iteration": 24,
+            "hessian_products": 24,
+            "elapsed_s": 28.722594439983368,
+            "recursive_relative_residual": 2.8501895882351005,
+            "direction_rayleigh": 3.3561753970339104e-05
+          },
+          {
+            "iteration": 25,
+            "hessian_products": 25,
+            "elapsed_s": 29.90936232198146,
+            "recursive_relative_residual": 2.6815997264209432,
+            "direction_rayleigh": 4.010917384550055e-05
+          },
+          {
+            "iteration": 26,
+            "hessian_products": 26,
+            "elapsed_s": 31.103977055987343,
+            "recursive_relative_residual": 2.5260733381995997,
+            "direction_rayleigh": 4.2066703379815994e-05
+          },
+          {
+            "iteration": 27,
+            "hessian_products": 27,
+            "elapsed_s": 32.30480665998766,
+            "recursive_relative_residual": 2.420353101107524,
+            "direction_rayleigh": 4.3254688848855645e-05
+          },
+          {
+            "iteration": 28,
+            "hessian_products": 28,
+            "elapsed_s": 33.49396652600262,
+            "recursive_relative_residual": 2.292425144902852,
+            "direction_rayleigh": 4.407313284529804e-05
+          },
+          {
+            "iteration": 29,
+            "hessian_products": 29,
+            "elapsed_s": 34.685136991989566,
+            "recursive_relative_residual": 2.2314919384612666,
+            "direction_rayleigh": 4.5255523320009085e-05
+          },
+          {
+            "iteration": 30,
+            "hessian_products": 30,
+            "elapsed_s": 35.867434235988185,
+            "recursive_relative_residual": 2.1684337631491197,
+            "direction_rayleigh": 3.803994515657933e-05
+          },
+          {
+            "iteration": 31,
+            "hessian_products": 31,
+            "elapsed_s": 37.055342741979985,
+            "recursive_relative_residual": 2.139357823090791,
+            "direction_rayleigh": 3.88081810320057e-05
+          },
+          {
+            "iteration": 32,
+            "hessian_products": 32,
+            "elapsed_s": 38.245968918985454,
+            "recursive_relative_residual": 1.9817864000178818,
+            "direction_rayleigh": 3.0881616614911906e-05
+          }
+        ],
+        "wall_s": 38.26168418300222
+      },
+      "product_relative_error": 3.432411629858797e-14,
+      "independent_full_relative_residual": 1.9817864000178886,
+      "independent_system_relative_residual": 1.9817864000178886,
+      "bound": {
+        "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+        "objective_gap_upper_bound": 15.295736017898557,
+        "absolute_solution_error_bound": 7140.433230997159,
+        "relative_solution_error_bound": 0.14992196296087326,
+        "raw_objective_gap_upper_bound": 15.295736014726746,
+        "correction_linear_residual_norm": 0.008490488079575259,
+        "scalar_roundoff_guard": 2.6217431147794012e-08,
+        "feasible": true
+      },
+      "independent_check_s": 22.457094643992605,
+      "probe_complete": true,
+      "cache": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 6335,
+        "misses": 11665,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cpu_reference": {
+        "workers": 8,
+        "peak_pending_frames": 8,
+        "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+      },
+      "process_peak_rss_bytes": 4715687936,
+      "torch_peak_allocated_bytes": 3333562368
+    },
+    {
+      "mode": "full-periodic",
+      "probe": {
+        "reason": "product_budget",
+        "iterations": 32,
+        "trace": [
+          {
+            "iteration": 1,
+            "hessian_products": 1,
+            "elapsed_s": 1.1895460649975576,
+            "recursive_relative_residual": 0.1349300955334419,
+            "direction_rayleigh": 9.499554699259767e-07
+          },
+          {
+            "iteration": 2,
+            "hessian_products": 2,
+            "elapsed_s": 2.385591040016152,
+            "recursive_relative_residual": 0.09808034279159084,
+            "direction_rayleigh": 1.2979485533083987e-06
+          },
+          {
+            "iteration": 3,
+            "hessian_products": 3,
+            "elapsed_s": 3.584841371019138,
+            "recursive_relative_residual": 0.10225097454949053,
+            "direction_rayleigh": 1.2553723123835776e-06
+          },
+          {
+            "iteration": 4,
+            "hessian_products": 4,
+            "elapsed_s": 4.790948653011583,
+            "recursive_relative_residual": 0.07164817270886906,
+            "direction_rayleigh": 1.2509278356257803e-06
+          },
+          {
+            "iteration": 5,
+            "hessian_products": 5,
+            "elapsed_s": 5.989743002020987,
+            "recursive_relative_residual": 0.08291586475502202,
+            "direction_rayleigh": 1.2069335948374542e-06
+          },
+          {
+            "iteration": 6,
+            "hessian_products": 6,
+            "elapsed_s": 7.177717670012498,
+            "recursive_relative_residual": 0.0813077474263999,
+            "direction_rayleigh": 1.171226241789748e-06
+          },
+          {
+            "iteration": 7,
+            "hessian_products": 7,
+            "elapsed_s": 8.375109109998448,
+            "recursive_relative_residual": 0.06513780434629102,
+            "direction_rayleigh": 1.1634853656357405e-06
+          },
+          {
+            "iteration": 8,
+            "hessian_products": 8,
+            "elapsed_s": 9.582348320021993,
+            "recursive_relative_residual": 0.05508957489367833,
+            "direction_rayleigh": 1.1311184750507179e-06
+          },
+          {
+            "iteration": 9,
+            "hessian_products": 9,
+            "elapsed_s": 10.782794047001516,
+            "recursive_relative_residual": 0.04936891229520531,
+            "direction_rayleigh": 1.116035329785791e-06
+          },
+          {
+            "iteration": 10,
+            "hessian_products": 10,
+            "elapsed_s": 11.984116314997664,
+            "recursive_relative_residual": 0.049722555742240916,
+            "direction_rayleigh": 1.1155643305167737e-06
+          },
+          {
+            "iteration": 11,
+            "hessian_products": 11,
+            "elapsed_s": 13.179085677023977,
+            "recursive_relative_residual": 0.04999484835462556,
+            "direction_rayleigh": 1.1085952399539317e-06
+          },
+          {
+            "iteration": 12,
+            "hessian_products": 12,
+            "elapsed_s": 14.36771176601178,
+            "recursive_relative_residual": 0.048535217484974746,
+            "direction_rayleigh": 1.093984875089708e-06
+          },
+          {
+            "iteration": 13,
+            "hessian_products": 13,
+            "elapsed_s": 15.562996658001794,
+            "recursive_relative_residual": 0.044012603824137006,
+            "direction_rayleigh": 1.0745350151251473e-06
+          },
+          {
+            "iteration": 14,
+            "hessian_products": 14,
+            "elapsed_s": 16.759413540014066,
+            "recursive_relative_residual": 0.040564567210517925,
+            "direction_rayleigh": 1.0588439103926035e-06
+          },
+          {
+            "iteration": 15,
+            "hessian_products": 15,
+            "elapsed_s": 17.959624406008516,
+            "recursive_relative_residual": 0.03834535344923753,
+            "direction_rayleigh": 1.023104952889315e-06
+          },
+          {
+            "iteration": 16,
+            "hessian_products": 16,
+            "elapsed_s": 19.157081545010442,
+            "recursive_relative_residual": 0.038577507180465265,
+            "direction_rayleigh": 1.021391840307468e-06
+          },
+          {
+            "iteration": 17,
+            "hessian_products": 17,
+            "elapsed_s": 20.355383549002,
+            "recursive_relative_residual": 0.04052928459323578,
+            "direction_rayleigh": 9.978001113590163e-07
+          },
+          {
+            "iteration": 18,
+            "hessian_products": 18,
+            "elapsed_s": 21.553786328004207,
+            "recursive_relative_residual": 0.045281113949670326,
+            "direction_rayleigh": 9.723079515212312e-07
+          },
+          {
+            "iteration": 19,
+            "hessian_products": 19,
+            "elapsed_s": 22.758089590002783,
+            "recursive_relative_residual": 0.05359348379243517,
+            "direction_rayleigh": 9.58762628102537e-07
+          },
+          {
+            "iteration": 20,
+            "hessian_products": 20,
+            "elapsed_s": 23.963427222013706,
+            "recursive_relative_residual": 0.06298496781660763,
+            "direction_rayleigh": 9.43717911466794e-07
+          },
+          {
+            "iteration": 21,
+            "hessian_products": 21,
+            "elapsed_s": 25.156580045004375,
+            "recursive_relative_residual": 0.07453767238421538,
+            "direction_rayleigh": 9.389339311365266e-07
+          },
+          {
+            "iteration": 22,
+            "hessian_products": 22,
+            "elapsed_s": 26.351843445998384,
+            "recursive_relative_residual": 0.07876225363944198,
+            "direction_rayleigh": 9.312277890803106e-07
+          },
+          {
+            "iteration": 23,
+            "hessian_products": 23,
+            "elapsed_s": 27.549796412000433,
+            "recursive_relative_residual": 0.07559012032785672,
+            "direction_rayleigh": 9.202624072844259e-07
+          },
+          {
+            "iteration": 24,
+            "hessian_products": 24,
+            "elapsed_s": 28.753031182015548,
+            "recursive_relative_residual": 0.06814942926093367,
+            "direction_rayleigh": 9.331378089082665e-07
+          },
+          {
+            "iteration": 25,
+            "hessian_products": 25,
+            "elapsed_s": 29.94911517802393,
+            "recursive_relative_residual": 0.060477159906912936,
+            "direction_rayleigh": 9.351827502645628e-07
+          },
+          {
+            "iteration": 26,
+            "hessian_products": 26,
+            "elapsed_s": 31.134931249020156,
+            "recursive_relative_residual": 0.052281537392621494,
+            "direction_rayleigh": 9.37405893993676e-07
+          },
+          {
+            "iteration": 27,
+            "hessian_products": 27,
+            "elapsed_s": 32.33398887101794,
+            "recursive_relative_residual": 0.043120699729931176,
+            "direction_rayleigh": 9.226489783053163e-07
+          },
+          {
+            "iteration": 28,
+            "hessian_products": 28,
+            "elapsed_s": 33.53090285800863,
+            "recursive_relative_residual": 0.04020408534005802,
+            "direction_rayleigh": 9.343811994749249e-07
+          },
+          {
+            "iteration": 29,
+            "hessian_products": 29,
+            "elapsed_s": 34.72366125299595,
+            "recursive_relative_residual": 0.0367298421533374,
+            "direction_rayleigh": 9.137732678847496e-07
+          },
+          {
+            "iteration": 30,
+            "hessian_products": 30,
+            "elapsed_s": 35.91383090201998,
+            "recursive_relative_residual": 0.032628147746357715,
+            "direction_rayleigh": 9.230447001060385e-07
+          },
+          {
+            "iteration": 31,
+            "hessian_products": 31,
+            "elapsed_s": 37.11901618001866,
+            "recursive_relative_residual": 0.031920977441559376,
+            "direction_rayleigh": 9.204380979175832e-07
+          },
+          {
+            "iteration": 32,
+            "hessian_products": 32,
+            "elapsed_s": 38.31683386702207,
+            "recursive_relative_residual": 0.0292001143161489,
+            "direction_rayleigh": 9.38866095127038e-07
+          }
+        ],
+        "wall_s": 38.35106459399685
+      },
+      "product_relative_error": 4.028507662136719e-14,
+      "independent_full_relative_residual": 0.02920011431614855,
+      "independent_system_relative_residual": 0.02920011431614855,
+      "bound": {
+        "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+        "objective_gap_upper_bound": 1.2106693410264278,
+        "absolute_solution_error_bound": 2008.8714419016694,
+        "relative_solution_error_bound": 0.0421786662185313,
+        "raw_objective_gap_upper_bound": 15.295736014726746,
+        "correction_linear_residual_norm": 0.000125100879954195,
+        "scalar_roundoff_guard": 2.1448348891671052e-09,
+        "feasible": true
+      },
+      "independent_check_s": 22.08414808101952,
+      "probe_complete": true,
+      "cache": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 12308,
+        "misses": 22192,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cpu_reference": {
+        "workers": 8,
+        "peak_pending_frames": 8,
+        "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+      },
+      "process_peak_rss_bytes": 4728119296,
+      "torch_peak_allocated_bytes": 3333562368
+    },
+    {
+      "mode": "reduced-diagonal",
+      "probe": {
+        "reason": "product_budget",
+        "iterations": 32,
+        "trace": [
+          {
+            "iteration": 1,
+            "hessian_products": 1,
+            "elapsed_s": 1.1829339340038132,
+            "recursive_relative_residual": 0.8402063713604152,
+            "direction_rayleigh": 3.818675929263065e-05
+          },
+          {
+            "iteration": 2,
+            "hessian_products": 2,
+            "elapsed_s": 2.374089577002451,
+            "recursive_relative_residual": 2.172933036171102,
+            "direction_rayleigh": 9.225451157306187e-05
+          },
+          {
+            "iteration": 3,
+            "hessian_products": 3,
+            "elapsed_s": 3.5649633379944135,
+            "recursive_relative_residual": 2.500108477919909,
+            "direction_rayleigh": 2.860553528845593e-05
+          },
+          {
+            "iteration": 4,
+            "hessian_products": 4,
+            "elapsed_s": 4.758486549981171,
+            "recursive_relative_residual": 1.8893418829202124,
+            "direction_rayleigh": 4.021979093339071e-05
+          },
+          {
+            "iteration": 5,
+            "hessian_products": 5,
+            "elapsed_s": 5.945291376992827,
+            "recursive_relative_residual": 1.8181859321227851,
+            "direction_rayleigh": 5.371260111191541e-05
+          },
+          {
+            "iteration": 6,
+            "hessian_products": 6,
+            "elapsed_s": 7.126238901983015,
+            "recursive_relative_residual": 2.12827999608547,
+            "direction_rayleigh": 4.215013996166197e-05
+          },
+          {
+            "iteration": 7,
+            "hessian_products": 7,
+            "elapsed_s": 8.3057042589935,
+            "recursive_relative_residual": 2.4407753462674284,
+            "direction_rayleigh": 2.988802106816805e-05
+          },
+          {
+            "iteration": 8,
+            "hessian_products": 8,
+            "elapsed_s": 9.492477533000056,
+            "recursive_relative_residual": 2.4224385220810376,
+            "direction_rayleigh": 2.575592543439043e-05
+          },
+          {
+            "iteration": 9,
+            "hessian_products": 9,
+            "elapsed_s": 10.67839552499936,
+            "recursive_relative_residual": 2.1298764444948284,
+            "direction_rayleigh": 2.976986991107566e-05
+          },
+          {
+            "iteration": 10,
+            "hessian_products": 10,
+            "elapsed_s": 11.869243311986793,
+            "recursive_relative_residual": 1.7494191230804077,
+            "direction_rayleigh": 4.131243826669529e-05
+          },
+          {
+            "iteration": 11,
+            "hessian_products": 11,
+            "elapsed_s": 13.06812594999792,
+            "recursive_relative_residual": 1.5947130578459918,
+            "direction_rayleigh": 6.180514511164547e-05
+          },
+          {
+            "iteration": 12,
+            "hessian_products": 12,
+            "elapsed_s": 14.28028209900367,
+            "recursive_relative_residual": 1.7936457929288432,
+            "direction_rayleigh": 6.622241702893546e-05
+          },
+          {
+            "iteration": 13,
+            "hessian_products": 13,
+            "elapsed_s": 15.47265854899888,
+            "recursive_relative_residual": 2.2521603941264234,
+            "direction_rayleigh": 4.8416467124473046e-05
+          },
+          {
+            "iteration": 14,
+            "hessian_products": 14,
+            "elapsed_s": 16.666627959988546,
+            "recursive_relative_residual": 2.526008037173694,
+            "direction_rayleigh": 4.081179312490436e-05
+          },
+          {
+            "iteration": 15,
+            "hessian_products": 15,
+            "elapsed_s": 17.86376145199756,
+            "recursive_relative_residual": 2.3581952565952706,
+            "direction_rayleigh": 4.616910283797794e-05
+          },
+          {
+            "iteration": 16,
+            "hessian_products": 16,
+            "elapsed_s": 19.071995687991148,
+            "recursive_relative_residual": 2.216448674901191,
+            "direction_rayleigh": 4.5626936520343954e-05
+          },
+          {
+            "iteration": 17,
+            "hessian_products": 17,
+            "elapsed_s": 20.262109223986045,
+            "recursive_relative_residual": 2.5714326040006514,
+            "direction_rayleigh": 4.715261865272216e-05
+          },
+          {
+            "iteration": 18,
+            "hessian_products": 18,
+            "elapsed_s": 21.453550695994636,
+            "recursive_relative_residual": 2.7195386778059736,
+            "direction_rayleigh": 5.082085170441425e-05
+          },
+          {
+            "iteration": 19,
+            "hessian_products": 19,
+            "elapsed_s": 22.6458582119958,
+            "recursive_relative_residual": 2.750502617381957,
+            "direction_rayleigh": 3.6048686808419135e-05
+          },
+          {
+            "iteration": 20,
+            "hessian_products": 20,
+            "elapsed_s": 23.83852649698383,
+            "recursive_relative_residual": 2.9924737340075143,
+            "direction_rayleigh": 3.547695133501073e-05
+          },
+          {
+            "iteration": 21,
+            "hessian_products": 21,
+            "elapsed_s": 25.022732115990948,
+            "recursive_relative_residual": 2.7059020169954016,
+            "direction_rayleigh": 3.472359913436242e-05
+          },
+          {
+            "iteration": 22,
+            "hessian_products": 22,
+            "elapsed_s": 26.2100929839944,
+            "recursive_relative_residual": 2.8203373363562596,
+            "direction_rayleigh": 3.613850156080703e-05
+          },
+          {
+            "iteration": 23,
+            "hessian_products": 23,
+            "elapsed_s": 27.400071533978917,
+            "recursive_relative_residual": 2.3970737984983512,
+            "direction_rayleigh": 4.273688624330595e-05
+          },
+          {
+            "iteration": 24,
+            "hessian_products": 24,
+            "elapsed_s": 28.590331553976284,
+            "recursive_relative_residual": 2.245677661823472,
+            "direction_rayleigh": 3.800800313631152e-05
+          },
+          {
+            "iteration": 25,
+            "hessian_products": 25,
+            "elapsed_s": 29.778411799983587,
+            "recursive_relative_residual": 2.055648400013754,
+            "direction_rayleigh": 3.732939776107001e-05
+          },
+          {
+            "iteration": 26,
+            "hessian_products": 26,
+            "elapsed_s": 30.971896387985907,
+            "recursive_relative_residual": 1.7480633673084651,
+            "direction_rayleigh": 2.2943983781349956e-05
+          },
+          {
+            "iteration": 27,
+            "hessian_products": 27,
+            "elapsed_s": 32.17493085699971,
+            "recursive_relative_residual": 1.5545140190723863,
+            "direction_rayleigh": 9.655188649743693e-06
+          },
+          {
+            "iteration": 28,
+            "hessian_products": 28,
+            "elapsed_s": 33.375322806998156,
+            "recursive_relative_residual": 1.3876918501402649,
+            "direction_rayleigh": 4.265806141713657e-06
+          },
+          {
+            "iteration": 29,
+            "hessian_products": 29,
+            "elapsed_s": 34.563126613997156,
+            "recursive_relative_residual": 1.336086729618562,
+            "direction_rayleigh": 2.5703103311150953e-06
+          },
+          {
+            "iteration": 30,
+            "hessian_products": 30,
+            "elapsed_s": 35.76501764799468,
+            "recursive_relative_residual": 1.4095470423455907,
+            "direction_rayleigh": 2.141280021379841e-06
+          },
+          {
+            "iteration": 31,
+            "hessian_products": 31,
+            "elapsed_s": 36.96648377698148,
+            "recursive_relative_residual": 1.6196581542297435,
+            "direction_rayleigh": 2.8628603458203774e-06
+          },
+          {
+            "iteration": 32,
+            "hessian_products": 32,
+            "elapsed_s": 38.153575907985214,
+            "recursive_relative_residual": 1.6232006058622994,
+            "direction_rayleigh": 5.369362266300789e-06
+          }
+        ],
+        "wall_s": 38.16230892800377
+      },
+      "product_relative_error": 2.267990036435313e-14,
+      "independent_full_relative_residual": 2.4204651110997863,
+      "independent_system_relative_residual": 1.6232006058622965,
+      "bound": {
+        "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+        "objective_gap_upper_bound": 15.295736017898557,
+        "absolute_solution_error_bound": 7140.433230997159,
+        "relative_solution_error_bound": 0.14992196296087326,
+        "raw_objective_gap_upper_bound": 15.295736014726746,
+        "correction_linear_residual_norm": 0.010369901707184506,
+        "scalar_roundoff_guard": 3.822930308211253e-08,
+        "feasible": true
+      },
+      "independent_check_s": 22.328966445988044,
+      "probe_complete": true,
+      "cache": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 18281,
+        "misses": 32719,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cpu_reference": {
+        "workers": 8,
+        "peak_pending_frames": 8,
+        "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+      },
+      "process_peak_rss_bytes": 4734124032,
+      "torch_peak_allocated_bytes": 3333562368
+    },
+    {
+      "mode": "reduced-periodic",
+      "probe": {
+        "reason": "product_budget",
+        "iterations": 32,
+        "trace": [
+          {
+            "iteration": 1,
+            "hessian_products": 1,
+            "elapsed_s": 1.1831499859981705,
+            "recursive_relative_residual": 2.0929307079447486,
+            "direction_rayleigh": 8.116155602408823e-05
+          },
+          {
+            "iteration": 2,
+            "hessian_products": 2,
+            "elapsed_s": 2.388850306015229,
+            "recursive_relative_residual": 3.3764469453484818,
+            "direction_rayleigh": 1.2194710515752674e-05
+          },
+          {
+            "iteration": 3,
+            "hessian_products": 3,
+            "elapsed_s": 3.5907604620151687,
+            "recursive_relative_residual": 4.122799350094396,
+            "direction_rayleigh": 1.108096222426471e-05
+          },
+          {
+            "iteration": 4,
+            "hessian_products": 4,
+            "elapsed_s": 4.7950384090072475,
+            "recursive_relative_residual": 3.956470528432114,
+            "direction_rayleigh": 8.635812280856182e-06
+          },
+          {
+            "iteration": 5,
+            "hessian_products": 5,
+            "elapsed_s": 5.995403142005671,
+            "recursive_relative_residual": 2.300591183413275,
+            "direction_rayleigh": 1.2735223658836576e-05
+          },
+          {
+            "iteration": 6,
+            "hessian_products": 6,
+            "elapsed_s": 7.185793773998739,
+            "recursive_relative_residual": 1.6342637127367399,
+            "direction_rayleigh": 2.9523827690137276e-05
+          },
+          {
+            "iteration": 7,
+            "hessian_products": 7,
+            "elapsed_s": 8.378649187012343,
+            "recursive_relative_residual": 1.8641181773825,
+            "direction_rayleigh": 2.9975485666879245e-05
+          },
+          {
+            "iteration": 8,
+            "hessian_products": 8,
+            "elapsed_s": 9.577372491999995,
+            "recursive_relative_residual": 2.304967031981185,
+            "direction_rayleigh": 2.5674165120652105e-05
+          },
+          {
+            "iteration": 9,
+            "hessian_products": 9,
+            "elapsed_s": 10.780260009021731,
+            "recursive_relative_residual": 2.000488410188305,
+            "direction_rayleigh": 2.05054658132736e-05
+          },
+          {
+            "iteration": 10,
+            "hessian_products": 10,
+            "elapsed_s": 11.978570628009038,
+            "recursive_relative_residual": 1.7297462092116476,
+            "direction_rayleigh": 2.0050390732617613e-05
+          },
+          {
+            "iteration": 11,
+            "hessian_products": 11,
+            "elapsed_s": 13.17915639502462,
+            "recursive_relative_residual": 1.3868418911620355,
+            "direction_rayleigh": 1.7406567066370168e-05
+          },
+          {
+            "iteration": 12,
+            "hessian_products": 12,
+            "elapsed_s": 14.389911550999386,
+            "recursive_relative_residual": 1.1155855944394593,
+            "direction_rayleigh": 1.5917744843505684e-05
+          },
+          {
+            "iteration": 13,
+            "hessian_products": 13,
+            "elapsed_s": 15.602515602018684,
+            "recursive_relative_residual": 1.0300360720743427,
+            "direction_rayleigh": 1.98591326436107e-05
+          },
+          {
+            "iteration": 14,
+            "hessian_products": 14,
+            "elapsed_s": 16.79966839501867,
+            "recursive_relative_residual": 0.6741877397009635,
+            "direction_rayleigh": 2.07961989622626e-05
+          },
+          {
+            "iteration": 15,
+            "hessian_products": 15,
+            "elapsed_s": 18.00114094701712,
+            "recursive_relative_residual": 0.5291295498013056,
+            "direction_rayleigh": 2.881408668380693e-05
+          },
+          {
+            "iteration": 16,
+            "hessian_products": 16,
+            "elapsed_s": 19.206180544017116,
+            "recursive_relative_residual": 0.6282349778336433,
+            "direction_rayleigh": 4.1591459828887595e-05
+          },
+          {
+            "iteration": 17,
+            "hessian_products": 17,
+            "elapsed_s": 20.404448321001837,
+            "recursive_relative_residual": 0.44463669130928013,
+            "direction_rayleigh": 3.820188013655731e-05
+          },
+          {
+            "iteration": 18,
+            "hessian_products": 18,
+            "elapsed_s": 21.611886258004233,
+            "recursive_relative_residual": 0.5268328165769789,
+            "direction_rayleigh": 3.658314567804066e-05
+          },
+          {
+            "iteration": 19,
+            "hessian_products": 19,
+            "elapsed_s": 22.821522083017044,
+            "recursive_relative_residual": 0.44036652209795263,
+            "direction_rayleigh": 3.7859580984189934e-05
+          },
+          {
+            "iteration": 20,
+            "hessian_products": 20,
+            "elapsed_s": 24.0294319470122,
+            "recursive_relative_residual": 0.3952556851494205,
+            "direction_rayleigh": 4.168652426057985e-05
+          },
+          {
+            "iteration": 21,
+            "hessian_products": 21,
+            "elapsed_s": 25.230400904023554,
+            "recursive_relative_residual": 0.3926704561080507,
+            "direction_rayleigh": 2.581918171912139e-05
+          },
+          {
+            "iteration": 22,
+            "hessian_products": 22,
+            "elapsed_s": 26.42814720000024,
+            "recursive_relative_residual": 0.3733474123117383,
+            "direction_rayleigh": 2.4014189168371953e-05
+          },
+          {
+            "iteration": 23,
+            "hessian_products": 23,
+            "elapsed_s": 27.626824033010053,
+            "recursive_relative_residual": 0.3582903121143185,
+            "direction_rayleigh": 2.420733318367594e-05
+          },
+          {
+            "iteration": 24,
+            "hessian_products": 24,
+            "elapsed_s": 28.832705472013913,
+            "recursive_relative_residual": 0.2980333603132181,
+            "direction_rayleigh": 2.03806409752386e-05
+          },
+          {
+            "iteration": 25,
+            "hessian_products": 25,
+            "elapsed_s": 30.03794824401848,
+            "recursive_relative_residual": 0.3011235481420128,
+            "direction_rayleigh": 2.213608745055192e-05
+          },
+          {
+            "iteration": 26,
+            "hessian_products": 26,
+            "elapsed_s": 31.240683932002867,
+            "recursive_relative_residual": 0.27042320191951985,
+            "direction_rayleigh": 1.5497637934606877e-05
+          },
+          {
+            "iteration": 27,
+            "hessian_products": 27,
+            "elapsed_s": 32.442171084025176,
+            "recursive_relative_residual": 0.24229402343334605,
+            "direction_rayleigh": 1.718026270813494e-05
+          },
+          {
+            "iteration": 28,
+            "hessian_products": 28,
+            "elapsed_s": 33.64867477401276,
+            "recursive_relative_residual": 0.2138157489322259,
+            "direction_rayleigh": 1.7671416735022664e-05
+          },
+          {
+            "iteration": 29,
+            "hessian_products": 29,
+            "elapsed_s": 34.857962173002306,
+            "recursive_relative_residual": 0.2137228031387539,
+            "direction_rayleigh": 1.9974137482164056e-05
+          },
+          {
+            "iteration": 30,
+            "hessian_products": 30,
+            "elapsed_s": 36.09272084501572,
+            "recursive_relative_residual": 0.18096097349845774,
+            "direction_rayleigh": 1.8447175255550318e-05
+          },
+          {
+            "iteration": 31,
+            "hessian_products": 31,
+            "elapsed_s": 37.29908023701864,
+            "recursive_relative_residual": 0.229058400472216,
+            "direction_rayleigh": 2.640052278205675e-05
+          },
+          {
+            "iteration": 32,
+            "hessian_products": 32,
+            "elapsed_s": 38.500686904997565,
+            "recursive_relative_residual": 0.17169979923692225,
+            "direction_rayleigh": 2.639708421012269e-05
+          }
+        ],
+        "wall_s": 38.52167581501999
+      },
+      "product_relative_error": 1.637911127062519e-14,
+      "independent_full_relative_residual": 1.7638220865520444,
+      "independent_system_relative_residual": 0.17169979923692236,
+      "bound": {
+        "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+        "objective_gap_upper_bound": 15.295736017898557,
+        "absolute_solution_error_bound": 7140.433230997159,
+        "relative_solution_error_bound": 0.14992196296087326,
+        "raw_objective_gap_upper_bound": 15.295736014726746,
+        "correction_linear_residual_norm": 0.0075566723034462815,
+        "scalar_roundoff_guard": 2.1202082979390418e-08,
+        "feasible": true
+      },
+      "independent_check_s": 22.286552684003254,
+      "probe_complete": true,
+      "cache": {
+        "limit_bytes": 3221225472,
+        "resident_bytes": 3207192576,
+        "peak_bytes": 3207192576,
+        "hits": 24254,
+        "misses": 43246,
+        "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+        "policy": "retain-first",
+        "retained_frames": 181
+      },
+      "cpu_reference": {
+        "workers": 8,
+        "peak_pending_frames": 8,
+        "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+      },
+      "process_peak_rss_bytes": 4734124032,
+      "torch_peak_allocated_bytes": 3333562368
+    }
+  ],
+  "failures": [],
+  "wall_s": 341.8909607270034,
+  "scene_updated": false,
+  "q3_authorized": false,
+  "scope": "Full/reduced conditioning diagnostic; no scene update or scientific qualification."
+}

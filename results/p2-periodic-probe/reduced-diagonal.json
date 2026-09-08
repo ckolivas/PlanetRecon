@@ -1,0 +1,266 @@
+{
+  "mode": "reduced-diagonal",
+  "probe": {
+    "reason": "product_budget",
+    "iterations": 32,
+    "trace": [
+      {
+        "iteration": 1,
+        "hessian_products": 1,
+        "elapsed_s": 1.1829339340038132,
+        "recursive_relative_residual": 0.8402063713604152,
+        "direction_rayleigh": 3.818675929263065e-05
+      },
+      {
+        "iteration": 2,
+        "hessian_products": 2,
+        "elapsed_s": 2.374089577002451,
+        "recursive_relative_residual": 2.172933036171102,
+        "direction_rayleigh": 9.225451157306187e-05
+      },
+      {
+        "iteration": 3,
+        "hessian_products": 3,
+        "elapsed_s": 3.5649633379944135,
+        "recursive_relative_residual": 2.500108477919909,
+        "direction_rayleigh": 2.860553528845593e-05
+      },
+      {
+        "iteration": 4,
+        "hessian_products": 4,
+        "elapsed_s": 4.758486549981171,
+        "recursive_relative_residual": 1.8893418829202124,
+        "direction_rayleigh": 4.021979093339071e-05
+      },
+      {
+        "iteration": 5,
+        "hessian_products": 5,
+        "elapsed_s": 5.945291376992827,
+        "recursive_relative_residual": 1.8181859321227851,
+        "direction_rayleigh": 5.371260111191541e-05
+      },
+      {
+        "iteration": 6,
+        "hessian_products": 6,
+        "elapsed_s": 7.126238901983015,
+        "recursive_relative_residual": 2.12827999608547,
+        "direction_rayleigh": 4.215013996166197e-05
+      },
+      {
+        "iteration": 7,
+        "hessian_products": 7,
+        "elapsed_s": 8.3057042589935,
+        "recursive_relative_residual": 2.4407753462674284,
+        "direction_rayleigh": 2.988802106816805e-05
+      },
+      {
+        "iteration": 8,
+        "hessian_products": 8,
+        "elapsed_s": 9.492477533000056,
+        "recursive_relative_residual": 2.4224385220810376,
+        "direction_rayleigh": 2.575592543439043e-05
+      },
+      {
+        "iteration": 9,
+        "hessian_products": 9,
+        "elapsed_s": 10.67839552499936,
+        "recursive_relative_residual": 2.1298764444948284,
+        "direction_rayleigh": 2.976986991107566e-05
+      },
+      {
+        "iteration": 10,
+        "hessian_products": 10,
+        "elapsed_s": 11.869243311986793,
+        "recursive_relative_residual": 1.7494191230804077,
+        "direction_rayleigh": 4.131243826669529e-05
+      },
+      {
+        "iteration": 11,
+        "hessian_products": 11,
+        "elapsed_s": 13.06812594999792,
+        "recursive_relative_residual": 1.5947130578459918,
+        "direction_rayleigh": 6.180514511164547e-05
+      },
+      {
+        "iteration": 12,
+        "hessian_products": 12,
+        "elapsed_s": 14.28028209900367,
+        "recursive_relative_residual": 1.7936457929288432,
+        "direction_rayleigh": 6.622241702893546e-05
+      },
+      {
+        "iteration": 13,
+        "hessian_products": 13,
+        "elapsed_s": 15.47265854899888,
+        "recursive_relative_residual": 2.2521603941264234,
+        "direction_rayleigh": 4.8416467124473046e-05
+      },
+      {
+        "iteration": 14,
+        "hessian_products": 14,
+        "elapsed_s": 16.666627959988546,
+        "recursive_relative_residual": 2.526008037173694,
+        "direction_rayleigh": 4.081179312490436e-05
+      },
+      {
+        "iteration": 15,
+        "hessian_products": 15,
+        "elapsed_s": 17.86376145199756,
+        "recursive_relative_residual": 2.3581952565952706,
+        "direction_rayleigh": 4.616910283797794e-05
+      },
+      {
+        "iteration": 16,
+        "hessian_products": 16,
+        "elapsed_s": 19.071995687991148,
+        "recursive_relative_residual": 2.216448674901191,
+        "direction_rayleigh": 4.5626936520343954e-05
+      },
+      {
+        "iteration": 17,
+        "hessian_products": 17,
+        "elapsed_s": 20.262109223986045,
+        "recursive_relative_residual": 2.5714326040006514,
+        "direction_rayleigh": 4.715261865272216e-05
+      },
+      {
+        "iteration": 18,
+        "hessian_products": 18,
+        "elapsed_s": 21.453550695994636,
+        "recursive_relative_residual": 2.7195386778059736,
+        "direction_rayleigh": 5.082085170441425e-05
+      },
+      {
+        "iteration": 19,
+        "hessian_products": 19,
+        "elapsed_s": 22.6458582119958,
+        "recursive_relative_residual": 2.750502617381957,
+        "direction_rayleigh": 3.6048686808419135e-05
+      },
+      {
+        "iteration": 20,
+        "hessian_products": 20,
+        "elapsed_s": 23.83852649698383,
+        "recursive_relative_residual": 2.9924737340075143,
+        "direction_rayleigh": 3.547695133501073e-05
+      },
+      {
+        "iteration": 21,
+        "hessian_products": 21,
+        "elapsed_s": 25.022732115990948,
+        "recursive_relative_residual": 2.7059020169954016,
+        "direction_rayleigh": 3.472359913436242e-05
+      },
+      {
+        "iteration": 22,
+        "hessian_products": 22,
+        "elapsed_s": 26.2100929839944,
+        "recursive_relative_residual": 2.8203373363562596,
+        "direction_rayleigh": 3.613850156080703e-05
+      },
+      {
+        "iteration": 23,
+        "hessian_products": 23,
+        "elapsed_s": 27.400071533978917,
+        "recursive_relative_residual": 2.3970737984983512,
+        "direction_rayleigh": 4.273688624330595e-05
+      },
+      {
+        "iteration": 24,
+        "hessian_products": 24,
+        "elapsed_s": 28.590331553976284,
+        "recursive_relative_residual": 2.245677661823472,
+        "direction_rayleigh": 3.800800313631152e-05
+      },
+      {
+        "iteration": 25,
+        "hessian_products": 25,
+        "elapsed_s": 29.778411799983587,
+        "recursive_relative_residual": 2.055648400013754,
+        "direction_rayleigh": 3.732939776107001e-05
+      },
+      {
+        "iteration": 26,
+        "hessian_products": 26,
+        "elapsed_s": 30.971896387985907,
+        "recursive_relative_residual": 1.7480633673084651,
+        "direction_rayleigh": 2.2943983781349956e-05
+      },
+      {
+        "iteration": 27,
+        "hessian_products": 27,
+        "elapsed_s": 32.17493085699971,
+        "recursive_relative_residual": 1.5545140190723863,
+        "direction_rayleigh": 9.655188649743693e-06
+      },
+      {
+        "iteration": 28,
+        "hessian_products": 28,
+        "elapsed_s": 33.375322806998156,
+        "recursive_relative_residual": 1.3876918501402649,
+        "direction_rayleigh": 4.265806141713657e-06
+      },
+      {
+        "iteration": 29,
+        "hessian_products": 29,
+        "elapsed_s": 34.563126613997156,
+        "recursive_relative_residual": 1.336086729618562,
+        "direction_rayleigh": 2.5703103311150953e-06
+      },
+      {
+        "iteration": 30,
+        "hessian_products": 30,
+        "elapsed_s": 35.76501764799468,
+        "recursive_relative_residual": 1.4095470423455907,
+        "direction_rayleigh": 2.141280021379841e-06
+      },
+      {
+        "iteration": 31,
+        "hessian_products": 31,
+        "elapsed_s": 36.96648377698148,
+        "recursive_relative_residual": 1.6196581542297435,
+        "direction_rayleigh": 2.8628603458203774e-06
+      },
+      {
+        "iteration": 32,
+        "hessian_products": 32,
+        "elapsed_s": 38.153575907985214,
+        "recursive_relative_residual": 1.6232006058622994,
+        "direction_rayleigh": 5.369362266300789e-06
+      }
+    ],
+    "wall_s": 38.16230892800377
+  },
+  "product_relative_error": 2.267990036435313e-14,
+  "independent_full_relative_residual": 2.4204651110997863,
+  "independent_system_relative_residual": 1.6232006058622965,
+  "bound": {
+    "certificate": "quadratic_normal_cone_correction_v1_diagnostic",
+    "objective_gap_upper_bound": 15.295736017898557,
+    "absolute_solution_error_bound": 7140.433230997159,
+    "relative_solution_error_bound": 0.14992196296087326,
+    "raw_objective_gap_upper_bound": 15.295736014726746,
+    "correction_linear_residual_norm": 0.010369901707184506,
+    "scalar_roundoff_guard": 3.822930308211253e-08,
+    "feasible": true
+  },
+  "independent_check_s": 22.328966445988044,
+  "probe_complete": true,
+  "cache": {
+    "limit_bytes": 3221225472,
+    "resident_bytes": 3207192576,
+    "peak_bytes": 3207192576,
+    "hits": 18281,
+    "misses": 32719,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 181
+  },
+  "cpu_reference": {
+    "workers": 8,
+    "peak_pending_frames": 8,
+    "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+  },
+  "process_peak_rss_bytes": 4734124032,
+  "torch_peak_allocated_bytes": 3333562368
+}

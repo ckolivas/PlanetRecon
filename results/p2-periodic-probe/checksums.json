@@ -1,0 +1,16 @@
+{
+  "DECISION.md": "2c54115f3e3b37227937c9b1749fd3619787dc7283f9071c73f63dd004740bd5",
+  "comparison.png": "93f2cc733400664f2673c985d0c89349d1dd572f010bdfe0e678fefd48a2cf56",
+  "full-diagonal.json": "7ba209f7a27448e886b54d0eeb751d202aa2acca84b3dbad57fe62e9ca1f97a0",
+  "full-periodic.json": "c66864b289b91bae6ddf9ce64cb5bf7428657ddd41b76422caebe6e2fc00814b",
+  "initial.json": "fbe64d37c40ad6c082171d687349561106f615834cb64bd8219cf8e30e7367f3",
+  "inverse.json": "30fd63b4fe4ab5fc353f194f924b19a5e65889a0be9d95394029394a59da9df1",
+  "protocol.json": "141004bf24f862454077adb9f096969a63b5d0324c4d4470a4c7994874d86f87",
+  "reduced-diagonal.json": "806c0e22d5783b040084860d8525d8aa1a015c37bf174ba4717f6ca0eab66166",
+  "reduced-periodic.json": "237b4f3c811923fb2e1aa9fed0ff1bad9e59aea216d41674fe0e15fb1ab7fcac",
+  "report.json": "4b86397e54b29abedd00912b72af2ac053d9245e83d472698520c9aaecdda45d",
+  "trace-full-diagonal.json": "79faac250995300e75589225002af465d3e68313b85b51d7156d213fb1e4f86d",
+  "trace-full-periodic.json": "2479d770e554783ac65d52e40fd9bac87e14cd2ac64c6b658de3d35b66e084ce",
+  "trace-reduced-diagonal.json": "513e992a31401af12889d288ba203ba31915b3afe6a195e4742c5e926f93ebcf",
+  "trace-reduced-periodic.json": "cda5aa758aa424f743541f16bd46bf5876b74b11c09686989c9c16df7d5ac179"
+}

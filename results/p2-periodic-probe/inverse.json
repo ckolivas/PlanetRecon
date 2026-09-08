@@ -1,0 +1,12 @@
+{
+  "kind": "periodic_uniform_sampling_inverse_v1",
+  "symbol_min": 6e-07,
+  "symbol_max": 0.01435789411857541,
+  "workers": {
+    "workers": 8,
+    "peak_pending_frames": 8,
+    "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+  },
+  "scope": "Approximate positive inverse for preconditioning only; finite crop, spatial weights and sampling aliases remain in the exact Hessian.",
+  "construction_s": 17.052233192982385
+}
