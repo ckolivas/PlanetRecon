@@ -60,7 +60,8 @@ def test_invalid_initialization_and_curvature_rejected():
 
 @pytest.mark.hardware
 @pytest.mark.parametrize('rgb', [False, True])
-def test_cuda_solver_matches_independent_cpu_certificate(rgb):
+@pytest.mark.parametrize('coupled', [False, True])
+def test_cuda_solver_matches_independent_cpu_certificate(rgb, coupled):
     import torch
     from tools.scene_fft import SceneFFTBatch
     from tools.scene_quadratic import SceneQuadratic
@@ -69,9 +70,37 @@ def test_cuda_solver_matches_independent_cpu_certificate(rgb):
     gpu = SceneQuadratic(cpu.operators, cpu.images, [1/w for w in cpu.weights],
                          ridge=cpu.ridge, smoothness=cpu.smoothness, prior=cpu.prior,
                          batch=SceneFFTBatch(cpu.operators, device='cuda'))
-    a, ia = solve(cpu)
-    b, ib = solve(gpu)
+    from tools.scene_periodic_preconditioner import PeriodicScenePreconditioner
+    a, ia = solve(cpu, preconditioner=PeriodicScenePreconditioner(cpu, workers=2) if coupled else None)
+    b, ib = solve(gpu, preconditioner=PeriodicScenePreconditioner(gpu, workers=2) if coupled else None)
     assert ia['converged'] and ib['converged']
     cert = cpu.certificate(b)
     assert cert['relative_solution_error_bound'] <= 1e-5
     assert np.linalg.norm(a-b) <= ia['absolute_solution_error_bound']+cert['absolute_solution_error_bound']
+
+
+@pytest.mark.parametrize('rgb', [False, True])
+@pytest.mark.parametrize('positive_start', [False, True])
+def test_coupled_preconditioner_preserves_constrained_optimum(rgb, positive_start):
+    from tools.scene_periodic_preconditioner import PeriodicScenePreconditioner
+    p = problem(117, rgb, True)
+    oracle, _ = dense_oracle(p)
+    inverse = PeriodicScenePreconditioner(p, workers=2)
+    x, info = solve(p, preconditioner=inverse, x0=np.full(p.shape, 5.) if positive_start else None)
+    assert info['converged'] and info['feasible']
+    assert np.linalg.norm(x-oracle) <= info['absolute_solution_error_bound']+1e-10
+    assert all(row['quadratic_objective_change'] < 0 for row in info['trace'])
+    assert all(len(row['inner_trace']) == row['inner_products'] for row in info['trace'])
+
+
+def test_nonpositive_coupled_inverse_rejected():
+    with pytest.raises(ValueError, match='positive'):
+        solve(problem(118), preconditioner=lambda r: -r)
+
+
+def test_product_interruption_records_unaccepted_inner_progress():
+    events = []
+    x, info = solve(problem(119), max_products=1, inner_callback=events.append)
+    assert info['reason'] == 'product_budget' and info['n_iter'] == 0 and np.all(x == 0)
+    assert len(events) == len(info['unaccepted_inner_trace']) == 1
+    assert events[0]['hessian_products'] == 1 and events[0]['outer_iteration'] == 1

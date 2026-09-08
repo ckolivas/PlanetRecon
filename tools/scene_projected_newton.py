@@ -11,26 +11,35 @@ class _Budget(Exception):
     pass
 
 
-def direction(normal, gradient, free, diagonal, *, steps=32, relative_tolerance=.1):
+def direction(normal, gradient, free, diagonal, *, steps=32, relative_tolerance=.1,
+              precondition=None, callback=None):
     """Truncated PCG on a principal Hessian; excluded components stay zero."""
     r = np.where(free, -gradient, 0.)
-    d = np.zeros_like(r); z = r/diagonal; p = z.copy()
+    def apply(residual):
+        value = residual/diagonal if precondition is None else np.asarray(precondition(residual), dtype=float)
+        if value.shape != residual.shape or not np.isfinite(value).all():
+            raise ValueError('invalid inverse product')
+        return np.where(free, value, 0.)
+    d = np.zeros_like(r); z = apply(r); p = z.copy()
     rz = float(np.vdot(r, z)); initial = float(np.linalg.norm(r))
     for n in range(steps):
         if np.linalg.norm(r) <= relative_tolerance*initial:
             return d, n
+        if not np.isfinite(rz) or rz <= 0: raise ValueError('inverse is not positive on residual')
         hp = np.where(free, normal(p), 0.)
         php = float(np.vdot(p, hp))
         if not np.isfinite(php) or php <= 0:
             raise ValueError('nonpositive or invalid reduced Hessian curvature')
         alpha = rz/php; d += alpha*p; r -= alpha*hp
-        z = r/diagonal; next_rz = float(np.vdot(r, z))
+        if callback is not None:
+            callback({'iteration': n+1, 'recursive_relative_residual': float(np.linalg.norm(r)/initial)})
+        z = apply(r); next_rz = float(np.vdot(r, z))
         p = z+(next_rz/rz)*p; rz = next_rz
     return d, steps
 
 
 def solve(problem, *, max_products=750, tolerance=1e-5, x0=None,
-          inner_steps=32, deadline=None, callback=None):
+          inner_steps=32, deadline=None, callback=None, preconditioner=None, inner_callback=None):
     if int(max_products) != max_products or max_products < 1 or int(inner_steps) != inner_steps or inner_steps < 1:
         raise ValueError('positive integer product and inner budgets required')
     if not np.isfinite(tolerance) or tolerance <= 0: raise ValueError('positive finite tolerance required')
@@ -40,7 +49,7 @@ def solve(problem, *, max_products=750, tolerance=1e-5, x0=None,
     diagonal = np.asarray(problem.majorizer)
     if diagonal.shape != x.shape or not np.isfinite(diagonal).all() or np.any(diagonal <= 0):
         raise ValueError('finite positive step majorizer required')
-    started = time.monotonic(); products = 0; trace = []; reason = 'product_budget'
+    started = time.monotonic(); products = 0; trace = []; inner_trace = []; reason = 'product_budget'
     # Initialization and final independent recomputation are recorded separately
     # from the bounded inner/line-search Hessian products.
     gradient = problem.gradient(x)
@@ -68,7 +77,14 @@ def solve(problem, *, max_products=750, tolerance=1e-5, x0=None,
             # Wrong active guesses are released whenever their gradient violates
             # the lower-bound KKT condition. Positive coordinates remain free.
             free = (x > 0) | (gradient < 0)
-            d, inner = direction(normal, gradient, free, diagonal, steps=inner_steps)
+            inner_trace = []
+            def inner_progress(row):
+                row = row | {'outer_iteration': len(trace)+1, 'hessian_products': products,
+                             'elapsed_s': time.monotonic()-started}
+                inner_trace.append(row)
+                if inner_callback is not None: inner_callback(dict(row))
+            d, inner = direction(normal, gradient, free, diagonal, steps=inner_steps,
+                                 precondition=preconditioner, callback=inner_progress)
             accepted = False; evaluations = 0
             for trial in range(12):
                 candidate = np.maximum(x+(2.**-trial)*d, 0.)
@@ -91,23 +107,27 @@ def solve(problem, *, max_products=750, tolerance=1e-5, x0=None,
             cert = problem.certificate(x, gradient=gradient)
             row = {'iteration': len(trace)+1, 'hessian_products': products,
                    'inner_products': inner, 'line_search_products': evaluations,
+                   'inner_trace': inner_trace,
                    'step_kind': kind, 'quadratic_objective_change': change,
                    'active_fraction': float(np.mean(x == 0)),
                    'relative_solution_error_bound': cert['relative_solution_error_bound'],
                    'elapsed_s': time.monotonic()-started}
             trace.append(row)
             if callback is not None: callback(dict(row), x.copy())
+            inner_trace = []
     except _Budget as exc:
         reason = str(exc)
     certificate = problem.certificate(x)
     converged = certificate['feasible'] and certificate['relative_solution_error_bound'] <= tolerance
     if converged: reason = 'certified'
     elif reason == 'certified': reason = 'fresh_gradient_disagrees'
-    return x, {'solver': 'extended_scene_projected_newton_cg_v1',
+    return x, {'solver': 'extended_scene_projected_newton_cg_v2',
                'status': 'valid' if converged else 'incomplete', 'converged': bool(converged),
                'reason': reason, 'n_iter': len(trace), 'hessian_products': products,
                'max_products': max_products, 'inner_steps': inner_steps,
+               'preconditioning': 'diagonal_majorizer' if preconditioner is None else 'supplied_positive_inverse',
                'initial_final_gradient_evaluations': 2, 'tolerance': tolerance,
                'objective': problem.objective(x), 'trace': trace,
+               'unaccepted_inner_trace': inner_trace,
                'exact_iteration_resume': False, 'wall_s': time.monotonic()-started,
                **certificate}
