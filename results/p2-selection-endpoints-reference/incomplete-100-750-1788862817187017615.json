@@ -1,0 +1,32 @@
+{
+  "solver": "extended_scene_projected_acceleration_v4",
+  "converged": false,
+  "status": "incomplete",
+  "reason": "wall_budget",
+  "scaling": "diagonal",
+  "majorizer_min": 6.00000014357792e-07,
+  "majorizer_max": 0.014357792041355587,
+  "n_iter": 142,
+  "resume_from_iteration": 0,
+  "maxiter": 750,
+  "tolerance": 1e-05,
+  "objective": 8861.057416382024,
+  "wall_s": 306.62204000301426,
+  "cumulative_solver_wall_s": 306.62204149900936,
+  "feasible": true,
+  "kkt_residual_norm": 0.0042842599381516435,
+  "absolute_solution_error_bound": 7140.433230252739,
+  "relative_solution_error_bound": 0.1499219629452433,
+  "objective_gap_upper_bound": 15.295736014709272,
+  "strong_convexity_lower_bound": 6e-07,
+  "gradient_lipschitz_upper_bound": 0.014357792041355587,
+  "reference_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 0.00428425993815403,
+    "absolute_solution_error_bound": 7140.433230256716,
+    "relative_solution_error_bound": 0.14992196294532678,
+    "objective_gap_upper_bound": 15.295736014726309,
+    "strong_convexity_lower_bound": 6e-07,
+    "gradient_lipschitz_upper_bound": 0.014357792041355582
+  }
+}

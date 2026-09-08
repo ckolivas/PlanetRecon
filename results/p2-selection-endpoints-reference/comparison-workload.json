@@ -1,0 +1,3 @@
+{
+  "background_workload": "Alternative endpoint pilot launched while this reference pilot is active; at most two study workers/four CPU threads, plus bounded verification jobs. Timings are not isolated speed comparisons."
+}
