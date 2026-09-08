@@ -1,0 +1,7 @@
+{
+  "fixed_residual_gap_certificate_floor": 0.0009691635134462124,
+  "maximum_possible_improvement_factor": 154.69212456443705,
+  "threshold_ruled_out_for_fixed_residual_family": true,
+  "original_tolerance": 1e-05,
+  "scope": "Lower limit on this fixed-normal-cone energy/global-ridge certificate; not a lower bound on actual scene error or on other certificate families."
+}

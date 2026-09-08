@@ -1,0 +1,48 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_conditioning.py": "4c80fdfd230224ac28eb9a4cbdacb1015b3dbbdce9a314f19c68c7adc42726aa",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-conditioning-protocol.md": "158f558623eca6be12a9300f2ab214e3a2f1297aaa00a4ec5227d1d4c60219ea",
+      "tools/audit_scene_selections.py": "9f95ee5790fb46d265dfb572aa8345148a4acf4189d0415916af2eaeb930a9e9",
+      "tools/scene_conditioning.py": "fda0a139937d3e233bc89e514b524c5013a43ce3f07b2e93b668598865d72a8d",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_iteration_state.py": "a62333a8a724669b4743aecf9ceb46f5d8822f5c7f7f9bff8b185833992bc912",
+      "tools/scene_parallel_reference.py": "90d48d9eb362d8f346750af3eca03db6cb20b7b011486e5f9468c7d63237dc68",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "checkpoint_sha256": "37e4f2b70a3c4c49f01b331b60929bf97cc804ae6a07305eef18c7e072274255",
+  "original_protocol_sha256": "57dd5afee24a5a1b1b1cd852357778f6166d60269c10a436b6d20f92892f5eae",
+  "manifest_sha256": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+  "initial_iteration": 142,
+  "modes": [
+    "identity",
+    "majorizer"
+  ],
+  "probe_steps": 32,
+  "wall_budget_s": 600.0,
+  "threads": 2,
+  "cpu_frame_workers": 8,
+  "device": "cuda",
+  "cache_bytes": 268435456,
+  "product_relative_tolerance": 1e-10,
+  "original_distance_tolerance": 1e-05,
+  "scene_updated": false,
+  "q3_authorized": false,
+  "scope": "Frozen-iterate conditioning/certificate diagnostic; does not reclassify historical solves."
+}
