@@ -1,0 +1,13 @@
+{
+  "status": "incomplete",
+  "q3_authorized": false,
+  "complete": false,
+  "source_hash": "826c1962b281c97359d0ff4c060f257daa725017edef18dba781837e424d417e",
+  "source_unchanged": false,
+  "cases": [],
+  "failures": [],
+  "full_resolution_budget_convergence_passed": false,
+  "termination_reason": "operator_cost_review",
+  "elapsed_to_stop_s": 891.0,
+  "notes": "Stopped the FISTA 512/1024 development audit after about 15 minutes without a completed crop/budget pair. No numerical failure or convergence conclusion is inferred. The runner was extended with an explicitly labelled ADMM option just before termination, so unchanged-source qualification is false. Retained as a resource-limited incomplete attempt; raw certified inputs are reused unchanged."
+}

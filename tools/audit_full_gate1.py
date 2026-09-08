@@ -56,6 +56,13 @@ def evaluate_case(payload):
     from planetrecon.runtime import apply_thread_limits
     apply_thread_limits(2)
     path, crop_name, directory, protocol = payload
+    if protocol.get('solver') == 'admm':
+        # A1o delegates to estimators.e2a; evaluate_crop imported its own alias.
+        # Both must use this explicitly recorded experimental candidate.
+        import planetrecon.estimators as estimators
+        import planetrecon.evaluate as evaluation
+        from tools.quadratic_admm import solve
+        estimators.e2a = evaluation.e2a = solve
     identity = file_hash(path)
     errors = gate_errors(path)
     if errors:
@@ -87,7 +94,7 @@ def evaluate_case(payload):
     return summary
 
 
-def run(inputs, directory, family='development', workers=3, budgets=(512, 1024)):
+def run(inputs, directory, family='development', workers=3, budgets=(512, 1024), solver='fista'):
     from planetrecon import constants as C
     from planetrecon.evaluate import REG, aggregate_family, family_paths
     from planetrecon.provenance import source_hash
@@ -101,12 +108,16 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024))
     directory.mkdir(parents=True, exist_ok=False)
     identity = source_hash()
     runner_identity = file_hash(__file__)
+    solver_path = Path(__file__).with_name('quadratic_admm.py') if solver == 'admm' else None
+    solver_identity = None if solver_path is None else file_hash(solver_path)
     protocol = {'family': family, 'seeds': list(seeds), 'regimes': list(regimes),
                 'crops': ['feature', 'bland'], 'n_frames': C.N_FRAMES, 'eval_size': C.EVAL_SIZE,
                 'budgets': list(budgets), 'solver_tolerance': C.E2A_FISTA_TOL,
                 'image_tolerance': 1e-3, 'gap_tolerance': .01,
                 'regularisation': asdict(REG), 'ranking_hash': ranking_config_hash(),
                 'source_hash': identity, 'runner_sha256': runner_identity,
+                'solver': solver, 'solver_source_sha256': solver_identity,
+                'admm_relative_solution_error_bound_tolerance': 1e-4 if solver == 'admm' else None,
                 'workers': workers, 'threads_per_worker': 2, 'q3_authorized': False,
                 'design': 'Known-transfer full-resolution Gate-1 reconstruction and gap budget stability. '
                           'Fixed regularisation, rankings and physical inputs; no MFBD/model/noise qualification.'}
@@ -128,7 +139,8 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024))
             write_json(directory/'progress.json', {'cases': rows, 'failures': failures})
     rows.sort(key=lambda r: (r['seed'], r['dr0'], r['crop']))
     complete = complete_family(rows, seeds, regimes) and not failures
-    unchanged = identity == source_hash() and runner_identity == file_hash(__file__)
+    unchanged = (identity == source_hash() and runner_identity == file_hash(__file__)
+                 and (solver_path is None or solver_identity == file_hash(solver_path)))
     passed = complete and unchanged and all(r['budget_convergence_passed'] for r in rows)
     tables = {}
     if complete:
@@ -157,6 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('--family', choices=('development', 'evaluation'), default='development')
     parser.add_argument('--workers', type=int, default=3)
     parser.add_argument('--budgets', type=int, nargs=2, default=(512, 1024))
+    parser.add_argument('--solver', choices=('fista', 'admm'), default='fista')
     args = parser.parse_args()
-    report = run(args.inputs, args.out, args.family, args.workers, tuple(args.budgets))
+    report = run(args.inputs, args.out, args.family, args.workers, tuple(args.budgets), args.solver)
     sys.exit(0 if report['full_resolution_budget_convergence_passed'] else 1)
