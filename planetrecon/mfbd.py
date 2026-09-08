@@ -528,6 +528,25 @@ def fit_converged(fit):
                                       and st['object_info'].get('converged', False) for st in fit['stages'])
 
 
+def phase_start(fwd, shifts_alpha, n_modes, seed, *, perturb=False):
+    """Truth-independent second start that escapes the zero even-phase saddle.
+
+    First two calibrated coordinates remain unchanged. Independent frame seeds
+    keep starts stable when partitions or the number of frames change. The
+    declared RMS is across the full initial mode grid on the illuminated pupil.
+    """
+    out = np.zeros((len(shifts_alpha), n_modes), dtype=np.float64)
+    frozen = min(2, n_modes)
+    out[:, :frozen] = np.asarray(shifts_alpha)[:, :frozen]
+    if perturb and n_modes > 2:
+        norm = C.Q2_PHASE_START_RMS_RAD*np.sqrt(fwd.mask.sum())
+        for k in range(len(out)):
+            rng = np.random.default_rng(np.random.SeedSequence([int(seed), 917403, k]))
+            draw = rng.normal(size=n_modes-2)
+            out[k, 2:] = draw*(norm/np.linalg.norm(draw))
+    return out
+
+
 def holdout_split(n: int, frac: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
     n_ho = int(round(frac * n))
     n_ho = min(max(n_ho, 0), max(n - 1, 0))
@@ -560,7 +579,7 @@ def assess_selected_fit(fwd, fit, images, sigma2, indices, alpha0, *,
     """Profile phase nuisance parameters once after freezing the selected model.
 
     The training object is never updated and assessment phases start from the
-    externally specified shift calibration, not an all-frame fit. The residual
+    specified shift calibration and frozen initialization, not an all-frame fit. The residual
     is a phase-profiled diagnostic, not an unfitted predictive likelihood.
     """
     indices = np.asarray(indices, dtype=np.int64)

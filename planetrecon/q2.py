@@ -33,6 +33,7 @@ from planetrecon.mfbd import (
     assessment_split,
     assess_selected_fit,
     fit_converged,
+    phase_start,
     initial_object,
     select_init,
     tip_tilt_from_shifts,
@@ -312,8 +313,7 @@ def evaluate_q2_crop(
     fwd = PupilForward.from_config(cfg)
     tt, tilt_info = tip_tilt_from_shifts(fwd, crop.shifts, return_info=True)
     m_max = int(m_grid[-1])
-    alpha_tt = np.zeros((n, m_max), dtype=np.float64)
-    alpha_tt[:, :min(2, m_max)] = tt[:, :min(2, m_max)]
+    phase_starts = {name: phase_start(fwd, tt, m_max, extras['seed'], perturb=name == 'subset') for name in inits}
 
     def fit_initialisation(
         name: str, train_idx: np.ndarray, holdout_idx: np.ndarray
@@ -335,7 +335,7 @@ def evaluate_q2_crop(
             crop.support,
             start_idx,
             tv_d,
-            alphas=alpha_tt,
+            alphas=phase_starts[name],
         )
         fit = d_tail(
             fwd,
@@ -350,7 +350,7 @@ def evaluate_q2_crop(
             m_grid=m_grid,
             outer_iters=outer_iters,
             alpha_iters=alpha_iters,
-            alpha0=alpha_tt,
+            alpha0=phase_starts[name],
             frame_workers=frame_workers,
             freeze_tip_tilt=True,
         )
@@ -427,7 +427,7 @@ def evaluate_q2_crop(
             ),
             "metrics": _metrics(chosen_fit["object"], crop),
         }
-        assessment = assess_selected_fit(fwd, chosen_fit, crop.observed, sigma2, assess, alpha_tt,
+        assessment = assess_selected_fit(fwd, chosen_fit, crop.observed, sigma2, assess, phase_starts[holdout_chosen],
                                          alpha_iters=alpha_iters, frame_workers=frame_workers)
         assessment['chosen_init'] = holdout_chosen
 
@@ -471,6 +471,9 @@ def evaluate_q2_crop(
         "blind_prior_selection": "frozen development tv_mu",
         "reference_selection": "frozen development reference_star",
         "tip_tilt_calibration": tilt_info,
+        "phase_initializations": {'zero': 'zero higher modes', 'subset': 'seeded nonzero higher modes',
+                                  'subset_full_grid_rms_rad': C.Q2_PHASE_START_RMS_RAD if m_max > 2 else 0.,
+                                  'seed': int(extras['seed'])},
         "assessment_role": "synthetic truth closure on all-frame refit; separate frame assessment after selection" if holdout
                            else "synthetic truth metric only; no separate frame assessment",
         "ranking_hash": ranking_config_hash(),

@@ -2483,3 +2483,12 @@ The audit took 174.42 s with 621.86 MiB cumulative Linux process peak RSS.
 `results/r10-full-grid-physics-audit` retains protocol, measurements and scoped
 decision. Complete reconstruction-gap families and atmospheric acceptance remain
 separate from these successful discretization controls.
+
+**Phase-start diversity (2026-09-08):** a matched defocus control demonstrates
+that zero higher phases can be stationary without minimizing the residual. The
+subset initialization now uses a reproducible 0.1 rad RMS higher-phase start,
+preserving calibrated tilt and per-frame seed identity. Model-selection and
+assessment nuisance fits use the same frozen initialization policy. Estimator
+1.7 records that policy; independent phase starts are included in the next
+budget comparison rather than treating two object starts on one symmetric phase
+subspace as sufficient global evidence.

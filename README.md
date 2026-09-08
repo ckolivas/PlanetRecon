@@ -417,6 +417,10 @@ Windows or macOS releases.
   Finite-exposure averaging is not modelled.
 - **Initialisations.** Both put known translations into tip/tilt. `zero`
   starts the object from all frames; `subset` starts it from \(\mathcal S_{10}\).
+  The subset start also supplies seeded nonzero higher-order phase coefficients
+  (0.1 rad RMS over the full initial mode grid). This avoids testing only the
+  symmetric zero-phase stationary point. Seeds and calibrated tilt are fixed
+  independently of assessment pixels and evaluation truth.
   The reported D is the better of the two by held-out residual if present,
   otherwise by training residual. Truth \(E_H\) is not used to pick an init.
 - **Selection and assessment.** Development runs preassign approximately 80%

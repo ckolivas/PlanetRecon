@@ -1,7 +1,7 @@
 import numpy as np
 
 from planetrecon.config import make_config
-from planetrecon.mfbd import PupilForward, d_tail, fit_converged, phase_stationarity
+from planetrecon.mfbd import PupilForward, d_tail, fit_converged, phase_stationarity, phase_start, fit_frame_alpha
 
 
 def fixture():
@@ -42,3 +42,25 @@ def test_historical_failures_do_not_override_converged_final_pair():
     assert not fit_converged({'stages': [stage]})
     del stage['convergence']
     assert not fit_converged({'stages': [stage]})
+
+
+def test_nonzero_phase_start_escapes_symmetric_stationary_point():
+    fwd, obj, _, _ = fixture()
+    obj_f = np.fft.fft2(obj-1.)
+    image = np.fft.ifft2(fwd.otf(np.array([0., 0., 2.]))*obj_f).real
+    _, zero_loss = fit_frame_alpha(np.zeros(3), fwd, obj_f, image, 1., n_iter=96, freeze_tip_tilt=True)
+    start = phase_start(fwd, np.zeros((1, 2)), 3, 1001, perturb=True)[0]
+    _, escaped_loss = fit_frame_alpha(start, fwd, obj_f, image, 1., n_iter=96, freeze_tip_tilt=True)
+    assert zero_loss > .001
+    assert escaped_loss < 1e-12
+
+
+def test_phase_starts_are_reproducible_and_preserve_calibrated_tilt():
+    from planetrecon import constants as C
+    fwd, _, _, _ = fixture()
+    tt = np.array([[3., -4.], [1., 2.]])
+    first = phase_start(fwd, tt, 3, 1001, perturb=True)
+    again = phase_start(fwd, tt[:1], 3, 1001, perturb=True)
+    np.testing.assert_array_equal(first[:1], again)
+    np.testing.assert_array_equal(first[:, :2], tt)
+    np.testing.assert_allclose(np.linalg.norm(first[:, 2:], axis=1)/np.sqrt(fwd.mask.sum()), C.Q2_PHASE_START_RMS_RAD)
