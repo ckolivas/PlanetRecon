@@ -1,0 +1,61 @@
+{
+  "status": "valid",
+  "scope": "Numerical pilot only; prior/domain/noise sensitivity and complete development selections remain unqualified.",
+  "numerical_pilot_passed": true,
+  "q3_authorized": false,
+  "source_input_unchanged": true,
+  "indices": [
+    0,
+    249,
+    499
+  ],
+  "scene_shape": [
+    1152,
+    1152
+  ],
+  "detector_shape": [
+    128,
+    128
+  ],
+  "runs": [
+    {
+      "solver": "extended_scene_projected_acceleration_v1",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "n_iter": 40,
+      "maxiter": 100,
+      "tolerance": 1e-05,
+      "objective": 958172.0152893914,
+      "wall_s": 36.73309817997506,
+      "feasible": true,
+      "kkt_residual_norm": 2.781053109623882e-05,
+      "absolute_solution_error_bound": 0.02781053109623882,
+      "relative_solution_error_bound": 6.653476793993837e-07,
+      "objective_gap_upper_bound": 3.8671281992743316e-07,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    },
+    {
+      "solver": "extended_scene_projected_acceleration_v1",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "n_iter": 40,
+      "maxiter": 200,
+      "tolerance": 1e-05,
+      "objective": 958172.0152893914,
+      "wall_s": 37.4511291400122,
+      "feasible": true,
+      "kkt_residual_norm": 2.781053109623882e-05,
+      "absolute_solution_error_bound": 0.02781053109623882,
+      "relative_solution_error_bound": 6.653476793993837e-07,
+      "objective_gap_upper_bound": 3.8671281992743316e-07,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    }
+  ],
+  "image_relative_change": 0.0,
+  "wall_s": 77.8870633149927,
+  "process_peak_rss_bytes": 388231168
+}

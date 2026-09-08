@@ -1,0 +1,13 @@
+{
+  "question": "At fixed domain, ridge and data selection, how much do noise and variance weighting change a numerically certified optical-scene solution?",
+  "runner_sha256": "79afbfd22351f62b142f067dca4d6287660322022a589722041890492763c757",
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "required_cases": [
+    "expected/scalar",
+    "expected/spatial",
+    "observed/scalar",
+    "observed/spatial"
+  ],
+  "decision": "Diagnostic only; retain all cases and numerical failures. Truth metrics never select weighting, prior or initialization. No scientific acceptance threshold or Gate-1/Q2/Q3 authorization.",
+  "q3_authorized": false
+}

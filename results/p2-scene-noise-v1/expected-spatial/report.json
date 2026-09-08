@@ -1,0 +1,61 @@
+{
+  "status": "incomplete",
+  "scope": "Numerical pilot only; prior/domain/noise sensitivity and complete development selections remain unqualified.",
+  "numerical_pilot_passed": false,
+  "q3_authorized": false,
+  "source_input_unchanged": true,
+  "indices": [
+    0,
+    249,
+    499
+  ],
+  "scene_shape": [
+    1152,
+    1152
+  ],
+  "detector_shape": [
+    128,
+    128
+  ],
+  "runs": [
+    {
+      "solver": "extended_scene_projected_acceleration_v1",
+      "converged": false,
+      "status": "incomplete",
+      "reason": "iteration_budget",
+      "n_iter": 100,
+      "maxiter": 100,
+      "tolerance": 1e-05,
+      "objective": 927555.0585946699,
+      "wall_s": 88.03846257700934,
+      "feasible": true,
+      "kkt_residual_norm": 4.162150379606869,
+      "absolute_solution_error_bound": 4162.150379606869,
+      "relative_solution_error_bound": 0.10233607480222762,
+      "objective_gap_upper_bound": 8661.747891230803,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 1.9183487907115446
+    },
+    {
+      "solver": "extended_scene_projected_acceleration_v1",
+      "converged": false,
+      "status": "incomplete",
+      "reason": "iteration_budget",
+      "n_iter": 200,
+      "maxiter": 200,
+      "tolerance": 1e-05,
+      "objective": 926159.8287348999,
+      "wall_s": 138.8880799949984,
+      "feasible": true,
+      "kkt_residual_norm": 0.3538110201475515,
+      "absolute_solution_error_bound": 353.8110201475515,
+      "relative_solution_error_bound": 0.008739870719527554,
+      "objective_gap_upper_bound": 62.59111898892555,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 1.9183487907115446
+    }
+  ],
+  "image_relative_change": 0.022432761985760958,
+  "wall_s": 231.07339289199444,
+  "process_peak_rss_bytes": 389009408
+}
