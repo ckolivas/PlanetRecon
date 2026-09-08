@@ -23,10 +23,13 @@ def laplacian_cells(x):
 
 
 class SceneQuadratic:
-    def __init__(self, operators, images, variances, *, ridge, smoothness=0., prior=None):
+    def __init__(self, operators, images, variances, *, ridge, smoothness=0., prior=None, batch=None):
         self.operators = tuple(operators)
         if not self.operators or len(images) != len(self.operators) or len(variances) != len(self.operators):
             raise ValueError('one image and variance per operator required')
+        self.batch = batch
+        if batch is not None and (len(batch.operators) != len(self.operators) or any(a is not b for a,b in zip(batch.operators,self.operators))):
+            raise ValueError("batch must bind exactly the supplied operators")
         self.shape = self.operators[0].scene_shape
         if any(op.scene_shape != self.shape for op in self.operators):
             raise ValueError('inconsistent scene domains')
@@ -46,9 +49,6 @@ class SceneQuadratic:
             self.images.append(np.where(mask, image, 0.))
             self.weights.append(np.divide(1., variance, out=np.zeros(op.output_shape), where=mask)/len(self.operators))
         self.linear = self.ridge*self.prior.copy()
-        # For nonnegative A, ||A||_2^2 <= ||A||_infinity ||A||_1.
-        # Apply to sqrt(W)A for spatial variance and average-frame normalization.
-        self.lipschitz = self.ridge+8*self.smoothness
         ones = np.ones(self.shape)
         self.majorizer = np.full(self.shape, self.ridge)
         degree = np.zeros(self.shape)
@@ -58,25 +58,28 @@ class SceneQuadratic:
             degree[tuple(lo)] += 1
             degree[tuple(hi)] += 1
         self.majorizer += 2*self.smoothness*degree
-        for op, image, weight in zip(self.operators, self.images, self.weights):
-            self.linear += op.adjoint(weight*image)
-            root = np.sqrt(weight)
-            forward_ones = op.forward(ones)
-            row_sum = root*forward_ones
-            self.majorizer += op.adjoint(weight*forward_ones)
-            col_sum = op.adjoint(root)
-            self.lipschitz += max(0., float(row_sum.max()))*max(0., float(col_sum.max()))
+        if self.batch is not None:
+            self.linear += self.batch.adjoint([w*y for w,y in zip(self.weights,self.images)])
+            self.majorizer += self.batch.normal(ones, self.weights)
+        else:
+            for op, image, weight in zip(self.operators, self.images, self.weights):
+                self.linear += op.adjoint(weight*image)
+                self.majorizer += op.adjoint(weight*op.forward(ones))
         # For nonnegative data H, diag(H 1)-H is a graph Laplacian.
         # For D'D smoothness, 2 diag(degree)-D'D is signless PSD.
         # Hence this diagonal majorizes the complete Hessian. Tiny inflation
         # covers roundoff in zero-valued FFT tails; it is not a fitted parameter.
         self.majorizer = np.maximum(self.majorizer, self.ridge)
         self.majorizer += 1e-12*max(float(self.majorizer.max()), self.ridge)
+        self.lipschitz = float(self.majorizer.max())
 
     def normal(self, x):
         out = self.ridge*x+self.smoothness*laplacian_cells(x)
-        for op, weight in zip(self.operators, self.weights):
-            out += op.adjoint(weight*op.forward(x))
+        if self.batch is not None:
+            out += self.batch.normal(x, self.weights)
+        else:
+            for op, weight in zip(self.operators, self.weights):
+                out += op.adjoint(weight*op.forward(x))
         return out
 
     def gradient(self, x):
@@ -85,8 +88,9 @@ class SceneQuadratic:
     def objective(self, x):
         value = self.ridge*np.sum((x-self.prior)**2)
         value += self.smoothness*sum(np.sum(np.diff(x, axis=a)**2) for a in (0, 1))
-        for op, image, weight in zip(self.operators, self.images, self.weights):
-            value += np.sum(weight*(op.forward(x)-image)**2)
+        predictions = self.batch.forward(x) if self.batch is not None else (op.forward(x) for op in self.operators)
+        for predicted, image, weight in zip(predictions, self.images, self.weights):
+            value += np.sum(weight*(predicted-image)**2)
         return float(.5*value)
 
     def certificate(self, x, gradient=None):
@@ -142,7 +146,7 @@ def solve(problem, *, maxiter=2000, tolerance=1e-5, x0=None, callback=None, dead
                     reason, converged = 'certified', True
                     break
     certificate = problem.certificate(x)
-    info = {'solver': 'extended_scene_projected_acceleration_v2', 'converged': converged,
+    info = {'solver': 'extended_scene_projected_acceleration_v3', 'converged': converged,
             'status': 'valid' if converged else 'incomplete', 'reason': reason,
             'scaling': scaling, 'majorizer_min': float(diagonal.min()), 'majorizer_max': float(diagonal.max()),
             'n_iter': n, 'maxiter': int(maxiter), 'tolerance': tolerance,
