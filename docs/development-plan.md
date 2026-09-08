@@ -431,6 +431,11 @@ full qualification is not supported by the current evidence.
    certificates. The runner gates execution on the archived stability check and
    binds source/input/runtime identities. Preserve every attempt, including failed
    fits and incomplete cases; require all 60 selections for a family pass.
+   Case 0 is running in `out/p2-selection-family/case-00`; verify completion before
+   another scientific invocation. Archive its outcome and use the
+   [tested report checker](scene-selection-family-summary.md) to write an immutable
+   cumulative summary. Continue with the next missing case in manifest order;
+   do not rerun completed failures or extend their budgets implicitly.
 4. Resolve prior/likelihood/phase and exposure sensitivity under P3, including
    identifiability and signal loss. Do not automatically extend the prior grid
    again or reuse the inspected pilot assessment as untouched final evaluation.

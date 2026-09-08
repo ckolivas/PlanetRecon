@@ -62,6 +62,12 @@ independent bound 9.859417e-6 and identical latent/detector images. This qualifi
 one endpoint, not the complete numerical family or scientific quality. The
 [gated full-family protocol](scene-selection-family-protocol.md) is ready for
 all 12 cases and 60 observed selections, one case at a time in manifest order.
+Case 0 (seed 1001, Dr0=4, feature crop) is now running in
+`out/p2-selection-family/case-00`; check its process and final report before
+starting another case. Its first two selections pass, but the case has not yet
+completed. The [family report checker](scene-selection-family-summary.md) now
+revalidates all 60 selections and shared identities, with 33 additional tests
+passing. It retains missing/failed cases and refuses to overwrite earlier summaries.
 Production defaults and numerical criteria remain unchanged.
 
 Independent-data preparation: [seven-capture intake](../results/real-data/README.md)
