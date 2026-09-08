@@ -1,0 +1,75 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_selection_family.py": "c9cb0d69f5d0b13a8117ecc79069893da0906d406e4e366efcd3c22abd12c1d7",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-reference-stability-protocol.md": "b10e8d0fb583d2299855ebb405331ba9b3674ee83326e667a45a544874da6886",
+      "docs/scene-selection-family-protocol.md": "e5bbfb7003b0a61f179f26b417709c32eeed776d6c40a7ae9d665e958d4c27b0",
+      "tools/audit_scene_reference_stability.py": "94248c555158e2d7971605608b0a97669d37bbba669411865c71ed343061e36f",
+      "tools/audit_scene_selections.py": "9f95ee5790fb46d265dfb572aa8345148a4acf4189d0415916af2eaeb930a9e9",
+      "tools/scene_cropped_fft.py": "ebd642f4f8187d11a77002343deaa9d5445db39c92b54114ee0a8a69ed1ec4b9",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_iteration_state.py": "a62333a8a724669b4743aecf9ceb46f5d8822f5c7f7f9bff8b185833992bc912",
+      "tools/scene_parallel_reference.py": "90d48d9eb362d8f346750af3eca03db6cb20b7b011486e5f9468c7d63237dc68",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_retained_cache.py": "d982838fd0eb89ab56ede4e16caa7880af66ae32f5134a34ee0a23f3754e4ab6",
+      "tools/scene_state_diagnostics.py": "4cfed41b98851cda467866ce299af3c532710e6cc6d035832733853a7d414e49",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "qualification_hashes": {
+    "results/p2-reference-stability/report.json": "b765d1edf9fda4a00ccfca1cde466c59871695903418bb4f75642357b58b5ed7",
+    "results/p2-reference-stability/protocol.json": "4764caedbd13243e147be1b709ebdd60b042091cc325b245e8ca6859ad2b0dc9"
+  },
+  "case_index": 0,
+  "case": [
+    1001,
+    4.0,
+    "feature"
+  ],
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "manifest_sha256": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+  "fractions": [
+    5,
+    10,
+    25,
+    50,
+    100
+  ],
+  "budgets": [
+    1500,
+    3000
+  ],
+  "budget_unit": "iterations",
+  "margin": 64,
+  "cell_factor": 1,
+  "sum_native_strength": 0.0003,
+  "tolerance": 1e-05,
+  "image_tolerance": 0.0001,
+  "cache_bytes": 4294967296,
+  "headroom_bytes": 1073741824,
+  "threads": 2,
+  "cpu_frame_workers": 8,
+  "fit_budget_s": {
+    "5": 300.0,
+    "10": 300.0,
+    "25": 600.0,
+    "50": 900.0,
+    "100": 900.0
+  },
+  "wall_budget_s": 3600.0,
+  "scope": "One case of the complete 12-case/60-selection numerical family; no scientific qualification.",
+  "q3_authorized": false
+}

@@ -1,0 +1,187 @@
+{
+  "status": "incomplete",
+  "cases_required": 12,
+  "cases_present": 1,
+  "cases_passed": 1,
+  "selections_required": 60,
+  "selections_passed": 5,
+  "cases": [
+    {
+      "case_index": 0,
+      "case": [
+        1001,
+        4.0,
+        "feature"
+      ],
+      "status": "valid",
+      "selections_passed": 5,
+      "selections": [
+        {
+          "fraction": 5,
+          "passed": true
+        },
+        {
+          "fraction": 10,
+          "passed": true
+        },
+        {
+          "fraction": 25,
+          "passed": true
+        },
+        {
+          "fraction": 50,
+          "passed": true
+        },
+        {
+          "fraction": 100,
+          "passed": true
+        }
+      ],
+      "failures": [],
+      "execution_failures": []
+    },
+    {
+      "case_index": 1,
+      "case": [
+        1001,
+        4.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 2,
+      "case": [
+        1001,
+        8.0,
+        "feature"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 3,
+      "case": [
+        1001,
+        8.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 4,
+      "case": [
+        1002,
+        4.0,
+        "feature"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 5,
+      "case": [
+        1002,
+        4.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 6,
+      "case": [
+        1002,
+        8.0,
+        "feature"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 7,
+      "case": [
+        1002,
+        8.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 8,
+      "case": [
+        1003,
+        4.0,
+        "feature"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 9,
+      "case": [
+        1003,
+        4.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 10,
+      "case": [
+        1003,
+        8.0,
+        "feature"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    },
+    {
+      "case_index": 11,
+      "case": [
+        1003,
+        8.0,
+        "bland"
+      ],
+      "status": "missing",
+      "selections_passed": 0,
+      "selections": [],
+      "failures": []
+    }
+  ],
+  "source_runtime_identity_consistent": true,
+  "scope": "Known-transfer numerical family only; no scientific prior, blind reconstruction or production qualification.",
+  "q3_authorized": false,
+  "source_reports": {
+    "results/p2-reference-stability/report.json": "b765d1edf9fda4a00ccfca1cde466c59871695903418bb4f75642357b58b5ed7",
+    "results/p2-reference-stability/protocol.json": "4764caedbd13243e147be1b709ebdd60b042091cc325b245e8ca6859ad2b0dc9",
+    "results/p2-full-selection-manifest/report.json": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+    "results/p2-selection-family/case-00/protocol.json": "7846b0507e0f0bd0ae97db913848922d7a1f999c6062de9c44083fff134c001d",
+    "results/p2-selection-family/case-00/report.json": "3e787986f0cb84674c411078bc4956e9f11f549892bcf8fb47b9f21c6973fc85"
+  },
+  "analysis_sha256": "8852ba1d070838f94e6369699591fe9610d0a2c134f6194957c393e6601cbbf0"
+}
