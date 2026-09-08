@@ -75,3 +75,8 @@ Use the project venv for these commands. Plot with system Python and
 
 Local validation: 526 regression tests passed and 41 skipped; the subsequently
 added compressed-evidence/family-integrity and resource-forecast checks also pass.
+
+The subsequent 500-frame full-resolution studies and remaining acceptance work
+are recorded in [the full-grid continuation](../r10-full-grid-summary/DECISION.md).
+They expose crop-forward model mismatch and unresolved full-grid stationarity;
+the bounded acceptance above must not be extrapolated to full-grid qualification.

@@ -473,6 +473,16 @@ start diversity. All 12 bounded development cases pass after refinement, and all
 acceptance remains separate. See the measured evidence and limits in
 [`results/r10-convergence-summary/DECISION.md`](results/r10-convergence-summary/DECISION.md).
 
+Full-resolution continuation now includes certified 500-frame inputs for all
+development and evaluation seeds, complete development reconstruction/budget
+comparisons, and per-pixel noise-weight and crop-boundary diagnostics. The
+experimental quadratic candidate has independent real-matrix and primal/dual
+error-bound controls; it is not the production MFBD solver. Stable images alone
+do not satisfy the remaining strict convergence checks. Per-pixel weighting
+worsened the tested reconstructions under the current crop-forward model.
+See [`results/r10-full-grid-summary/DECISION.md`](results/r10-full-grid-summary/DECISION.md)
+for the measured results and the remaining acceptance steps.
+
 The bounded W03 audit and decision are in
 [`results/r10-development-audit/DECISION.md`](results/r10-development-audit/DECISION.md).
 All 12 reduced development cases remain incomplete. Reproduce with

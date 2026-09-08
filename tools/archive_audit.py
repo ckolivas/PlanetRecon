@@ -26,6 +26,11 @@ def archive(directory):
         path.unlink()
     report['case_encoding'] = 'gzip JSON; lossless archival after execution'
     report_path.write_text(json.dumps(report, indent=2)+'\n')
+    progress_path = directory/'progress.json'
+    if progress_path.exists():
+        progress = json.loads(progress_path.read_text())
+        progress['cases'] = report['cases']
+        progress_path.write_text(json.dumps(progress, indent=2)+'\n')
     protocol_path = directory/'protocol.json'
     protocol = json.loads(protocol_path.read_text())
     if 'parent_report_sha256' in protocol:
