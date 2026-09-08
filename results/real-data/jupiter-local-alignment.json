@@ -1,0 +1,254 @@
+{
+  "scope": "Local Jupiter development comparison against the supplied unsharpened conventional stack; not ground truth or scientific qualification.",
+  "selection": "All 3341 frames surviving cached quality/shape screening; no extra frame rejection.",
+  "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0",
+  "controls": {
+    "pure_blur_false_motion_rms_px": {
+      "gradient_matcher": 0.01570403960105749,
+      "blur_projected_matcher": 0.001460646249523677
+    },
+    "spatial_motion_error_ratio": 0.1843806001662171,
+    "cuda_cpu_displacement_max_difference_px": 3.0531133177191805e-15,
+    "stripe_ambiguity": "Reject one-dimensional texture rather than inventing the unconstrained motion component.",
+    "boundary_safeguard": "Fall back to global alignment if any coordinate Jacobian falls below 0.25."
+  },
+  "development_history": [
+    {
+      "candidate": "blur-projected gradient matcher",
+      "frames": 128,
+      "outcome": "rejected: both image metrics regress",
+      "baseline": {
+        "relative_rmse": 0.006628006654294201,
+        "highpass_correlation_sigma3": 0.748518571099233,
+        "n_used": 128,
+        "n_rejected": 0,
+        "reference_index": 566,
+        "wall_s": 3.3599952979998307
+      },
+      "candidate_metrics": {
+        "relative_rmse": 0.007049170521598978,
+        "highpass_correlation_sigma3": 0.7444036982912151,
+        "n_used": 128,
+        "n_rejected": 0,
+        "reference_index": 566,
+        "wall_s": 18.70656150700006
+      }
+    },
+    {
+      "candidate": "normalized patches",
+      "frames": 128,
+      "outcome": "both image metrics improve in bounded pilot",
+      "baseline": {
+        "relative_rmse": 0.006628006654294201,
+        "highpass_correlation_sigma3": 0.748518571099233,
+        "n_used": 128,
+        "n_rejected": 0,
+        "reference_index": 566,
+        "wall_s": 3.3599952979998307
+      },
+      "candidate_metrics": {
+        "relative_rmse": 0.00660930557232332,
+        "highpass_correlation_sigma3": 0.755888587150267,
+        "n_used": 128,
+        "n_rejected": 0,
+        "reference_index": 566,
+        "wall_s": 25.166271841999787
+      }
+    },
+    {
+      "candidate": "normalized patches with corrected reliability interpolation",
+      "frames": 512,
+      "outcome": "both image metrics improve; training frames disjoint from evaluation",
+      "baseline": {
+        "relative_rmse": 0.005718395607839774,
+        "highpass_correlation_sigma3": 0.8830042666616648,
+        "n_used": 512,
+        "n_rejected": 0,
+        "reference_index": 1638,
+        "wall_s": 23.30672189200004
+      },
+      "candidate_metrics": {
+        "relative_rmse": 0.005700022044399586,
+        "highpass_correlation_sigma3": 0.8874517560032366,
+        "n_used": 512,
+        "n_rejected": 0,
+        "reference_index": 1638,
+        "wall_s": 101.95991404400002
+      }
+    },
+    {
+      "candidate": "normalized patches, full capture",
+      "outcome": "slight improvement, but diagonal-stripe control exposes ambiguity",
+      "baseline": {
+        "relative_rmse": 0.005310286026217639,
+        "highpass_correlation_sigma3": 0.9618748827472856,
+        "n_used": 3341,
+        "n_rejected": 408,
+        "reference_index": 1947,
+        "wall_s": 79.59075535700003
+      },
+      "candidate_metrics": {
+        "relative_rmse": 0.005306993012649448,
+        "highpass_correlation_sigma3": 0.963611664902289,
+        "n_used": 3341,
+        "n_rejected": 408,
+        "reference_index": 1947,
+        "wall_s": 228.94090512399998
+      }
+    },
+    {
+      "candidate": "two-dimensional texture guard",
+      "outcome": "both image metrics improve; boundary collapse control then requires additional safeguard",
+      "baseline": {
+        "relative_rmse": 0.005310286026217639,
+        "highpass_correlation_sigma3": 0.9618748827472856,
+        "n_used": 3341,
+        "n_rejected": 408,
+        "reference_index": 1947,
+        "wall_s": 79.59075535700003
+      },
+      "candidate_metrics": {
+        "relative_rmse": 0.005297227071678898,
+        "highpass_correlation_sigma3": 0.9636698110138234,
+        "n_used": 3341,
+        "n_rejected": 408,
+        "reference_index": 1947,
+        "wall_s": 241.63082659800057
+      }
+    }
+  ],
+  "baseline": {
+    "relative_rmse": 0.005310286026217639,
+    "highpass_correlation_sigma3": 0.9618748827472856,
+    "n_used": 3341,
+    "n_rejected": 408,
+    "reference_index": 1947,
+    "wall_s": 79.59075535700003
+  },
+  "application": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 3341,
+    "n_rejected": 408,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -18.222912975296918,
+      -4.518164626122585
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.23747584093792,
+        15.870219029923371
+      ],
+      [
+        233.26808824473187,
+        16.74921072840808
+      ],
+      [
+        232.95522125928161,
+        51.45421867181186
+      ]
+    ],
+    "relative_rmse": 0.005297227071678063,
+    "highpass_correlation_sigma3": 0.9636698110138382,
+    "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches",
+    "wall_s": 256.85525941300057,
+    "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+    "comparison_source_sha256": "4c4415ddaade44c2be026fb4355772df555a1dadd63fe551de9c6bb044f32153",
+    "local_alignment": {
+      "version": 1,
+      "enabled": true,
+      "template_candidates": [
+        1947,
+        566,
+        569,
+        574,
+        1305,
+        1638,
+        1949,
+        1598,
+        579,
+        567,
+        576,
+        1643,
+        1948,
+        2120,
+        1946,
+        1599,
+        517,
+        1950,
+        1955,
+        568,
+        1597,
+        565,
+        1304,
+        518,
+        575,
+        1952,
+        1636,
+        1451,
+        572,
+        573,
+        577,
+        1585,
+        571,
+        1954,
+        578,
+        1640,
+        1637,
+        1654,
+        544,
+        1588,
+        558,
+        589,
+        1641,
+        1594,
+        1459,
+        1634,
+        1635,
+        546,
+        1646,
+        1633,
+        580,
+        548,
+        545,
+        564,
+        1821,
+        562,
+        2119,
+        1944,
+        1471,
+        1649,
+        1469,
+        1306,
+        547,
+        1704
+      ],
+      "window_px": 65,
+      "step_px": 32,
+      "maximum_residual_px": 3,
+      "anchor_index": 1947,
+      "template": "mean of valid aligned candidates, origin anchored to the selected best frame"
+    }
+  },
+  "validation": {
+    "regression": {
+      "passed": 1039,
+      "skipped": 77
+    },
+    "focused_with_cuda": {
+      "passed": 30
+    }
+  },
+  "limits": [
+    "Single-capture development evidence; conventional reference is not ground truth.",
+    "Full-capture template uses up to 64 selected frames also included in the stack; 128/512-frame pilots used disjoint template frames.",
+    "Timing measurements were not isolated hardware benchmarks.",
+    "The gain is modest, and this does not establish superiority to every quality cutoff or complete scientific convergence."
+  ],
+  "decision": "Expose as experimental opt-in for geometry_mode=none. Keep global alignment and all screened frames as defaults. Continue work that improves contributions from more frames, without automatic sharpening.",
+  "relative_rmse_reduction": 0.0024591810074076274,
+  "fine_detail_correlation_change": 0.0017949282665525867,
+  "application_commit": "bdd2697",
+  "boundary_safeguard_leaves_jupiter_image_bitwise_unchanged": true
+}

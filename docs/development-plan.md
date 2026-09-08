@@ -13,20 +13,28 @@ quality-range midpoint cutoff (strictly above capture worst/best midpoint) and
 ranked frame-count selection are comparison controls to steer improvements,
 not a replacement objective or a default rejection policy.
 
-Next, address atmospheric deformation and blur so additional frames contribute
-useful information. Compare the all-screened result against the optional cutoff
-under the same reference and settings, without sharpening. A first local
-registration pilot using a single noisy frame regressed on Jupiter (128 frames:
-matched RMS 0.006628 global versus 0.009514 local); it was not adopted.
-The [disjoint-frame template pilot](../results/real-data/jupiter-template-pilot.json)
-now evaluates 64 independent high-quality template frames against the same 128
-evaluation frames. Template-only global alignment improves RMS by just 0.064%;
-template-based local warping still worsens RMS and fine-detail correlation.
-Neither is integrated. Next examine local displacement reliability and separation
-of brightness/blur changes from motion before another bounded image comparison.
-Recorded SER exposure now supplies geometry midpoint timing automatically where
-the capture header includes it; manual values retain priority. Require actual image improvement before integration; defer broad
-qualification matrices and reporting work that do not change application output.
+The [normalized local patch matcher](../results/real-data/jupiter-local-alignment.json)
+is now available as an experimental option. It improves both paired image
+metrics in 128/512-frame pilots and the full 3,341-screened-frame Jupiter run,
+without extra rejection or sharpening. The full application gain is modest:
+0.246% lower matched RMS and fine-detail correlation 0.96367 versus 0.96187.
+Keep global alignment as the default. Preserve the rejected gradient and
+single-frame-reference approaches; separating a blur direction alone did not
+resolve their real-image regression. The adopted optional matcher excludes
+one-dimensional texture and rejects collapsing/folding coordinate fields.
+Thirty focused CPU/CUDA controls pass, alongside 1,039 default regression tests.
+
+Next compare all-screened and optional midpoint-cutoff stacking under this same
+local matcher and reference, then test whether local quality/reliability weighting
+can improve contributions from additional frames. Use controlled spatially varying
+blur/noise before real-image adoption. Retain common colour weights, frame counts
+and the best-frame anchor; do not add automatic sharpening or tune defaults from
+one capture. Extend to local mono/other-planet captures where meaningful comparisons
+are available. Keep experiments bounded and adopt only demonstrated output gains.
+Do not expand reporting tools or the deferred broad numerical matrix.
+
+Recorded SER exposure already supplies geometry midpoint timing where the
+capture header includes it; manual values retain priority.
 
 ## Execution progress (2026-09-09)
 
@@ -134,15 +142,13 @@ and qualification where incomplete, not wholesale reimplementation.
 
 ## Current priority: application image quality
 
-The user's latest direction prioritizes changes that improve reconstructed
-application images. Best-frame percentage selection is implemented in the GUI
-and CLI, reusing cached quality measurements. The unsharpened Jupiter comparison
-at 25/50/100% by frame count found a 5.2% relative reduction in matched RMS at 50%, with slightly
-lower fine-detail correlation; 25% worsened both metrics. Keep sharpening separate
-and retain 100% as the default. Next implement and evaluate local registration
-against the global-translation baseline, using real Jupiter and controlled
-spatially varying motion. Adopt changes only when image detail improves without
-introducing colour, boundary or noise artifacts; do not expand bookkeeping tools.
+The user's direction prioritizes improved reconstruction from more frames.
+Optional quality-range and frame-count comparisons are implemented; 100% remains
+the default. Experimental normalized local patch alignment now improves the full
+screened Jupiter image slightly and passes CPU/CUDA, colour, boundary and resume
+controls. Follow the image-output priority above: matched all-frame/cutoff
+comparisons, then controlled local quality weighting. Keep sharpening separate
+and avoid adopting a change merely because a synthetic control improves.
 
 The second numerical case was interrupted without a terminal report; its four
 completed selection records are preserved and its full-count endpoint remains

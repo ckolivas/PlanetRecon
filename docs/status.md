@@ -2,10 +2,12 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 1,020 passed, 66 skipped. Optional quality-range and
+Latest complete regression: 1,039 passed, 77 skipped. Optional quality-range and
 frame-count selection pass all 35 focused tests with CUDA enabled, including colour,
 geometry, cache reuse and resume checks. Recorded SER exposure has 21 new
 controls covering parsing, automatic/manual timing, GUI updates and exact resume.
+Optional local patch alignment passes 30 focused controls with CUDA enabled,
+including blur/brightness invariance, ambiguity/fold fallback, colour and exact resume.
 The new projection solver
 and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
 
@@ -21,10 +23,16 @@ retains 1,645/3,749 frames (43.88% of the capture after screening), with RMS 0.5
 and fine-detail correlation 0.96124 versus all-screened 0.96187. Different estimators
 need not reproduce AutoStakkert's retained percentage. These are comparison
 controls, not evidence that the more-frame reconstruction goal has been achieved.
-The [disjoint-template pilot](../results/real-data/jupiter-template-pilot.json) is
-now complete: template-only global alignment improves RMS by just 0.064%;
-local warping still regresses. Neither candidate is adopted. Next investigate
-displacement reliability and separation of photometric/blur changes from motion.
+The [disjoint-template gradient pilot](../results/real-data/jupiter-template-pilot.json)
+regressed and remains rejected. A different normalized patch matcher now has
+[successful paired 128/512/full-capture comparisons](../results/real-data/jupiter-local-alignment.json).
+The final application retains all 3,341 screened Jupiter frames: RMS falls from
+0.005310286 to 0.005297227 (0.246% relative improvement), and fine-detail correlation
+rises from 0.9618749 to 0.9636698. No sharpening or extra frame rejection is used.
+**Local patch alignment (experimental)** is available in GUI/CLI for Motion model
+none. It uses a cleaner template anchored to the best selected frame, rejects
+ambiguous texture and falls back globally for coordinate folds. The improvement
+is modest and processing is slower; global alignment remains the default.
 
 SER capture-settings headers now supply exposure automatically (Jupiter 20 ms;
 Mars 3 ms; local Saturn 13–33 ms). Blank Exposure uses metadata; manual seconds
@@ -33,7 +41,7 @@ effective value, with its origin retained in output provenance.
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|
-| Capture baseline | SER/native AVI, mono/RGB/raw CFA output, translation, nearest-neighbour colour previews; best-frame percentage selection from cached quality in GUI/CLI | Independent nights/cameras and matched conventional-stack comparisons remain |
+| Capture baseline | SER/native AVI, mono/RGB/raw CFA output, translation, nearest-neighbour colour previews; optional quality-range/count selection and normalized local patch alignment in GUI/CLI | Independent nights/cameras and matched conventional-stack comparisons remain |
 | Preprocessing | Separate optional cache, quality/shape exclusions, best retained reference, SER duration, apparent flattening, geometry hints | Spin may be unresolved; apparent flattening alone is not intrinsic shape |
 | Geometry | Field and surface motion, Saturn globe/rings, coverage, CPU resume | Physical inference and combined atmospheric/geometry accuracy remain experimental |
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
