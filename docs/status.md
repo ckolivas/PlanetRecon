@@ -2,19 +2,26 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 984 passed, 65 skipped. The new frame-percentage
-selection passes all 19 focused tests with CUDA enabled, including colour,
+Latest complete regression: 999 passed, 66 skipped. Optional quality-range and
+frame-count selection pass all 35 focused tests with CUDA enabled, including colour,
 geometry, cache reuse and resume checks. The new projection solver
 and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
 
-Application image improvement: **Best retained frames (%)** now selects the
-sharpest screened frames using the existing cache, in the GUI and CLI. In the
-[unsharpened Jupiter comparison](../results/real-data/jupiter-best-percent.json),
-50% reduced matched RMS from 0.5310% to 0.5035% (about 5.2% relative improvement),
-while fine-detail correlation changed from 0.96187 to 0.96149. At 25%, both
-metrics worsened. The default remains 100%; percentage selection exposes the
-sharpness/noise trade-off rather than imposing a universal optimum. Next target
-local seeing deformation that a single global translation cannot correct.
+Application image goal: improve reconstruction using more frames. Optional
+**Quality range** selection at 50% uses the strict capture worst/best midpoint;
+**Frame count** retains the earlier ranked-count option. Both default to 100%,
+using all screened frames. The GUI displays actual counts and reuses the cache.
+
+The earlier [unsharpened Jupiter comparison](../results/real-data/jupiter-best-percent.json)
+used frame counts: 50% reduced matched RMS from 0.5310% to 0.5035%, while fine-detail
+correlation slightly decreased. The new [quality-range midpoint comparison](../results/real-data/jupiter-quality-range.json)
+retains 1,645/3,749 frames (43.88% of the capture after screening), with RMS 0.5043%
+and fine-detail correlation 0.96124 versus all-screened 0.96187. Different estimators
+need not reproduce AutoStakkert's retained percentage. These are comparison
+controls, not evidence that the more-frame reconstruction goal has been achieved.
+Next address local seeing deformation using a higher signal-to-noise reference
+template anchored to the best frame; the initial single-frame local-warp pilot
+regressed and was not adopted.
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|

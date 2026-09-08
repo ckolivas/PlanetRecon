@@ -1,0 +1,64 @@
+{
+  "scope": "Local unsharpened Jupiter development comparison; reference is not truth; no default percentage is selected automatically.",
+  "rows": [
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 1645,
+      "n_rejected": 2104,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -18.212745494045844,
+        -4.514372243591226
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.3645557407733,
+          -27.397998681385463
+        ],
+        [
+          233.25208162460328,
+          -13.631044369972543
+        ],
+        [
+          232.7649801983208,
+          45.90152117782568
+        ]
+      ],
+      "relative_rmse": 0.0050425527164598685,
+      "highpass_correlation_sigma3": 0.961238080580311,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+      "stack_percent": 50,
+      "selection_mode": "quality_range",
+      "selection": {
+        "percent": 50,
+        "mode": "quality_range",
+        "screened_frames": 3341,
+        "selected_frames": 1645,
+        "additional_exclusions": 1696,
+        "ranking": "strictly above capture quality-range cutoff; screening still applies",
+        "quality_minimum": 0.8881322317450328,
+        "quality_maximum": 1.4787222549660037,
+        "quality_cutoff": 1.1834272433555182
+      },
+      "wall_s": 57.6347873779996,
+      "cached_screened_frames": 3341,
+      "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0"
+    }
+  ],
+  "application_source_hash": "ac848f2d9f1230a611d9e5f2781b1df4a5ab1655c3b4d660323fb1efedb190a4",
+  "comparison_source_sha256": "4c4415ddaade44c2be026fb4355772df555a1dadd63fe551de9c6bb044f32153",
+  "default_stack_percent": 100,
+  "previous_frame_count_comparison": "jupiter-best-percent.json",
+  "decision": "Keep midpoint selection optional. The goal remains better reconstruction using more frames. This estimator retains 1645/3749 (43.88%) at the midpoint after screening, not the 75% reported for AutoStakkert. Against the prior all-screened result, matched RMS improves slightly while fine-detail correlation decreases; this does not establish better reconstruction from more frames.",
+  "application_commit": "71c6918",
+  "validation": {
+    "regression": {
+      "passed": 999,
+      "skipped": 66
+    },
+    "selection_with_cuda": {
+      "passed": 35
+    }
+  }
+}

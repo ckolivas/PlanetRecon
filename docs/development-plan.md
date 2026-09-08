@@ -5,6 +5,24 @@ This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
 
+## Image-output priority
+
+The objective is better reconstruction using more frames than conventional
+quality-cutoff stacking. All screened frames remain the default. The optional
+quality-range midpoint cutoff (strictly above capture worst/best midpoint) and
+ranked frame-count selection are comparison controls to steer improvements,
+not a replacement objective or a default rejection policy.
+
+Next, address atmospheric deformation and blur so additional frames contribute
+useful information. Compare the all-screened result against the optional cutoff
+under the same reference and settings, without sharpening. A first local
+registration pilot using a single noisy frame regressed on Jupiter (128 frames:
+matched RMS 0.006628 global versus 0.009514 local); it was not adopted.
+The next bounded candidate should use a higher signal-to-noise aligned template,
+anchored to the highest-quality frame, before testing local motion or robust
+weighting. Require actual image improvement before integration; defer broad
+qualification matrices and reporting work that do not change application output.
+
 ## Execution progress (2026-09-09)
 
 - **P0:** stage checkpoints plus atomic iterate/momentum resume now cover the new
@@ -114,7 +132,7 @@ and qualification where incomplete, not wholesale reimplementation.
 The user's latest direction prioritizes changes that improve reconstructed
 application images. Best-frame percentage selection is implemented in the GUI
 and CLI, reusing cached quality measurements. The unsharpened Jupiter comparison
-at 25/50/100% found a 5.2% relative reduction in matched RMS at 50%, with slightly
+at 25/50/100% by frame count found a 5.2% relative reduction in matched RMS at 50%, with slightly
 lower fine-detail correlation; 25% worsened both metrics. Keep sharpening separate
 and retain 100% as the default. Next implement and evaluate local registration
 against the global-translation baseline, using real Jupiter and controlled
