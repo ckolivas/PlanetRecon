@@ -1,6 +1,6 @@
 # Current implementation and qualification status
 
-Updated 2026-09-08. This matrix supersedes current-status wording in the historical
+Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
 
 | Area | Implemented | Qualification / remaining work |
@@ -11,7 +11,7 @@ R10 roadmap; archived experiments and their original decisions remain unchanged.
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
 | Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Shared CPU/CUDA operators pass all 500-frame parity; bounded parallel independent CPU verification is qualified; full reconstruction performance and production integration remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; dense/noise/sensitivity controls and the 12-case, 11-frame pilot pass; full 60-selection manifest is frozen and the 25-frame endpoint passes both solvers; all 500-frame fits remain incomplete in both tested solvers |
+| Scientific reconstruction | Legacy Fourier estimators, blind prototypes and independently tested constrained Newton-CG | Extended forward model matches all 3,000 development frames; dense/noise/sensitivity controls and the 12-case, 11-frame pilot pass; the 25-frame endpoint passes all three tested solvers; all 500-frame fits remain incomplete |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
 | Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | Reference sensitivity/family/endpoint runners retain exact iterate/momentum resume and incomplete outcomes; alternative solver has completed-stage resume only |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
@@ -32,6 +32,18 @@ and [three-scaling comparison](../results/p2-frozen-jacobi/DECISION.md). All thr
 at 0.149922. Better inner correction alone cannot certify this saved iterate with
 the tested bound family. Constrained solver progress remains necessary; none of
 these diagnostics updates a scene or qualifies the incomplete 500-frame fits.
+The subsequent [Newton-CG endpoint study](../results/p2-selection-endpoints-newton/DECISION.md)
+does update feasible scenes and passes 25 frames, but both 500-frame fits stop at
+their wall limits with bound 0.167701. Its successful descent and identical cap
+outputs do not establish convergence. A [retained-spectrum cache](../results/p5-retained-cache/DECISION.md)
+passes full-count parity and reduces local product time about 11%; production
+defaults remain unchanged. Coupled-curvature preconditioning remains next.
+
+Independent-data preparation: [seven-capture intake](../results/real-data/README.md)
+records whole-file hashes and unknown permissions without publishing pixels or
+private paths. Three mono Saturn files are available. OSC Saturn and both OSC
+Mars files contain duplicate timestamps; valid motion timing remains unresolved
+for those captures. Camera/night independence and true mono Mars are still missing.
 Scientific setting limits: [unbracketed prior](../results/p2-prior-extension/DECISION.md),
 [domain](../results/p2-domain-sensitivity/DECISION.md),
 [sampling](../results/p2-sampling-sensitivity/DECISION.md),

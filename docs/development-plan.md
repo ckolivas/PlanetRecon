@@ -1,11 +1,11 @@
 # Development plan
 
-Updated 2026-09-08 with full-count endpoint and frozen-iterate conditioning evidence.
+Updated 2026-09-09 with constrained-curvature, cache and capture-intake evidence.
 This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
 
-## Execution progress (2026-09-08)
+## Execution progress (2026-09-09)
 
 - **P0:** stage checkpoints plus atomic iterate/momentum resume now cover the new
   solver and sensitivity/family runners. Exact identities bind input, protocol,
@@ -24,7 +24,11 @@ completed features and archived scientific results remain intact.
   The single declared weak-prior extension again selected its weakest endpoint;
   the prior optimum is unbracketed and the extension has stopped as declared. The full
   observed selection manifest is now frozen; the 25-frame endpoint passes both
-  solvers. Both remain incomplete at 500 frames under the declared budgets.
+  original solvers. A safeguarded Newton-CG implementation now also passes the
+  25-frame endpoint (13 updates, 293 products, independent bound 6.29459e-6).
+  All three solvers remain incomplete at 500 frames under the declared budgets.
+  Newton-CG reaches nine updates and bound 0.167701 in each 300-second fit;
+  identical terminal images across caps do not qualify an unconverged solve.
   Three frozen-iterate 32-product probes (identity, existing majorizer and true
   Hessian diagonal) now pass independent CPU/CUDA checks but do not tighten the
   saved iterate's error bound. An algebraic limit rules out qualifying that
@@ -36,7 +40,16 @@ completed features and archived scientific results remain intact.
   relative solution difference. This is a measured pilot, not a whole-job or
   500-frame reconstruction performance guarantee. Full-count operator parity and
   bounded parallel independent CPU verification now pass, with archived resource
-  profiles; translated exposure fast paths remain absent.
+  profiles. Fixed cache admission at 3 GiB now preserves 181 PSF spectra across
+  full sweeps and reduces local median product time from 1.35 to 1.20 seconds
+  with unchanged arithmetic. Larger LRU alone still has zero reuse. Full spectra
+  require 8.86 GB; available-memory headroom remains part of each new protocol.
+  Translated exposure fast paths remain absent.
+- **P7 intake:** all seven local SER files are now hashed and inventoried without
+  image pixels or private filenames. IR642/L3 remain RGGB; three Saturn R/G/B
+  files are mono. OSC Saturn and both Mars files contain duplicate timestamps,
+  so the current timing contract reports no valid duration. Independent group
+  provenance and distribution permissions remain unknown; true mono Mars is absent.
 - **P3/P4/P6–P8:** likelihood/phase qualification, scientific requalification,
   production integration, independent captures and release refresh remain.
   Q3 is not authorized. Windows/macOS runtime tests remain excluded.
@@ -49,7 +62,10 @@ See [current status](status.md), [operator evidence](../results/p1-scene-detecto
 [CPU verifier](../results/p5-parallel-reference/DECISION.md) and
 [endpoint comparison](../results/p2-selection-endpoints-comparison/DECISION.md),
 [fixed-iterate certificate limits](../results/p2-frozen-conditioning/DECISION.md)
-and [Hessian-diagonal comparison](../results/p2-frozen-jacobi/DECISION.md).
+and [Hessian-diagonal comparison](../results/p2-frozen-jacobi/DECISION.md),
+[Newton-CG endpoints](../results/p2-selection-endpoints-newton/DECISION.md),
+[retained-cache profile](../results/p5-retained-cache/DECISION.md) and
+[capture intake](capture-intake.md).
 
 ## Direction
 
@@ -342,14 +358,16 @@ full qualification is not supported by the current evidence.
    diagnostic has now retained iteration/product traces and compared three
    diagonal scalings on the same frozen iterate. None tightened its bound, and
    the algebraic floor rules out fixing certification only with a more accurate
-   inner solve. Next implement a safeguarded constrained curvature update:
-   account for active bounds, release cells with violating gradients, and retain
-   a valid projected-step fallback. First verify dense constrained optima,
-   feasibility, descent and independent residual bounds, including incorrect
-   initial active sets. Only then declare a bounded 25/500-frame same-objective
-   comparison with explicit product counts, wall budget and original tolerance.
-   Do not adopt an unconstrained correction as a scene or infer a solver winner
-   from these 32-product traces. Keep every alternative comparison and its limits.
+   inner solve. Safeguarded Newton-CG now passes dense optima, feasibility,
+   descent, incorrect-active-set and CPU/CUDA controls; its declared endpoint
+   experiment passes 25 frames but remains wall-limited at 500. Next examine a
+   non-diagonal preconditioner for the coupled blur curvature. Prove positivity
+   and test its application on reduced active sets against dense controls before
+   a new frozen-objective probe. An approximate inverse must never replace the
+   exact forward model or independent certificate. Record inner residual/product
+   progress as well as accepted updates before declaring another fit protocol.
+   Do not infer a solver winner or image accuracy from incomplete fits. Keep
+   every alternative comparison, failed outcome and numerical threshold.
 2. Use the measured resource evidence to choose subsequent execution budgets.
    Shared CUDA passes full 500-frame operator parity, while the small GPU cache
    churns at larger counts. A bounded parallel independent CPU verifier is now
@@ -357,6 +375,10 @@ full qualification is not supported by the current evidence.
    match serial CPU results bit-for-bit. The frozen-iterate studies have now
    adopted it under new identities while preserving historical states. Retain
    these worker and cache scopes in subsequent prospective execution budgets.
+   The new 3 GiB fixed-admission cache passes all 500-frame parity and improves
+   local per-product time by about 11%; adopt it only in a new study identity
+   with the qualified 1 GiB headroom check. A larger LRU cache alone did not help.
+   This modest gain does not justify an unqualified solver or blind budget rise.
 3. Qualify the full 5/10/25/50/100% selection matrix across all seeds, seeing regimes
    and crops, with independent certificates and budget stability. The one-case
    endpoint comparison does not replace the complete family or settle the prior.
