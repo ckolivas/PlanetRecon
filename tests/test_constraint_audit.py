@@ -1,4 +1,6 @@
 import numpy as np
+import json
+from pathlib import Path
 
 from planetrecon.constraint_audit import convolution_matrix, operator_cases, quadratic_oracle
 from planetrecon.estimators import e2a
@@ -55,3 +57,16 @@ def test_warm_stationarity_certifies_active_constraints_against_oracle():
     assert info['converged'] and info['kkt_projection_converged']
     assert info['kkt_residual'] < 1e-6
     np.testing.assert_allclose(fitted, oracle, atol=1e-7)
+
+
+def test_restart_qualification_covers_starts_and_budget_stability():
+    report = json.loads((Path(__file__).resolve().parents[1]/
+                         'results/r10-constraint-operator-audit-v5/report.json').read_text())
+    assert report['operator_checks_passed'] and not report['q3_authorized']
+    assert len(report['cases']) == 6
+    for case in report['cases']:
+        for init in ('zero', 'positive_pattern'):
+            a, b = [s for s in case['solves'] if s['initialization'] == init and s['budget'] >= 512]
+            assert a['bounded_check_passed'] and b['bounded_check_passed']
+            assert a['solver']['n_iter'] == b['solver']['n_iter'] < 512
+            assert a['relative_image_error'] == b['relative_image_error']

@@ -284,6 +284,7 @@ def e2a(
     x0: np.ndarray | None = None,
     tv_mu: float = 0.0,
     tv_eps: float = C.E2B_TV_EPS,
+    adaptive_restart: bool = True,
 ) -> tuple[np.ndarray, dict]:
     """Positivity + spectral-support reconstruction of the E1 quadratic (§8.3).
 
@@ -323,6 +324,7 @@ def e2a(
     n_iter = 0
     stationarity_checks = 0
     inner_projection_failures = 0
+    momentum_restarts = 0
     for n_iter in range(1, maxiter + 1):
         of = np.fft.fft2(y)
         grad = np.fft.ifft2((den * of - num) * support).real
@@ -339,7 +341,15 @@ def e2a(
         dual_q = proj_info["q"]
         inner_projection_failures += int(not proj_info["converged"])
         t_next = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
-        y = o_next + ((t - 1.0) / t_next) * (o_next - o)
+        # Composite gradient restart (O'Donoghue/Candes, arXiv:1204.3982):
+        # discard momentum when it points against the projected descent step.
+        # This changes acceleration only, not the objective or stopping tests.
+        if adaptive_restart and np.vdot(y-o_next, o_next-o).real > 0:
+            t_next = 1.0
+            y = o_next.copy()
+            momentum_restarts += 1
+        else:
+            y = o_next + ((t - 1.0) / t_next) * (o_next - o)
         last_delta = float(np.linalg.norm(o_next - o) / max(np.linalg.norm(o_next), 1e-12))
         o = o_next
         t = t_next
@@ -370,6 +380,8 @@ def e2a(
         ),
         "stationarity_checks": stationarity_checks,
         "inner_projection_failures": inner_projection_failures,
+        "momentum_restarts": momentum_restarts,
+        "adaptive_restart": bool(adaptive_restart),
         "tv_mu": float(tv_mu),
         "positivity_violation": feas["positivity_violation"],
         "out_of_support": feas["out_of_support"],

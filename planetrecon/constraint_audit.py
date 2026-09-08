@@ -127,13 +127,14 @@ def run(directory):
     directory.mkdir(parents=True, exist_ok=False)
     protocol = {'status': 'diagnostic', 'q3_authorized': False, 'seeds': list(C.DEV_SEEDS),
                 'image_size': 8, 'support_radii': [.26, 1.], 'regularizers': [.03],
-                'budgets': [32, 128, 512], 'initializations': ['zero', 'positive_pattern'],
-                'solver_tolerance': 1e-6, 'oracle_relative_image_tolerance': 1e-4,
+                'budgets': [128, 512, 1024], 'initializations': ['zero', 'positive_pattern'],
+                'solver_tolerance': 1e-8, 'oracle_relative_image_tolerance': 1e-4,
                 'oracle_relative_objective_gap_tolerance': 1e-8,
                 'operator_relative_tolerance': 1e-11,
                 'oracle': 'Dense spatial convolution, real trigonometric basis, SLSQP positivity constraints',
                 'limits': 'Small known-transfer quadratic only; no TV, atmospheric fit, real-capture qualification or gate authorization.',
-                'design_revision': 'v3 checks warm stationarity projection after v2 isolated cold-projection failures. Replace constant initialization, whose DC difference vanishes at the first step, with a positive cosine pattern. Initial pre-v2 12-case attempt was stopped for cost; no completed-family claim.'}
+                'design_revision': 'v5 retains v4 restart and tightens solver tolerance from 1e-6 to 1e-8 after v4 stopped within its tolerance but one oracle image error exceeded 1e-4; compare 128/512/1024 budgets without loosening any acceptance tolerance.',
+                'restart_reference': 'https://arxiv.org/abs/1204.3982'}
     (directory/'protocol.json').write_text(json.dumps(protocol, indent=2)+'\n')
     started = time.monotonic()
     operators = operator_cases()

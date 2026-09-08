@@ -2454,3 +2454,12 @@ the separate assessment implementation, not scientific convergence or Q3.
 Local regression validation: 512 tests passed and 41 skipped; the subsequently
 added assessment-manifest integrity check and its 18 targeted companions also
 pass. No new GPU operator or native runtime qualification is claimed here.
+
+**Object convergence (2026-09-08):** estimator 1.5 adds composite gradient
+momentum restart. The v4/v5 independent-oracle audits preserve the 1e-4 image
+and 1e-8 objective acceptance tolerances. At the tighter 1e-8 solver tolerance,
+all six cases pass from both starts within 369 iterations, including full support;
+512/1024 caps give identical outputs. Defaults are frozen at 512/1e-8. Reports in
+`results/r10-constraint-operator-audit-v4` and `-v5` retain the intermediate
+failure and successful refinement. This completes the bounded quadratic controls,
+not atmospheric or full-resolution scientific acceptance.

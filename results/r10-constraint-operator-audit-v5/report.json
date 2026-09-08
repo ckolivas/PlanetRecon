@@ -1,0 +1,1584 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "3b9243c1d8d800457169bb5359f48c9d0dd370399e15440f4d4e6eb1f6bbf9b8",
+  "estimator_operator_version": "1.5",
+  "operators": [
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 4.1230164515653413e-16,
+      "adjoint_relative_error": 2.725093620809356e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.3089335564211195e-16,
+      "adjoint_relative_error": 2.8143817827911796e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 5.450270339719593e-16,
+      "adjoint_relative_error": 5.371222520804786e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 8.639580683613097e-16,
+      "adjoint_relative_error": 6.592716810783485e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 2.2535353368325306e-16,
+      "adjoint_relative_error": 2.8589440560995e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.602868430836081e-16,
+      "adjoint_relative_error": 4.464388323884342e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.0227054952620494e-16,
+      "adjoint_relative_error": 4.546320839406516e-16
+    },
+    {
+      "shape": [
+        12,
+        16
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 6.345508802635581e-16,
+      "adjoint_relative_error": 7.848264515823836e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.3168222204961943e-16,
+      "adjoint_relative_error": 2.8923937161054696e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.4225530145571616e-16,
+      "adjoint_relative_error": 3.006312080682258e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 5.856648884440835e-16,
+      "adjoint_relative_error": 4.2556935816948904e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        3,
+        5
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 7.237720761245286e-16,
+      "adjoint_relative_error": 6.203458062656682e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.182356832914729e-16,
+      "adjoint_relative_error": 2.7330406159469507e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 2,
+      "crop_size": 4,
+      "origin": [
+        1,
+        1
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.294981740890814e-16,
+      "adjoint_relative_error": 3.409830377285391e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 3.965962257825243e-16,
+      "adjoint_relative_error": 4.495807326995223e-16
+    },
+    {
+      "shape": [
+        16,
+        12
+      ],
+      "kernel_shape": [
+        4,
+        4
+      ],
+      "bin_factor": 4,
+      "crop_size": 3,
+      "origin": [
+        0,
+        0
+      ],
+      "shift": [
+        1.25,
+        -0.75
+      ],
+      "flux": 3.5,
+      "forward_relative_error": 7.453264361912051e-16,
+      "adjoint_relative_error": 9.32942327230048e-16
+    }
+  ],
+  "operator_checks_passed": true,
+  "cases": [
+    {
+      "seed": 1001,
+      "support_radius": 0.26,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 15,
+        "positivity_violation": 3.1502578323738817e-14
+      },
+      "oracle_objective": 55.65687418512455,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 27,
+            "rel_delta": 1.48663041517397e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.1118107262907415e-12,
+            "out_of_support": 8.994413335497893e-17,
+            "feasible": true,
+            "kkt_residual": 2.6420219901047057e-11,
+            "grad_norm": 12.996526505968376,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 6.793327822986973e-10,
+          "relative_objective_gap": 7.393072361736213e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 27,
+            "rel_delta": 1.48663041517397e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.1118107262907415e-12,
+            "out_of_support": 8.994413335497893e-17,
+            "feasible": true,
+            "kkt_residual": 2.6420219901047057e-11,
+            "grad_norm": 12.996526505968376,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 6.793327822986973e-10,
+          "relative_objective_gap": 7.393072361736213e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 27,
+            "rel_delta": 1.48663041517397e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.1118107262907415e-12,
+            "out_of_support": 8.994413335497893e-17,
+            "feasible": true,
+            "kkt_residual": 2.6420219901047057e-11,
+            "grad_norm": 12.996526505968376,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 6.793327822986973e-10,
+          "relative_objective_gap": 7.393072361736213e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 29,
+            "rel_delta": 1.5660973602931975e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 27,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3143930388537228e-12,
+            "out_of_support": 1.3154251090362301e-16,
+            "feasible": true,
+            "kkt_residual": 9.037244852248474e-11,
+            "grad_norm": 12.996526505564129,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 7.438975996387262e-10,
+          "relative_objective_gap": -4.5435925635329273e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 29,
+            "rel_delta": 1.5660973602931975e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 27,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3143930388537228e-12,
+            "out_of_support": 1.3154251090362301e-16,
+            "feasible": true,
+            "kkt_residual": 9.037244852248474e-11,
+            "grad_norm": 12.996526505564129,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 7.438975996387262e-10,
+          "relative_objective_gap": -4.5435925635329273e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 29,
+            "rel_delta": 1.5660973602931975e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 27,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3143930388537228e-12,
+            "out_of_support": 1.3154251090362301e-16,
+            "feasible": true,
+            "kkt_residual": 9.037244852248474e-11,
+            "grad_norm": 12.996526505564129,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 7.438975996387262e-10,
+          "relative_objective_gap": -4.5435925635329273e-13,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 4.321572274184824e-09,
+        "normal_relative_residual": 3.682353133790043e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 4.002766292483203e-10
+      }
+    },
+    {
+      "seed": 1001,
+      "support_radius": 1.0,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 38,
+        "positivity_violation": 3.677613769070831e-15
+      },
+      "oracle_objective": 44.54844119132592,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 4.354103560540548e-05,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 2,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.355138688025663e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 2.78105302025313e-06,
+            "grad_norm": 6.584749520051463,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.0007892398793126728,
+          "relative_objective_gap": 2.5745246154771953e-08,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 308,
+            "rel_delta": 9.261188535034206e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.6653345369377348e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 9.214190861641592e-10,
+            "grad_norm": 6.584270979643254,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.971306257991304e-07,
+          "relative_objective_gap": -1.913986797540608e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 308,
+            "rel_delta": 9.261188535034206e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.6653345369377348e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 9.214190861641592e-10,
+            "grad_norm": 6.584270979643254,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.971306257991304e-07,
+          "relative_objective_gap": -1.913986797540608e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 4.351271652087654e-05,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 2,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3877787807814457e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 2.7799578530685114e-06,
+            "grad_norm": 6.584749310909792,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.0007890262616249122,
+          "relative_objective_gap": 2.572240048935871e-08,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 308,
+            "rel_delta": 9.271476436362514e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 9.22449855504821e-10,
+            "grad_norm": 6.5842709793668766,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.9787309584539654e-07,
+          "relative_objective_gap": -1.913986797540608e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 308,
+            "rel_delta": 9.271476436362514e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 9.22449855504821e-10,
+            "grad_norm": 6.5842709793668766,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.9787309584539654e-07,
+          "relative_objective_gap": -1.913986797540608e-15,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 4.321572274184824e-09,
+        "normal_relative_residual": 3.682353133790043e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 4.002766292483203e-10
+      }
+    },
+    {
+      "seed": 1002,
+      "support_radius": 0.26,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 12,
+        "positivity_violation": 5.715566908648384e-14
+      },
+      "oracle_objective": 76.21268424379336,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 36,
+            "rel_delta": 6.668374814970308e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 34,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3999912340523224e-12,
+            "out_of_support": 1.2634185289228991e-16,
+            "feasible": true,
+            "kkt_residual": 3.615995885877542e-11,
+            "grad_norm": 32.465464260134,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.4682079658767222e-11,
+          "relative_objective_gap": 1.1791927565686848e-12,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 36,
+            "rel_delta": 6.668374814970308e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 34,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3999912340523224e-12,
+            "out_of_support": 1.2634185289228991e-16,
+            "feasible": true,
+            "kkt_residual": 3.615995885877542e-11,
+            "grad_norm": 32.465464260134,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.4682079658767222e-11,
+          "relative_objective_gap": 1.1791927565686848e-12,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 36,
+            "rel_delta": 6.668374814970308e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 34,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.3999912340523224e-12,
+            "out_of_support": 1.2634185289228991e-16,
+            "feasible": true,
+            "kkt_residual": 3.615995885877542e-11,
+            "grad_norm": 32.465464260134,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.4682079658767222e-11,
+          "relative_objective_gap": 1.1791927565686848e-12,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 43,
+            "rel_delta": 3.02483303000955e-11,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 41,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.536604177232448e-12,
+            "out_of_support": 9.587781687930849e-17,
+            "feasible": true,
+            "kkt_residual": 1.902848777697556e-12,
+            "grad_norm": 32.46546425999619,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.023135389069792e-11,
+          "relative_objective_gap": -1.5476438772169647e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 43,
+            "rel_delta": 3.02483303000955e-11,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 41,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.536604177232448e-12,
+            "out_of_support": 9.587781687930849e-17,
+            "feasible": true,
+            "kkt_residual": 1.902848777697556e-12,
+            "grad_norm": 32.46546425999619,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.023135389069792e-11,
+          "relative_objective_gap": -1.5476438772169647e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 43,
+            "rel_delta": 3.02483303000955e-11,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 41,
+            "momentum_restarts": 6,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.536604177232448e-12,
+            "out_of_support": 9.587781687930849e-17,
+            "feasible": true,
+            "kkt_residual": 1.902848777697556e-12,
+            "grad_norm": 32.46546425999619,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.023135389069792e-11,
+          "relative_objective_gap": -1.5476438772169647e-13,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 2.4757299828502952e-09,
+        "normal_relative_residual": 2.2125957008520863e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 2.3438250663504466e-10
+      }
+    },
+    {
+      "seed": 1002,
+      "support_radius": 1.0,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 29,
+        "positivity_violation": 1.9539925233402755e-14
+      },
+      "oracle_objective": 49.60886388066151,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 0.0002622679841653958,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 1,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 4.440892098500626e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.0283735849907977e-05,
+            "grad_norm": 10.417293566546002,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.0024292895982638324,
+          "relative_objective_gap": 2.9496521765614493e-07,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 304,
+            "rel_delta": 1.064329501695101e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.0571904034527868e-09,
+            "grad_norm": 10.418012643421422,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.032066299484518e-07,
+          "relative_objective_gap": 5.013014571635437e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 304,
+            "rel_delta": 1.064329501695101e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.0571904034527868e-09,
+            "grad_norm": 10.418012643421422,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.032066299484518e-07,
+          "relative_objective_gap": 5.013014571635437e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 0.00026222297944144586,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 1,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 4.440892098500626e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.0279460757265762e-05,
+            "grad_norm": 10.417293487692028,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.0024284462333707536,
+          "relative_objective_gap": 2.9475077808024894e-07,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 304,
+            "rel_delta": 1.063712096836969e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.056579602327746e-09,
+            "grad_norm": 10.418012643463735,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.031545091062181e-07,
+          "relative_objective_gap": 5.156243559396449e-15,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 304,
+            "rel_delta": 1.063712096836969e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 5,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.220446049250313e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 1.056579602327746e-09,
+            "grad_norm": 10.418012643463735,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 3.031545091062181e-07,
+          "relative_objective_gap": 5.156243559396449e-15,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 2.4757299828502952e-09,
+        "normal_relative_residual": 2.2125957008520863e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 2.3438250663504466e-10
+      }
+    },
+    {
+      "seed": 1003,
+      "support_radius": 0.26,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 27,
+        "positivity_violation": 2.671751708760439e-13
+      },
+      "oracle_objective": 71.026668882612,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 1.3797847338098152e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 23,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4722112418041888e-12,
+            "out_of_support": 1.3507519699827534e-16,
+            "feasible": true,
+            "kkt_residual": 1.16770771332958e-09,
+            "grad_norm": 27.617170650279373,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0409972040666497e-07,
+          "relative_objective_gap": 3.1532250327230514e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 1.3797847338098152e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 23,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4722112418041888e-12,
+            "out_of_support": 1.3507519699827534e-16,
+            "feasible": true,
+            "kkt_residual": 1.16770771332958e-09,
+            "grad_norm": 27.617170650279373,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0409972040666497e-07,
+          "relative_objective_gap": 3.1532250327230514e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 1.3797847338098152e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 23,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4722112418041888e-12,
+            "out_of_support": 1.3507519699827534e-16,
+            "feasible": true,
+            "kkt_residual": 1.16770771332958e-09,
+            "grad_norm": 27.617170650279373,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0409972040666497e-07,
+          "relative_objective_gap": 3.1532250327230514e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 7.959402053719789e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4882539645100223e-12,
+            "out_of_support": 1.3424446826808413e-16,
+            "feasible": true,
+            "kkt_residual": 6.297839555857943e-10,
+            "grad_norm": 27.61717065255929,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0803737661163654e-07,
+          "relative_objective_gap": 1.093224719466926e-12,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 7.959402053719789e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4882539645100223e-12,
+            "out_of_support": 1.3424446826808413e-16,
+            "feasible": true,
+            "kkt_residual": 6.297839555857943e-10,
+            "grad_norm": 27.61717065255929,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0803737661163654e-07,
+          "relative_objective_gap": 1.093224719466926e-12,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 31,
+            "rel_delta": 7.959402053719789e-10,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 24,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 1.4882539645100223e-12,
+            "out_of_support": 1.3424446826808413e-16,
+            "feasible": true,
+            "kkt_residual": 6.297839555857943e-10,
+            "grad_norm": 27.61717065255929,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 1.0803737661163654e-07,
+          "relative_objective_gap": 1.093224719466926e-12,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 9.821458012607106e-09,
+        "normal_relative_residual": 9.15272968314952e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 9.70499730875432e-10
+      }
+    },
+    {
+      "seed": 1003,
+      "support_radius": 1.0,
+      "regularizer": 0.03,
+      "oracle": {
+        "success": true,
+        "message": "Optimization terminated successfully",
+        "n_iter": 32,
+        "positivity_violation": 5.530298441414061e-15
+      },
+      "oracle_objective": 47.24285998994134,
+      "solves": [
+        {
+          "initialization": "zero",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 0.0005627079854315274,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 1,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 3.3306690738754696e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 2.6959585644053683e-05,
+            "grad_norm": 10.971546335277614,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.016258524131217412,
+          "relative_objective_gap": 5.821829784214896e-06,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "zero",
+          "budget": 512,
+          "solver": {
+            "n_iter": 369,
+            "rel_delta": 7.700610043157265e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.7755575615628914e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 7.672519104599688e-09,
+            "grad_norm": 10.97037832059075,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.8066185271013313e-06,
+          "relative_objective_gap": 2.0755495657073064e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "zero",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 369,
+            "rel_delta": 7.700610043157265e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.7755575615628914e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 7.672519104599688e-09,
+            "grad_norm": 10.97037832059075,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.8066185271013313e-06,
+          "relative_objective_gap": 2.0755495657073064e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 128,
+          "solver": {
+            "n_iter": 128,
+            "rel_delta": 0.0005627802389761885,
+            "step": 0.027669320871891043,
+            "converged": false,
+            "termination_reason": "iteration_limit",
+            "stationarity_checks": 1,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 1,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 4.718447854656915e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 2.6964367934194056e-05,
+            "grad_norm": 10.971547783260176,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 0.016261693240969616,
+          "relative_objective_gap": 5.8240565271887175e-06,
+          "bounded_check_passed": false
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 512,
+          "solver": {
+            "n_iter": 369,
+            "rel_delta": 7.70220468805387e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.498001805406602e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 7.67410829556441e-09,
+            "grad_norm": 10.970378320530209,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.8071076233012668e-06,
+          "relative_objective_gap": 2.077053587131732e-13,
+          "bounded_check_passed": true
+        },
+        {
+          "initialization": "positive_pattern",
+          "budget": 1024,
+          "solver": {
+            "n_iter": 369,
+            "rel_delta": 7.70220468805387e-09,
+            "step": 0.027669320871891043,
+            "converged": true,
+            "termination_reason": "converged",
+            "stationarity_checks": 2,
+            "inner_projection_failures": 0,
+            "momentum_restarts": 4,
+            "adaptive_restart": true,
+            "tv_mu": 0.0,
+            "positivity_violation": 2.498001805406602e-16,
+            "out_of_support": 0.0,
+            "feasible": true,
+            "kkt_residual": 7.67410829556441e-09,
+            "grad_norm": 10.970378320530209,
+            "projection_converged": true,
+            "kkt_projection_converged": true,
+            "projection_iters": 1,
+            "projection_method": "dykstra",
+            "estimator_operator_version": "1.5"
+          },
+          "relative_image_error": 2.8071076233012668e-06,
+          "relative_objective_gap": 2.077053587131732e-13,
+          "bounded_check_passed": true
+        }
+      ],
+      "unconstrained": {
+        "cg_info": 0,
+        "n_iter_cap": 200,
+        "n_iter": 39,
+        "normal_residual": 9.821458012607106e-09,
+        "normal_relative_residual": 9.15272968314952e-11,
+        "converged": true,
+        "termination_reason": "converged",
+        "E1_relative_error": 9.70499730875432e-10
+      }
+    }
+  ],
+  "wall_s": 9.346396704990184,
+  "noise_controls": {
+    "constant": {
+      "scalar_variance": 54.0,
+      "variance_rel_rms": 0.0,
+      "weight_rel_rms": 0.0,
+      "true_var_dynamic_range": 1.0,
+      "n_pixels": 64.0
+    },
+    "structured": {
+      "scalar_variance": 93.25463041964822,
+      "variance_rel_rms": 0.8520803626218072,
+      "weight_rel_rms": 0.6078621793933017,
+      "true_var_dynamic_range": 8.224513384693601,
+      "n_pixels": 64.0
+    }
+  }
+}

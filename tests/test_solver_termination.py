@@ -17,11 +17,11 @@ def problem():
 
 def test_acceleration_stagnation_does_not_end_remaining_budget():
     args = problem()
-    _, early = e2a(*args, np.ones((8, 8)), x0=np.zeros((8, 8)), tol=1e-3, maxiter=40)
+    _, early = e2a(*args, np.ones((8, 8)), x0=np.zeros((8, 8)), tol=1e-3, maxiter=40, adaptive_restart=False)
     assert early['rel_delta'] < 1e-3 < early['kkt_residual']
     assert not early['converged']
     assert early['termination_reason'] == 'iteration_limit'
-    _, complete = e2a(*args, np.ones((8, 8)), x0=np.zeros((8, 8)), tol=1e-3, maxiter=300)
+    _, complete = e2a(*args, np.ones((8, 8)), x0=np.zeros((8, 8)), tol=1e-3, maxiter=300, adaptive_restart=False)
     assert complete['n_iter'] > 40
     assert complete['converged']
     assert complete['kkt_residual'] < 1e-3
