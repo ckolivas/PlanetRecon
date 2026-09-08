@@ -1,0 +1,56 @@
+{
+  "fraction": 100,
+  "periodic": {
+    "kind": "periodic_uniform_sampling_inverse_v1",
+    "symbol_min": 6e-07,
+    "symbol_max": 0.01435789411857541,
+    "workers": {
+      "workers": 8,
+      "peak_pending_frames": 8,
+      "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+    },
+    "scope": "Approximate positive inverse for preconditioning only; finite crop, spatial weights and sampling aliases remain in the exact Hessian."
+  },
+  "window": {
+    "kind": "window_averaged_periodic_inverse_v1",
+    "symbol_min": 6e-07,
+    "symbol_max": 0.004030717647319413,
+    "workers": {
+      "workers": 8,
+      "peak_pending_frames": 8,
+      "scope": "At most workers pending per-frame results plus accumulator and worker workspaces; no retained PSF spectra."
+    },
+    "scope": "Positive inverse candidate with conserved observation density; aliases and finite-boundary coupling remain in the exact Hessian.",
+    "window_fraction": 0.2807017543859649
+  },
+  "frequencies": [
+    {
+      "ky": 0,
+      "kx": 0,
+      "independent_energy": 0.004027388674999134,
+      "periodic_symbol": 0.01435789411857541,
+      "window_symbol": 0.004030717647319413
+    },
+    {
+      "ky": 1,
+      "kx": 0,
+      "independent_energy": 0.003919947354483118,
+      "periodic_symbol": 0.013971489101225542,
+      "window_symbol": 0.003922253081045766
+    },
+    {
+      "ky": 0,
+      "kx": 1,
+      "independent_energy": 0.0038923089691544816,
+      "periodic_symbol": 0.013865920756292293,
+      "window_symbol": 0.0038926198614153804
+    },
+    {
+      "ky": 128,
+      "kx": 114,
+      "independent_energy": 6.000000004054181e-07,
+      "periodic_symbol": 6e-07,
+      "window_symbol": 6e-07
+    }
+  ]
+}

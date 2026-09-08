@@ -1,0 +1,251 @@
+{
+  "fraction": 100,
+  "state": "zero",
+  "mode": "periodic",
+  "probe": {
+    "reason": "product_budget",
+    "iterations": 32,
+    "trace": [
+      {
+        "iteration": 1,
+        "hessian_products": 1,
+        "elapsed_s": 1.1906910499965306,
+        "recursive_relative_residual": 0.052962845983492095,
+        "direction_rayleigh": 0.01260324277102412
+      },
+      {
+        "iteration": 2,
+        "hessian_products": 2,
+        "elapsed_s": 2.3923922130197752,
+        "recursive_relative_residual": 0.014259924495076218,
+        "direction_rayleigh": 0.0011831075991138652
+      },
+      {
+        "iteration": 3,
+        "hessian_products": 3,
+        "elapsed_s": 3.5908787840162404,
+        "recursive_relative_residual": 0.007042262538175347,
+        "direction_rayleigh": 0.0002865101518326882
+      },
+      {
+        "iteration": 4,
+        "hessian_products": 4,
+        "elapsed_s": 4.790130731998943,
+        "recursive_relative_residual": 0.003778053274993308,
+        "direction_rayleigh": 0.00013315271564323346
+      },
+      {
+        "iteration": 5,
+        "hessian_products": 5,
+        "elapsed_s": 6.002037327998551,
+        "recursive_relative_residual": 0.00270762171967281,
+        "direction_rayleigh": 7.307651967737474e-05
+      },
+      {
+        "iteration": 6,
+        "hessian_products": 6,
+        "elapsed_s": 7.218304917012574,
+        "recursive_relative_residual": 0.002002389661314503,
+        "direction_rayleigh": 3.605833938709453e-05
+      },
+      {
+        "iteration": 7,
+        "hessian_products": 7,
+        "elapsed_s": 8.427648995013442,
+        "recursive_relative_residual": 0.0014485579860282413,
+        "direction_rayleigh": 1.8253375361489388e-05
+      },
+      {
+        "iteration": 8,
+        "hessian_products": 8,
+        "elapsed_s": 9.61451774300076,
+        "recursive_relative_residual": 0.001076789621133798,
+        "direction_rayleigh": 9.719851012516868e-06
+      },
+      {
+        "iteration": 9,
+        "hessian_products": 9,
+        "elapsed_s": 10.811749036016408,
+        "recursive_relative_residual": 0.0008153162208262989,
+        "direction_rayleigh": 5.492640985696532e-06
+      },
+      {
+        "iteration": 10,
+        "hessian_products": 10,
+        "elapsed_s": 12.001229381014127,
+        "recursive_relative_residual": 0.0006754811724433198,
+        "direction_rayleigh": 3.1385720743860014e-06
+      },
+      {
+        "iteration": 11,
+        "hessian_products": 11,
+        "elapsed_s": 13.191217985004187,
+        "recursive_relative_residual": 0.0006128705025899646,
+        "direction_rayleigh": 2.3667624690865296e-06
+      },
+      {
+        "iteration": 12,
+        "hessian_products": 12,
+        "elapsed_s": 14.385730226000305,
+        "recursive_relative_residual": 0.0005571412485237939,
+        "direction_rayleigh": 2.017891853398094e-06
+      },
+      {
+        "iteration": 13,
+        "hessian_products": 13,
+        "elapsed_s": 15.577808189002099,
+        "recursive_relative_residual": 0.0005079866511834787,
+        "direction_rayleigh": 1.5585349885896023e-06
+      },
+      {
+        "iteration": 14,
+        "hessian_products": 14,
+        "elapsed_s": 16.77970035801991,
+        "recursive_relative_residual": 0.00045773096201313994,
+        "direction_rayleigh": 1.2188514506593526e-06
+      },
+      {
+        "iteration": 15,
+        "hessian_products": 15,
+        "elapsed_s": 17.980512762995204,
+        "recursive_relative_residual": 0.0003513112220623114,
+        "direction_rayleigh": 1.076127099926858e-06
+      },
+      {
+        "iteration": 16,
+        "hessian_products": 16,
+        "elapsed_s": 19.182692091009812,
+        "recursive_relative_residual": 0.0003487770451327642,
+        "direction_rayleigh": 9.781429450537248e-07
+      },
+      {
+        "iteration": 17,
+        "hessian_products": 17,
+        "elapsed_s": 20.3762049380166,
+        "recursive_relative_residual": 0.00024712068501317507,
+        "direction_rayleigh": 1.0184857574509914e-06
+      },
+      {
+        "iteration": 18,
+        "hessian_products": 18,
+        "elapsed_s": 21.572455026005628,
+        "recursive_relative_residual": 0.00019485166052956004,
+        "direction_rayleigh": 8.929656291344405e-07
+      },
+      {
+        "iteration": 19,
+        "hessian_products": 19,
+        "elapsed_s": 22.792384639993543,
+        "recursive_relative_residual": 0.00015591483247717123,
+        "direction_rayleigh": 8.836598094939266e-07
+      },
+      {
+        "iteration": 20,
+        "hessian_products": 20,
+        "elapsed_s": 23.99461753902142,
+        "recursive_relative_residual": 0.0001439842085252665,
+        "direction_rayleigh": 9.488341325176747e-07
+      },
+      {
+        "iteration": 21,
+        "hessian_products": 21,
+        "elapsed_s": 25.200334257009672,
+        "recursive_relative_residual": 0.00011871748008965202,
+        "direction_rayleigh": 1.0004288386722915e-06
+      },
+      {
+        "iteration": 22,
+        "hessian_products": 22,
+        "elapsed_s": 26.403198531013913,
+        "recursive_relative_residual": 0.00011818262580236856,
+        "direction_rayleigh": 1.0083533792121673e-06
+      },
+      {
+        "iteration": 23,
+        "hessian_products": 23,
+        "elapsed_s": 27.621413169021253,
+        "recursive_relative_residual": 0.0001039255043099527,
+        "direction_rayleigh": 1.13794913045447e-06
+      },
+      {
+        "iteration": 24,
+        "hessian_products": 24,
+        "elapsed_s": 28.827432000020053,
+        "recursive_relative_residual": 0.00010701631995621707,
+        "direction_rayleigh": 1.2490884565809747e-06
+      },
+      {
+        "iteration": 25,
+        "hessian_products": 25,
+        "elapsed_s": 30.04011892300332,
+        "recursive_relative_residual": 0.00012139006421899502,
+        "direction_rayleigh": 1.3439612574673158e-06
+      },
+      {
+        "iteration": 26,
+        "hessian_products": 26,
+        "elapsed_s": 31.228321466012858,
+        "recursive_relative_residual": 8.788299905841245e-05,
+        "direction_rayleigh": 1.3995657544962e-06
+      },
+      {
+        "iteration": 27,
+        "hessian_products": 27,
+        "elapsed_s": 32.41909935302101,
+        "recursive_relative_residual": 0.00011077373960323408,
+        "direction_rayleigh": 1.4856978546848031e-06
+      },
+      {
+        "iteration": 28,
+        "hessian_products": 28,
+        "elapsed_s": 33.61416786699556,
+        "recursive_relative_residual": 8.728322644224908e-05,
+        "direction_rayleigh": 1.420207677199224e-06
+      },
+      {
+        "iteration": 29,
+        "hessian_products": 29,
+        "elapsed_s": 34.80869505999726,
+        "recursive_relative_residual": 9.802027537379199e-05,
+        "direction_rayleigh": 1.5124780247833903e-06
+      },
+      {
+        "iteration": 30,
+        "hessian_products": 30,
+        "elapsed_s": 36.00748548799311,
+        "recursive_relative_residual": 8.73684905629671e-05,
+        "direction_rayleigh": 1.480636572954056e-06
+      },
+      {
+        "iteration": 31,
+        "hessian_products": 31,
+        "elapsed_s": 37.210122821998084,
+        "recursive_relative_residual": 9.764570080217523e-05,
+        "direction_rayleigh": 1.5608799626795228e-06
+      },
+      {
+        "iteration": 32,
+        "hessian_products": 32,
+        "elapsed_s": 38.41288017400075,
+        "recursive_relative_residual": 0.00010689671351311022,
+        "direction_rayleigh": 1.423299567808255e-06
+      }
+    ],
+    "wall_s": 38.45155781300855
+  },
+  "product_relative_error": 1.1285218597625666e-15,
+  "independent_reduced_relative_residual": 0.00010689671351312104,
+  "independent_full_relative_residual": 0.00010689671351312104,
+  "probe_complete": true,
+  "cache": {
+    "limit_bytes": 3221225472,
+    "resident_bytes": 3207192576,
+    "peak_bytes": 3207192576,
+    "hits": 12308,
+    "misses": 22192,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 181
+  },
+  "process_peak_rss_bytes": 4865933312
+}

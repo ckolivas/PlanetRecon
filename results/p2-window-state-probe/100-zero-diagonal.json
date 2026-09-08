@@ -1,0 +1,251 @@
+{
+  "fraction": 100,
+  "state": "zero",
+  "mode": "diagonal",
+  "probe": {
+    "reason": "product_budget",
+    "iterations": 32,
+    "trace": [
+      {
+        "iteration": 1,
+        "hessian_products": 1,
+        "elapsed_s": 1.1724737120093778,
+        "recursive_relative_residual": 0.039855485275217796,
+        "direction_rayleigh": 0.004749248441463794
+      },
+      {
+        "iteration": 2,
+        "hessian_products": 2,
+        "elapsed_s": 2.360123708989704,
+        "recursive_relative_residual": 0.012952944070418032,
+        "direction_rayleigh": 0.000857690676496193
+      },
+      {
+        "iteration": 3,
+        "hessian_products": 3,
+        "elapsed_s": 3.5519352669944055,
+        "recursive_relative_residual": 0.006124658413517791,
+        "direction_rayleigh": 0.00022353456792328824
+      },
+      {
+        "iteration": 4,
+        "hessian_products": 4,
+        "elapsed_s": 4.740368469996611,
+        "recursive_relative_residual": 0.0035006404366150806,
+        "direction_rayleigh": 7.328581391188326e-05
+      },
+      {
+        "iteration": 5,
+        "hessian_products": 5,
+        "elapsed_s": 5.91983615301433,
+        "recursive_relative_residual": 0.0026253381581735,
+        "direction_rayleigh": 2.9389409157190783e-05
+      },
+      {
+        "iteration": 6,
+        "hessian_products": 6,
+        "elapsed_s": 7.103711049014237,
+        "recursive_relative_residual": 0.0019301818961402857,
+        "direction_rayleigh": 1.8977527994769916e-05
+      },
+      {
+        "iteration": 7,
+        "hessian_products": 7,
+        "elapsed_s": 8.294213340006536,
+        "recursive_relative_residual": 0.0016753420018762383,
+        "direction_rayleigh": 1.1354494525718176e-05
+      },
+      {
+        "iteration": 8,
+        "hessian_products": 8,
+        "elapsed_s": 9.48720749601489,
+        "recursive_relative_residual": 0.0012908976962477067,
+        "direction_rayleigh": 9.468236046109413e-06
+      },
+      {
+        "iteration": 9,
+        "hessian_products": 9,
+        "elapsed_s": 10.678531698009465,
+        "recursive_relative_residual": 0.0011079205877192544,
+        "direction_rayleigh": 7.6213843675051376e-06
+      },
+      {
+        "iteration": 10,
+        "hessian_products": 10,
+        "elapsed_s": 11.86918832801166,
+        "recursive_relative_residual": 0.0010011035147448652,
+        "direction_rayleigh": 6.950527825342261e-06
+      },
+      {
+        "iteration": 11,
+        "hessian_products": 11,
+        "elapsed_s": 13.059549464989686,
+        "recursive_relative_residual": 0.0008312211806140189,
+        "direction_rayleigh": 6.981324953223672e-06
+      },
+      {
+        "iteration": 12,
+        "hessian_products": 12,
+        "elapsed_s": 14.252254516992252,
+        "recursive_relative_residual": 0.0007573841935343057,
+        "direction_rayleigh": 6.453514516851551e-06
+      },
+      {
+        "iteration": 13,
+        "hessian_products": 13,
+        "elapsed_s": 15.446748248999938,
+        "recursive_relative_residual": 0.0006207597660282154,
+        "direction_rayleigh": 6.978556667128659e-06
+      },
+      {
+        "iteration": 14,
+        "hessian_products": 14,
+        "elapsed_s": 16.641152413008967,
+        "recursive_relative_residual": 0.0005830421691508983,
+        "direction_rayleigh": 6.385301293342119e-06
+      },
+      {
+        "iteration": 15,
+        "hessian_products": 15,
+        "elapsed_s": 17.82868029898964,
+        "recursive_relative_residual": 0.00048077247881683283,
+        "direction_rayleigh": 5.706194593154736e-06
+      },
+      {
+        "iteration": 16,
+        "hessian_products": 16,
+        "elapsed_s": 19.012268465012312,
+        "recursive_relative_residual": 0.0004805583186668337,
+        "direction_rayleigh": 6.3020574255985484e-06
+      },
+      {
+        "iteration": 17,
+        "hessian_products": 17,
+        "elapsed_s": 20.20062095799949,
+        "recursive_relative_residual": 0.00045210050512229456,
+        "direction_rayleigh": 5.7588096521697485e-06
+      },
+      {
+        "iteration": 18,
+        "hessian_products": 18,
+        "elapsed_s": 21.386175544001162,
+        "recursive_relative_residual": 0.00040298214739430333,
+        "direction_rayleigh": 5.754715061463159e-06
+      },
+      {
+        "iteration": 19,
+        "hessian_products": 19,
+        "elapsed_s": 22.578313545993296,
+        "recursive_relative_residual": 0.000374593449225426,
+        "direction_rayleigh": 5.5704451118341105e-06
+      },
+      {
+        "iteration": 20,
+        "hessian_products": 20,
+        "elapsed_s": 23.767959941993468,
+        "recursive_relative_residual": 0.0003266461313051862,
+        "direction_rayleigh": 5.202479170479514e-06
+      },
+      {
+        "iteration": 21,
+        "hessian_products": 21,
+        "elapsed_s": 24.960704703989904,
+        "recursive_relative_residual": 0.00033215086341499816,
+        "direction_rayleigh": 5.5854219117768235e-06
+      },
+      {
+        "iteration": 22,
+        "hessian_products": 22,
+        "elapsed_s": 26.21039319699048,
+        "recursive_relative_residual": 0.00029571283109068185,
+        "direction_rayleigh": 5.257790865836708e-06
+      },
+      {
+        "iteration": 23,
+        "hessian_products": 23,
+        "elapsed_s": 27.39737503399374,
+        "recursive_relative_residual": 0.0002652746726823337,
+        "direction_rayleigh": 5.863683629938534e-06
+      },
+      {
+        "iteration": 24,
+        "hessian_products": 24,
+        "elapsed_s": 28.581233890989097,
+        "recursive_relative_residual": 0.000233894856671192,
+        "direction_rayleigh": 5.483983516645899e-06
+      },
+      {
+        "iteration": 25,
+        "hessian_products": 25,
+        "elapsed_s": 29.772616605012445,
+        "recursive_relative_residual": 0.0002214033227248137,
+        "direction_rayleigh": 5.5478943717310825e-06
+      },
+      {
+        "iteration": 26,
+        "hessian_products": 26,
+        "elapsed_s": 30.959632154990686,
+        "recursive_relative_residual": 0.0002153881318843334,
+        "direction_rayleigh": 4.447734575595973e-06
+      },
+      {
+        "iteration": 27,
+        "hessian_products": 27,
+        "elapsed_s": 32.13969434698811,
+        "recursive_relative_residual": 0.00018700734498763662,
+        "direction_rayleigh": 4.088412149373884e-06
+      },
+      {
+        "iteration": 28,
+        "hessian_products": 28,
+        "elapsed_s": 33.32550363600603,
+        "recursive_relative_residual": 0.00017462209026116655,
+        "direction_rayleigh": 3.879641039666846e-06
+      },
+      {
+        "iteration": 29,
+        "hessian_products": 29,
+        "elapsed_s": 34.51645025800099,
+        "recursive_relative_residual": 0.0001535468836524674,
+        "direction_rayleigh": 3.48605413176239e-06
+      },
+      {
+        "iteration": 30,
+        "hessian_products": 30,
+        "elapsed_s": 35.70479049999267,
+        "recursive_relative_residual": 0.0001416916722324574,
+        "direction_rayleigh": 2.605637513909533e-06
+      },
+      {
+        "iteration": 31,
+        "hessian_products": 31,
+        "elapsed_s": 36.892938358010724,
+        "recursive_relative_residual": 0.00013475624917613194,
+        "direction_rayleigh": 2.0469720848869053e-06
+      },
+      {
+        "iteration": 32,
+        "hessian_products": 32,
+        "elapsed_s": 38.08789050599444,
+        "recursive_relative_residual": 0.00011813871691863035,
+        "direction_rayleigh": 2.6661326787969178e-06
+      }
+    ],
+    "wall_s": 38.11226995999459
+  },
+  "product_relative_error": 1.0195622831086675e-15,
+  "independent_reduced_relative_residual": 0.00011813871691864466,
+  "independent_full_relative_residual": 0.00011813871691864469,
+  "probe_complete": true,
+  "cache": {
+    "limit_bytes": 3221225472,
+    "resident_bytes": 3207192576,
+    "peak_bytes": 3207192576,
+    "hits": 6335,
+    "misses": 11665,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations",
+    "policy": "retain-first",
+    "retained_frames": 181
+  },
+  "process_peak_rss_bytes": 4865933312
+}

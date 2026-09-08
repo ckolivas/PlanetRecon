@@ -1,0 +1,17 @@
+{
+  "fraction": 100,
+  "state": "zero",
+  "raw_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 576.8928190835423,
+    "absolute_solution_error_bound": 961488031.8059039,
+    "relative_solution_error_bound": 961488031.8059039,
+    "objective_gap_upper_bound": 277337770591.79724,
+    "strong_convexity_lower_bound": 6e-07,
+    "gradient_lipschitz_upper_bound": 0.014357792041355582
+  },
+  "free_fraction": 0.9994356925027412,
+  "cpu_cuda_free_mask_disagreement": 527,
+  "gradient_relative_error": 8.840122461060283e-16,
+  "gradient_backward_error": 8.840122461060283e-16
+}

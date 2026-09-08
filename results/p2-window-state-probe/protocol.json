@@ -1,0 +1,67 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_window_states.py": "b8bd2bb80e28f486e5878f9578418958a885910ef1833251aa11d20ad5427864",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-window-state-protocol.md": "cf8985a85f0a78362e1f77b98fa9c6ee263791ee7678ff7c2bb4d3b361f48def",
+      "tools/audit_scene_conditioning.py": "a5e897a3dd74415ed5b6a4d922e2ce3d682b04c121c643886fc2668366ba8e29",
+      "tools/audit_scene_selections.py": "9f95ee5790fb46d265dfb572aa8345148a4acf4189d0415916af2eaeb930a9e9",
+      "tools/scene_conditioning.py": "fda0a139937d3e233bc89e514b524c5013a43ce3f07b2e93b668598865d72a8d",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_iteration_state.py": "a62333a8a724669b4743aecf9ceb46f5d8822f5c7f7f9bff8b185833992bc912",
+      "tools/scene_parallel_reference.py": "90d48d9eb362d8f346750af3eca03db6cb20b7b011486e5f9468c7d63237dc68",
+      "tools/scene_periodic_preconditioner.py": "c41990b8c48d7a3b486ebd334074f372ab3b24041b586a68bbd7b261ae107ff2",
+      "tools/scene_preconditioned_probe.py": "233cab455b0e506f84fb17c5fd501f2f9b36628120e17904bc2c49b580275568",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_retained_cache.py": "d982838fd0eb89ab56ede4e16caa7880af66ae32f5134a34ee0a23f3754e4ab6",
+      "tools/scene_state_diagnostics.py": "2c673fd7d532a6c8bc4f215b7b0cbc210097ec2fb09278ce138397d146ba7fb9",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c",
+      "tools/scene_window_preconditioner.py": "cfac5b5503b0e7eee892725cb4da12bc00364fce1ae187c56439f1ad691d9f48"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_hashes": {
+    "out/r10-full-gate1/inputs/gate1_Dr0-4_seed-01001.h5": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+    "results/p2-full-selection-manifest/report.json": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+    "results/p2-selection-endpoints-reference/protocol.json": "57dd5afee24a5a1b1b1cd852357778f6166d60269c10a436b6d20f92892f5eae",
+    "out/p2-selection-endpoints-reference/iterations/100-750.npz": "37e4f2b70a3c4c49f01b331b60929bf97cc804ae6a07305eef18c7e072274255",
+    "out/p2-selection-endpoints-reference/stages/5/identity.json": "445c45cb4980e19c954b0dcb17e06e4c6f8eb709060380f65c6460e5465ebeee",
+    "out/p2-selection-endpoints-reference/stages/5/budget-750.json": "6ff3d3121617b166bdeabce7e5f6bc7501e8c4b71c1a5db938a3177b84fa4713",
+    "out/p2-selection-endpoints-reference/stages/5/budget-750.npz": "b98d85069d2d16e329491f6597c22dad66892cda74d5d19ff245d188ab49f9bb"
+  },
+  "fractions": [
+    5,
+    100
+  ],
+  "states": [
+    "zero",
+    "late"
+  ],
+  "modes": [
+    "diagonal",
+    "periodic",
+    "window"
+  ],
+  "probe_steps": 32,
+  "wall_budget_s": 900,
+  "cache_bytes": 3221225472,
+  "headroom_bytes": 1073741824,
+  "cpu_frame_workers": 8,
+  "threads": 2,
+  "product_relative_tolerance": 1e-10,
+  "initial_gradient_backward_tolerance": 1e-10,
+  "original_distance_tolerance": 1e-05,
+  "scene_updated": false,
+  "scope": "Window/state conditioning diagnostic only; no fitted image or scientific qualification."
+}
