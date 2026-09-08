@@ -31,7 +31,7 @@ def fixture():
     alpha = np.zeros((4, 3))
     images = np.fft.ifft2(fwd.otfs(alpha)*np.fft.fft2(obj)).real
     fit = {'object': obj, 'alphas': alpha, 'train_idx': np.array([0, 1]), 'holdout_idx': np.array([2]),
-           'stages': [{'M': 3, 'object_info': {'converged': True}, 'phase_fits': []}]}
+           'stages': [{'M': 3, 'object_info': {'converged': True}, 'phase_fits': [], 'convergence': {'converged': True}}]}
     return fwd, fit, images, alpha
 
 
@@ -99,7 +99,7 @@ def test_q2_selection_is_invariant_to_assessment_pixels(monkeypatch):
         loss = float(obj.mean())
         stage = {'M': 2, 'object': obj, 'alphas': kw['alpha0'], 'otfs': None,
                  'train_loss': loss, 'holdout_loss': loss if kw['holdout_idx'].size else None,
-                 'n_outer': 1, 'phase_fits': [], 'object_info': {'converged': True}}
+                 'n_outer': 1, 'phase_fits': [], 'object_info': {'converged': True}, 'convergence': {'converged': True}}
         return {'object': obj, 'alphas': kw['alpha0'], 'stages': [stage],
                 'train_idx': kw['train_idx'], 'holdout_idx': kw['holdout_idx']}
 

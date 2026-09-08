@@ -154,7 +154,10 @@ def frame_loss_and_grad(
     dpsf = (dpsf - float(np.sum(dpsf * psf))) / sdet
     dbinned = _center_crop_adj(dpsf, binned.shape)
     dopt_norm = _bin_box_adj(dbinned, fwd.bin_factor)
-    dopt = dopt_norm / total - psf_opt * (float(np.sum(dopt_norm)) / total)
+    # Adjoint of I / sum(I): subtract the scalar inner product, not a
+    # PSF-shaped term. The latter is the untransposed Jacobian and corrupts
+    # higher-mode gradients, particularly for large calibrated pupil tilts.
+    dopt = (dopt_norm - float(np.sum(dopt_norm * psf_opt))) / total
     dpsi = 2.0 * psi * dopt
     n_opt = field.size
     dfield = np.fft.fftshift(n_opt * ifft2(np.fft.ifftshift(dpsi), workers=1))
@@ -241,6 +244,7 @@ def fit_frame_alpha(
             not np.isfinite(sigma2) or sigma2 <= 0 or type(n_iter) is not int or n_iter < 1):
         raise ValueError("phase fit requires finite inputs, positive variance and iteration budget")
     frozen = min(2, a.size) if freeze_tip_tilt else 0
+    scale = max(float(np.sum(np.asarray(image, dtype=np.float64)**2)/sigma2), 1.)
     trace = []
 
     def fun(free):
@@ -255,11 +259,16 @@ def fit_frame_alpha(
     if a.size == frozen:
         info = {"success": True, "status": 0, "message": "all coordinates frozen",
                 "nit": 0, "nfev": 1, "gradient_norm": 0.0, "frozen_modes": frozen,
+                "data_energy_scale": scale, "relative_gradient_inf": 0.0,
                 "objective_trace": trace}
         return (a, loss0, info) if return_info else (a, loss0)
-    res = minimize(fun, a[frozen:], method="L-BFGS-B", jac=True,
+    def scaled_fun(free):
+        loss, grad = fun(free)
+        return loss/scale, grad/scale
+
+    res = minimize(scaled_fun, a[frozen:], method="L-BFGS-B", jac=True,
         callback=lambda x: trace.append(float(fun(x)[0])),
-        options={"maxiter": n_iter, "ftol": 1e-10, "gtol": 1e-8})
+        options={"maxiter": n_iter, "ftol": 1e-14, "gtol": 1e-10, "maxls": 40})
     if not np.all(np.isfinite(res.x)) or not np.isfinite(res.fun):
         raise ValueError("non-finite phase optimizer result")
     a[frozen:] = res.x
@@ -267,6 +276,8 @@ def fit_frame_alpha(
     info = {"success": bool(res.success), "status": int(res.status), "message": str(res.message),
             "nit": int(res.nit), "nfev": int(res.nfev),
             "gradient_norm": float(np.linalg.norm(gradient)), "frozen_modes": frozen,
+            "data_energy_scale": scale,
+            "relative_gradient_inf": float(np.max(np.abs(gradient), initial=0.)/scale),
             "objective_trace": trace}
     return (a, loss, info) if return_info else (a, loss)
 
@@ -413,38 +424,39 @@ def d_tail(
         raise ValueError("training set must be nonempty and disjoint from holdout")
     stages = []
     for stage, m in enumerate(m_grid):
-        n_outer = int(outer_iters[stage]) if stage < len(outer_iters) else int(outer_iters[-1])
+        outer_cap = int(outer_iters[stage]) if stage < len(outer_iters) else int(outer_iters[-1])
         last_info: dict = {}
         phase_diagnostics = []
-        for _it in range(n_outer):
-            otfs = fwd.otfs(alphas[:, :m], frame_workers=frame_workers)
-            obj, last_info = reconstruct_object(
-                otfs[train_idx],
-                images[train_idx],
-                sigma2[train_idx],
-                lam_f,
-                support,
-                tv_mu,
-                x0=obj,
-            )
+        trace = []
+        otfs = fwd.otfs(alphas[:, :m], frame_workers=frame_workers)
+        obj, last_info = reconstruct_object(otfs[train_idx], images[train_idx], sigma2[train_idx],
+                                            lam_f, support, tv_mu, x0=obj)
+        for n_outer in range(1, outer_cap+1):
+            old_obj, old_otfs = obj.copy(), otfs[train_idx].copy()
             obj_f = fft2(obj, workers=1)
             phase_info = _fit_frames(
                 fwd, alphas, m, obj_f, images, sigma2, train_idx, alpha_iters, frame_workers,
                 freeze_tip_tilt=freeze_tip_tilt,
             )
-            phase_diagnostics.append({"partition": "train", "outer": _it + 1, "frames": phase_info})
-        otfs = fwd.otfs(alphas[:, :m], frame_workers=frame_workers)
-        obj, last_info = reconstruct_object(
-            otfs[train_idx],
-            images[train_idx],
-            sigma2[train_idx],
-            lam_f,
-            support,
-            tv_mu,
-            x0=obj,
-        )
+            phase_diagnostics.append({"partition": "train", "outer": n_outer, "frames": phase_info})
+            otfs = fwd.otfs(alphas[:, :m], frame_workers=frame_workers)
+            obj, last_info = reconstruct_object(otfs[train_idx], images[train_idx], sigma2[train_idx],
+                                                lam_f, support, tv_mu, x0=obj)
+            current_phase = phase_stationarity(fwd, alphas[:, :m], obj, images, sigma2, train_idx,
+                                                freeze_tip_tilt=freeze_tip_tilt)
+            obj_delta = float(np.linalg.norm(obj-old_obj)/max(np.linalg.norm(obj), 1e-12))
+            otf_delta = float(np.linalg.norm(otfs[train_idx]-old_otfs)/max(np.linalg.norm(otfs[train_idx]), 1e-12))
+            joint = bool(last_info.get('converged', False) and current_phase['stationary']
+                         and obj_delta < C.Q2_JOINT_REL_TOL and otf_delta < C.Q2_JOINT_REL_TOL)
+            trace.append({'outer': n_outer, 'object_rel_delta': obj_delta, 'otf_rel_delta': otf_delta,
+                          'train_loss': data_residual(otfs[train_idx], obj, images[train_idx], sigma2[train_idx]),
+                          'phase_relative_gradient_inf': current_phase['max_relative_gradient_inf'],
+                          'object_converged': bool(last_info.get('converged', False)), 'converged': joint})
+            if joint:
+                break
         obj_f = fft2(obj, workers=1)
         holdout_loss = None
+        holdout_stationarity = None
         if holdout_idx.size:
             phase_info = _fit_frames(
                 fwd, alphas, m, obj_f, images, sigma2, holdout_idx, alpha_iters, frame_workers,
@@ -455,6 +467,8 @@ def d_tail(
             holdout_loss = data_residual(
                 otfs[holdout_idx], obj, images[holdout_idx], sigma2[holdout_idx]
             )
+            holdout_stationarity = phase_stationarity(fwd, alphas[:, :m], obj, images, sigma2, holdout_idx,
+                                                      freeze_tip_tilt=freeze_tip_tilt)
         train_loss = data_residual(otfs[train_idx], obj, images[train_idx], sigma2[train_idx])
         stages.append(
             {
@@ -465,6 +479,11 @@ def d_tail(
                 "train_loss": train_loss,
                 "holdout_loss": holdout_loss,
                 "n_outer": n_outer,
+                "outer_cap": outer_cap,
+                "convergence": {'converged': joint and (holdout_stationarity is None or holdout_stationarity['stationary']),
+                                'training_converged': joint, 'phase': current_phase,
+                                'model_selection_phase': holdout_stationarity,
+                                'trace': trace, 'relative_change_tolerance': C.Q2_JOINT_REL_TOL},
                 "phase_fits": phase_diagnostics,
                 "object_info": {
                     k: v for k, v in last_info.items() if k != "H_eff"
@@ -478,6 +497,35 @@ def d_tail(
         "train_idx": train_idx,
         "holdout_idx": holdout_idx,
     }
+
+
+def phase_stationarity(fwd, alphas, obj, images, sigma2, indices, *, freeze_tip_tilt=False):
+    """Evaluate free-coordinate gradients at the final object/phase pair.
+
+    Gradients are relative to measured weighted image energy, independent of
+    truth and of arbitrary brightness units. A stationary fit can still have
+    large residual/model error; those require separate acceptance checks.
+    """
+    obj_f = fft2(obj, workers=1)
+    rows = []
+    for k in indices:
+        loss, gradient = frame_loss_and_grad(alphas[k], fwd, obj_f, images[k], sigma2[k])
+        if freeze_tip_tilt:
+            gradient = gradient[min(2, gradient.size):]
+        scale = max(float(np.sum(np.asarray(images[k], dtype=np.float64)**2)/sigma2[k]), 1.)
+        raw = float(np.max(np.abs(gradient), initial=0.))
+        rows.append({'frame': int(k), 'loss': loss, 'gradient_inf': raw,
+                     'data_energy_scale': scale, 'relative_gradient_inf': raw/scale})
+    maximum = max((r['relative_gradient_inf'] for r in rows), default=float('inf'))
+    return {'stationary': bool(np.isfinite(maximum) and maximum <= C.Q2_PHASE_GRAD_REL_TOL),
+            'max_relative_gradient_inf': maximum, 'tolerance': C.Q2_PHASE_GRAD_REL_TOL,
+            'normalization': 'weighted observed image energy, floored at one', 'frames': rows}
+
+
+def fit_converged(fit):
+    """Require current joint checks; old optimizer status flags are insufficient."""
+    return bool(fit['stages']) and all(st.get('convergence', {}).get('converged', False)
+                                      and st['object_info'].get('converged', False) for st in fit['stages'])
 
 
 def holdout_split(n: int, frac: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
@@ -529,14 +577,13 @@ def assess_selected_fit(fwd, fit, images, sigma2, indices, alpha0, *,
     otfs = fwd.otfs(alphas[indices, :m])
     loss = data_residual(otfs, obj, images[indices], sigma2[indices])
     finite = bool(np.isfinite(loss) and loss >= 0)
-    converged = all(st['object_info'].get('converged', False)
-                    and all(fr['success'] for batch in st['phase_fits'] for fr in batch['frames'])
-                    for st in fit['stages']) and all(fr['success'] for fr in phase_info)
+    current_phase = phase_stationarity(fwd, alphas[:, :m], obj, images, sigma2, indices, freeze_tip_tilt=True)
+    converged = fit_converged(fit) and current_phase['stationary']
     return {'partition_role': 'assessment only after model selection',
             'metric_role': 'phase-profiled residual with frozen training object; not unfitted prediction',
             'sampling_limit': 'disjoint frames in one capture; temporal correlation remains',
             'indices': indices.tolist(), 'n_frames': int(indices.size), 'M': int(m),
-            'loss': float(loss) if finite else None, 'phase_fits': phase_info,
+            'loss': float(loss) if finite else None, 'phase_fits': phase_info, 'phase_stationarity': current_phase,
             'status': 'invalid' if not finite else 'valid' if converged else 'incomplete'}
 
 

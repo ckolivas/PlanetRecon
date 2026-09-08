@@ -32,6 +32,7 @@ from planetrecon.mfbd import (
     d_tail,
     assessment_split,
     assess_selected_fit,
+    fit_converged,
     initial_object,
     select_init,
     tip_tilt_from_shifts,
@@ -295,6 +296,7 @@ def evaluate_q2_crop(
     outer_iters: tuple[int, ...] = C.Q2_OUTER_ITERS,
     alpha_iters: int = C.Q2_ALPHA_ITERS,
     frame_workers: int = C.Q2_FRAME_WORKERS,
+    return_reconstructions: bool = False,
 ) -> dict:
     n = crop.observed.shape[0]
     partitions = assessment_split(n, C.Q2_HOLDOUT_FRAC, extras['seed']) if holdout else None
@@ -392,6 +394,7 @@ def evaluate_q2_crop(
                         "n_outer": int(stage["n_outer"]),
                         "phase_fits": stage["phase_fits"],
                         "object_info": stage["object_info"],
+                        "convergence": stage["convergence"],
                     }
                 )
             final = stages[-1]
@@ -437,9 +440,7 @@ def evaluate_q2_crop(
     eh_star = known["E_H_E2_star"]
     c_val = closure_C(eh_a1, eh_d, eh_star)
     metric_valid = np.isfinite(c_val) and not d_metrics["high_band_illconditioned"]
-    converged = all(st.get("object_info", {}).get("converged", False)
-        and all(f["success"] for batch in st.get("phase_fits", []) for f in batch["frames"])
-        for st in inits_out[chosen]["stages"])
+    converged = fit_converged(inits_out[chosen])
     known_converged = all(known[key].get("_info", {}).get("converged", False)
         for key in ("E2a_S10", "E2a_S100", "E2b_S10", "E2b_S100", "A1o_S10"))
     status = "invalid" if not metric_valid else ("valid" if converged and known_converged else "incomplete")
@@ -464,7 +465,7 @@ def evaluate_q2_crop(
             "final_train_loss": block["final_train_loss"],
         }
 
-    return {
+    result = {
         "crop": crop.name,
         "status": status,
         "blind_prior_selection": "frozen development tv_mu",
@@ -491,6 +492,11 @@ def evaluate_q2_crop(
         "regularisation": asdict(reg),
         "tv_mu_D": tv_d,
     }
+    if return_reconstructions:
+        result['_reconstructions'] = {name: block['object'].copy() for name, block in inits_out.items()}
+        if holdout_fits is not None:
+            result['_reconstructions'].update({f'train_{name}': fit['object'].copy() for name, fit in holdout_fits.items()})
+    return result
 
 
 def evaluate_q2_file(

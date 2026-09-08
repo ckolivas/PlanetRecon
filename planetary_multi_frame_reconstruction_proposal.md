@@ -2463,3 +2463,15 @@ all six cases pass from both starts within 369 iterations, including full suppor
 `results/r10-constraint-operator-audit-v4` and `-v5` retain the intermediate
 failure and successful refinement. This completes the bounded quadratic controls,
 not atmospheric or full-resolution scientific acceptance.
+
+**Atmospheric derivative and joint stopping correction (2026-09-08):** a
+large-shift physical case exposed an incorrect transpose in the PSF flux-
+normalization derivative. Estimator 1.6 subtracts the scalar adjoint inner
+product; the failing physical finite-difference check improves from relative
+error 0.6893 to 1.385e-8 (step 1e-4). Thirty-nine targeted tests pass. Phase fits
+use truth-independent measured image-energy scaling and current free-coordinate
+gradients. Joint stopping requires a converged object, stable image/OTF and
+stationary phases at the final pair; historical optimizer flags cannot replace
+that check. Early failed iterations do not invalidate a later converged pair.
+These corrections require regeneration of affected MFBD evidence; historical
+phase-fit claims are not reused as current qualification.
