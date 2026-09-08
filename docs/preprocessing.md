@@ -180,6 +180,20 @@ checks do not substitute for full-capture runs.
 
 ## Geometry suggestions
 
+Preprocessing also prefills **Globe flattening** from the median retained
+silhouette minor/major ratio `q`. For a supplied observer latitude `B`, it uses
+`f = 1 - sqrt((q² - sin²(B))/cos²(B))`; this is the oblate projection relation
+in [Braga-Ribas et al. (2013), equation 2](https://audreythirouin.wordpress.com/wp-content/uploads/2013/12/bragaribas2013.pdf),
+with latitude complementary to their polar aspect angle. Unknown latitude uses
+an explicitly labelled equator-on approximation, `f = 1 - q`.
+
+At least 12 retained silhouettes are required. Ring/Saturn models, ratios below
+0.75, robust ratio scatter above 0.03, incompatible latitudes and near-pole-on
+views remain unresolved. The reported scatter describes frame variation, not a
+complete physical uncertainty. Mild phase, limb darkening and seeing can still
+bias the illuminated outline. User-entered flattening is preserved, and stale
+automatic values clear when a later preprocessing pass cannot estimate it.
+
 Accepted frames also supply three averages aligned to the highest-quality
 retained frame (up to 32 frames each, plus the reference if outside those groups,
 reduced to at most 256 pixels per side) for a small-angle projected-sphere

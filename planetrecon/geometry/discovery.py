@@ -13,6 +13,7 @@ from planetrecon.geometry.fit import fit_disc_ellipse
 from planetrecon.geometry.pose import source_times_s
 from planetrecon.pipeline.align import phase_correlation_shift
 from planetrecon.pipeline.preprocess import measurement_plane
+from planetrecon.geometry.shape import estimate_flattening
 
 
 def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
@@ -71,8 +72,11 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
 
 def discover_geometry(source, config, selection, calibration=None, should_cancel=None):
     """Three short averages aligned to the best retained frame; at most 97 reads."""
-    report = {'method': 'projected spherical texture motion v2', 'suggestions': {},
+    shape = estimate_flattening(selection, config)
+    report = {'method': 'projected spherical texture motion v2', 'suggestions': dict(shape['suggestions']),
               'status': 'unresolved', 'notes': [], 'sample_indices': []}
+    report['flattening_estimate'] = {k: v for k, v in shape.items() if k != 'suggestions'}
+    report['notes'].extend(shape['notes'])
     accepted = np.flatnonzero(selection.accepted)
     if len(accepted) < 12:
         report['notes'].append('At least 12 accepted frames are needed to estimate rotation.')

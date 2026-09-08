@@ -31,7 +31,7 @@ CONTROL_HELP = {
     'field_center_x': 'Horizontal rotation centre in pixels, increasing to the right. Leave blank to estimate the centre.',
     'field_center_y': 'Vertical rotation centre in pixels, increasing downwards. Leave blank to estimate the centre.',
     'equatorial_radius_px': 'Globe equatorial radius in pixels for the geometry model.',
-    'flattening': 'Globe flattening: 1 minus polar radius divided by equatorial radius. Zero is spherical.',
+    'flattening': 'Globe flattening: 1 minus polar radius divided by equatorial radius. Zero is spherical. Preprocessing estimates it from retained silhouettes, conditional on viewing latitude and a full globe outline.',
     'pole_pa_rad': 'Projected orientation of the globe rotation pole, in degrees.',
     'sub_obs_lat_rad': 'Signed latitude facing the observer, in degrees. The sign selects which pole is tilted towards the observer.',
     'sub_obs_lon0_rad': 'Globe longitude facing the observer at the output epoch, in degrees.',

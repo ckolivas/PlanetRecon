@@ -216,14 +216,14 @@ class ConfigControls(QTabWidget):
         applicable = estimate.get('applicable', True)
         allow_prefill = allow_prefill and applicable
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
-                   'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s'}
+                   'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'}
         if allow_prefill:
-            for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s'):
+            for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'):
                 old = self.geometry_auto.get(key)
                 if (old is not None and key not in estimate.get('suggestions', {})
                         and key not in self.geometry_manual and self.fields[key].text() == old):
                     value = getattr(defaults, key)
-                    self.fields[key].setText('' if value is None else str(math.degrees(value)))
+                    self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
                     del self.geometry_auto[key]
         applied = []
         for key, value in estimate.get('suggestions', {}).items():
