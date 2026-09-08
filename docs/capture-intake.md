@@ -31,6 +31,12 @@ Invalid, duplicate or reversed timestamps remain explicit and do not produce an
 invented duration. A repaired timing series needs a separate documented source
 and interpretation; it must not silently replace the original evidence.
 
+For an invalid-timestamp intake, use `tools/diagnose_capture_timestamps.py` with
+`--private-spec`, `--intake` and a new `--out` path. It rechecks whole-file hashes
+and compares raw pixels in at most 64 uniformly spaced equal-timestamp pairs
+per affected capture. Reports omit paths and pixels. Equal timestamps do not
+imply equal images; this diagnostic neither removes frames nor repairs timing.
+
 Before independent evaluation, obtain true mono Mars and additional verified
 nights/cameras, field rotation, measurable globe rotation, ring geometries and
 seeing/noise/calibration conditions. Bind any conventional comparison stack to

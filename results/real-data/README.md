@@ -70,3 +70,11 @@ current motion timing contract; no cadence or rotation correction was invented.
 Separate R/G/B files do not by themselves establish independent cameras/nights.
 Those group fields remain unknown, and true mono Mars remains absent. The new G/B
 inventory records do not claim reconstruction, geometry or release qualification.
+
+`duplicate-timestamp-diagnosis.json` checks 64 uniformly selected adjacent
+equal-timestamp pairs per affected capture after verifying whole-file hashes.
+All 64 pairs in OSC Saturn, all 64 in IR642 Mars and all 64 in L3 Mars contain
+different raw pixels. Thus equal timestamps alone do not justify deleting a
+frame as a duplicate image. The sample does not characterize every affected
+pair, establish independent exposures or recover acquisition cadence. Original
+timestamps, pixels and timing validity remain unchanged; no repair was applied.

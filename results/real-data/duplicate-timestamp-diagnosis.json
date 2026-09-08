@@ -1,0 +1,1025 @@
+{
+  "records": [
+    {
+      "id": "osc-saturn",
+      "capture_sha256": "b4d8a790ef713565204e72df1695294722baff9816bfe6e3f9ea9b968771bb59",
+      "duplicate_intervals": 499,
+      "sampled_pairs": [
+        {
+          "first_frame": 1,
+          "second_frame": 2,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 233,
+          "second_frame": 234,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 390,
+          "second_frame": 391,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 496,
+          "second_frame": 497,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 603,
+          "second_frame": 604,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4191,
+          "second_frame": 4192,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4299,
+          "second_frame": 4300,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4435,
+          "second_frame": 4436,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4598,
+          "second_frame": 4599,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4732,
+          "second_frame": 4733,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4868,
+          "second_frame": 4869,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4950,
+          "second_frame": 4951,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 5461,
+          "second_frame": 5462,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 5596,
+          "second_frame": 5597,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 5675,
+          "second_frame": 5676,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 5778,
+          "second_frame": 5779,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 7163,
+          "second_frame": 7164,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 7730,
+          "second_frame": 7731,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 7888,
+          "second_frame": 7889,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8018,
+          "second_frame": 8019,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8177,
+          "second_frame": 8178,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8340,
+          "second_frame": 8341,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8450,
+          "second_frame": 8451,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8582,
+          "second_frame": 8583,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8715,
+          "second_frame": 8716,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8849,
+          "second_frame": 8850,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8956,
+          "second_frame": 8957,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9033,
+          "second_frame": 9034,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9136,
+          "second_frame": 9137,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9285,
+          "second_frame": 9286,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9425,
+          "second_frame": 9426,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9509,
+          "second_frame": 9510,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9643,
+          "second_frame": 9644,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9807,
+          "second_frame": 9808,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 9930,
+          "second_frame": 9931,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 10086,
+          "second_frame": 10087,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 10192,
+          "second_frame": 10193,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13221,
+          "second_frame": 13222,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13328,
+          "second_frame": 13329,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13449,
+          "second_frame": 13450,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13547,
+          "second_frame": 13548,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13682,
+          "second_frame": 13683,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13820,
+          "second_frame": 13821,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 13925,
+          "second_frame": 13926,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 14055,
+          "second_frame": 14056,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 14186,
+          "second_frame": 14187,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15051,
+          "second_frame": 15052,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15210,
+          "second_frame": 15211,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15322,
+          "second_frame": 15323,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15753,
+          "second_frame": 15754,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15860,
+          "second_frame": 15861,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15995,
+          "second_frame": 15996,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16155,
+          "second_frame": 16156,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16289,
+          "second_frame": 16290,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16398,
+          "second_frame": 16399,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16533,
+          "second_frame": 16534,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16639,
+          "second_frame": 16640,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16745,
+          "second_frame": 16746,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16829,
+          "second_frame": 16830,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 16933,
+          "second_frame": 16934,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17449,
+          "second_frame": 17450,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17585,
+          "second_frame": 17586,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17772,
+          "second_frame": 17773,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17908,
+          "second_frame": 17909,
+          "pixels_identical": false
+        }
+      ],
+      "sampled_identical_pairs": 0,
+      "timestamps_present": true,
+      "source_stat_unchanged": true,
+      "timing_repaired": false,
+      "frames_removed": false,
+      "scope": "Uniform bounded sample of adjacent equal-timestamp pairs; no conclusion about unsampled pairs, independent observations or cadence."
+    },
+    {
+      "id": "osc-mars-ir642",
+      "capture_sha256": "c067c506b7ffd0655dac3c83458d4084ed50299d99799bfac20f5fcb112870e8",
+      "duplicate_intervals": 55034,
+      "sampled_pairs": [
+        {
+          "first_frame": 1,
+          "second_frame": 2,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 3762,
+          "second_frame": 3763,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 5341,
+          "second_frame": 5342,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 6939,
+          "second_frame": 6940,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 8530,
+          "second_frame": 8531,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 10113,
+          "second_frame": 10114,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 12152,
+          "second_frame": 12153,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17391,
+          "second_frame": 17392,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 21837,
+          "second_frame": 21838,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 23415,
+          "second_frame": 23416,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 24992,
+          "second_frame": 24993,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 26599,
+          "second_frame": 26600,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 28171,
+          "second_frame": 28172,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 29764,
+          "second_frame": 29765,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 31343,
+          "second_frame": 31344,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 32950,
+          "second_frame": 32951,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 34545,
+          "second_frame": 34546,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 36141,
+          "second_frame": 36142,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 37726,
+          "second_frame": 37727,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 39357,
+          "second_frame": 39358,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 40965,
+          "second_frame": 40966,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 42560,
+          "second_frame": 42561,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 44151,
+          "second_frame": 44152,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 45751,
+          "second_frame": 45752,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 47313,
+          "second_frame": 47314,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 48922,
+          "second_frame": 48923,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 50481,
+          "second_frame": 50482,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 52096,
+          "second_frame": 52097,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 53676,
+          "second_frame": 53677,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 55261,
+          "second_frame": 55262,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 56864,
+          "second_frame": 56865,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 58464,
+          "second_frame": 58465,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 60063,
+          "second_frame": 60064,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 61657,
+          "second_frame": 61658,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 63270,
+          "second_frame": 63271,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 64847,
+          "second_frame": 64848,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 66440,
+          "second_frame": 66441,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 68043,
+          "second_frame": 68044,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 69645,
+          "second_frame": 69646,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 71229,
+          "second_frame": 71230,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 72849,
+          "second_frame": 72850,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 75429,
+          "second_frame": 75430,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 80766,
+          "second_frame": 80767,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 84515,
+          "second_frame": 84516,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 86097,
+          "second_frame": 86098,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 87674,
+          "second_frame": 87675,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 89278,
+          "second_frame": 89279,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 90887,
+          "second_frame": 90888,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 92494,
+          "second_frame": 92495,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 94116,
+          "second_frame": 94117,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 95739,
+          "second_frame": 95740,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 97372,
+          "second_frame": 97373,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 99001,
+          "second_frame": 99002,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 100589,
+          "second_frame": 100590,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 102225,
+          "second_frame": 102226,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 103837,
+          "second_frame": 103838,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 105418,
+          "second_frame": 105419,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 107029,
+          "second_frame": 107030,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 108621,
+          "second_frame": 108622,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 110204,
+          "second_frame": 110205,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 111800,
+          "second_frame": 111801,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 113479,
+          "second_frame": 113480,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 115093,
+          "second_frame": 115094,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 116689,
+          "second_frame": 116690,
+          "pixels_identical": false
+        }
+      ],
+      "sampled_identical_pairs": 0,
+      "timestamps_present": true,
+      "source_stat_unchanged": true,
+      "timing_repaired": false,
+      "frames_removed": false,
+      "scope": "Uniform bounded sample of adjacent equal-timestamp pairs; no conclusion about unsampled pairs, independent observations or cadence."
+    },
+    {
+      "id": "osc-mars-l3",
+      "capture_sha256": "c11c025c2c4bb5c6e2732085066ff9e845dabe2ca149db2b0a95bb9b9f0e7b67",
+      "duplicate_intervals": 49361,
+      "sampled_pairs": [
+        {
+          "first_frame": 1,
+          "second_frame": 2,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 1396,
+          "second_frame": 1397,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 2838,
+          "second_frame": 2839,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 4612,
+          "second_frame": 4613,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 15780,
+          "second_frame": 15781,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 17931,
+          "second_frame": 17932,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 22190,
+          "second_frame": 22191,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 26906,
+          "second_frame": 26907,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 31424,
+          "second_frame": 31425,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 32866,
+          "second_frame": 32867,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 34297,
+          "second_frame": 34298,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 35706,
+          "second_frame": 35707,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 37117,
+          "second_frame": 37118,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 38523,
+          "second_frame": 38524,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 39943,
+          "second_frame": 39944,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 41385,
+          "second_frame": 41386,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 42808,
+          "second_frame": 42809,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 44250,
+          "second_frame": 44251,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 45662,
+          "second_frame": 45663,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 47083,
+          "second_frame": 47084,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 48487,
+          "second_frame": 48488,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 49911,
+          "second_frame": 49912,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 51340,
+          "second_frame": 51341,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 52760,
+          "second_frame": 52761,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 54184,
+          "second_frame": 54185,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 55621,
+          "second_frame": 55622,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 57068,
+          "second_frame": 57069,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 60874,
+          "second_frame": 60875,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 63632,
+          "second_frame": 63633,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 65305,
+          "second_frame": 65306,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 66914,
+          "second_frame": 66915,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 69890,
+          "second_frame": 69891,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 71492,
+          "second_frame": 71493,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 72846,
+          "second_frame": 72847,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 74464,
+          "second_frame": 74465,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 76035,
+          "second_frame": 76036,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 77654,
+          "second_frame": 77655,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 79236,
+          "second_frame": 79237,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 80829,
+          "second_frame": 80830,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 82426,
+          "second_frame": 82427,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 83928,
+          "second_frame": 83929,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 85350,
+          "second_frame": 85351,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 86785,
+          "second_frame": 86786,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 88192,
+          "second_frame": 88193,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 89624,
+          "second_frame": 89625,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 91055,
+          "second_frame": 91056,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 92481,
+          "second_frame": 92482,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 93888,
+          "second_frame": 93889,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 95316,
+          "second_frame": 95317,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 96727,
+          "second_frame": 96728,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 98146,
+          "second_frame": 98147,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 99564,
+          "second_frame": 99565,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 101012,
+          "second_frame": 101013,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 102447,
+          "second_frame": 102448,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 103852,
+          "second_frame": 103853,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 105283,
+          "second_frame": 105284,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 106704,
+          "second_frame": 106705,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 108126,
+          "second_frame": 108127,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 109534,
+          "second_frame": 109535,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 110942,
+          "second_frame": 110943,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 112370,
+          "second_frame": 112371,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 113786,
+          "second_frame": 113787,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 115225,
+          "second_frame": 115226,
+          "pixels_identical": false
+        },
+        {
+          "first_frame": 116627,
+          "second_frame": 116628,
+          "pixels_identical": false
+        }
+      ],
+      "sampled_identical_pairs": 0,
+      "timestamps_present": true,
+      "source_stat_unchanged": true,
+      "timing_repaired": false,
+      "frames_removed": false,
+      "scope": "Uniform bounded sample of adjacent equal-timestamp pairs; no conclusion about unsampled pairs, independent observations or cadence."
+    }
+  ],
+  "max_pairs_per_capture": 64,
+  "intake_sha256": "0d4768913a73ff52373138e6d9d63e0fd0a4b72e94e1c29cd744bf4b9c268b67",
+  "generator_identity": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/diagnose_capture_timestamps.py": "8a6d92ce43c576c8e9ac85ae61df4caeb4faf6475b9687399b1b0d5611f62e80",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "scientific_qualification": false,
+  "source_input_unchanged": true
+}
