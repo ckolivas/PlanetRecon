@@ -2,9 +2,11 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 999 passed, 66 skipped. Optional quality-range and
+Latest complete regression: 1,020 passed, 66 skipped. Optional quality-range and
 frame-count selection pass all 35 focused tests with CUDA enabled, including colour,
-geometry, cache reuse and resume checks. The new projection solver
+geometry, cache reuse and resume checks. Recorded SER exposure has 21 new
+controls covering parsing, automatic/manual timing, GUI updates and exact resume.
+The new projection solver
 and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
 
 Application image goal: improve reconstruction using more frames. Optional
@@ -19,9 +21,15 @@ retains 1,645/3,749 frames (43.88% of the capture after screening), with RMS 0.5
 and fine-detail correlation 0.96124 versus all-screened 0.96187. Different estimators
 need not reproduce AutoStakkert's retained percentage. These are comparison
 controls, not evidence that the more-frame reconstruction goal has been achieved.
-Next address local seeing deformation using a higher signal-to-noise reference
-template anchored to the best frame; the initial single-frame local-warp pilot
-regressed and was not adopted.
+The [disjoint-template pilot](../results/real-data/jupiter-template-pilot.json) is
+now complete: template-only global alignment improves RMS by just 0.064%;
+local warping still regresses. Neither candidate is adopted. Next investigate
+displacement reliability and separation of photometric/blur changes from motion.
+
+SER capture-settings headers now supply exposure automatically (Jupiter 20 ms;
+Mars 3 ms; local Saturn 13–33 ms). Blank Exposure uses metadata; manual seconds
+override it, including zero. Geometry preprocessing and midpoint poses use the
+effective value, with its origin retained in output provenance.
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|

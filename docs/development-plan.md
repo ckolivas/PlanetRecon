@@ -18,9 +18,14 @@ useful information. Compare the all-screened result against the optional cutoff
 under the same reference and settings, without sharpening. A first local
 registration pilot using a single noisy frame regressed on Jupiter (128 frames:
 matched RMS 0.006628 global versus 0.009514 local); it was not adopted.
-The next bounded candidate should use a higher signal-to-noise aligned template,
-anchored to the highest-quality frame, before testing local motion or robust
-weighting. Require actual image improvement before integration; defer broad
+The [disjoint-frame template pilot](../results/real-data/jupiter-template-pilot.json)
+now evaluates 64 independent high-quality template frames against the same 128
+evaluation frames. Template-only global alignment improves RMS by just 0.064%;
+template-based local warping still worsens RMS and fine-detail correlation.
+Neither is integrated. Next examine local displacement reliability and separation
+of brightness/blur changes from motion before another bounded image comparison.
+Recorded SER exposure now supplies geometry midpoint timing automatically where
+the capture header includes it; manual values retain priority. Require actual image improvement before integration; defer broad
 qualification matrices and reporting work that do not change application output.
 
 ## Execution progress (2026-09-09)

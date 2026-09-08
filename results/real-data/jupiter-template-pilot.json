@@ -1,0 +1,108 @@
+{
+  "scope": "Bounded Jupiter development pilot; conventional unsharpened stack is not ground truth.",
+  "application_commit": "2934ad9",
+  "evaluation_frames": 128,
+  "template_frames": 64,
+  "template_selection": "Best quality frames outside the fixed uniformly sampled evaluation subset; global alignment and template origin anchored to evaluation best frame 566.",
+  "evaluation_indices_sha256": "0c60c62502defc06eee853702f0628b963df31ff116335d51c84374e9f55c6d0",
+  "template_indices_sha256": "c5b3d3d8edf2be4ebbea46f1a03074e82f0b472941c8f115357c23028c2b8f3f",
+  "prototype_sha256": "f2d639c857a37550eaa2a6d4fcc0b43cc8a7ea257868fbfd41013c7ecf441e08",
+  "local_method_sha256": "c354638965a59b3b7602f78cd551916ceddbc45fd64be2b5d70522aefa58167e",
+  "input_pixels_sha256": "bbff3f33daee180d858ec5296dae6cbe142406a557809861fa84c38ef7e4dab0",
+  "rows": [
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 128,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -28.150849736649647,
+        2.45554101325841
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.19433579749114,
+          27.83788001755269
+        ],
+        [
+          233.25892756203976,
+          25.476106330862255
+        ],
+        [
+          232.86224344154226,
+          67.9581041661007
+        ]
+      ],
+      "relative_rmse": 0.006628006654294201,
+      "highpass_correlation_sigma3": 0.748518571099233,
+      "registration_method": "global disjoint-template pilot",
+      "mode": "global",
+      "reference_index": 566,
+      "wall_s": 3.3599952979998307
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 128,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -28.152860070988073,
+        2.4554804382829447
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.1946688119695,
+          27.787545749716895
+        ],
+        [
+          233.25912940846305,
+          25.44791636049235
+        ],
+        [
+          232.86285930913226,
+          67.87989947877274
+        ]
+      ],
+      "relative_rmse": 0.00662375902564873,
+      "highpass_correlation_sigma3": 0.7491781361087294,
+      "registration_method": "template-global disjoint-template pilot",
+      "mode": "template-global",
+      "reference_index": 566,
+      "wall_s": 3.2233469550001246
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 128,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -28.132272532727406,
+        2.5087716684900436
+      ],
+      "per_channel_gain_offset": [
+        [
+          236.34426617746627,
+          -480.7922206724597
+        ],
+        [
+          236.15075021381858,
+          -507.4932213466933
+        ],
+        [
+          235.42290221048208,
+          -319.5693525865824
+        ]
+      ],
+      "relative_rmse": 0.007451129373607473,
+      "highpass_correlation_sigma3": 0.7447357589162817,
+      "registration_method": "template-local disjoint-template pilot",
+      "mode": "template-local",
+      "reference_index": 566,
+      "wall_s": 17.40396509700031
+    }
+  ],
+  "decision": "Do not adopt local warping: both RMS and fine-detail correlation regress. The global template gain is tiny (about 0.064% relative RMS), insufficient evidence for extra production complexity. Keep current application registration. Next examine local displacement reliability before further integration; all-screened reconstruction remains the objective."
+}
