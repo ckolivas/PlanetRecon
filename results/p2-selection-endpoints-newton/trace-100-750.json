@@ -1,0 +1,103 @@
+{
+  "trace": [
+    {
+      "iteration": 1,
+      "hessian_products": 2,
+      "inner_products": 1,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -12717000.068571586,
+      "active_fraction": 0.0,
+      "relative_solution_error_bound": 523.645160181655,
+      "elapsed_s": 4.329274585994426
+    },
+    {
+      "iteration": 2,
+      "hessian_products": 6,
+      "inner_products": 3,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -36398.49573079623,
+      "active_fraction": 0.15028247498629385,
+      "relative_solution_error_bound": 63.428437410132396,
+      "elapsed_s": 10.056730768992566
+    },
+    {
+      "iteration": 3,
+      "hessian_products": 20,
+      "inner_products": 13,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -1671.068141105904,
+      "active_fraction": 0.4197794596354167,
+      "relative_solution_error_bound": 24.612243072299492,
+      "elapsed_s": 29.54703626499395
+    },
+    {
+      "iteration": 4,
+      "hessian_products": 41,
+      "inner_products": 20,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -115.57907338057731,
+      "active_fraction": 0.5810482627467105,
+      "relative_solution_error_bound": 10.466221722301402,
+      "elapsed_s": 58.38079675199697
+    },
+    {
+      "iteration": 5,
+      "hessian_products": 63,
+      "inner_products": 21,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -14.39912871295667,
+      "active_fraction": 0.5661792420504386,
+      "relative_solution_error_bound": 2.9641978751835456,
+      "elapsed_s": 88.24589724899852
+    },
+    {
+      "iteration": 6,
+      "hessian_products": 96,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -1.5758862338537554,
+      "active_fraction": 0.4155733878152412,
+      "relative_solution_error_bound": 1.8372667653654138,
+      "elapsed_s": 133.05025951200514
+    },
+    {
+      "iteration": 7,
+      "hessian_products": 129,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -0.6704204931954538,
+      "active_fraction": 0.3956298828125,
+      "relative_solution_error_bound": 0.5344586896926364,
+      "elapsed_s": 177.9926821879926
+    },
+    {
+      "iteration": 8,
+      "hessian_products": 162,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -0.18256029058794557,
+      "active_fraction": 0.3699480023300439,
+      "relative_solution_error_bound": 0.29912345213879343,
+      "elapsed_s": 222.72302695098915
+    },
+    {
+      "iteration": 9,
+      "hessian_products": 195,
+      "inner_products": 32,
+      "line_search_products": 1,
+      "step_kind": "newton",
+      "quadratic_objective_change": -0.09375222366050456,
+      "active_fraction": 0.3678920812774123,
+      "relative_solution_error_bound": 0.16770123305544912,
+      "elapsed_s": 267.54325743598747
+    }
+  ]
+}
