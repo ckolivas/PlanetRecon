@@ -43,6 +43,7 @@ def test_dense_oracle_active_constraints_multiple_starts(seed, rgb, start):
     eigen = np.linalg.eigvalsh(matrix.T@matrix)
     assert eigen.min() >= problem.ridge-1e-12
     assert eigen.max() <= problem.lipschitz+1e-12
+    assert np.linalg.eigvalsh(np.diag(problem.majorizer.ravel())-matrix.T@matrix).min() >= -1e-12
     x0 = {'zero': np.zeros(shape), 'positive': np.ones(shape)*5, 'negative': -np.ones(shape)}[start]
     result, info = solve(problem, x0=x0, tolerance=1e-7)
     assert info['converged'] and info['feasible']
@@ -88,3 +89,14 @@ def test_certificate_requires_positive_ridge(ridge):
     op = SceneDetectorOperator((2, 2), (np.ones((1, 1)),), 1, (0, 0), (2, 2))
     with pytest.raises(ValueError):
         SceneQuadratic([op], [np.zeros((2, 2))], [1.], ridge=ridge)
+
+
+def test_diagonal_scaling_preserves_objective_and_certificate():
+    rng = np.random.default_rng(91)
+    op = SceneDetectorOperator((8, 8), (np.ones((3, 3))/9,), 1, (0, 0), (8, 8))
+    variances = np.ones((8, 8)); variances[:, :4] = 100.
+    p = SceneQuadratic([op], [rng.normal(.5, 1., (8, 8))], [variances], ridge=.01)
+    diagonal, a = solve(p, scaling='diagonal', tolerance=1e-7)
+    global_image, b = solve(p, scaling='global', tolerance=1e-7)
+    assert a['converged'] and b['converged']
+    assert np.linalg.norm(diagonal-global_image) <= a['absolute_solution_error_bound']+b['absolute_solution_error_bound']

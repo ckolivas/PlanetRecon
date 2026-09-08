@@ -50,12 +50,28 @@ class SceneQuadratic:
         # Apply to sqrt(W)A for spatial variance and average-frame normalization.
         self.lipschitz = self.ridge+8*self.smoothness
         ones = np.ones(self.shape)
+        self.majorizer = np.full(self.shape, self.ridge)
+        degree = np.zeros(self.shape)
+        for axis in (0, 1):
+            lo, hi = [slice(None)]*len(self.shape), [slice(None)]*len(self.shape)
+            lo[axis], hi[axis] = slice(None, -1), slice(1, None)
+            degree[tuple(lo)] += 1
+            degree[tuple(hi)] += 1
+        self.majorizer += 2*self.smoothness*degree
         for op, image, weight in zip(self.operators, self.images, self.weights):
             self.linear += op.adjoint(weight*image)
             root = np.sqrt(weight)
-            row_sum = root*op.forward(ones)
+            forward_ones = op.forward(ones)
+            row_sum = root*forward_ones
+            self.majorizer += op.adjoint(weight*forward_ones)
             col_sum = op.adjoint(root)
             self.lipschitz += max(0., float(row_sum.max()))*max(0., float(col_sum.max()))
+        # For nonnegative data H, diag(H 1)-H is a graph Laplacian.
+        # For D'D smoothness, 2 diag(degree)-D'D is signless PSD.
+        # Hence this diagonal majorizes the complete Hessian. Tiny inflation
+        # covers roundoff in zero-valued FFT tails; it is not a fitted parameter.
+        self.majorizer = np.maximum(self.majorizer, self.ridge)
+        self.majorizer += 1e-12*max(float(self.majorizer.max()), self.ridge)
 
     def normal(self, x):
         out = self.ridge*x+self.smoothness*laplacian_cells(x)
@@ -88,16 +104,19 @@ class SceneQuadratic:
                 'gradient_lipschitz_upper_bound': self.lipschitz}
 
 
-def solve(problem, *, maxiter=2000, tolerance=1e-5, x0=None, callback=None, deadline=None):
+def solve(problem, *, maxiter=2000, tolerance=1e-5, x0=None, callback=None, deadline=None, scaling="diagonal"):
     if int(maxiter) != maxiter or maxiter < 1 or not np.isfinite(tolerance) or tolerance <= 0:
         raise ValueError('positive iteration budget and tolerance required')
+    if scaling not in ("diagonal", "global"):
+        raise ValueError("scaling must be diagonal or global")
     x = np.zeros(problem.shape) if x0 is None else np.array(x0, dtype=float, copy=True)
     if x.shape != problem.shape or not np.isfinite(x).all():
         raise ValueError('invalid initialization')
     x = np.maximum(x, 0.)
     y = x.copy()
-    L, mu = problem.lipschitz, problem.ridge
-    beta = (np.sqrt(L)-np.sqrt(mu))/(np.sqrt(L)+np.sqrt(mu))
+    diagonal = problem.majorizer if scaling == "diagonal" else np.full(problem.shape, problem.lipschitz)
+    mu = problem.ridge/float(diagonal.max())
+    beta = (1-np.sqrt(mu))/(1+np.sqrt(mu))
     start = time.monotonic()
     reason, converged = 'iteration_budget', False
     certificate = problem.certificate(x)
@@ -110,9 +129,9 @@ def solve(problem, *, maxiter=2000, tolerance=1e-5, x0=None, callback=None, dead
                 reason = 'wall_budget'
                 n -= 1
                 break
-            new = np.maximum(y-problem.gradient(y)/L, 0.)
+            new = np.maximum(y-problem.gradient(y)/diagonal, 0.)
             # Gradient restart prevents momentum repeatedly crossing an active face.
-            restart = np.vdot(y-new, new-x).real > 0
+            restart = np.vdot(diagonal*(y-new), new-x).real > 0
             y = new if restart else new+beta*(new-x)
             x = new
             if n % 10 == 0 or n == maxiter:
@@ -123,8 +142,9 @@ def solve(problem, *, maxiter=2000, tolerance=1e-5, x0=None, callback=None, dead
                     reason, converged = 'certified', True
                     break
     certificate = problem.certificate(x)
-    info = {'solver': 'extended_scene_projected_acceleration_v1', 'converged': converged,
+    info = {'solver': 'extended_scene_projected_acceleration_v2', 'converged': converged,
             'status': 'valid' if converged else 'incomplete', 'reason': reason,
+            'scaling': scaling, 'majorizer_min': float(diagonal.min()), 'majorizer_max': float(diagonal.max()),
             'n_iter': n, 'maxiter': int(maxiter), 'tolerance': tolerance,
             'objective': problem.objective(x), 'wall_s': time.monotonic()-start, **certificate}
     return x, info
