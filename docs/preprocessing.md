@@ -35,6 +35,28 @@ Python callers can call `preprocess_source(source, config)` independently, then
 selection. File-backed sources also save/load the sidecar automatically. Set
 `ReconstructionConfig(frame_preselection=False)` to ignore preprocessing.
 
+## Recorded exposure
+
+Blank **Exposure (s; blank = recorded)** automatically uses recorded integration
+time. The SER reader recognizes the capture-settings telescope field
+`fps=...gain=...exp=...`, where `exp` is milliseconds, and preserves the original
+header text. Jupiter records 20 ms, both Mars captures 3 ms, and the local Saturn
+captures 13–33 ms. Input inspection shows the recorded value; the blank field's
+placeholder follows the current capture. Enter seconds to override it, or 0 to
+disable the midpoint offset. CLI `stack --exposure` is the equivalent override.
+
+Geometry preprocessing, exposure-midpoint poses and motion-during-exposure checks
+use that effective value. Result metadata records its value and origin separately
+from the requested configuration. Changing recorded exposure invalidates cached
+geometry suggestions while preserving reusable quality/shape measurements.
+
+This is a writer convention in a text field, not a dedicated field in the
+[SER format](https://siril.readthedocs.io/en/latest/file-formats/SER.html).
+Unknown/malformed fields are not interpreted as exposure, and timestamp cadence
+is never substituted for integration time. Files without recorded exposure use
+zero midpoint offset unless the user supplies a value. Existing saved numeric
+exposure settings remain explicit overrides.
+
 ## Optional frame selection
 
 The default **100%** uses all screened frames. Selection is an optional comparison

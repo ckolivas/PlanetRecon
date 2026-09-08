@@ -90,6 +90,9 @@ The separate **Preprocess** action [caches quality, shape and geometry measureme
 a noise-robust Laplacian quality estimate rejects frames below mean − 2σ,
 and apparent width/height reject frames outside mean ± 2σ before stacking.
 The detected silhouette axes account for tilt, phase and attached rings.
+Recorded SER exposure is read automatically from supported capture-settings
+headers for geometry midpoint calculations. Leave Exposure blank for automatic
+metadata use; manual seconds override it. Frame cadence remains separate.
 The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
 shows exclusion counts before processing. Runs never repeat the analysis automatically.
 Use `planetrecon preprocess --path capture.ser` from the CLI;

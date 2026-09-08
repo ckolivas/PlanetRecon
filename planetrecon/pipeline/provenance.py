@@ -30,5 +30,6 @@ def capture_provenance(source, config, calibration):
                                    "sha256": hashlib.sha256(arr.tobytes()).hexdigest()}
             else:
                 cal[field.name] = value
-    return {"config": config.to_dict(), "input_identity": identity,
+    from planetrecon.geometry.pose import capture_exposure
+    return {"exposure": capture_exposure(source, config.exposure_s), "config": config.to_dict(), "input_identity": identity,
             "calibration": cal, "calibration_mode": calibration.mode if calibration else "approximate-noise"}

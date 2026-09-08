@@ -291,6 +291,10 @@ class SERSource(FrameSource):
             "capture_timing": FieldValue(capture_timing(self), "measured",
                                          "Derived from per-frame SER trailer timestamps when available."),
         }
+        exposure = header_exposure_s(self.header.telescope)
+        if exposure is not None:
+            extras['exposure_s'] = FieldValue(exposure, 'header',
+                'FireCapture-style telescope field fps=...gain=...exp=...; exp is milliseconds.')
         if self.bayer_override:
             extras["bayer_override"] = FieldValue(self.bayer_override, "user")
         if self.endian_override:
@@ -374,3 +378,21 @@ class SERSource(FrameSource):
 
     def close(self) -> None:
         self._file.close()
+
+
+def header_exposure_s(telescope: str) -> float | None:
+    """Read the capture-settings convention; ordinary telescope names are opaque.
+
+    SER has no dedicated exposure field. These writers store milliseconds in
+    the complete fps/gain/exp settings string. Never substitute frame cadence.
+    """
+    import re
+    number = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?"
+    match = re.fullmatch(rf"\s*fps=({number})\s*gain=({number})\s*exp=({number})\s*",
+                         telescope, flags=re.IGNORECASE)
+    if match is None:
+        return None
+    fps, gain, exposure_ms = map(float, match.groups())
+    if not np.isfinite([fps, gain, exposure_ms]).all() or fps <= 0 or exposure_ms <= 0:
+        return None
+    return exposure_ms / 1000.

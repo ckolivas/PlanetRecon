@@ -185,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--pole-pa-deg", type=float, default=0.0)
     st.add_argument("--sub-obs-lat-deg", type=float, default=None)
     st.add_argument("--sub-obs-lon-deg", type=float, default=0.0)
-    st.add_argument("--exposure", type=float, default=0.0, help="integration time in seconds")
+    st.add_argument("--exposure", type=float, default=None, help="integration time in seconds (default: recorded metadata; 0 disables midpoint offset)")
     st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")
     st.add_argument("--reference-epoch", type=float, default=0.0)
     st.add_argument("--ring-inner", type=float, default=None, help="Saturn ring inner radius in pixels")

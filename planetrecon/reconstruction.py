@@ -50,7 +50,7 @@ class ReconstructionConfig:
     sub_obs_lat_rad: float | None = None
     sub_obs_lon0_rad: float = 0.0
     surface_rate_rad_s: float | None = None
-    exposure_s: float = 0.0
+    exposure_s: float | None = None
     cadence_s: float | None = None
     geometry_duration_warn_s: float = C.GEOMETRY_DURATION_WARN_S
     freeze_mid_exposure: bool = True
@@ -119,7 +119,6 @@ class ReconstructionConfig:
             "flattening",
             "pole_pa_rad",
             "sub_obs_lon0_rad",
-            "exposure_s",
             "geometry_duration_warn_s",
         ):
             value = getattr(self, name)
@@ -127,7 +126,7 @@ class ReconstructionConfig:
                 raise ValueError(f"{name} must be finite")
         if float(self.flattening) < 0.0 or float(self.flattening) >= 1.0:
             raise ValueError("flattening must be in [0, 1)")
-        if float(self.exposure_s) < 0.0 or float(self.geometry_duration_warn_s) < 0.0:
+        if float(self.geometry_duration_warn_s) < 0.0:
             raise ValueError("exposure and duration warning must be non-negative")
         for name in (
             "sub_obs_lat_rad",
@@ -137,12 +136,15 @@ class ReconstructionConfig:
             "equatorial_radius_px",
             "surface_rate_rad_s",
             "cadence_s",
+            "exposure_s",
         ):
             value = getattr(self, name)
             if value is None:
                 continue
             if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite or null")
+        if self.exposure_s is not None and self.exposure_s < 0:
+            raise ValueError("exposure must be non-negative")
         if self.equatorial_radius_px is not None and float(self.equatorial_radius_px) <= 0:
             raise ValueError("equatorial_radius_px must be positive")
         if self.cadence_s is not None and float(self.cadence_s) <= 0:
@@ -200,7 +202,7 @@ class ReconstructionConfig:
             raise ValueError("moon velocity requires a complete moon track")
         if self.sub_obs_lat_rad is not None and abs(self.sub_obs_lat_rad) > math.pi / 2:
             raise ValueError("sub_obs_lat_rad must be in [-pi/2, pi/2]")
-        if self.geometry_mode != "none" and self.exposure_s > 0 and not self.freeze_mid_exposure:
+        if self.geometry_mode != "none" and (self.exposure_s or 0) > 0 and not self.freeze_mid_exposure:
             raise ValueError("exposure quadrature is not supported; use freeze_mid_exposure")
         if self.max_ram_bytes is not None:
             import sys

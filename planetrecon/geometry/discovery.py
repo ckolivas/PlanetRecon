@@ -72,9 +72,14 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
 
 def discover_geometry(source, config, selection, calibration=None, should_cancel=None):
     """Three short averages aligned to the best retained frame; at most 97 reads."""
+    from dataclasses import replace
+    from planetrecon.geometry.pose import capture_exposure
+    exposure = capture_exposure(source, config.exposure_s)
+    config = replace(config, exposure_s=exposure['value_s'])
     shape = estimate_flattening(selection, config)
     report = {'method': 'projected spherical texture motion v2', 'suggestions': dict(shape['suggestions']),
               'status': 'unresolved', 'notes': [], 'sample_indices': []}
+    report['exposure'] = exposure
     report['flattening_estimate'] = {k: v for k, v in shape.items() if k != 'suggestions'}
     report['notes'].extend(shape['notes'])
     accepted = np.flatnonzero(selection.accepted)

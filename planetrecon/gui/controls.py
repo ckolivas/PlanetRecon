@@ -52,7 +52,7 @@ class ConfigControls(QTabWidget):
         self._integer(capture, 'reference_index', 'Reference frame (0 = automatic)', 0, 2**31-1)
         self._number(capture, 'max_shift_px', 'Maximum shift (px)')
         self._number(capture, 'cadence_s', 'Cadence (s; blank = timestamps)')
-        self._number(capture, 'exposure_s', 'Exposure (s)')
+        self._number(capture, 'exposure_s', 'Exposure (s; blank = recorded)')
         cal = self._tab('Calibration')
         label = QLabel('NPY tables must match the raw detector shape.\nDark is already exposure-scaled; flat is positive.\nCFA tables stay on the raw pixel lattice.')
         label.setWordWrap(True)

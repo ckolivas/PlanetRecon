@@ -133,3 +133,16 @@ def globe_for_config(radius_px: float, flattening: float, pole_pa_rad: float,
         surface_rate_rad_s=float(surface_rate_rad_s),
         reference_epoch_s=float(reference_epoch_s),
     )
+
+
+def capture_exposure(source: FrameSource, override_s: float | None = None) -> dict:
+    """Effective integration time with an explicit distinction from cadence."""
+    if override_s is not None:
+        return {'value_s': float(override_s), 'origin': 'user'}
+    field = source.metadata().extras.get('exposure_s')
+    if field is not None and isinstance(field.value, (int, float)) and not isinstance(field.value, bool):
+        value = float(field.value)
+        if np.isfinite(value) and value > 0:
+            return {'value_s': value, 'origin': field.origin, 'note': field.note}
+    return {'value_s': 0., 'origin': 'unavailable',
+            'note': 'No recorded exposure; midpoint correction uses zero. Cadence is not substituted.'}

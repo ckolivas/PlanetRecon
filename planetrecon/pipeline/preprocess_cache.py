@@ -96,6 +96,12 @@ def cache_report(selection, path=None, config=None, source=None):
         if config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {}):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
                         'notes': [*estimate.get('notes', []), 'Cached whole-silhouette flattening is not used for Saturn globe geometry.']}
+    if source is not None and config is not None:
+        from planetrecon.geometry.pose import capture_exposure
+        recorded = selection.summary.get('geometry_estimate', {}).get('exposure')
+        if recorded is not None and recorded != capture_exposure(source, config.exposure_s):
+            estimate = {'suggestions': {}, 'applicable': False,
+                        'notes': ['Exposure changed; run Preprocess to refresh geometry estimates. Quality/shape exclusions remain valid.']}
     timing = selection.summary.get('timing', {})
     if source is not None:
         from planetrecon.geometry.pose import capture_timing

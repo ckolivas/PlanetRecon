@@ -87,6 +87,9 @@ def prepare_geometry(
     sample_indices: list[int] | None = None,
     reference_index: int | None = None,
 ) -> tuple[list[FramePose], SceneModel, dict, list[str]]:
+    from dataclasses import replace
+    from planetrecon.geometry.pose import capture_exposure
+    config = replace(config, exposure_s=capture_exposure(source, config.exposure_s)['value_s'])
     reference_index = config.reference_index if reference_index is None else reference_index
     times, time_origin = source_times_s(source, cadence_s=config.cadence_s)
     if times.size == 0:

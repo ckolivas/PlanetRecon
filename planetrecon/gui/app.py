@@ -376,6 +376,10 @@ class MainWindow:
         self.input_image = payload['input_image']
         meta = payload['source_metadata']
         self.input_metadata = meta
+        exposure = meta.get('extras', {}).get('exposure_s', {}).get('value')
+        self.controls.fields['exposure_s'].setPlaceholderText(
+            f'Automatic: {exposure:.6g} s' if exposure is not None else 'No recorded exposure')
+
         if 'preprocessing_cache' in payload:
             self._set_preprocessing(payload['preprocessing_cache'])
         self.input_max = payload.get('input_max')
@@ -384,7 +388,9 @@ class MainWindow:
                     if timing.get('status') == 'available' else 'unavailable')
         self.source_label.setText(f"{meta['path']} · {meta['width']}×{meta['height']} · "
                                   f"{meta['n_frames']} frames · {meta['color_mode']} · "
-                                  f"{meta['bit_depth']} bit · duration: {duration} · input view: {payload['input_view']}")
+                                  f"{meta['bit_depth']} bit · duration: {duration} · "
+                                  f"recorded exposure: {str(exposure) + ' s' if exposure is not None else 'unavailable'} · "
+                                  f"input view: {payload['input_view']}")
         if self.inspecting:
             self.view.setCurrentText('Input')
             self.details.setPlainText(json.dumps(meta, indent=2))
