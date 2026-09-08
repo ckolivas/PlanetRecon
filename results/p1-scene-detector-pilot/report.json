@@ -1,0 +1,324 @@
+{
+  "status": "valid",
+  "scope": "Numerical consistency only, including stored float32 scene/mean rounding. No reconstruction/physical-model adequacy claim.",
+  "q3_authorized": false,
+  "complete": true,
+  "source_unchanged": true,
+  "numerical_consistency_passed": true,
+  "cases": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 5.619690751264615e-13,
+              "stack_mean_standardized_square": 5.679624862095831e-13,
+              "stack_max_standardized_square": 1.0357602544925624e-11
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 2220.741175884098,
+              "stack_mean_standardized_square": 16033.64381348035,
+              "stack_max_standardized_square": 993913.2412952855
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 7.505724985661096e-13,
+              "stack_mean_standardized_square": 7.495933234697342e-13,
+              "stack_max_standardized_square": 1.1179570485451247e-11
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 112.82837690846645,
+              "stack_mean_standardized_square": 549.7767547762045,
+              "stack_max_standardized_square": 89689.40170893025
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+      "input_unchanged": true
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 2.7659372434513944e-13,
+              "stack_mean_standardized_square": 2.7800530064040365e-13,
+              "stack_max_standardized_square": 7.288241321288224e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 1588.9958148455385,
+              "stack_mean_standardized_square": 11324.374099373956,
+              "stack_max_standardized_square": 405196.7112322671
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 3.7472978827076324e-13,
+              "stack_mean_standardized_square": 3.767152635925421e-13,
+              "stack_max_standardized_square": 7.288241321288224e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 36.88653078941435,
+              "stack_mean_standardized_square": 182.53564389642207,
+              "stack_max_standardized_square": 31556.87552586681
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "1a8eb699a03d8f0322444b301e6996d7739afb04f3b50bd7d8e1a09333a13233",
+      "input_unchanged": true
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 5.671463756192757e-13,
+              "stack_mean_standardized_square": 5.698218979941557e-13,
+              "stack_max_standardized_square": 1.3501283184909165e-11
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 1191.2661946814178,
+              "stack_mean_standardized_square": 8328.214912881858,
+              "stack_max_standardized_square": 567124.6360616155
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 7.463940721243607e-13,
+              "stack_mean_standardized_square": 7.436477460131441e-13,
+              "stack_max_standardized_square": 1.1420809337710658e-11
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 117.83785293942526,
+              "stack_mean_standardized_square": 641.6225226589809,
+              "stack_max_standardized_square": 112729.98513246178
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "f0f30633e7ba2f00f63d153fbf0af69a04d9a721050180f6924b08a94f13370f",
+      "input_unchanged": true
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 2.9132494692162155e-13,
+              "stack_mean_standardized_square": 3.0135476307037753e-13,
+              "stack_max_standardized_square": 5.433651194573855e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 602.4717769121627,
+              "stack_mean_standardized_square": 2892.7148123655925,
+              "stack_max_standardized_square": 133052.9208740258
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 3.67479300521442e-13,
+              "stack_mean_standardized_square": 3.761476099502302e-13,
+              "stack_max_standardized_square": 6.3328115158225014e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 114.95539363512171,
+              "stack_mean_standardized_square": 508.3301462869025,
+              "stack_max_standardized_square": 63425.60878303207
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "79ad73843fbd348615408e2f2f448cf312cd62090345a9768699a064a19229aa",
+      "input_unchanged": true
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 5.787193201971858e-13,
+              "stack_mean_standardized_square": 6.042624689620417e-13,
+              "stack_max_standardized_square": 1.0787869081335529e-11
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 1345.737419363823,
+              "stack_mean_standardized_square": 5622.785837956717,
+              "stack_max_standardized_square": 356043.43798662565
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 7.380661553973955e-13,
+              "stack_mean_standardized_square": 7.360956483642388e-13,
+              "stack_max_standardized_square": 9.789400572047933e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 349.673281350269,
+              "stack_mean_standardized_square": 1367.959763974741,
+              "stack_max_standardized_square": 212819.73835508685
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "272d9d0a8512c1b765eac0312311d54f39824987cee5f07b7a6101482cdb463f",
+      "input_unchanged": true
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "indices": [
+        0,
+        55,
+        110,
+        166,
+        221,
+        277,
+        332,
+        388,
+        443,
+        499
+      ],
+      "crops": [
+        {
+          "crop": "feature",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 2.8045016215308626e-13,
+              "stack_mean_standardized_square": 2.881961754018149e-13,
+              "stack_max_standardized_square": 5.8068452343030315e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 1283.158137417727,
+              "stack_mean_standardized_square": 8965.566250921944,
+              "stack_max_standardized_square": 384232.3779112264
+            }
+          },
+          "numerical_consistency_passed": true
+        },
+        {
+          "crop": "bland",
+          "models": {
+            "extended": {
+              "per_frame_mean_standardized_square": 3.7324436553952234e-13,
+              "stack_mean_standardized_square": 3.7808865141994134e-13,
+              "stack_max_standardized_square": 5.8068452343030315e-12
+            },
+            "legacy_circular": {
+              "per_frame_mean_standardized_square": 59.52266714960731,
+              "stack_mean_standardized_square": 273.9223230780415,
+              "stack_max_standardized_square": 40179.826720789155
+            }
+          },
+          "numerical_consistency_passed": true
+        }
+      ],
+      "input_sha256": "f1bdb2e3e5605b5e4d69d99fb0f25da486d376945b6210e89b9b29f73208e316",
+      "input_unchanged": true
+    }
+  ],
+  "failures": [],
+  "wall_s": 10.19391723399167
+}

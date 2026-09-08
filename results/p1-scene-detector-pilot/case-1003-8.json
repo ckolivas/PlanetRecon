@@ -1,0 +1,52 @@
+{
+  "seed": 1003,
+  "dr0": 8.0,
+  "indices": [
+    0,
+    55,
+    110,
+    166,
+    221,
+    277,
+    332,
+    388,
+    443,
+    499
+  ],
+  "crops": [
+    {
+      "crop": "feature",
+      "models": {
+        "extended": {
+          "per_frame_mean_standardized_square": 2.8045016215308626e-13,
+          "stack_mean_standardized_square": 2.881961754018149e-13,
+          "stack_max_standardized_square": 5.8068452343030315e-12
+        },
+        "legacy_circular": {
+          "per_frame_mean_standardized_square": 1283.158137417727,
+          "stack_mean_standardized_square": 8965.566250921944,
+          "stack_max_standardized_square": 384232.3779112264
+        }
+      },
+      "numerical_consistency_passed": true
+    },
+    {
+      "crop": "bland",
+      "models": {
+        "extended": {
+          "per_frame_mean_standardized_square": 3.7324436553952234e-13,
+          "stack_mean_standardized_square": 3.7808865141994134e-13,
+          "stack_max_standardized_square": 5.8068452343030315e-12
+        },
+        "legacy_circular": {
+          "per_frame_mean_standardized_square": 59.52266714960731,
+          "stack_mean_standardized_square": 273.9223230780415,
+          "stack_max_standardized_square": 40179.826720789155
+        }
+      },
+      "numerical_consistency_passed": true
+    }
+  ],
+  "input_sha256": "f1bdb2e3e5605b5e4d69d99fb0f25da486d376945b6210e89b9b29f73208e316",
+  "input_unchanged": true
+}
