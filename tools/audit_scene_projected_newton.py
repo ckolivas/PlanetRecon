@@ -69,7 +69,7 @@ def run(path, manifest_path, directory, *, device='cpu', resume=False):
                     x, info = store.run(f'budget-{cap}', compute)
                     fits.append(info); outputs.append(x)
                 except TimeoutError as exc:
-                    fits.append({'maxiter': cap, 'converged': False, 'reason': str(exc)})
+                    fits.append({'max_products': cap, 'converged': False, 'reason': str(exc)})
             changes = {}
             if len(outputs) == 2:
                 changes['latent'] = float(np.linalg.norm(outputs[0]-outputs[1])/max(np.linalg.norm(outputs[1]), 1.))
