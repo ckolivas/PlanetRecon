@@ -1,0 +1,70 @@
+{
+  "phase": "photons",
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_sensitivity.py": "3dca2dfb09cfc126da21852de3f959ab68dc0edd1ec9c1404cd377c7d9fbce52",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "fd41a5cabaeed3d846331283e3538744d049bdd80885fef79cd31ab9969fa02f",
+      "docs/scene-sensitivity-protocol.md": "27bd696dc509bbf8127674676864ac52beb037c25f8c53dcd8b3a7ebaa848e9a",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_quadratic.py": "0ed6dba933fd333e7731c9ef1608ad08b83871f0501a5d69661223421797ec81",
+      "tools/scene_study.py": "f708ed339bf9759cfc419f0eb47e0f008b65c8ac4c7f7afd1f428301c7adb9c8"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "prior_report_sha256": "08d8f808bc06d68f3c4fea948b9125edb4937cae847e3821d65bbd896b8a13b9",
+  "fixed_strength": 0.0003,
+  "device": "cuda",
+  "cache_bytes": 268435456,
+  "threads": 2,
+  "train_small": [
+    0,
+    249,
+    499
+  ],
+  "train_large": [
+    0,
+    55,
+    111,
+    166,
+    222,
+    249,
+    277,
+    333,
+    388,
+    444,
+    499
+  ],
+  "selection": [
+    125,
+    374
+  ],
+  "assessment": [
+    62,
+    187,
+    312,
+    437
+  ],
+  "budgets": [
+    300,
+    600
+  ],
+  "wall_budget_s": 1800.0,
+  "fit_budget_s": 300.0,
+  "solution_tolerance": 1e-05,
+  "image_stability_tolerance": 0.0001,
+  "material_image_change_threshold": 0.01,
+  "scope": "Development pilot; fixed scalar observed-data variance, zero prior mean, no latent truth or expected-image values. No Gate-1/Q2/Q3 or production-setting qualification.",
+  "q3_authorized": false
+}

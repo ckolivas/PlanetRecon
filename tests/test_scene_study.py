@@ -56,3 +56,12 @@ def test_exact_psf_influence_domain_preserves_regularized_solution():
     np.testing.assert_allclose(a[2:10,2:10],b,atol=1e-8)
     outside=a.copy();outside[2:10,2:10]=0
     assert np.linalg.norm(outside)<=ia['absolute_solution_error_bound']+1e-12
+
+
+def test_rgb_cell_detector_flux_and_generator_batch():
+    base=SceneDetectorOperator((8,8,3),(np.ones((1,1)),),2,(1,1),(2,2))
+    op=CellBasisOperator(base,2)
+    x=np.ones(op.scene_shape)*4
+    np.testing.assert_allclose(op.detector_scene(x),4.)
+    batch=CellFFTBatch(o for o in [op])
+    np.testing.assert_allclose(batch.forward(x)[0],op.forward(x),atol=1e-12)

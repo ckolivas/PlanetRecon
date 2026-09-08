@@ -84,7 +84,7 @@ class CellBasisOperator:
     def detector_scene(self,x):
         base=self.base
         expanded=expand_cells(x,self.factor)
-        detector=bin_box(expanded,base.bin_factor)
+        detector=bin_box(expanded,base.bin_factor) if expanded.ndim==2 else np.stack([bin_box(expanded[...,c],base.bin_factor) for c in range(expanded.shape[2])],axis=-1)
         ox,oy=base.origin_xy;h,w=base.detector_shape
         return detector[oy:oy+h,ox:ox+w]
 
@@ -92,10 +92,10 @@ class CellBasisOperator:
 class CellFFTBatch:
     def __init__(self,operators,**kwargs):
         self.operators=tuple(operators)
-        if not self.operators or len({o.factor for o in operators})!=1:
+        if not self.operators or len({o.factor for o in self.operators})!=1:
             raise ValueError('common cell factor required')
         self.factor=self.operators[0].factor
-        self.native=SceneFFTBatch([o.base for o in operators],**kwargs)
+        self.native=SceneFFTBatch([o.base for o in self.operators],**kwargs)
 
     def forward(self,x):
         return self.native.forward(expand_cells(x,self.factor))

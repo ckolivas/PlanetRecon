@@ -12,7 +12,7 @@ from tools.study_io import identities,open_study,write_json,file_hash
 
 
 def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=False,
-        budgets=(300,600),wall_budget_s=1800.,fit_budget_s=300.):
+        budgets=(300,600),wall_budget_s=1800.,fit_budget_s=300.,strengths=(.0003,.003,.03)):
     from planetrecon.runtime import apply_thread_limits
     from planetrecon.physics_audit import peak_rss_bytes
     apply_thread_limits(2)
@@ -20,6 +20,8 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
         raise ValueError('invalid phase or budgets')
     if not np.isfinite([wall_budget_s,fit_budget_s]).all() or min(wall_budget_s,fit_budget_s)<=0:
         raise ValueError('positive finite time budgets required')
+    if not strengths or any(not np.isfinite(v) or v<=0 for v in strengths) or len(set(strengths))!=len(strengths):
+        raise ValueError('distinct positive finite prior strengths required')
     strength=None
     if phase!='prior':
         if prior_report is None:raise ValueError('qualified prior report required')
@@ -27,11 +29,11 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
         if prior['status']!='valid' or prior['selected_strength'] is None:raise ValueError('prior selection is incomplete')
         if prior['input_sha256']!=file_hash(path):raise ValueError('prior report input mismatch')
         strength=prior['selected_strength']
-    dependencies=[Path(__file__),Path('tools/scene_fft.py'),Path('tools/scene_study.py'),Path('tools/scene_quadratic.py'),Path('docs/scene-sensitivity-protocol.md')]
+    dependencies=[Path(__file__),Path('tools/scene_fft.py'),Path('tools/scene_study.py'),Path('tools/scene_quadratic.py'),Path('docs/scene-sensitivity-protocol.md'),Path('docs/scene-prior-extension-protocol.md')]
     identity=identities(dependencies)
     protocol={'phase':phase,'identities':identity,'input_sha256':file_hash(path),
               'prior_report_sha256':None if prior_report is None else file_hash(prior_report),
-              'fixed_strength':strength,'device':device,'cache_bytes':256*1024**2,'threads':2,
+              'fixed_strength':strength,'strength_grid':list(strengths),'device':device,'cache_bytes':256*1024**2,'threads':2,
               'train_small':list(TRAIN_SMALL),'train_large':list(TRAIN_LARGE),'selection':list(SELECTION),'assessment':list(ASSESSMENT),
               'budgets':list(budgets),'wall_budget_s':wall_budget_s,'fit_budget_s':fit_budget_s,
               'solution_tolerance':1e-5,'image_stability_tolerance':1e-4,'material_image_change_threshold':.01,
@@ -42,7 +44,7 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
     train=TRAIN_LARGE if phase=='photons' else TRAIN_SMALL
     # Assessment observations are deliberately absent until after prior selection.
     data=ObservedSceneData(path,tuple(train)+SELECTION)
-    if phase=='prior':configs=[(f'ridge-{v}',None,1,TRAIN_SMALL,v) for v in (.0003,.003,.03)]
+    if phase=='prior':configs=[(f'ridge-{v}',None,1,TRAIN_SMALL,v) for v in strengths]
     elif phase=='domain':configs=[(f'margin-{m}',m,1,TRAIN_SMALL,strength) for m in (None,0,32,64)]
     elif phase=='sampling':configs=[(f'factor-{f}',64,f,TRAIN_SMALL,strength) for f in (1,2,4)]
     else:configs=[(f'frames-{len(t)}',64,1,t,strength) for t in (TRAIN_SMALL,TRAIN_LARGE)]
@@ -122,7 +124,8 @@ if __name__=='__main__':
     p.add_argument('--phase',choices=('prior','domain','sampling','photons'),default='prior')
     p.add_argument('--prior-report',type=Path);p.add_argument('--device',choices=('cpu','cuda'),default='cpu')
     p.add_argument('--budgets',nargs=2,type=int,default=(300,600));p.add_argument('--wall-budget-s',type=float,default=1800.)
+    p.add_argument('--strengths',type=float,nargs='+',default=(.0003,.003,.03))
     p.add_argument('--fit-budget-s',type=float,default=300.);p.add_argument('--resume',action='store_true')
     a=p.parse_args();r=run(a.input,a.out,phase=a.phase,prior_report=a.prior_report,device=a.device,
-        resume=a.resume,budgets=a.budgets,wall_budget_s=a.wall_budget_s,fit_budget_s=a.fit_budget_s)
+        resume=a.resume,budgets=a.budgets,wall_budget_s=a.wall_budget_s,fit_budget_s=a.fit_budget_s,strengths=a.strengths)
     sys.exit(0 if r['status']=='valid' else 1)
