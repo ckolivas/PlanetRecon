@@ -306,7 +306,7 @@ def evaluate_q2_crop(
     tv_d = float(tv_mu)
     lam_d = reg.field_e2b(cfg, cfg.eval_size) if tv_d > 0 else reg.field_e2a(cfg, cfg.eval_size)
     fwd = PupilForward.from_config(cfg)
-    tt = tip_tilt_from_shifts(fwd, crop.shifts)
+    tt, tilt_info = tip_tilt_from_shifts(fwd, crop.shifts, return_info=True)
     m_max = int(m_grid[-1])
     alpha_tt = np.zeros((n, m_max), dtype=np.float64)
     alpha_tt[:, :min(2, m_max)] = tt[:, :min(2, m_max)]
@@ -457,6 +457,7 @@ def evaluate_q2_crop(
         "status": status,
         "blind_prior_selection": "frozen development tv_mu",
         "reference_selection": "frozen development reference_star",
+        "tip_tilt_calibration": tilt_info,
         "assessment_role": "synthetic truth metric; holdout reused for model selection",
         "ranking_hash": ranking_config_hash(),
         "n_frames": n,

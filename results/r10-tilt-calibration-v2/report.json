@@ -1,0 +1,381 @@
+{
+  "protocol": {
+    "role": "bounded development diagnostic",
+    "q3_authorized": false,
+    "grid_points_per_axis": 3,
+    "higher_mode_phase_rms_rad": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "centroid_tolerance_px": 1e-06,
+    "max_nfev": 64,
+    "cases": "all 12 archived reduced development cases; recorded min/max displacement rectangles",
+    "limitations": "Centroid calibration does not establish physical pupil tilt from image motion or correct exposure/basis/model mismatch."
+  },
+  "records": [
+    {
+      "case": "audit-1001-4-bland.json",
+      "input_sha256": "2e8ae0f7a5dda50de7507cf7fdf37290351f50df118277d1a4f5ce6ebf5eb598",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.15181846089178774,
+      "status": "passed",
+      "max_centroid_error_px": 1.2809491335957507e-14,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-4-bland.json",
+      "input_sha256": "2e8ae0f7a5dda50de7507cf7fdf37290351f50df118277d1a4f5ce6ebf5eb598",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.1529293229637906,
+      "status": "passed",
+      "max_centroid_error_px": 8.951766953123458e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1001-4-bland.json",
+      "input_sha256": "2e8ae0f7a5dda50de7507cf7fdf37290351f50df118277d1a4f5ce6ebf5eb598",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.6889823363638777,
+      "status": "passed",
+      "max_centroid_error_px": 3.978087586700131e-13,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-4-feature.json",
+      "input_sha256": "0e5855fba9e0aa44dfb5277588c2181f687448ed238c6a74252a32aab8aa926b",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.15181846089178774,
+      "status": "passed",
+      "max_centroid_error_px": 1.2809491335957507e-14,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-4-feature.json",
+      "input_sha256": "0e5855fba9e0aa44dfb5277588c2181f687448ed238c6a74252a32aab8aa926b",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.1529293229637906,
+      "status": "passed",
+      "max_centroid_error_px": 8.951766953123458e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1001-4-feature.json",
+      "input_sha256": "0e5855fba9e0aa44dfb5277588c2181f687448ed238c6a74252a32aab8aa926b",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.6889823363638777,
+      "status": "passed",
+      "max_centroid_error_px": 3.978087586700131e-13,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-8-bland.json",
+      "input_sha256": "f4ad98851c2a7e920bd537701035abd50e5c44f472695f2ea2a1eff2242c92b1",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.272289091805462,
+      "status": "passed",
+      "max_centroid_error_px": 1.0805156823142815e-14,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-8-bland.json",
+      "input_sha256": "f4ad98851c2a7e920bd537701035abd50e5c44f472695f2ea2a1eff2242c92b1",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.3167550520058021,
+      "status": "passed",
+      "max_centroid_error_px": 1.7241537553159386e-10,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-8-bland.json",
+      "input_sha256": "f4ad98851c2a7e920bd537701035abd50e5c44f472695f2ea2a1eff2242c92b1",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 1.2078627004510736,
+      "status": "passed",
+      "max_centroid_error_px": 6.30676727605591e-13,
+      "max_nfev": 5
+    },
+    {
+      "case": "audit-1001-8-feature.json",
+      "input_sha256": "b0cf1042ebcfb1528adf0dd2f399b2471c7f9757563ca39f785ed40eca09bb4f",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.272289091805462,
+      "status": "passed",
+      "max_centroid_error_px": 1.0805156823142815e-14,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-8-feature.json",
+      "input_sha256": "b0cf1042ebcfb1528adf0dd2f399b2471c7f9757563ca39f785ed40eca09bb4f",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.3167550520058021,
+      "status": "passed",
+      "max_centroid_error_px": 1.7241537553159386e-10,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1001-8-feature.json",
+      "input_sha256": "b0cf1042ebcfb1528adf0dd2f399b2471c7f9757563ca39f785ed40eca09bb4f",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 1.2078627004510736,
+      "status": "passed",
+      "max_centroid_error_px": 6.30676727605591e-13,
+      "max_nfev": 5
+    },
+    {
+      "case": "audit-1002-4-bland.json",
+      "input_sha256": "45d7bfb7528e776f672ba3de3daf912d92c64aaf0e24088a1008c9d321313868",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.014017390927222546,
+      "status": "passed",
+      "max_centroid_error_px": 5.249148587104408e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-4-bland.json",
+      "input_sha256": "45d7bfb7528e776f672ba3de3daf912d92c64aaf0e24088a1008c9d321313868",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.1952719545359066,
+      "status": "passed",
+      "max_centroid_error_px": 1.712588567655044e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-4-bland.json",
+      "input_sha256": "45d7bfb7528e776f672ba3de3daf912d92c64aaf0e24088a1008c9d321313868",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.24995339308097744,
+      "status": "passed",
+      "max_centroid_error_px": 1.5076933293354465e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-4-feature.json",
+      "input_sha256": "ea24fedf511800b5fb9db2fc44536ec52ea25e6d48dc45a120011a81f9e23aa0",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.014017390927222546,
+      "status": "passed",
+      "max_centroid_error_px": 5.249148587104408e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-4-feature.json",
+      "input_sha256": "ea24fedf511800b5fb9db2fc44536ec52ea25e6d48dc45a120011a81f9e23aa0",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.1952719545359066,
+      "status": "passed",
+      "max_centroid_error_px": 1.712588567655044e-12,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-4-feature.json",
+      "input_sha256": "ea24fedf511800b5fb9db2fc44536ec52ea25e6d48dc45a120011a81f9e23aa0",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.24995339308097744,
+      "status": "passed",
+      "max_centroid_error_px": 1.5076933293354465e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-8-bland.json",
+      "input_sha256": "e1b4ecb8ac77d926f215bf4daaba7dcf5dd9b3f42e5c66c4ec40367b25a90778",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.039659826547100964,
+      "status": "passed",
+      "max_centroid_error_px": 1.2985509304192832e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-8-bland.json",
+      "input_sha256": "e1b4ecb8ac77d926f215bf4daaba7dcf5dd9b3f42e5c66c4ec40367b25a90778",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.17889429675320312,
+      "status": "passed",
+      "max_centroid_error_px": 1.132605134731625e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-8-bland.json",
+      "input_sha256": "e1b4ecb8ac77d926f215bf4daaba7dcf5dd9b3f42e5c66c4ec40367b25a90778",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.11711410368456415,
+      "status": "passed",
+      "max_centroid_error_px": 6.012986583262091e-11,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1002-8-feature.json",
+      "input_sha256": "061febf8a4f663b5fac317690267a89f1e5cbe549b7c74649eea0755727a4f4b",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.039659826547100964,
+      "status": "passed",
+      "max_centroid_error_px": 1.2985509304192832e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-8-feature.json",
+      "input_sha256": "061febf8a4f663b5fac317690267a89f1e5cbe549b7c74649eea0755727a4f4b",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.17889429675320312,
+      "status": "passed",
+      "max_centroid_error_px": 1.132605134731625e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1002-8-feature.json",
+      "input_sha256": "061febf8a4f663b5fac317690267a89f1e5cbe549b7c74649eea0755727a4f4b",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.11711410368456415,
+      "status": "passed",
+      "max_centroid_error_px": 6.012986583262091e-11,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-4-bland.json",
+      "input_sha256": "77fc17fb300a5cdd5ca66fc3a097963378161ffcaff9c09e7dd50cbdabbe37c8",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.18669161684526497,
+      "status": "passed",
+      "max_centroid_error_px": 1.1672527514139643e-10,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-4-bland.json",
+      "input_sha256": "77fc17fb300a5cdd5ca66fc3a097963378161ffcaff9c09e7dd50cbdabbe37c8",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.32250173619067873,
+      "status": "passed",
+      "max_centroid_error_px": 2.478320198854619e-12,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-4-bland.json",
+      "input_sha256": "77fc17fb300a5cdd5ca66fc3a097963378161ffcaff9c09e7dd50cbdabbe37c8",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.5768855022282622,
+      "status": "passed",
+      "max_centroid_error_px": 4.881585025336839e-12,
+      "max_nfev": 5
+    },
+    {
+      "case": "audit-1003-4-feature.json",
+      "input_sha256": "8965c873e57891c956c6fa4d9706233271a5886a57da0fd9d03304264c9bccf8",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.18669161684526497,
+      "status": "passed",
+      "max_centroid_error_px": 1.1672527514139643e-10,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-4-feature.json",
+      "input_sha256": "8965c873e57891c956c6fa4d9706233271a5886a57da0fd9d03304264c9bccf8",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.32250173619067873,
+      "status": "passed",
+      "max_centroid_error_px": 2.478320198854619e-12,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-4-feature.json",
+      "input_sha256": "8965c873e57891c956c6fa4d9706233271a5886a57da0fd9d03304264c9bccf8",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.5768855022282622,
+      "status": "passed",
+      "max_centroid_error_px": 4.881585025336839e-12,
+      "max_nfev": 5
+    },
+    {
+      "case": "audit-1003-8-bland.json",
+      "input_sha256": "40dfecbde9a66e8b6acd6503de6f28206626d30672f6438852710cb4f04b5fc7",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.26175798907600456,
+      "status": "passed",
+      "max_centroid_error_px": 7.105427357601002e-15,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-8-bland.json",
+      "input_sha256": "40dfecbde9a66e8b6acd6503de6f28206626d30672f6438852710cb4f04b5fc7",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.33031880873658165,
+      "status": "passed",
+      "max_centroid_error_px": 2.2398253288721303e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1003-8-bland.json",
+      "input_sha256": "40dfecbde9a66e8b6acd6503de6f28206626d30672f6438852710cb4f04b5fc7",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.7878516557352733,
+      "status": "passed",
+      "max_centroid_error_px": 8.841850740537124e-13,
+      "max_nfev": 5
+    },
+    {
+      "case": "audit-1003-8-feature.json",
+      "input_sha256": "4bee409dd490641b5d7690aa17876f9101126a2f8eee6daee7b352555f575502",
+      "higher_mode_phase_rms_rad": 0.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.26175798907600456,
+      "status": "passed",
+      "max_centroid_error_px": 7.105427357601002e-15,
+      "max_nfev": 4
+    },
+    {
+      "case": "audit-1003-8-feature.json",
+      "input_sha256": "4bee409dd490641b5d7690aa17876f9101126a2f8eee6daee7b352555f575502",
+      "higher_mode_phase_rms_rad": 0.5,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.33031880873658165,
+      "status": "passed",
+      "max_centroid_error_px": 2.2398253288721303e-11,
+      "max_nfev": 3
+    },
+    {
+      "case": "audit-1003-8-feature.json",
+      "input_sha256": "4bee409dd490641b5d7690aa17876f9101126a2f8eee6daee7b352555f575502",
+      "higher_mode_phase_rms_rad": 1.0,
+      "n_targets": 9,
+      "legacy_max_centroid_error_px": 0.7878516557352733,
+      "status": "passed",
+      "max_centroid_error_px": 8.841850740537124e-13,
+      "max_nfev": 5
+    }
+  ],
+  "wall_time_s": 2.7083474849932827,
+  "source_sha256": "8be7cff3b51abaf472fbe294f00929f43fef796d7285f8610ad2924b7a2e0832",
+  "all_passed": true
+}

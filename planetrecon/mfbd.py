@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy.fft import fft2, ifft2
-from scipy.optimize import minimize
+from scipy.optimize import minimize, least_squares
 
 from planetrecon import constants as C
 from planetrecon.config import SimConfig
@@ -163,22 +163,64 @@ def frame_loss_and_grad(
     return loss, np.asarray(grad, dtype=np.float64)
 
 
-def tip_tilt_jacobian(fwd: PupilForward) -> tuple[np.ndarray, np.ndarray]:
-    """Linear map α_tip/tilt → PSF centroid, evaluated at zero."""
-    c0 = np.array(centroid_px(fwd.psf_det(np.zeros(2))), dtype=np.float64)
-    cx = np.array(centroid_px(fwd.psf_det(np.array([1.0, 0.0]))), dtype=np.float64)
-    cy = np.array(centroid_px(fwd.psf_det(np.array([0.0, 1.0]))), dtype=np.float64)
-    jac = np.column_stack([cx - c0, cy - c0])
+def tip_tilt_jacobian(fwd: PupilForward, phase_base=None) -> tuple[np.ndarray, np.ndarray]:
+    """Local centroid Jacobian; an initializer for the nonlinear calibration."""
+    base = np.zeros(2) if phase_base is None else np.asarray(phase_base, dtype=float).copy()
+    if base.ndim != 1 or not 2 <= base.size <= fwd.n_modes or not np.isfinite(base).all():
+        raise ValueError('tip/tilt calibration requires at least two finite pupil modes')
+    base[:2] = 0.
+    c0 = np.array(centroid_px(fwd.psf_det(base)), dtype=np.float64)
+    columns = []
+    for axis in range(2):
+        plus, minus = base.copy(), base.copy()
+        plus[axis], minus[axis] = 1e-3, -1e-3
+        columns.append((np.array(centroid_px(fwd.psf_det(plus))) -
+                        np.array(centroid_px(fwd.psf_det(minus)))) / 2e-3)
+    jac = np.column_stack(columns)
     return jac, c0
 
 
-def tip_tilt_from_shifts(fwd: PupilForward, shifts: np.ndarray) -> np.ndarray:
-    """Known detector-pixel translations as first-two KL coefficients."""
-    jac, c0 = tip_tilt_jacobian(fwd)
-    out = np.zeros((shifts.shape[0], 2), dtype=np.float64)
-    for k in range(shifts.shape[0]):
-        out[k] = np.linalg.lstsq(jac, np.asarray(shifts[k], dtype=np.float64) - c0, rcond=None)[0]
-    return out
+def tip_tilt_from_shifts(fwd: PupilForward, shifts: np.ndarray, *, phase_base=None,
+                        return_info: bool = False):
+    """Fit first-two KL coefficients to the actual cropped detector PSF centroid.
+
+    A one-radian secant is inaccurate after detector binning/cropping. The local
+    Jacobian only initializes a bounded nonlinear solve, whose centroid error
+    must pass before the coefficients can be used. Optional fixed higher modes
+    qualify the mapping under aberration; centroid agreement alone does not
+    establish a physical pupil tilt from measured image motion.
+    """
+    shifts = np.asarray(shifts, dtype=float)
+    if shifts.ndim != 2 or shifts.shape[1] != 2 or not np.isfinite(shifts).all():
+        raise ValueError('shifts must be a finite (N, 2) array')
+    if np.any(shifts < -(fwd.eval_size//2)) or np.any(shifts > (fwd.eval_size-1)//2):
+        raise ValueError('requested centroid is outside the detector crop')
+    bases = np.zeros((len(shifts), 2)) if phase_base is None else np.asarray(phase_base, dtype=float)
+    if (bases.ndim != 2 or bases.shape[0] != len(shifts) or not 2 <= bases.shape[1] <= fwd.n_modes
+            or not np.isfinite(bases).all()):
+        raise ValueError('phase_base must contain finite (N, M) coefficients with at least two modes')
+    out = np.zeros((len(shifts), 2), dtype=np.float64)
+    diagnostics = []
+    common = tip_tilt_jacobian(fwd) if phase_base is None else None
+    for k, target in enumerate(shifts):
+        base = bases[k].copy()
+        jac, c0 = common if common is not None else tip_tilt_jacobian(fwd, base)
+        if not np.isfinite(jac).all() or np.linalg.cond(jac) > 1e8:
+            raise ValueError('tip/tilt centroid calibration is ill-conditioned')
+        initial = np.linalg.solve(jac, target-c0)
+        def residual(coefficients):
+            base[:2] = coefficients
+            return np.array(centroid_px(fwd.psf_det(base))) - target
+        fit = least_squares(residual, initial, max_nfev=64, ftol=1e-11, xtol=1e-11, gtol=1e-11)
+        error = float(np.linalg.norm(residual(fit.x)))
+        if not fit.success or not np.isfinite(error) or error > 1e-6:
+            raise ValueError(f'tip/tilt centroid calibration failed for frame {k}: error {error:.6g} px')
+        out[k] = fit.x
+        diagnostics.append({'success': True, 'status': int(fit.status), 'nfev': int(fit.nfev),
+                            'centroid_error_px': error, 'optimality': float(fit.optimality)})
+    info = {'method': 'nonlinear cropped detector-centroid calibration v2',
+            'tolerance_px': 1e-6, 'frames': diagnostics}
+    return (out, info) if return_info else out
 
 
 def fit_frame_alpha(

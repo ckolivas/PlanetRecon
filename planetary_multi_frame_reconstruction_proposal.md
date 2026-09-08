@@ -2379,3 +2379,24 @@ Compressed/OpenDML AVI remains outside the declared native AVI adapter scope.
 Cross-platform build execution awaits the workflow; Windows/macOS runtime tests
 are excluded from the process. Licensing and publisher signing have not been
 invented. No private captures or derived pixels were added to Git.
+
+**Preprocessing and reference continuation (2026-09-08):** standalone cached
+preprocessing supplies optional quality/shape rejection, best-retained reference
+selection, conditional globe flattening and timing from SER frame timestamps.
+Geometry processing retains subpixel translation alignment; blank surface rate
+applies no spin correction. Jupiter's current best retained reference is frame
+1947 (zero-based), its apparent equator-on flattening is 0.06884, and its measured
+first-to-last timestamp span is 74.996 s. Rotation remains unresolved.
+
+**W02 centroid calibration continuation (2026-09-08):** the first-two-mode mapping
+now refines a local central-difference Jacobian with a bounded nonlinear fit to
+the actual cropped detector PSF centroid. Failed or ill-conditioned calibration
+is rejected; Q2 reports per-frame termination and centroid errors. The committed
+`results/r10-tilt-calibration-v2` diagnostic covers all 12 archived development
+displacement rectangles, nine positions each, at fixed higher-mode RMS phases
+0/0.5/1 rad: 324 fits. Maximum error is 1.725e-10 px, within the predeclared
+1e-6 px tolerance, in at most five solver evaluations. The superseded one-radian
+secant reaches 1.208 px error under these perturbations. This qualifies the
+bounded centroid mapping, not physical pupil tilt inference from measured image
+motion, the atmospheric solver, or Q3. Reproduce in a new directory with
+`.venv/bin/python tools/qualify_tilt_mapping.py --out NEW_DIRECTORY`.
