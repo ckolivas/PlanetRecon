@@ -1,5 +1,23 @@
 # Summarizing complete and partial family evidence
 
+Inspect an unfinished case without modifying its files:
+
+```sh
+.venv/bin/python tools/scene_family_progress.py out/p2-selection-family/case-01
+```
+
+This prints the five selection records, stored stages, latest optimizer traces
+and final-report availability. It rechecks recorded selection certificates and
+stability against the frozen contract. An optimizer trace or a stored-stage
+convergence flag never substitutes for independent CPU evidence. Every record
+read has its own checksum; files may advance during inspection, so this is not
+an atomic snapshot of the entire case or a source/input verification.
+
+Process liveness remains explicitly unknown. A missing final report, an old
+trace or an empty restricted process listing does not prove the run has stopped.
+Check the owning execution session before starting or resuming any study. Never
+start a second scientific run solely because a progress report appears stale.
+
 After each completed case, archive its JSON evidence and decision without
 rewriting prior attempts. Produce a new summary path with:
 
