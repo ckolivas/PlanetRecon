@@ -55,13 +55,16 @@ channel support, and leaves flat/noise-only controls unchanged. CPU/CUDA samplin
 agrees within 1.4e-15. The [fixed Jupiter pilot](../results/real-data/jupiter-gated-sampling.json)
 is complete: RMS worsens by 2.89% and fine-detail correlation falls by 0.0386.
 The gate is not adopted; do not run a full-capture validation or sweep radii.
-Next compare the green-only registration proxy with an all-colour luminance
-proxy, keeping frame selection, best-frame origin and accumulation weights fixed.
-Start with known translations in low-contrast/noisy Bayer scenes, including
-unequal channel brightness and blur. Test real Jupiter only if registration
-accuracy improves without breaking constant-colour or noise controls. Preserve
-the current global/all-screened defaults, local ambiguity/fold guards and no
-sharpening. Do not confuse gains on ideal sharp controls with real-image gains.
+The [all-colour registration controls](../results/real-data/colour-registration-controls.json)
+are complete: bilinear RGB luminance improves aggregate translation accuracy by
+about 23% at Jupiter-like colour ratios and 31% with balanced colours. The weak
+red/blue case is roughly neutral overall, with up to 1.8% regressions in individual
+Bayer layouts, so this is not a universal replacement. Constant colours and
+flat-template/noise controls pass. Next run one paired Jupiter luminance-proxy
+pilot, keeping stack weights green-based, all 512 frames, the same 64 template
+candidates and the same best-frame origin. Only proceed to full application
+validation if both paired image metrics improve. Preserve global/all-screened
+defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts
