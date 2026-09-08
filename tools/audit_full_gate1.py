@@ -65,7 +65,11 @@ def evaluate_case(payload):
         from tools.quadratic_admm import solve
         estimators.e2a = evaluation.e2a = solve
     identity = file_hash(path)
-    errors = gate_errors(path)
+    if protocol.get('input_compatibility') == 'archived-full-grid':
+        from tools.input_compatibility import archived_input_errors
+        errors = archived_input_errors(path)
+    else:
+        errors = gate_errors(path)
     if errors:
         raise ValueError(f'{path}: {errors}')
     cfg, crop, extras = load_crop(path, crop_name)
@@ -100,7 +104,7 @@ def evaluate_case(payload):
     return summary
 
 
-def run(inputs, directory, family='development', workers=3, budgets=(512, 1024), solver='fista', *, resume=False, wall_budget_s=3600., background_workload='unspecified'):
+def run(inputs, directory, family='development', workers=3, budgets=(512, 1024), solver='fista', *, resume=False, wall_budget_s=3600., background_workload='unspecified', input_compatibility='strict'):
     from planetrecon import constants as C
     from planetrecon.evaluate import REG, aggregate_family, family_paths
     from planetrecon.provenance import source_hash
@@ -118,7 +122,10 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024),
     runner_identity = file_hash(__file__)
     solver_path = Path(__file__).with_name('quadratic_admm.py') if solver == 'admm' else None
     solver_identity = None if solver_path is None else file_hash(solver_path)
-    protocol = {'family': family, 'seeds': list(seeds), 'regimes': list(regimes),
+    protocol = {'input_compatibility': input_compatibility,
+                'compatibility_source_sha256': file_hash(Path(__file__).with_name('input_compatibility.py')),
+                'compatibility_bridge_sha256': file_hash(Path(__file__).resolve().parents[1]/'results/r10-full-grid-inputs/compatibility.json'),
+                'family': family, 'seeds': list(seeds), 'regimes': list(regimes),
                 'crops': ['feature', 'bland'], 'n_frames': C.N_FRAMES, 'eval_size': C.EVAL_SIZE,
                 'budgets': list(budgets), 'solver_tolerance': C.E2A_FISTA_TOL,
                 'image_tolerance': 1e-3, 'gap_tolerance': .01,
@@ -187,10 +194,11 @@ if __name__ == '__main__':
     parser.add_argument('--workers', type=int, default=3)
     parser.add_argument('--budgets', type=int, nargs=2, default=(512, 1024))
     parser.add_argument('--solver', choices=('fista', 'admm'), default='fista')
+    parser.add_argument('--input-compatibility', choices=('strict', 'archived-full-grid'), default='strict')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--wall-budget-s', type=float, default=3600.)
     parser.add_argument('--background-workload', default='unspecified')
     args = parser.parse_args()
     report = run(args.inputs, args.out, args.family, args.workers, tuple(args.budgets), args.solver,
-                 resume=args.resume, wall_budget_s=args.wall_budget_s, background_workload=args.background_workload)
+                 resume=args.resume, wall_budget_s=args.wall_budget_s, background_workload=args.background_workload, input_compatibility=args.input_compatibility)
     sys.exit(0 if report['full_resolution_budget_convergence_passed'] else 1)

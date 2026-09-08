@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "scope": "Exact archived simulation inputs only; no reconstruction qualification",
+  "original_git_commit": "84cde4e7684581aa441fba0d2d0a996ca75ba260",
+  "original_package_source_hash": "826c1962b281c97359d0ff4c060f257daa725017edef18dba781837e424d417e",
+  "input_manifest": "results/r10-full-grid-inputs/manifest.json",
+  "input_manifest_sha256": "d9cf63fceeee454d0be1774d08923399630c1e5483d85528a44169e4bb5b593b",
+  "dependencies": {
+    "planetrecon/__init__.py": "2b264c230ab1383d14052c58559f2652a22a25954fc6e7a5903c33baa979f574",
+    "planetrecon/constants.py": "17fa798ff4dbc623f7b352faa10a96d18138e4f7776a69b7c5bc683048589def",
+    "planetrecon/config.py": "1851e6bf8c9d517feaa9e72efe28e27fa165eb958578408c709fa198087f9d29",
+    "planetrecon/simulate.py": "875cca8188e9bcdb087a36231ffdb6b8b468efea690953673279bb8d7b75b113",
+    "planetrecon/atmosphere.py": "d5e04e81a79a9e86074f3d5a36df2903ca415abce8f5e7da22ff063186680ad3",
+    "planetrecon/hdf5io.py": "2a70686ae599583d5ed4724fff4d49ae8f52a80eb122e5ee0c28cc030d3d8b77",
+    "planetrecon/kl.py": "a663a8dd6910874586aa9554b02c14de7204e5a61306a4094c1804089026d9cd",
+    "planetrecon/metric.py": "8977e86ed09b4f473759284210b17532a1e9c0d5a8df51a7c66d78d03abd3420",
+    "planetrecon/object.py": "0d699cd2b8c0d34ec07b95a908011e7303878d20f2d38098978c977177a66ed2",
+    "planetrecon/optics.py": "f286b87bcf4bcfba13e1bafb00800c6a840686f6f182ae25191586d8387e552c",
+    "planetrecon/rng.py": "cee64f2858e8adbcf48fb4dc3b07c8c081860be2db0b951289ff6382e9675107",
+    "planetrecon/validate.py": "b2ddeef00da9380e3495cb9e1298d0769e83bbd37a2c59fa9482110cfb6dd760",
+    "planetrecon/provenance.py": "9ae4f83ad93749d45574ce3e99e4b4d9ba398b7f8ebf662fbca6f3c47ef21d4f",
+    "planetrecon/estimators.py": "fabb6bb62a5646b00609773c6f24bbf9240c840aaabb912481de330084cab590",
+    "planetrecon/rank.py": "c9f611d4f9f6ac417205fb3ead3449f89b9badfa0885bbcb787b3939998389f8"
+  }
+}

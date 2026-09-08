@@ -35,3 +35,11 @@ to a pass. Failed stages and completed attempt reports remain as separate record
 An interrupted solve restarts from its beginning; prior stages are reused.
 The time budget is checked between stages, so an active solve may exceed it.
 Peak memory is process high-water RSS, not an isolated stage allocation.
+
+The explicitly selected `--input-compatibility archived-full-grid` mode can reuse
+only the 30 byte-identical archived files. Its reviewed bridge records their
+original Git/package identity and hashes the conservative simulation/validation
+import closure. It checks the original certificate, current physics/sampling and
+input manifest; it never rewrites HDF5 or refreshes pass flags. This lets new
+reconstruction modules change without declaring their results qualified. Changes
+to a generation/validation dependency still require a new reviewed comparison.
