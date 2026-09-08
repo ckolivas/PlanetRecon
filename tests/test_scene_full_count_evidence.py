@@ -51,3 +51,21 @@ def test_parallel_reference_and_incomplete_endpoint_scope():
     failed = [json.loads(p.read_text()) for p in root.glob('incomplete-100-*.json')]
     assert {r['maxiter'] for r in failed} == {750, 1500}
     assert all(not r['converged'] and r['reason'] == 'wall_budget' for r in failed)
+
+
+def test_alternative_and_comparison_retain_incomplete_full_count_result():
+    for name in ('p2-selection-endpoints-lbfgsb', 'p2-selection-endpoints-comparison'):
+        root = ROOT/name
+        for path, expected in json.loads((root/'checksums.json').read_text()).items():
+            assert hashlib.sha256((root/path).read_bytes()).hexdigest() == expected
+    alternative = json.loads((ROOT/'p2-selection-endpoints-lbfgsb/report.json').read_text())
+    assert alternative['complete'] and alternative['status'] == 'incomplete'
+    assert [r['numerical_passed'] for r in alternative['rows']] == [True, False]
+    assert all(f['reason'] == 'wall_budget' for f in alternative['rows'][1]['runs'])
+    comparison = json.loads((ROOT/'p2-selection-endpoints-comparison/report.json').read_text())
+    assert comparison['certified_objectives_consistent']
+    assert not comparison['reference_endpoints_passed'] and not comparison['candidate_endpoints_passed']
+    for source, expected in comparison['source_reports'].items():
+        assert hashlib.sha256((ROOT.parent/source).read_bytes()).hexdigest() == expected
+    assert all(f['objective_consistent_with_bounds'] is True for f in comparison['rows'][0]['fits'])
+    assert all(f['objective_consistent_with_bounds'] is None for f in comparison['rows'][1]['fits'])

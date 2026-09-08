@@ -1,0 +1,57 @@
+{
+  "identities": {
+    "package_source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+    "dependencies": {
+      "results/r10-full-grid-inputs/compatibility.json": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+      "tools/audit_scene_lbfgsb.py": "a6ca5d5df06cf1457384596c32e1447d2eb8b648bebcd8f8ba20e727a885c870",
+      "tools/experiment_stages.py": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+      "tools/input_compatibility.py": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+      "tools/study_io.py": "901c9195efc22b15d69004282d3d69ed5e941f48d21a0f75548ca7888a910ce7",
+      "docs/scene-lbfgsb-comparison-protocol.md": "d9b5c6b041b3ed7012323a81005f315c8c2293dce120b4108ff973103df76359",
+      "tools/audit_scene_selections.py": "9f95ee5790fb46d265dfb572aa8345148a4acf4189d0415916af2eaeb930a9e9",
+      "tools/scene_fft.py": "0e25f2eeaa04e3cbb9dc2043056f8fb36c9cb0a1a0d2bc92a6f1059d51441f37",
+      "tools/scene_lbfgsb.py": "ed23d66125013309b5d5117c18dc645a1362044b3318c758ffaf447bb1058c61",
+      "tools/scene_quadratic.py": "05658b8f6e797d1507bac9e88506b8c5a5e02b9871e43b5a360938d10e1df5fc",
+      "tools/scene_residual.py": "bffaae991992437835b113ef240070f256fa32f108bbf7ff868bfb9f5d9b5965",
+      "tools/scene_study.py": "263970a029c9565a0ddf15b78864d0f8938098e3b02ea2039e1f6726b033003c"
+    },
+    "runtime": {
+      "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+      "platform": "Linux-7.2.0-ck1-x86_64-with-glibc2.41",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "h5py": "3.16.0",
+      "torch": "2.13.0+cu132"
+    }
+  },
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "manifest_sha256": "6144f1387d65c754a1e0a403eb73f941667cc0a95eb1a49539cc41e7b49e731d",
+  "case": [
+    1001,
+    4.0,
+    "feature"
+  ],
+  "fractions": [
+    5,
+    100
+  ],
+  "sum_native_strength": 0.0003,
+  "margin": 64,
+  "cell_factor": 1,
+  "budgets": [
+    750,
+    1500
+  ],
+  "tolerance": 1e-05,
+  "image_tolerance": 0.0001,
+  "device": "cuda",
+  "threads": 2,
+  "cache_bytes": 268435456,
+  "fit_budget_s": 300.0,
+  "wall_budget_s": 1200.0,
+  "history_pairs": 8,
+  "max_line_search": 20,
+  "background_workload": "May overlap the reference endpoint pilot and bounded verification jobs; wall times are not isolated speed comparisons.",
+  "scope": "One alternative numerical endpoint pilot; no full-family or scientific qualification; stage resume only.",
+  "q3_authorized": false
+}
