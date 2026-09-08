@@ -45,13 +45,17 @@ The [independent local-template refinement](../results/real-data/jupiter-local-t
 also completed: RMS improves 0.164%, but fine-detail correlation declines by
 0.000141. It fails the declared two-metric gate and is not adopted; no full run
 or additional template iterations are warranted.
-Next test whether a narrower nonnegative colour-sampling footprint can reduce
-resampling blur. Start with known-truth subpixel-shift controls for mono and all
-four Bayer layouts, with fixed frame counts, noise and colour intensities.
-Require preserved constant colour, valid channel coverage and no noise-only
-regression before a single paired Jupiter pilot. Keep original measurements,
-common colour weights, the best-frame coordinate anchor and no sharpening;
-do not introduce a new default until the actual application output improves.
+The [colour-sampling controls](../results/real-data/sampling-footprint-controls.json)
+are complete. An unconditional radius-0.75 triangular footprint reduces blur but
+raises noise-only RMS about 34%, so it is rejected. A shared colour gate based on
+agreement between two independent 32-frame templates retains radius-1 sampling
+in flat/noise-only regions. Across mono and all four Bayer layouts it reduces
+textured/mixed-scene error about 19–35%, preserves constant colours and direct
+channel support, and leaves flat/noise-only controls unchanged. CPU/CUDA sampling
+agrees within 1.4e-15. Next run one fixed 512-frame Jupiter comparison using this
+gate, the existing independent template and the same raw samples/weights/anchor.
+Only proceed to application validation if both paired image metrics improve;
+keep global alignment/all screened frames as defaults and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts
