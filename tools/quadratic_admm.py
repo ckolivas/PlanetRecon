@@ -37,6 +37,16 @@ def solve(otfs, images, sigma2, lam_f, support, maxiter=10000, tol=C.E2A_FISTA_T
     if not mask[0, 0]:
         raise ValueError('ADMM audit requires DC in the spectral support')
     num, den = wiener_num_den(otfs, images, sigma2, lam_f)
+    # Fractional registration on even grids need not preserve Hermitian
+    # transfer coefficients at Nyquist. Restrict the quadratic to real images
+    # before inverting its diagonal; taking .real after division is not the
+    # same solve. This is also the real normal operator used by production
+    # FISTA, whose gradient is the real part of the inverse FFT.
+    iy = (-np.arange(num.shape[0])) % num.shape[0]
+    ix = (-np.arange(num.shape[1])) % num.shape[1]
+    reflected = np.ix_(iy, ix)
+    num = .5*(num+num[reflected].conj())
+    den = .5*(den+den[reflected])
     rho = float(np.sqrt(den[mask].min()*den[mask].max()))
     lipschitz = float(den[mask].max())
     x = np.fft.ifft2(mask*num/den).real if x0 is None else np.asarray(x0, dtype=float).copy()
@@ -71,4 +81,4 @@ def solve(otfs, images, sigma2, lam_f, support, maxiter=10000, tol=C.E2A_FISTA_T
                       'maxiter': maxiter, 'rel_delta': rel_delta, 'rho': rho,
                       'termination_reason': 'converged' if converged else 'iteration_limit',
                       'relative_solution_error_bound_tolerance': error_bound_tol,
-                      'stationarity_tolerance': tol, 'solver': 'experimental_quadratic_admm_v1'}
+                      'stationarity_tolerance': tol, 'solver': 'experimental_quadratic_admm_v2'}

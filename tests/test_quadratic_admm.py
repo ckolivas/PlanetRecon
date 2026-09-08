@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from planetrecon.constraint_audit import convolution_matrix, quadratic_oracle
-from planetrecon.estimators import e1
+from planetrecon.estimators import e1, shift_otf
 from planetrecon.optics import otf_from_centered_psf
 from tools.quadratic_admm import solve
 
@@ -64,3 +64,21 @@ def test_zero_data_and_missing_dc():
     support = np.ones((4, 4)); support[0, 0] = 0
     with pytest.raises(ValueError, match='DC'):
         solve(*args, support)
+
+
+def test_fractional_registration_uses_the_real_quadratic_normal_operator():
+    # Complex Nyquist coefficients make the real-space normal matrix differ
+    # from taking .real after division by the unsymmetrized Fourier diagonal.
+    n = 6
+    h = (shift_otf(np.ones((n, n), complex), (.3, -.2))
+         + shift_otf(np.ones((n, n), complex), (-.6, .4)))/2
+    kernel = np.fft.fftshift(np.fft.ifft2(h))
+    matrix = convolution_matrix((n, n), kernel, circular=True)
+    observed = np.random.default_rng(4).normal(10., .1, (n, n))
+    normal = (matrix.conj().T @ matrix).real + .05*np.eye(n*n)
+    rhs = (matrix.conj().T @ observed.ravel()).real
+    exact = np.linalg.solve(normal, rhs).reshape((n, n))
+    assert exact.min() > 0
+    image, info = solve(h[None], observed[None], np.ones(1), np.full((n, n), .05), np.ones((n, n)))
+    assert info['converged'] and info['feasible']
+    np.testing.assert_allclose(image, exact, atol=1e-9)

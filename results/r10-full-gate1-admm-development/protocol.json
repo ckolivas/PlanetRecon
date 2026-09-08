@@ -1,0 +1,43 @@
+{
+  "family": "development",
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    8.0,
+    4.0
+  ],
+  "crops": [
+    "feature",
+    "bland"
+  ],
+  "n_frames": 500,
+  "eval_size": 128,
+  "budgets": [
+    10000,
+    20000
+  ],
+  "solver_tolerance": 1e-08,
+  "image_tolerance": 0.001,
+  "gap_tolerance": 0.01,
+  "regularisation": {
+    "e1_lambda_rel": 0.03,
+    "e2a_lambda_rel": 0.03,
+    "e1_lambda_grad": 0.0,
+    "e2b_lambda_rel": 0.03,
+    "e2b_tv": 0.0,
+    "e2b_tv_eps": 1.0
+  },
+  "ranking_hash": "5c0e813aeee91e910e07472c99784097da990c9961878f0b19a3abd677032206",
+  "source_hash": "826c1962b281c97359d0ff4c060f257daa725017edef18dba781837e424d417e",
+  "runner_sha256": "a9c6581ed3eb87de045241fd244abd3fc5ede721d9ecddf00f0c7f6fc3787228",
+  "solver": "admm",
+  "solver_source_sha256": "4ddf1c890a5f623cb8ad7a3927e3087a12bd9700191e4d121d5317062e9e4350",
+  "admm_relative_solution_error_bound_tolerance": 0.0001,
+  "workers": 4,
+  "threads_per_worker": 2,
+  "q3_authorized": false,
+  "design": "Known-transfer full-resolution Gate-1 reconstruction and gap budget stability. Fixed regularisation, rankings and physical inputs; no MFBD/model/noise qualification."
+}
