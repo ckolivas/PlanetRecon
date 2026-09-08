@@ -11,13 +11,14 @@ R10 roadmap; archived experiments and their original decisions remain unchanged.
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
 | Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Physical solver is CPU; corrected-operator backend parity and whole-job benchmarks remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; new solver qualification remains |
+| Scientific reconstruction | Legacy Fourier estimators and blind prototypes, bounded oracle/gradient checks | Full-grid legacy convergence incomplete; extended forward model now matches all 3,000 development frames; new solver has dense controls and four full-optical-grid three-frame pilots; complete family qualification remains |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
 | Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | No within-solve restart or hard wall deadline; extend to other runners as migrated |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
 | Capture interpretation | IR642 Mars and L3 Mars are both OSC RGGB | True mono Mars and further independent captures still need sourcing and permission records |
 
 New operator evidence: [full-scene consistency decision](../results/p1-scene-detector-full/DECISION.md).
+Reference solver evidence: [qualified numerical/noise pilot](../results/p2-scene-noise-v2-qualified/DECISION.md).
 Legacy solver evidence: [full-grid decision](../results/r10-full-grid-summary/DECISION.md).
 Remaining sequence: [development plan](development-plan.md).
 

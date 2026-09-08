@@ -1,0 +1,31 @@
+{
+  "question": "Can a known-transfer full-optical-domain pilot certify its regularized solution and doubled-budget stability?",
+  "source_hash": "60f1badc58e2909835449b4c9d5998cbd999b04cfb280b93d211299f09396e7a",
+  "runner_sha256": "598250a0275e1f1bac03265be00871af643f3721a5cefd2d9349ceed73f5493b",
+  "solver_sha256": "1908f1f9a5c82706397f7c484d51d33196230af0228d50cf9c8bcc38bc79cea2",
+  "checkpoint_sha256": "2fcf6c016ec86189aa88def8ab5171e709f2fbc64c424130b0fd672aad948090",
+  "compatibility_sha256": "ed1db5c6da1bd64783ec1c840e6b8af66bc58d5e9ed0849387007726e50036f0",
+  "bridge_sha256": "b5cde0c8a3e833bc8ae4329ad5a71cef0ca9344ca24e3c1bf726cda7b1a368c8",
+  "input_sha256": "2e707d2d1686ffd6ea13bd362ae438b080f5dffae7a2382a420e793e72932874",
+  "crop": "feature",
+  "frames": 3,
+  "selection": "uniform including sequence endpoints",
+  "budgets": [
+    300,
+    600
+  ],
+  "ridge": 0.001,
+  "smoothness": 0.0,
+  "initialization": "zero",
+  "noise": "expected",
+  "weighting": "spatial",
+  "variance_source": "oracle expected+read diagnostic",
+  "unknowns": "all optical cells, including margins; units=electrons per optical cell",
+  "boundary": "zero exterior beyond original extended scene, positive ridge over all unknowns",
+  "threads": 2,
+  "wall_budget_s": 600.0,
+  "tolerance": 1e-05,
+  "image_stability_tolerance": 0.0001,
+  "q3_authorized": false,
+  "decision": "Numerical pilot only; prior/domain/noise sensitivity and complete development selections remain unqualified."
+}

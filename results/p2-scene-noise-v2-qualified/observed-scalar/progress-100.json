@@ -1,0 +1,34 @@
+{
+  "trace": [
+    {
+      "iteration": 10,
+      "feasible": true,
+      "kkt_residual_norm": 0.18899051808338932,
+      "absolute_solution_error_bound": 188.9905180833893,
+      "relative_solution_error_bound": 0.0045200557181970654,
+      "objective_gap_upper_bound": 17.85870796271395,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    },
+    {
+      "iteration": 20,
+      "feasible": true,
+      "kkt_residual_norm": 0.006832853820236204,
+      "absolute_solution_error_bound": 6.832853820236204,
+      "relative_solution_error_bound": 0.00016342397912939385,
+      "objective_gap_upper_bound": 0.023343945664358247,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    },
+    {
+      "iteration": 30,
+      "feasible": true,
+      "kkt_residual_norm": 0.00028884270647618835,
+      "absolute_solution_error_bound": 0.28884270647618837,
+      "relative_solution_error_bound": 6.9083537745509916e-06,
+      "objective_gap_upper_bound": 4.171505454224475e-05,
+      "strong_convexity_lower_bound": 0.001,
+      "gradient_lipschitz_upper_bound": 0.015206258551645781
+    }
+  ]
+}

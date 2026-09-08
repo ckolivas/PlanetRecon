@@ -19,15 +19,16 @@ completed features and archived scientific results remain intact.
   boundary-prior sensitivity and combined geometry/phase inference remain.
 - **P2 reference delivered:** matrix-free nonnegative solver with a proved
   strong-convexity certificate and independent dense controls. A full 1152×1152
-  three-frame scalar-weight pilot certifies both budgets. Spatial weighting
-  exposed conditioning problems, retained as incomplete evidence; a same-objective
-  diagonal-majorizer refinement is being qualified. Full selections/family remain.
+  three-frame pilot now certifies both budgets for noiseless/observed data and
+  scalar/spatial variance weights. Conditioning failures are retained; a proved
+  diagonal majorizer resolves the bottleneck at measured budgets. Full selections,
+  prior/domain sensitivity and family qualification remain.
 - **P3–P8:** the dependency ordering and owner requirements below remain in force.
   A fixed-prior, one-case noise pilot is diagnostic; it does not freeze the
   likelihood, prior, phase model, boundary extent or scientific assessment.
 
 See [current status](status.md), [operator evidence](../results/p1-scene-detector-full/DECISION.md)
-and [initial solver pilot](../results/p2-scene-noise-v1/DECISION.md).
+and [qualified numerical pilot](../results/p2-scene-noise-v2-qualified/DECISION.md).
 
 ## Direction
 
@@ -309,3 +310,17 @@ Use separate commits for each reviewable implementation or completed evidence
 step. Keep code fixes, failed experiments and subsequent refinements traceable.
 Set runtime estimates after the P1/P2 pilot measurements; a calendar promise for
 full qualification is not supported by the current evidence.
+
+## Next implementation sequence after the optical-grid pilots
+
+1. Specify domain/prior/sampling and photon-normalization sensitivity, with
+   development selection separated from final assessment. The current ridge is
+   a numerical pilot setting, not a selected scientific prior.
+2. Profile repeated scene transforms and bounded PSF caches; small CPU/CUDA parity
+   work may proceed under P5's existing early-operator exception. Measured pilot
+   costs do not support blindly multiplying current execution into full families.
+3. Qualify the frozen known-transfer objective across complete development
+   selections, then repeat noise/phase/exposure controls and Gate-1/Q2 as above.
+
+The existing application and release tracks remain available independently; no
+new independent capture corpus or license/signing choices were supplied here.

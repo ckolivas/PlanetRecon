@@ -1,0 +1,14 @@
+{
+  "scope": "The numerical pilots import these unchanged writer/hash helpers; unrelated full-family dependency guards in the same helper module changed during v2 work.",
+  "before_git_commit": "826b91a",
+  "path": "tools/audit_full_gate1.py",
+  "before_function_sha256": {
+    "file_hash": "91418b806b31ed25f3d0d1f5bf188d4e0574814261cbe07c9710603cb074c5ec",
+    "write_json": "a29c540f219bb24eb3025b991dc6ab8fcc8d44f3db3701318b402d7d0c433a23"
+  },
+  "after_function_sha256": {
+    "file_hash": "91418b806b31ed25f3d0d1f5bf188d4e0574814261cbe07c9710603cb074c5ec",
+    "write_json": "a29c540f219bb24eb3025b991dc6ab8fcc8d44f3db3701318b402d7d0c433a23"
+  },
+  "unchanged": true
+}
