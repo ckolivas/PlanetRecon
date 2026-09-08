@@ -125,6 +125,7 @@ def run(path,manifest_path,directory,*,case_index,resume=False):
     report={'status':'valid' if complete and unchanged and all(r['numerical_passed'] for r in rows) else 'incomplete',
             'complete':complete,'source_input_unchanged':unchanged,'case_index':case_index,'rows':rows,'failures':failures,
             'wall_s':time.monotonic()-started,'scope':protocol['scope'],'q3_authorized':False}
+    write_json(directory/f'attempt-{time.time_ns()}.json',report)
     write_json(directory/'report.json',report);return report
 
 
