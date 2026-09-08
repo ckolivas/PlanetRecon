@@ -5,17 +5,20 @@ import numpy as np
 from tools.study_io import file_hash
 
 
-def reference_stage(directory, original, selection, expected_hash, *, shape=(1024,912)):
+def reference_stage(directory, original, selection, expected_hash, *, shape=(1024,912), cap=750, iterations=310):
+    if int(cap)!=cap or int(iterations)!=iterations or not 0<=iterations<=cap or cap<1:
+        raise ValueError('valid declared cap and iteration count required')
+    cap,iterations=int(cap),int(iterations)
     directory=Path(directory)
     if json.loads((directory/'identity.json').read_text())!={'protocol':original,'selection':selection}:
         raise ValueError('stage objective identity mismatch')
-    payload=directory/'budget-750.npz'
-    manifest=json.loads((directory/'budget-750.json').read_text())
+    payload=directory/f'budget-{cap}.npz'
+    manifest=json.loads((directory/f'budget-{cap}.json').read_text())
     if manifest.get('status')!='completed' or manifest.get('sha256')!=expected_hash or file_hash(payload)!=expected_hash:
         raise ValueError('frozen stage checksum mismatch')
     with np.load(payload,allow_pickle=False) as z:
         x=z['image'].copy();info=json.loads(str(z['metadata']))
-    expected={'solver':'extended_scene_projected_acceleration_v4','maxiter':750,'n_iter':310,
+    expected={'solver':'extended_scene_projected_acceleration_v4','maxiter':cap,'n_iter':iterations,
               'converged':True,'scaling':'diagonal'}
     if any(info.get(k)!=v for k,v in expected.items()): raise ValueError('unexpected reference stage')
     if x.shape!=shape or x.dtype!=np.float64 or not np.isfinite(x).all() or np.any(x<0):

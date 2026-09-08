@@ -39,3 +39,17 @@ def test_boundary_truncation_does_not_claim_exact_periodic_symbol():
     p=SceneQuadratic([op],[np.ones((2,2))],[1.],ridge=.01)
     inverse=WindowAveragedPreconditioner(p,workers=1)
     assert abs(fourier_energy(p,0,0)-inverse.symbol[0,0])>.01
+
+
+def test_declared_larger_reference_cap_is_bound_to_payload_metadata(tmp_path):
+    original={'input':'frozen'};selection={'indices':[1,2]}
+    (tmp_path/'identity.json').write_text(json.dumps({'protocol':original,'selection':selection}))
+    info={'solver':'extended_scene_projected_acceleration_v4','maxiter':1500,'n_iter':1410,'converged':True,'scaling':'diagonal'}
+    path=tmp_path/'budget-1500.npz';np.savez(path,image=np.ones((2,2)),metadata=json.dumps(info))
+    digest=file_hash(path)
+    (tmp_path/'budget-1500.json').write_text(json.dumps({'status':'completed','sha256':digest}))
+    np.testing.assert_array_equal(reference_stage(tmp_path,original,selection,digest,shape=(2,2),cap=1500,iterations=1410),1.)
+    with pytest.raises(ValueError,match='unexpected reference'):
+        reference_stage(tmp_path,original,selection,digest,shape=(2,2),cap=1500,iterations=1400)
+    with pytest.raises(ValueError,match='cap'):
+        reference_stage(tmp_path,original,selection,digest,shape=(2,2),cap=1500,iterations=1501)
