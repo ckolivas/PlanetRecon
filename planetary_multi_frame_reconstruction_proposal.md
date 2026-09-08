@@ -2415,3 +2415,13 @@ constraint convergence, independent model assessment and affected-family
 requalification remain prerequisites for W11/Q3. Documented independent capture
 coverage remains necessary for W16. The requested baseline features and native
 tag-build automation remain available independently of those scientific gates.
+
+**W01 stopping correction (2026-09-08):** estimator operator version 1.3 checks
+the projected-gradient residual before accepting an accelerated iterate's small
+change as convergence. A deterministic blurred 8x8 regression previously stopped
+at iteration 40 with residual 0.001662 above its 0.001 tolerance; it now continues
+to iteration 70 and residual 0.000260. Reports distinguish projection failure and
+iteration exhaustion and count unconverged inner projections. E2a0 also records
+actual CG iterations and the measured normal-equation residual. The 57 targeted
+solver, W01 and Q2 tests pass. Existing scientific artifacts retain their original
+operator identity; this correction alone does not requalify any gate.

@@ -112,9 +112,24 @@ def e2a0(
 
     A = LinearOperator((n, n), matvec=matvec, dtype=np.float64)
     x0v = None if x0 is None else np.asarray(x0, dtype=np.float64).ravel()
-    x, info = cg(A, b, rtol=tol, maxiter=maxiter, x0=x0v)
+    n_iter = 0
+
+    def count_iteration(_x):
+        nonlocal n_iter
+        n_iter += 1
+
+    x, info = cg(A, b, rtol=tol, maxiter=maxiter, x0=x0v, callback=count_iteration)
     recon = np.asarray(x, dtype=np.float64).reshape(shape)
-    return recon, {"cg_info": int(info), "n_iter_cap": int(maxiter)}
+    residual = float(np.linalg.norm(matvec(x) - b))
+    relative_residual = residual / max(float(np.linalg.norm(b)), 1e-12)
+    return recon, {
+        "cg_info": int(info), "n_iter_cap": int(maxiter), "n_iter": n_iter,
+        "normal_residual": residual, "normal_relative_residual": relative_residual,
+        "converged": bool(info == 0),
+        "termination_reason": "converged" if info == 0 else (
+            "iteration_limit" if info > 0 else "solver_failure"
+        ),
+    }
 
 
 def _apply_spectral_support(image: np.ndarray, support: np.ndarray) -> np.ndarray:
@@ -275,6 +290,8 @@ def e2a(
     Optional Charbonnier TV (``tv_mu``) is the E2b production prior. A1o must
     call this with ``tv_mu=0`` so it keeps E2a object assumptions (§8.6).
     """
+    if maxiter < 1 or not np.isfinite(tol) or tol <= 0:
+        raise ValueError("positive iteration budget and finite positive tolerance required")
     num, den = wiener_num_den(otfs, images, sigma2, lam_f)
     support = np.asarray(support, dtype=np.float64)
     den = np.where(support > 0.5, den, 1.0)
@@ -287,10 +304,21 @@ def e2a(
     if tv_mu > 0.0:
         lip = lip + 8.0 * float(tv_mu) / max(float(tv_eps), 1e-12)
     step = 1.0 / max(lip, C.DEN_FLOOR)
+
+    def stationarity(image):
+        grad = np.fft.ifft2((den * np.fft.fft2(image) - num) * support).real
+        if tv_mu > 0.0:
+            grad += float(tv_mu) * isotropic_tv_grad(image, tv_eps)
+        projected, info = project_positivity_support(image - step * grad, support)
+        residual = float(np.linalg.norm(projected - image) / max(np.linalg.norm(image), 1e-12))
+        return residual, info, grad
+
     y = o.copy()
     t = 1.0
     last_delta = 0.0
     n_iter = 0
+    stationarity_checks = 0
+    inner_projection_failures = 0
     for n_iter in range(1, maxiter + 1):
         of = np.fft.fft2(y)
         grad = np.fft.ifft2((den * of - num) * support).real
@@ -305,33 +333,39 @@ def e2a(
         )
         dual_p = proj_info["p"]
         dual_q = proj_info["q"]
+        inner_projection_failures += int(not proj_info["converged"])
         t_next = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
         y = o_next + ((t - 1.0) / t_next) * (o_next - o)
         last_delta = float(np.linalg.norm(o_next - o) / max(np.linalg.norm(o_next), 1e-12))
         o = o_next
         t = t_next
         if last_delta < tol and proj_info["converged"]:
-            break
+            # Acceleration can make successive iterates almost equal away from
+            # an optimum. Spend the remaining budget unless the gradient mapping
+            # also certifies stationarity with a converged constraint projection.
+            residual, check, _ = stationarity(o)
+            stationarity_checks += 1
+            if residual < tol and check["converged"]:
+                break
     o, proj_info = project_positivity_support(o, support)
-    of = np.fft.fft2(o)
-    grad_o = np.fft.ifft2((den * of - num) * support).real
-    if tv_mu > 0.0:
-        grad_o = grad_o + float(tv_mu) * isotropic_tv_grad(o, tv_eps)
-    projected, kkt_info = project_positivity_support(
-        o - step * grad_o,
-        support,
-        maxiter=C.DYKSTRA_MAXITER,
-    )
-    kkt = float(np.linalg.norm(projected - o) / max(np.linalg.norm(o), 1e-12))
+    kkt, kkt_info, grad_o = stationarity(o)
+    stationarity_checks += 1
     feas = constraint_diagnostics(o, support)
+    converged = bool(
+        last_delta < tol and feas["feasible"] and proj_info["converged"]
+        and kkt_info["converged"] and kkt < tol
+    )
     return o, {
         "n_iter": n_iter,
         "rel_delta": last_delta,
         "step": step,
-        "converged": bool(
-            last_delta < tol and feas["feasible"] and proj_info["converged"]
-            and kkt_info["converged"] and kkt < tol
+        "converged": converged,
+        "termination_reason": "converged" if converged else (
+            "projection_not_converged" if not (proj_info["converged"] and kkt_info["converged"])
+            else "iteration_limit" if n_iter == maxiter else "final_check_failed"
         ),
+        "stationarity_checks": stationarity_checks,
+        "inner_projection_failures": inner_projection_failures,
         "tv_mu": float(tv_mu),
         "positivity_violation": feas["positivity_violation"],
         "out_of_support": feas["out_of_support"],
