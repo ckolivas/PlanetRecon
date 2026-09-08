@@ -36,8 +36,14 @@ now confirm the composite-filter noise budget within 0.4%. Subtracting known
 noise improves spatial-blur control RMS by roughly 1–18% relative to the first
 local weighting candidate. However, a same-colour finite-difference MAD estimator
 mistakes sharp Bayer detail for noise, overestimating noise sigma by up to 2.5x.
-Do not adopt automatic noise subtraction. Next use a bounded Jupiter sensitivity
-comparison to determine whether accurate noise calibration could materially help.
+The [bounded Jupiter noise sensitivity](../results/real-data/jupiter-local-noise-sensitivity.json)
+is now complete: both half/full provisional noise subtraction worsen both paired
+metrics; full subtraction increases RMS by 5.1% and loses 0.0533 fine-detail
+correlation. Increasing quality smoothing also harms low-noise spatial-blur
+controls. Neither approach is adopted; stop this weighting/smoothing sweep.
+Next test one local-alignment refinement of the independent 64-frame template,
+keeping stack frames, weights and best-frame origin fixed. Validate the candidate
+in the full application only if the paired pilot improves both image metrics.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

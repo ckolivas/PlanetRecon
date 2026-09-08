@@ -1,0 +1,1848 @@
+{
+  "scope": "Development sensitivity only. No calibrated noise claim and no application change.",
+  "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+  "setup": "Same 512 screened frames, disjoint 64-frame template and original reference frame 1638 as the previous local-energy pilot. All original RGB/CFA contributions share each local weight. No rejection or output filtering/sharpening. Baseline image and coverage reproduced bitwise.",
+  "noise_model": {
+    "slope": 0.2333214341207581,
+    "intercept": -0.3454924050483299,
+    "scope": "Unvalidated intensity-variance sensitivity model, not sensor calibration",
+    "measurements": [
+      {
+        "index": 0,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9100204727518273,
+        "estimated_noise_fraction": 0.9286597110014232,
+        "bins": [
+          {
+            "mean_intensity": 91.80642884855152,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.14423179503072,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.31504212551104,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.78453791603806,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.34675828532428,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 120,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9556762191775214,
+        "estimated_noise_fraction": 0.9179412655971445,
+        "bins": [
+          {
+            "mean_intensity": 92.43878620365426,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 119.71590718065829,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.80198443196252,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 158.19075412956767,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 180.07783820823997,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 241,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9139441114246782,
+        "estimated_noise_fraction": 0.9277287333569698,
+        "bins": [
+          {
+            "mean_intensity": 93.09202328889052,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.99666253243916,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.66757852875236,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 158.08366415076574,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.85258824952177,
+            "sigma": 6.177509243773341
+          }
+        ]
+      },
+      {
+        "index": 362,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 4.005300684947005,
+        "estimated_noise_fraction": 0.9065682712040463,
+        "bins": [
+          {
+            "mean_intensity": 92.78390243574079,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 120.03298654341867,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.58401552503756,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.8316912979379,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.91902047335867,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 483,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.984057385953242,
+        "estimated_noise_fraction": 0.9114021527748042,
+        "bins": [
+          {
+            "mean_intensity": 93.16958607044072,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 120.29183770244052,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.70964718619123,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 157.94222593888546,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 180.05153390112758,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 604,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 4.031176896008184,
+        "estimated_noise_fraction": 0.9007489596351987,
+        "bins": [
+          {
+            "mean_intensity": 93.21715292581139,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 120.30172145205684,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.85127319350093,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 158.04131623243546,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 180.22266140269616,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 725,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9796139622714195,
+        "estimated_noise_fraction": 0.9124197646509675,
+        "bins": [
+          {
+            "mean_intensity": 92.4946937014301,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.60312421848717,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.33006401600596,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.85658251968664,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.9142192555547,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 846,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.980692333358021,
+        "estimated_noise_fraction": 0.9121725876060155,
+        "bins": [
+          {
+            "mean_intensity": 92.9055110696689,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.74608880804281,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.3387270944855,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.9186628128823,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 180.30017288762065,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 967,
+        "sigma": 5.683308504271474,
+        "planet_quality_energy": 3.9711356903442923,
+        "estimated_noise_fraction": 0.9993813038536057,
+        "bins": [
+          {
+            "mean_intensity": 92.13757240537008,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.27330309978133,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.0953830713355,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.5805883752824,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.26233400676918,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 1088,
+        "sigma": 5.683308504271474,
+        "planet_quality_energy": 3.966771381324229,
+        "estimated_noise_fraction": 1.0004808078820935,
+        "bins": [
+          {
+            "mean_intensity": 92.92840521810538,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.92194370462896,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.83622843886155,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.94325838472886,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.65152357965246,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 1209,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 4.0177194519844095,
+        "estimated_noise_fraction": 0.9037660661785897,
+        "bins": [
+          {
+            "mean_intensity": 91.86082130629227,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 118.8139915209067,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.9844683070229,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.49103690839206,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.47978146236832,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 1329,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9373091566965237,
+        "estimated_noise_fraction": 0.9222233595655058,
+        "bins": [
+          {
+            "mean_intensity": 92.1977644345455,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 119.22501290260216,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.98612334519353,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.58598393783896,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.47469362378482,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 1450,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9488781762101532,
+        "estimated_noise_fraction": 0.9195215239088111,
+        "bins": [
+          {
+            "mean_intensity": 92.38660303934026,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 119.36818372602006,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.91536441093388,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.59451289353606,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 180.13144830412597,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 1571,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.88532679412812,
+        "estimated_noise_fraction": 0.9345619090998982,
+        "bins": [
+          {
+            "mean_intensity": 92.37244219961273,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.13061948935248,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.94515979189796,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.02698918107274,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 178.81068543055738,
+            "sigma": 6.177509243773341
+          }
+        ]
+      },
+      {
+        "index": 1692,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9386647220370126,
+        "estimated_noise_fraction": 0.9219059447846017,
+        "bins": [
+          {
+            "mean_intensity": 92.352596490005,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.2313211483999,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.18746787848153,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.4932479654196,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.2827468296424,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 1813,
+        "sigma": 5.683308504271474,
+        "planet_quality_energy": 3.9480884985379845,
+        "estimated_noise_fraction": 1.0052152468590272,
+        "bins": [
+          {
+            "mean_intensity": 92.37657366183296,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.16825148004966,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 139.70868547329454,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.21329186093388,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.65337638152076,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 1934,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.962497112397337,
+        "estimated_noise_fraction": 0.9163611549496028,
+        "bins": [
+          {
+            "mean_intensity": 92.90297021802269,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 119.8213213644291,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.4153229133138,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.7002765407379,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.79977130739752,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2055,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.923001504874023,
+        "estimated_noise_fraction": 0.9255868131452593,
+        "bins": [
+          {
+            "mean_intensity": 92.7772152994458,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.50267560852909,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.3489013190716,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.60949422464313,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.47143358121096,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2176,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.891321195118066,
+        "estimated_noise_fraction": 0.9331222840947737,
+        "bins": [
+          {
+            "mean_intensity": 92.08099104071798,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 118.82332991056751,
+            "sigma": 4.942007395018673
+          },
+          {
+            "mean_intensity": 139.7231257528979,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.03183134465613,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 179.05845664616143,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2297,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.947536168428572,
+        "estimated_noise_fraction": 0.9198341252347436,
+        "bins": [
+          {
+            "mean_intensity": 91.76968061080206,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 118.61460642612977,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.5093149811891,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 156.88069751696892,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 178.67091376932646,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2418,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9364333306273065,
+        "estimated_noise_fraction": 0.9224285416724497,
+        "bins": [
+          {
+            "mean_intensity": 91.9059721855728,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 118.94666983611303,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.9240430779217,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.05042521627897,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 178.61552044820883,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2538,
+        "sigma": 5.683308504271474,
+        "planet_quality_energy": 4.017928987437157,
+        "estimated_noise_fraction": 0.987742376421177,
+        "bins": [
+          {
+            "mean_intensity": 92.48680914201526,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 119.9861554799115,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.7190161144631,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 157.63902067187283,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 179.1193170941914,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 2659,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9002919923763617,
+        "estimated_noise_fraction": 0.9309760538425663,
+        "bins": [
+          {
+            "mean_intensity": 92.25401924156037,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.23751857306772,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 140.18975064990587,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 157.2365335329635,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 178.25279603711638,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2780,
+        "sigma": 5.683308504271474,
+        "planet_quality_energy": 3.947840108379769,
+        "estimated_noise_fraction": 1.0052784943970858,
+        "bins": [
+          {
+            "mean_intensity": 91.6689559054327,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 118.47911863795093,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.3205947663363,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 156.40057161064027,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 177.7661428944732,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 2901,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.927915740481829,
+        "estimated_noise_fraction": 0.9244287990052393,
+        "bins": [
+          {
+            "mean_intensity": 92.25870584960253,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.01853346921793,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.69286040246936,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 156.9985971986835,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 178.74651456248924,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 3022,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.935832480416761,
+        "estimated_noise_fraction": 0.9225693588238832,
+        "bins": [
+          {
+            "mean_intensity": 92.15129783428614,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 118.97289375910287,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.8355285451115,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 157.07808206414333,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 178.9883854869021,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 3143,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.866592643950479,
+        "estimated_noise_fraction": 0.9390900014942423,
+        "bins": [
+          {
+            "mean_intensity": 91.38832558898194,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 118.27232381452299,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.41716176965514,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 156.6903507690596,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 177.68284377258712,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 3264,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.995047588379299,
+        "estimated_noise_fraction": 0.9088948998723598,
+        "bins": [
+          {
+            "mean_intensity": 92.28729177433755,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.13869958064986,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.60193854146218,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 156.65043372214288,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 178.47301145817394,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 3385,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9375508666098398,
+        "estimated_noise_fraction": 0.9221667304760333,
+        "bins": [
+          {
+            "mean_intensity": 91.2635343595411,
+            "sigma": 4.447806655516805
+          },
+          {
+            "mean_intensity": 118.3875241779448,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.5134585381287,
+            "sigma": 5.43620813452054
+          },
+          {
+            "mean_intensity": 156.63963480834553,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 178.12567613492672,
+            "sigma": 6.671709983275209
+          }
+        ]
+      },
+      {
+        "index": 3506,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.8369726320857818,
+        "estimated_noise_fraction": 0.9463394180954708,
+        "bins": [
+          {
+            "mean_intensity": 90.10521383157773,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 118.10551902139709,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.75169609613283,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 157.03469410411773,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 176.58807384943833,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 3627,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.9310803196446984,
+        "estimated_noise_fraction": 0.9236846286827692,
+        "bins": [
+          {
+            "mean_intensity": 92.43993053928517,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 119.2975473471779,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 140.0701408180017,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 156.95646376472953,
+            "sigma": 6.177509243773341
+          },
+          {
+            "mean_intensity": 178.58276457246942,
+            "sigma": 6.424609613524275
+          }
+        ]
+      },
+      {
+        "index": 3748,
+        "sigma": 5.43620813452054,
+        "planet_quality_energy": 3.8264914098446092,
+        "estimated_noise_fraction": 0.9489315617519927,
+        "bins": [
+          {
+            "mean_intensity": 90.48176160058193,
+            "sigma": 4.69490702526774
+          },
+          {
+            "mean_intensity": 117.9683472777875,
+            "sigma": 5.189107764769607
+          },
+          {
+            "mean_intensity": 139.11077591641362,
+            "sigma": 5.683308504271474
+          },
+          {
+            "mean_intensity": 156.54933325849402,
+            "sigma": 5.930408874022407
+          },
+          {
+            "mean_intensity": 177.4965508993224,
+            "sigma": 6.177509243773341
+          }
+        ]
+      }
+    ]
+  },
+  "method": "Fit variance versus intensity from 32 uniform capture samples using same-green-sublattice second-difference MAD estimates in five intensity bins on an eroded planetary disk. This estimator has known texture bias. Propagate max(0,0.2333214341207581*Gaussian3(green)-0.3454924050483299) through the Bayer-aware squared filter kernel. Test subtraction of 0.5 or 1 times this provisional energy from each native frame quality map. Template energy is fixed without noise subtraction; same clipping, gate and scalar global weights as prior pilot.",
+  "metrics": [
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -24.272628639389776,
+        0.1286365787321331
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.2229557562671,
+          20.5490760175857
+        ],
+        [
+          233.29185427984584,
+          17.536015687093933
+        ],
+        [
+          232.98166922665388,
+          50.90501241455017
+        ]
+      ],
+      "relative_rmse": 0.005690950605278034,
+      "highpass_correlation_sigma3": 0.8879318710956717,
+      "registration_method": "Production confidence-gated dense local patch matcher with fixed independent 64-frame template and best-frame origin; snapshot global-only description does not describe the study backend override.",
+      "mode": "local-baseline",
+      "noise_variance_fraction": 0.0,
+      "template_noise_subtraction": false,
+      "n_template": 64,
+      "reference_index": 1638,
+      "wall_s": 36.88640449900049
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -24.271978095233372,
+        0.12806937178487676
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.2693927368955,
+          13.715758621344559
+        ],
+        [
+          233.33645086912378,
+          10.006164403221051
+        ],
+        [
+          233.02222970904248,
+          45.3560339764789
+        ]
+      ],
+      "relative_rmse": 0.005694510468192429,
+      "highpass_correlation_sigma3": 0.8864791829164982,
+      "registration_method": "Production confidence-gated dense local patch matcher with fixed independent 64-frame template and best-frame origin; snapshot global-only description does not describe the study backend override.",
+      "mode": "noise-half",
+      "noise_variance_fraction": 0.5,
+      "template_noise_subtraction": false,
+      "n_template": 64,
+      "reference_index": 1638,
+      "wall_s": 84.68378449800002,
+      "relative_rmse_change_percent": 0.0625530453751244,
+      "detail_correlation_change": -0.0014526881791735446
+    },
+    {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 94012,
+      "registration_xy_px": [
+        -24.272995656785533,
+        0.1300218054570369
+      ],
+      "per_channel_gain_offset": [
+        [
+          233.20906148689338,
+          22.77257606802546
+        ],
+        [
+          233.2724677040151,
+          20.618743065451955
+        ],
+        [
+          232.94132431067322,
+          55.99374906615675
+        ]
+      ],
+      "relative_rmse": 0.005982961877930395,
+      "highpass_correlation_sigma3": 0.8345944289458817,
+      "registration_method": "Production confidence-gated dense local patch matcher with fixed independent 64-frame template and best-frame origin; snapshot global-only description does not describe the study backend override.",
+      "mode": "noise-full",
+      "noise_variance_fraction": 1.0,
+      "template_noise_subtraction": false,
+      "n_template": 64,
+      "reference_index": 1638,
+      "wall_s": 105.25958177800021,
+      "relative_rmse_change_percent": 5.131151066072115,
+      "detail_correlation_change": -0.05333744214979008
+    }
+  ],
+  "decision": "Reject both tested noise-subtraction strengths: neither improves either paired metric. Full subtraction worsens RMS by 5.131% and detail correlation by 0.05334. This rejects these candidates, not every possible calibrated noise model. Do not tune more subtraction strengths against this one reference.",
+  "additional_controls": [
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.435182410970606,
+          "bias": -0.021214054241304837
+        },
+        "2.0": {
+          "rmse": 5.899507080387315,
+          "bias": -0.022531857729950127
+        }
+      },
+      "rmse_ratio": 1.0854294546728545
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.3360677887949475,
+          "bias": -0.0023081977695039277
+        },
+        "2.0": {
+          "rmse": 5.867458513464088,
+          "bias": -0.007991313896489645
+        }
+      },
+      "rmse_ratio": 1.0995847027627708
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.363124145198719,
+          "bias": -0.00629442603777904
+        },
+        "2.0": {
+          "rmse": 5.911620619277945,
+          "bias": -0.001539378555358737
+        }
+      },
+      "rmse_ratio": 1.1022718212798153
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.329077856669373,
+          "bias": -0.011567689013180057
+        },
+        "2.0": {
+          "rmse": 5.773889203335644,
+          "bias": -0.013179011611843908
+        }
+      },
+      "rmse_ratio": 1.0834687273539432
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 6.506959803158307,
+          "bias": -0.03646192304879573
+        },
+        "2.0": {
+          "rmse": 6.490124297870089,
+          "bias": -0.033664831234837114
+        }
+      },
+      "rmse_ratio": 0.9974126925941595
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 6.4502615450015846,
+          "bias": -0.004516316501888653
+        },
+        "2.0": {
+          "rmse": 6.45817101260186,
+          "bias": -0.0029040265966167418
+        }
+      },
+      "rmse_ratio": 1.001226224323633
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 6.488550926497005,
+          "bias": 0.007058595444798934
+        },
+        "2.0": {
+          "rmse": 6.526757398567528,
+          "bias": 0.0067218152669699825
+        }
+      },
+      "rmse_ratio": 1.0058882903907713
+    },
+    {
+      "mode": "mono",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 6.410859013771781,
+          "bias": -0.033113126047627346
+        },
+        "2.0": {
+          "rmse": 6.390078602689091,
+          "bias": -0.0330727097343767
+        }
+      },
+      "rmse_ratio": 0.9967585605863348
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.0940056856819327,
+          "bias": -0.008610194142565395
+        },
+        "2.0": {
+          "rmse": 3.0950883781514626,
+          "bias": -0.008384421632359858
+        }
+      },
+      "rmse_ratio": 1.000349932281812
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.117334574750372,
+          "bias": 0.00020816931808518636
+        },
+        "2.0": {
+          "rmse": 3.118231307319165,
+          "bias": 0.00020668364408929027
+        }
+      },
+      "rmse_ratio": 1.0002876600336892
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.1506788249566653,
+          "bias": 0.0015321250261577063
+        },
+        "2.0": {
+          "rmse": 3.1513464385495666,
+          "bias": 0.0014823410851808475
+        }
+      },
+      "rmse_ratio": 1.0002118951597392
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.1663539649865533,
+          "bias": -0.0101080255278459
+        },
+        "2.0": {
+          "rmse": 3.1671736838610602,
+          "bias": -0.010032310799335732
+        }
+      },
+      "rmse_ratio": 1.000258884156216
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.510259941421517,
+          "bias": -0.011877344460138472
+        },
+        "2.0": {
+          "rmse": 3.516716920884868,
+          "bias": -0.009873559371507514
+        }
+      },
+      "rmse_ratio": 1.0018394590631758
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.5229705044030286,
+          "bias": 0.0029687656885155765
+        },
+        "2.0": {
+          "rmse": 3.528489361133327,
+          "bias": 0.0029650951216708254
+        }
+      },
+      "rmse_ratio": 1.0015665350372365
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.565255240113765,
+          "bias": 0.008495028590335421
+        },
+        "2.0": {
+          "rmse": 3.5692614112881422,
+          "bias": 0.00791161994941517
+        }
+      },
+      "rmse_ratio": 1.0011236702296382
+    },
+    {
+      "mode": "mono",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 3.5618774984399377,
+          "bias": -0.021219917934653228
+        },
+        "2.0": {
+          "rmse": 3.566672074768211,
+          "bias": -0.020758791167282162
+        }
+      },
+      "rmse_ratio": 1.0013460811974508
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.5825186326449326,
+          "bias": -0.0010488902127785127
+        },
+        "2.0": {
+          "rmse": 0.5825186326449326,
+          "bias": -0.0010488902127785127
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.5855434288394529,
+          "bias": 0.0019093473744382263
+        },
+        "2.0": {
+          "rmse": 0.5855434288394529,
+          "bias": 0.0019093473744382263
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.5748104260637441,
+          "bias": 0.003648902107907604
+        },
+        "2.0": {
+          "rmse": 0.5748104260637441,
+          "bias": 0.003648902107907604
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.5727269940445068,
+          "bias": -0.005404057517630305
+        },
+        "2.0": {
+          "rmse": 0.5727269940445068,
+          "bias": -0.005404057517630305
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.7475558979348027,
+          "bias": -0.0031466706382226703
+        },
+        "2.0": {
+          "rmse": 1.7475558979348027,
+          "bias": -0.0031466706382226703
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.7566302865183554,
+          "bias": 0.005728042123141127
+        },
+        "2.0": {
+          "rmse": 1.7566302865183554,
+          "bias": 0.005728042123141127
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.7244312781912314,
+          "bias": 0.010946706324102906
+        },
+        "2.0": {
+          "rmse": 1.7244312781912314,
+          "bias": 0.010946706324102906
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "mono",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.718180982133519,
+          "bias": -0.01621217255286974
+        },
+        "2.0": {
+          "rmse": 1.718180982133519,
+          "bias": -0.01621217255286974
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 4.4338585965910475,
+          "bias": 0.0025741913306299323
+        },
+        "2.0": {
+          "rmse": 4.86925008314565,
+          "bias": -0.001614430797140937
+        }
+      },
+      "rmse_ratio": 1.098196971569944
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 4.353952391541514,
+          "bias": 0.003762044236316581
+        },
+        "2.0": {
+          "rmse": 4.843402409307397,
+          "bias": -0.0036546734866992813
+        }
+      },
+      "rmse_ratio": 1.1124151055755098
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 4.3440320778355535,
+          "bias": 0.01040933446404207
+        },
+        "2.0": {
+          "rmse": 4.8398495922323805,
+          "bias": 0.014865051684411415
+        }
+      },
+      "rmse_ratio": 1.114137627327069
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 4.309820354321841,
+          "bias": -0.011732979257949989
+        },
+        "2.0": {
+          "rmse": 4.73577331556216,
+          "bias": -0.013587370037134672
+        }
+      },
+      "rmse_ratio": 1.0988331128032234
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.576982988405577,
+          "bias": 0.016828214470832065
+        },
+        "2.0": {
+          "rmse": 5.483193180834557,
+          "bias": 0.021453014513490177
+        }
+      },
+      "rmse_ratio": 0.9831826979271755
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.584540164583579,
+          "bias": 0.012867764833411528
+        },
+        "2.0": {
+          "rmse": 5.509470272399007,
+          "bias": 0.016946915926182107
+        }
+      },
+      "rmse_ratio": 0.9865575517460407
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.522591918731752,
+          "bias": 0.03840295945199236
+        },
+        "2.0": {
+          "rmse": 5.445589681425772,
+          "bias": 0.038037237680922015
+        }
+      },
+      "rmse_ratio": 0.9860568663339399
+    },
+    {
+      "mode": "RGGB",
+      "case": "spatial_blur",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 5.49809684689723,
+          "bias": -0.03629539971171569
+        },
+        "2.0": {
+          "rmse": 5.412143951190869,
+          "bias": -0.03680278864380342
+        }
+      },
+      "rmse_ratio": 0.9843667912552564
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.393050595659813,
+          "bias": 0.0029107690867268897
+        },
+        "2.0": {
+          "rmse": 2.3942049027864085,
+          "bias": 0.0031152083558001102
+        }
+      },
+      "rmse_ratio": 1.000482358011439
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.4166519997492046,
+          "bias": 0.002876135322563022
+        },
+        "2.0": {
+          "rmse": 2.417859421475598,
+          "bias": 0.0029663206096113078
+        }
+      },
+      "rmse_ratio": 1.000499625815599
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.3970321986488132,
+          "bias": 0.010879353653617538
+        },
+        "2.0": {
+          "rmse": 2.397729819630354,
+          "bias": 0.010794008459352505
+        }
+      },
+      "rmse_ratio": 1.0002910352985386
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.4244056016578974,
+          "bias": -0.007538961960877859
+        },
+        "2.0": {
+          "rmse": 2.425835444487641,
+          "bias": -0.007557087213576238
+        }
+      },
+      "rmse_ratio": 1.0005897704694156
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.7135216905961914,
+          "bias": 0.0221157512782383
+        },
+        "2.0": {
+          "rmse": 2.720333338640579,
+          "bias": 0.023848553949913663
+        }
+      },
+      "rmse_ratio": 1.0025102611370285
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.763197775336692,
+          "bias": 0.018862308554481427
+        },
+        "2.0": {
+          "rmse": 2.769518770196626,
+          "bias": 0.02010762785178539
+        }
+      },
+      "rmse_ratio": 1.0022875651234062
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.698930954858569,
+          "bias": 0.026482634518400456
+        },
+        "2.0": {
+          "rmse": 2.7020121482636554,
+          "bias": 0.02601098862110631
+        }
+      },
+      "rmse_ratio": 1.0011416347645128
+    },
+    {
+      "mode": "RGGB",
+      "case": "uniform_blur",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 2.7243850335071875,
+          "bias": -0.018891665118664604
+        },
+        "2.0": {
+          "rmse": 2.731210834497629,
+          "bias": -0.0183901791895775
+        }
+      },
+      "rmse_ratio": 1.0025054465159995
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.44966952022915707,
+          "bias": 0.008974925616208645
+        },
+        "2.0": {
+          "rmse": 0.44966952022915707,
+          "bias": 0.008974925616208645
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.4618895307920225,
+          "bias": 0.0072298886308220485
+        },
+        "2.0": {
+          "rmse": 0.4618895307920225,
+          "bias": 0.0072298886308220485
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.45491796389941597,
+          "bias": 0.008154420112777937
+        },
+        "2.0": {
+          "rmse": 0.45491796389941597,
+          "bias": 0.008154420112777937
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 4.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 0.44887168262905786,
+          "bias": -0.004455134540898313
+        },
+        "2.0": {
+          "rmse": 0.44887168262905786,
+          "bias": -0.004455134540898313
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 0,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.349008560687476,
+          "bias": 0.02692477684875668
+        },
+        "2.0": {
+          "rmse": 1.349008560687476,
+          "bias": 0.02692477684875668
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 1,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.3856685923760723,
+          "bias": 0.021689665892631382
+        },
+        "2.0": {
+          "rmse": 1.3856685923760723,
+          "bias": 0.021689665892631382
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 2,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.364753891698244,
+          "bias": 0.024463260338099042
+        },
+        "2.0": {
+          "rmse": 1.364753891698244,
+          "bias": 0.024463260338099042
+        }
+      },
+      "rmse_ratio": 1.0
+    },
+    {
+      "mode": "RGGB",
+      "case": "flat_noise",
+      "noise": 12.0,
+      "seed": 3,
+      "metrics": {
+        "1.0": {
+          "rmse": 1.34661504788717,
+          "bias": -0.013365403622153287
+        },
+        "2.0": {
+          "rmse": 1.34661504788717,
+          "bias": -0.013365403622153287
+        }
+      },
+      "rmse_ratio": 1.0
+    }
+  ],
+  "smoothing_decision": "Increasing quality measurement Gaussian sigma from 1 to 2 harms low-noise spatial-blur controls by 9-11% relative RMS and slightly harms uniform-blur controls. Do not adopt or start another real-image smoothing sweep.",
+  "noise_correlation_check": {
+    "bayer_unit_variance_energy": 0.12286932702787313,
+    "incorrect_independent_proxy_energy": 0.06990848725285062,
+    "ratio": 1.757573820521527
+  },
+  "scripts": {
+    "inspect_capture.py": "b1e577af337e2010471e7de3f86ed2c40ab3aca35eef62a2becee13e7c7a2afd",
+    "jupiter_sensitivity.py": "3aa7dcbc2dac3aba83f65c85662d37a54d983ea2882b11ed9bc89a43ebbcaf31",
+    "smoothing_controls.py": "45ca84b025366cb11c80bbea3c761c5fb184bc4a629d747145c90ce256ce1c88"
+  },
+  "private_artifacts": "out/jupiter-local-noise-sensitivity/; out/local-quality-noise/"
+}
