@@ -1,0 +1,33 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "source_unchanged": true,
+  "cases": [
+    {
+      "path": "case-1002-4-feature.json.gz",
+      "sha256": "214a56c071bf483e5c977ebc751bec86ab538b8dca01b67e9d6cd9317612d9a1",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "uncompressed_sha256": "9ffbd8ea2a1713d8fd2d316fb0758bb1a8e417cf77bd372ac403d34a19b1e4cd"
+    },
+    {
+      "path": "case-1002-8-feature.json.gz",
+      "sha256": "837a5864c5a5158344afa05a09af9d1d9459c4010edbad7cc392141575bfdaf9",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "uncompressed_sha256": "aa48c47e76e45c359c601ff3fb6297092a8038aef8ba2e14e1758da4b05c2fc6"
+    },
+    {
+      "path": "case-1003-4-feature.json.gz",
+      "sha256": "d9dd2f878a715893412ce410c4874e6ed4af6cad2857293eea001359b4d3c60f",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "uncompressed_sha256": "5d8169232ad340fc749a72f3f824a666ab8b08a0e42a773cda10ce97605ce890"
+    }
+  ],
+  "previously_passed_cases": 9,
+  "combined_passed_cases": 12,
+  "complete_bounded_family_passed": true,
+  "case_encoding": "gzip JSON; lossless archival after execution"
+}

@@ -1,0 +1,231 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "source_hash_after": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "source_unchanged": true,
+  "cases": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1001-4-feature.json.gz",
+      "sha256": "a7e2fa18c0b2a4378eddfcb0b61de82590bab4d8e9fbb0ff17033042ff921ffd",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 10.386149874015246,
+      "uncompressed_sha256": "c47d10cceaaddceed408fe8b69222715865d07e11c00ab178687b76615f19875"
+    },
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1001-4-bland.json.gz",
+      "sha256": "6efb2a1971c70ae01a5503ed4e7e95d9126789be72159ad301747c6c8e82cb18",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 14.58614082398708,
+      "uncompressed_sha256": "718a550b3efb37e612e0d63db2902284e884d466c384194b1478f730a10d1cf9"
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1001-8-feature.json.gz",
+      "sha256": "efb325018d10d5577cdd278dbb989061c882369cfdab7f5b6a32641ab64efd99",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 6.959636660991237,
+      "uncompressed_sha256": "78517d4d38b4a97422644204e612a805b8a851ba71ecce0222a7d40a3f69f965"
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1001-8-bland.json.gz",
+      "sha256": "e99fbd5d6c4d759e638af5a78a13ed472326447083dbc50c5c335c9be1466816",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 15.085598140023649,
+      "uncompressed_sha256": "5407b8b6fb867bfc17bd82083672be6871a662eb86ff1fe29e89723542c4a2bd"
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1002-4-feature.json.gz",
+      "sha256": "771b5f547a6ee81b27fd7bf3b5819908d946961119d0c5c64f4ca40bc0e2d6d9",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 3.355398146651949e-07,
+      "closure_absolute_change": 1.2477782262987347e-07,
+      "wall_s": 14.871994961984456,
+      "uncompressed_sha256": "d8c27e317553b9b52bce9592a2d96bb2fc31874107e4c0e6284fe50c3c29fb90"
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1002-4-bland.json.gz",
+      "sha256": "bf6034dfada64a2dbe17333c0d4d0fbe58044323ede218f507372d621acd5318",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 10.063741089979885,
+      "uncompressed_sha256": "487f668fd0bd69ffc7f30059e9fda466fa1d6e13b651edfbd9d7291b8a6f2481"
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1002-8-feature.json.gz",
+      "sha256": "02998309f6d500d76f32820952aadf375013d4db6aca0c7c75b8514a378b97fc",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 6.982085919228739e-06,
+      "closure_absolute_change": 3.3167367035069617e-06,
+      "wall_s": 30.612687957007438,
+      "uncompressed_sha256": "60dd42fc86a18fae51c67eefa2e2a47ee7dfb20dd7281f3deaf37fa442dccf89"
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1002-8-bland.json.gz",
+      "sha256": "cbac07972ca31d71d79152e508ee69ac95cacf7043629b449019e1cd98c88c8f",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 12.131576753017725,
+      "uncompressed_sha256": "af653dbd4a3682679dcff3a48e3ba92d6ae18447fb1ac7753c80b0c188030cb3"
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1003-4-feature.json.gz",
+      "sha256": "410716ee12ff809cc830eb2829c57167e19bbeab8c23d7a91cccbc4407125a80",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 1.351902108005699e-07,
+      "closure_absolute_change": 9.922936239359359e-08,
+      "wall_s": 24.42788114902214,
+      "uncompressed_sha256": "d08b5e0b5bf9587ee79c19c972a6723da12458d347afb6f2fdd4480d28ee767c"
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1003-4-bland.json.gz",
+      "sha256": "10bc568a9d8128caff81e9d8a899898572437ddbf2dedbd54060a0e31d24576b",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 16.706594095972832,
+      "uncompressed_sha256": "02a5e0caa458743b96e10b34efbf70c55475eef3b791bea971dc31cafa842be4"
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1003-8-feature.json.gz",
+      "sha256": "ccb0fd755357a9dcff022cc3dbccea37ffe0992285babdda60c13ecfa892000a",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 5.8273232290954894e-08,
+      "closure_absolute_change": 0.0,
+      "wall_s": 24.668166177987587,
+      "uncompressed_sha256": "d4a90109bd55ad8109d1966e77abd4a462ed4ace8557837b8137c2442dd4d70b"
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1003-8-bland.json.gz",
+      "sha256": "de5f15a1cabcb4f4fab1c2112d4735eb34bb50882cb95e10e1e13c27e68d4b5e",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 20.58747563898214,
+      "uncompressed_sha256": "f20c25293aca8acf0db05c96e9c0432eef8db3c7cb1596220693c67701a3e695"
+    }
+  ],
+  "low_frequency_ranking": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[2, 4, 13, 17, 46, 55, 61, 75] hi=[2, 4, 13, 17, 46, 55, 61, 75]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=0.999 levels 4/5 lo=[4, 13, 16, 17, 46, 55, 61, 75] hi=[4, 13, 16, 17, 46, 55, 61, 75]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 37, 43, 49, 50, 73] hi=[10, 11, 20, 37, 43, 49, 50, 73]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 31, 37, 43, 49, 73] hi=[10, 11, 20, 31, 37, 43, 49, 73]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 50, 64, 72] hi=[25, 33, 38, 46, 49, 50, 64, 72]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 64, 65, 72] hi=[25, 33, 38, 46, 49, 64, 65, 72]",
+          "value": 1.0
+        }
+      ]
+    }
+  ],
+  "wall_s": 345.55327142000897,
+  "complete": true,
+  "all_bounded_checks_passed": false,
+  "case_encoding": "gzip JSON; lossless archival after execution"
+}

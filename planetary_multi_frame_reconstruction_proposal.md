@@ -2492,3 +2492,15 @@ assessment nuisance fits use the same frozen initialization policy. Estimator
 1.7 records that policy; independent phase starts are included in the next
 budget comparison rather than treating two object starts on one symmetric phase
 subspace as sufficient global evidence.
+
+**Bounded scientific convergence decision (2026-09-08):** the corrected
+development family covers all three seeds, both regimes/crops, both object/phase
+starts and all 15/35/60-mode stages. The main 12/96 versus 36/192 comparison and
+four-case 36/192 versus 72/384 refinement qualify all 12 reduced-grid cases,
+including every initialization's intermediate stages and separate assessment.
+Refined images and closure are unchanged between budgets. The final source
+identities remained unchanged during both runs. Detailed traces, failed
+predecessors, charts and CPU forecasts are retained; the complete scoped decision
+is `results/r10-convergence-summary/DECISION.md`. Full-resolution Gate-1/Q2 and gap
+families, model/noise sensitivity and independent capture acceptance remain
+required. Numerical convergence on eight-frame, 32x32 cases does not authorize Q3.

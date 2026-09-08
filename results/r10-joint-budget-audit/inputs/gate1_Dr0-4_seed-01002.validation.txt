@@ -1,0 +1,46 @@
+PlanetRecon Gate-1 simulator validation
+revision: R9
+schema: planetary-mfbd-gate1 1.0
+seed: 1002
+D/r0: 4
+r0_m: 0.0625
+tau0_s: 0.003925
+texp_s: 0.0011775
+dt_s: 0.003925
+N_frames: 8
+J: 8
+padding_detector_px: 64
+pupil_grid_size: 128
+
+psf_energy_error: 0.000e+00
+no_wrap_pass: True
+kl60_residual_median: 1.439571e-01
+exposure_convergence: 1.4011637571312023e-09
+exposure_convergence_pass: True
+
+structure function rho, measured, target, ratio:
+  0.04688  7.71553e+00  4.25949e+00  1.811
+  0.06042  1.23526e+01  6.50204e+00  1.900
+  0.07396  1.79173e+01  9.10822e+00  1.967
+  0.08750  2.43952e+01  1.20541e+01  2.024
+  0.10104  3.17721e+01  1.53211e+01  2.074
+  0.11458  4.00356e+01  1.88940e+01  2.119
+  0.12812  4.91754e+01  2.27603e+01  2.161
+  0.14167  5.91816e+01  2.69092e+01  2.199
+  0.15521  7.01261e+01  3.13314e+01  2.238
+  0.16875  8.19988e+01  3.60187e+01  2.277
+  0.18229  9.47176e+01  4.09638e+01  2.312
+  0.19583  1.08278e+02  4.61600e+01  2.346
+  0.20938  1.22673e+02  5.16016e+01  2.377
+  0.22292  1.37896e+02  5.72830e+01  2.407
+  0.23646  1.53938e+02  6.31994e+01  2.436
+  0.25000  1.70796e+02  6.93461e+01  2.463
+structure_function_pass: False
+grid_convergence: 3.842576950525959e-06
+grid_convergence_pass: True
+padding_convergence: 5.287660065802501e-30
+padding_convergence_pass: True
+lowfreq_convergence: [0.0016958668576747948, 0.003193599640286314, 0.010364021144248047]
+lowfreq_convergence_pass: True
+
+Gate-eligible: NO

@@ -1,0 +1,229 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "63344fb31eb8cb6379294edc08008b16d4ecb24f542ddc55009489313b330150",
+  "cases": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1001-4-feature.json.gz",
+      "sha256": "a2ec9c444b1a2fe1a4f1c9f7ae2f448bde878c607393496f1dc13bf265712506",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 6.586723688661582e-08,
+      "closure_absolute_change": 2.3758422229569476e-08,
+      "wall_s": 5.918109503982123,
+      "uncompressed_sha256": "59aad02ae268fbf39df466ab3836e959c17016a8cc6068033d608f83fa6710ea"
+    },
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1001-4-bland.json.gz",
+      "sha256": "fcb34b096b02ace5949831efe127983605d891ae1fc4f7e1051b34cf59897ddb",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 8.982499029792386e-08,
+      "closure_absolute_change": 1.6529924906638627e-07,
+      "wall_s": 8.489099803002318,
+      "uncompressed_sha256": "9bb468902ef645769cc396cb3261973bb0cff049ccbaa1e091d986486f904cec"
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1001-8-feature.json.gz",
+      "sha256": "951394c9eade09917f93c3bd42bff057054e78505fa616fa2b26c6dae5fcaf04",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 2.002575602943122e-12,
+      "closure_absolute_change": 1.865840815185038e-12,
+      "wall_s": 4.134714464016724,
+      "uncompressed_sha256": "5c2057b2c878c4c8fc2bf3c9f9ebeacb090cb66cf84620b10cba51fa33a6daaa"
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1001-8-bland.json.gz",
+      "sha256": "f1c080b6b487c7af105c9019ee91469ae82b2215b4696f60af046bccf2ab6204",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 2.1559095823590452e-07,
+      "closure_absolute_change": 1.8587139993808677e-07,
+      "wall_s": 8.31068910099566,
+      "uncompressed_sha256": "cf020aa2bc9722f430568ce387b00b07f0801e1ade3d74d4431a055e5df578cb"
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1002-4-feature.json.gz",
+      "sha256": "ad0662475421a38da3316d3e99476909cccfefdda56efb360bcf8621b13e5ec0",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 1.5536490824017028e-05,
+      "closure_absolute_change": 2.0353141049533896e-05,
+      "wall_s": 10.333174761006376,
+      "uncompressed_sha256": "d56548f692bfdac38572193de07004b8c69d640470f3ab8e95a266563cff041a"
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1002-4-bland.json.gz",
+      "sha256": "e23595ff9825dba4a95ba76dc8e926172484f50055e47221f33673bd4a5f79ad",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 1.2804795870276104e-08,
+      "closure_absolute_change": 1.4189942554310164e-09,
+      "wall_s": 7.287934872001642,
+      "uncompressed_sha256": "0e215777f3fc79db2a3884e81ce8b4ecef6b21b0b41ad2ced6a4692a6f8ae3f7"
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1002-8-feature.json.gz",
+      "sha256": "48382c6edde86c61f66d1e85b851da2a612990cca475eb4a606a4c963fcbebb8",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 0.00010299209778798262,
+      "closure_absolute_change": 5.805235145261989e-05,
+      "wall_s": 15.694417001999682,
+      "uncompressed_sha256": "254d97ecaee07cacd88375ef1c374d59c63e182a3caeb3fe4f906cb709d0ebb3"
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1002-8-bland.json.gz",
+      "sha256": "e6b92ac9f6a1d7816d1393e1f93a141dd34e9481a285a957338ab7b51d6c037c",
+      "bounded_convergence_passed": true,
+      "max_image_relative_change": 0.0,
+      "closure_absolute_change": 0.0,
+      "wall_s": 5.609517963981489,
+      "uncompressed_sha256": "641ed95531534406bb4d49ddb46bbc978d55b9b8f6b0df4829d647d8089e42df"
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "feature",
+      "path": "case-1003-4-feature.json.gz",
+      "sha256": "e0ad7d15544ba9223f000ffe95c9be38c75c2677e4b4047fb3607704dbd54de2",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 1.5149250932965636e-05,
+      "closure_absolute_change": 6.640077020891866e-06,
+      "wall_s": 14.126360449998174,
+      "uncompressed_sha256": "410f03e64815c61c67b6c6000790c7b5bc9fa1209af3247830e4269ad8e72f9f"
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "bland",
+      "path": "case-1003-4-bland.json.gz",
+      "sha256": "5779b0fbd2befe9e87c26b25f89439b9d8fbcb2efd3c030499a46d43d82894f3",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 1.8785691109733794e-06,
+      "closure_absolute_change": 1.7093734474560307e-06,
+      "wall_s": 12.181261579011334,
+      "uncompressed_sha256": "24a3f8ebe5ea5c20996c7f84ac9d660e6a781d533faea6693238919ebb8d2a4c"
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "feature",
+      "path": "case-1003-8-feature.json.gz",
+      "sha256": "96d4ae08a71f71933508868fed0103df450c6e0cb5bc346eb5f499a1cc7b8414",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 6.233171084254872e-06,
+      "closure_absolute_change": 5.717827974205392e-06,
+      "wall_s": 20.202680010988843,
+      "uncompressed_sha256": "db86506677de9a6cca9e90b63365bc6da94e1b59cad2487dd9f5ee56fa1fdc8e"
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "bland",
+      "path": "case-1003-8-bland.json.gz",
+      "sha256": "36415683d6b908dc4b1a72194eed9cd51b205bed3fc8d848c14367239e471bd5",
+      "bounded_convergence_passed": false,
+      "max_image_relative_change": 8.994588386397854e-07,
+      "closure_absolute_change": 2.7520813736803262e-06,
+      "wall_s": 17.117841272993246,
+      "uncompressed_sha256": "9e0c8ee7331521f3ef0bf5946260611e6bb0d7dddbb9a70aa4cf74f7b7722523"
+    }
+  ],
+  "low_frequency_ranking": [
+    {
+      "seed": 1001,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[2, 4, 13, 17, 46, 55, 61, 75] hi=[2, 4, 13, 17, 46, 55, 61, 75]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1001,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=0.999 levels 4/5 lo=[4, 13, 16, 17, 46, 55, 61, 75] hi=[4, 13, 16, 17, 46, 55, 61, 75]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 37, 43, 49, 50, 73] hi=[10, 11, 20, 37, 43, 49, 50, 73]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[10, 11, 20, 31, 37, 43, 49, 73] hi=[10, 11, 20, 31, 37, 43, 49, 73]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 50, 64, 72] hi=[25, 33, 38, 46, 49, 50, 64, 72]",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "checks": [
+        {
+          "name": "lowfreq_ranking_subharmonics",
+          "passed": true,
+          "message": "S_10 Jaccard=1.000 Spearman=1.000 levels 4/5 lo=[25, 33, 38, 46, 49, 64, 65, 72] hi=[25, 33, 38, 46, 49, 64, 65, 72]",
+          "value": 1.0
+        }
+      ]
+    }
+  ],
+  "wall_s": 256.0127947370056,
+  "complete": true,
+  "all_bounded_checks_passed": false,
+  "case_encoding": "gzip JSON; lossless archival after execution"
+}

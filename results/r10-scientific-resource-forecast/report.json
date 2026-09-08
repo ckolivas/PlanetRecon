@@ -1,0 +1,163 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "source_hash": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "benchmark_script_sha256": "8f4eb60f9d7612db56f338a7837e668599cc94546cdb70dee68de53ea5e58789",
+  "measurements": [
+    {
+      "n_diam": 16,
+      "pupil_grid": 128,
+      "detector_grid": 32,
+      "setup_s": 0.0023266430071089417,
+      "gradient": [
+        {
+          "modes": 15,
+          "median_s": 0.000577708997298032,
+          "min_s": 0.0005643169861286879,
+          "max_s": 0.0006702439859509468,
+          "samples": 20
+        },
+        {
+          "modes": 35,
+          "median_s": 0.0005754744925070554,
+          "min_s": 0.0005594810063485056,
+          "max_s": 0.0006634900055360049,
+          "samples": 20
+        },
+        {
+          "modes": 60,
+          "median_s": 0.0005721259949496016,
+          "min_s": 0.000558422994799912,
+          "max_s": 0.0006267869903240353,
+          "samples": 20
+        }
+      ],
+      "process_peak_rss_bytes": 146018304,
+      "cpu_threads": 2
+    },
+    {
+      "n_diam": 32,
+      "pupil_grid": 256,
+      "detector_grid": 64,
+      "setup_s": 0.006150836008600891,
+      "gradient": [
+        {
+          "modes": 15,
+          "median_s": 0.005140524997841567,
+          "min_s": 0.003249232016969472,
+          "max_s": 0.00673841597745195,
+          "samples": 20
+        },
+        {
+          "modes": 35,
+          "median_s": 0.003529714507749304,
+          "min_s": 0.0031585670076310635,
+          "max_s": 0.005496794998180121,
+          "samples": 20
+        },
+        {
+          "modes": 60,
+          "median_s": 0.0036328879941720515,
+          "min_s": 0.0032895100011955947,
+          "max_s": 0.006816701003117487,
+          "samples": 20
+        }
+      ],
+      "process_peak_rss_bytes": 153944064,
+      "cpu_threads": 2
+    },
+    {
+      "n_diam": 64,
+      "pupil_grid": 512,
+      "detector_grid": 128,
+      "setup_s": 0.02135846798773855,
+      "gradient": [
+        {
+          "modes": 15,
+          "median_s": 0.017505411989986897,
+          "min_s": 0.015672172012273222,
+          "max_s": 0.029412684991257265,
+          "samples": 20
+        },
+        {
+          "modes": 35,
+          "median_s": 0.019656945500173606,
+          "min_s": 0.015704714984167367,
+          "max_s": 0.033400595013517886,
+          "samples": 20
+        },
+        {
+          "modes": 60,
+          "median_s": 0.019788688514381647,
+          "min_s": 0.017450106010073796,
+          "max_s": 0.032749162026448175,
+          "samples": 20
+        }
+      ],
+      "process_peak_rss_bytes": 187170816,
+      "cpu_threads": 2
+    }
+  ],
+  "forecasts": [
+    {
+      "frames": 500,
+      "gradient_calls_per_frame_stage": 10,
+      "cpu_work_unit_hours": 0.07909867500630854
+    },
+    {
+      "frames": 500,
+      "gradient_calls_per_frame_stage": 100,
+      "cpu_work_unit_hours": 0.7909867500630854
+    },
+    {
+      "frames": 500,
+      "gradient_calls_per_frame_stage": 1000,
+      "cpu_work_unit_hours": 7.909867500630854
+    },
+    {
+      "frames": 1000,
+      "gradient_calls_per_frame_stage": 10,
+      "cpu_work_unit_hours": 0.1581973500126171
+    },
+    {
+      "frames": 1000,
+      "gradient_calls_per_frame_stage": 100,
+      "cpu_work_unit_hours": 1.5819735001261708
+    },
+    {
+      "frames": 1000,
+      "gradient_calls_per_frame_stage": 1000,
+      "cpu_work_unit_hours": 15.819735001261709
+    },
+    {
+      "frames": 5000,
+      "gradient_calls_per_frame_stage": 10,
+      "cpu_work_unit_hours": 0.7909867500630854
+    },
+    {
+      "frames": 5000,
+      "gradient_calls_per_frame_stage": 100,
+      "cpu_work_unit_hours": 7.909867500630854
+    },
+    {
+      "frames": 5000,
+      "gradient_calls_per_frame_stage": 1000,
+      "cpu_work_unit_hours": 79.09867500630854
+    },
+    {
+      "frames": 20000,
+      "gradient_calls_per_frame_stage": 10,
+      "cpu_work_unit_hours": 3.1639470002523415
+    },
+    {
+      "frames": 20000,
+      "gradient_calls_per_frame_stage": 100,
+      "cpu_work_unit_hours": 31.639470002523417
+    },
+    {
+      "frames": 20000,
+      "gradient_calls_per_frame_stage": 1000,
+      "cpu_work_unit_hours": 316.39470002523416
+    }
+  ]
+}

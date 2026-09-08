@@ -466,6 +466,13 @@ preserves booleans/nulls. New Q2 runs write only to the chosen experiment direct
 archived R9 tables remain immutable. Full development-family qualification is
 still required; these repairs do not authorize Q3.
 
+The subsequent convergence continuation fixes the PSF normalization derivative,
+checks stationarity at the final object/phase pair and adds deterministic phase
+start diversity. All 12 bounded development cases pass after refinement, and all
+60 full-grid physical discretization controls pass. Full-resolution Gate-1/Q2
+acceptance remains separate. See the measured evidence and limits in
+[`results/r10-convergence-summary/DECISION.md`](results/r10-convergence-summary/DECISION.md).
+
 The bounded W03 audit and decision are in
 [`results/r10-development-audit/DECISION.md`](results/r10-development-audit/DECISION.md).
 All 12 reduced development cases remain incomplete. Reproduce with

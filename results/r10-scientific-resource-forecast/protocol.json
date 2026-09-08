@@ -1,0 +1,28 @@
+{
+  "q3_authorized": false,
+  "n_diam": [
+    16,
+    32,
+    64
+  ],
+  "modes": [
+    15,
+    35,
+    60
+  ],
+  "gradient_repeats": 20,
+  "cpu_threads": 2,
+  "separate_process_per_grid": true,
+  "forecast_frames": [
+    500,
+    1000,
+    5000,
+    20000
+  ],
+  "gradient_calls_per_frame_stage": [
+    10,
+    100,
+    1000
+  ],
+  "limits": "Measured CPU gradient kernels only; work-unit forecasts exclude optimizer variability, object updates, I/O and parallel efficiency. Not an end-to-end or GPU benchmark."
+}

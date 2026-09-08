@@ -1,0 +1,43 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "parent": "results/r10-joint-budget-audit-v3",
+  "parent_report_sha256": "1494892903c3467074ddb3db2b59e68e603e0dfee811c769e76cdcf461e0a7a4",
+  "cases": [
+    {
+      "seed": 1002,
+      "dr0": 4.0,
+      "crop": "feature"
+    },
+    {
+      "seed": 1002,
+      "dr0": 8.0,
+      "crop": "feature"
+    },
+    {
+      "seed": 1003,
+      "dr0": 4.0,
+      "crop": "feature"
+    },
+    {
+      "seed": 1003,
+      "dr0": 8.0,
+      "crop": "feature"
+    }
+  ],
+  "budgets": [
+    {
+      "outer": 36,
+      "phase": 192
+    },
+    {
+      "outer": 72,
+      "phase": 384
+    }
+  ],
+  "image_tolerance": 0.001,
+  "closure_tolerance": 0.01,
+  "source_hash": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "design": "Refine failures in either selected-model checks or any unselected initialization/stage; same inputs, model, starts, partitions and tolerances; no Q3 or full-resolution acceptance.",
+  "parent_report_original_sha256": "1494892903c3467074ddb3db2b59e68e603e0dfee811c769e76cdcf461e0a7a4"
+}

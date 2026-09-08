@@ -1,0 +1,49 @@
+{
+  "status": "diagnostic",
+  "q3_authorized": false,
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    4.0,
+    8.0
+  ],
+  "crops": [
+    "feature",
+    "bland"
+  ],
+  "n_frames": 8,
+  "n_diam": 16,
+  "eval_size": 32,
+  "modes": [
+    15,
+    35,
+    60
+  ],
+  "budgets": [
+    {
+      "outer": 12,
+      "phase": 96
+    },
+    {
+      "outer": 36,
+      "phase": 192
+    }
+  ],
+  "phase_initialization": "zero versus subset with seeded 0.1 rad RMS higher phases",
+  "source_hash": "d224b26ff069683edb16aacb9e55e94aa34d423c420f57b37f96f0e8a4cee705",
+  "inits": [
+    "zero",
+    "subset"
+  ],
+  "image_stability_tolerance": 0.001,
+  "closure_stability_tolerance": 0.01,
+  "phase_relative_gradient_tolerance": 1e-08,
+  "joint_relative_change_tolerance": 1e-06,
+  "object_solver_tolerance": 1e-08,
+  "object_iteration_cap": 512,
+  "partition": "6 training, 1 selection, 1 assessment; fixed before fits",
+  "limits": "Reduced grids and frame count; fixed regularizer and snapshot model; no full-resolution gate qualification."
+}
