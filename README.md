@@ -94,10 +94,14 @@ The **Use cached preprocessing** checkbox controls reuse on later runs and the G
 shows exclusion counts before processing. Runs never repeat the analysis automatically.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
 `stack --no-frame-preselection` ignores cached decisions. After preprocessing,
-**Best retained frames (%)** (CLI: `stack --stack-percent 25`) selects the sharpest
-fraction of screened frames for the next run, without repeating preprocessing or
-adding sharpening. Lower percentages trade noise for less seeing blur; 100% is
-the default.
+**Optional frame selection** defaults to 100%, using all screened frames.
+For comparison, **Quality range** at 50% (`stack --stack-percent 50`) keeps
+scores strictly above `(capture best + capture worst) / 2`, then applies screening.
+**Frame count** (`--selection-mode frame_count`) instead selects a ranked
+percentage of screened frames. The GUI shows the actual retained count.
+Neither repeats preprocessing nor adds sharpening. These optional controls help
+evaluate the aim of improving reconstruction using more frames; they do not
+replace that aim with conventional frame rejection.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

@@ -35,22 +35,36 @@ Python callers can call `preprocess_source(source, config)` independently, then
 selection. File-backed sources also save/load the sidecar automatically. Set
 `ReconstructionConfig(frame_preselection=False)` to ignore preprocessing.
 
-## Selecting the sharpest frames
+## Optional frame selection
 
-After Preprocess, set **Best retained frames (%)** in the Capture tab to use a
-percentage of the frames that survived quality/shape screening. The CLI option
-is `stack --stack-percent 25`; Python uses `ReconstructionConfig(stack_percent=25)`.
-Frames are ranked by cached quality, highest first. Ties choose the earlier frame,
-and counts round up. The GUI shows the planned count before registration rejection.
+The default **100%** uses all screened frames. Selection is an optional comparison
+control, not the reconstruction strategy: the development aim remains to gain
+useful detail from more frames through better alignment and reconstruction.
 
-Lower percentages can reduce seeing blur at the cost of increased noise; this
-is frame selection, with no sharpening. The default remains 100%. A value below
-100 requires a matching cache, and changing the percentage does not repeat
-preprocessing or overwrite its measurements. Disabling cached preprocessing
-disables this percentage selection too. The same selection applies to CPU/GPU,
-Bayer/RGB/mono, and motion-compensated stacking. An explicit reference must remain
-in the selected subset; automatic reference uses its highest-quality frame.
-Resume requires the same percentage and selected frames as the saved run.
+After Preprocess, choose **Quality range** and **Upper quality range (%)** in
+Capture. At 50%, retain scores strictly above `(best + worst) / 2`.
+For percentage `p`, the cutoff is `worst + (best - worst) * (1 - p / 100)`.
+The extrema are all finite measured capture qualities, before quality/shape
+screening; screening still applies to the selected frames. This is not a
+percentile or fixed frame count. Equal-to-cutoff scores are excluded; a flat
+quality range and 100% retain all screened frames. CLI: `stack --stack-percent 50`;
+Python: `ReconstructionConfig(stack_percent=50, frame_selection_mode='quality_range')`.
+
+**Frame count** retains a ranked percentage of screened frames, highest quality
+first. Ties choose the earlier frame and counts round up.
+CLI: `stack --selection-mode frame_count --stack-percent 50`.
+Saved configurations containing a percentage but no selection mode preserve their
+earlier frame-count meaning. The GUI reports actual planned counts before
+registration rejection; different quality estimators can give different counts
+at the same range cutoff.
+
+Lower values trade noise for less seeing blur, with no sharpening. A value below
+100 requires a matching cache; changing mode or percentage reuses measurements
+without overwriting the cache. Disabling cached preprocessing disables this
+selection too. It applies to CPU/GPU, Bayer/RGB/mono and motion-compensated
+stacking. An explicit reference must remain in the subset; automatic reference
+uses its highest-quality frame. Resume requires the same mode, percentage and
+selected frames.
 
 ## Cache validity
 

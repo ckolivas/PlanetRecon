@@ -10,7 +10,7 @@ from zipfile import BadZipFile
 import numpy as np
 
 from planetrecon.calibration import load_calibration
-from planetrecon.pipeline.preprocess import FrameSelection, screen_source
+from planetrecon.pipeline.preprocess import FrameSelection, screen_source, quality_range_counts
 from planetrecon.pipeline.provenance import capture_provenance
 
 SCHEMA = 'planetrecon-preprocessing-1'
@@ -103,6 +103,7 @@ def cache_report(selection, path=None, config=None, source=None):
     return {'status': 'ready', 'path': None if path is None else str(path),
             'digest': selection.digest, **exclusion_counts(selection),
             'best_reference_index': selection.best_reference_index,
+            'quality_range': quality_range_counts(selection),
             'timing': timing,
             'geometry_estimate': estimate}
 

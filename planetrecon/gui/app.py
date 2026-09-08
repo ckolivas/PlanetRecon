@@ -155,6 +155,7 @@ class MainWindow:
         self.controls = ConfigControls(self.config)
         self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
         self.controls.fields['stack_percent'].valueChanged.connect(self._refresh_preprocessing)
+        self.controls.fields['frame_selection_mode'].currentIndexChanged.connect(self._refresh_preprocessing)
         for key in ('bayer_override', 'endian_override', 'endian_convention', 'crop',
                     'recover_complete_frames', 'reject_saturated', 'bias_path', 'dark_path',
                     'flat_path', 'gain_e_per_adu', 'read_noise_e', 'saturate_adu'):
@@ -395,9 +396,28 @@ class MainWindow:
         if info.get('status') == 'ready':
             usage = 'Will use cache' if self.controls.fields['frame_preselection'].isChecked() else 'Cache disabled for runs'
             percent = self.controls.fields['stack_percent'].value()
-            selected = (info['accepted'] * percent + 99) // 100
-            selection_text = (f' Next run: best {percent}% = {selected} screened frames before registration rejection.'
-                              if self.controls.fields['frame_preselection'].isChecked() else '')
+            mode = self.controls.fields['frame_selection_mode'].currentData()
+            if percent == 100:
+                selection_text = f" Next run: all {info['accepted']} screened frames."
+            elif mode == 'frame_count':
+                selected = (info['accepted'] * percent + 99) // 100
+                selection_text = f' Next run: best {percent}% by count = {selected} screened frames.'
+            elif 'quality_range' in info:
+                quality = info['quality_range']
+                selected = quality['retained_counts'][percent - 1]
+                low, high = quality['minimum'], quality['maximum']
+                cutoff = None if low is None else low + (high - low) * (1 - percent / 100.)
+                threshold = (f'quality > {cutoff:.6g}' if low is not None and low != high
+                             else 'flat or unavailable quality range; no additional exclusions')
+                fraction = 100 * selected / max(1, info['n_total'])
+                selection_text = (f' Next run: upper {percent}% of quality range ({threshold}): '
+                                  f'{selected} frames ({fraction:.1f}% of capture).')
+            else:
+                selection_text = ' Inspect input or Preprocess to refresh quality-range counts.'
+            if self.controls.fields['frame_preselection'].isChecked():
+                selection_text += ' Before registration rejection.'
+            else:
+                selection_text = ''
             self.preprocessing_label.setText(
                 f"{usage}: {info['quality']} quality / {info['shape']} shape exclusions "
                 f"({info['quality_shape_overlap']} overlap), {info['other']} other; "

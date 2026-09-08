@@ -122,13 +122,18 @@ def _stack_source(
         if config.stack_percent < 100 and selection is None:
             raise ValueError('Best-frame selection requires a matching preprocessing cache. Run Preprocess first, or set best frames to 100%.')
         if selection is not None and config.stack_percent < 100:
-            from planetrecon.pipeline.preprocess import best_frame_mask
-            accepted = best_frame_mask(selection, config.stack_percent)
-            detail = {'percent_of_screened_frames': config.stack_percent,
+            from planetrecon.pipeline.preprocess import best_frame_mask, quality_range
+            accepted = best_frame_mask(selection, config.stack_percent, config.frame_selection_mode)
+            detail = {'percent': config.stack_percent, 'mode': config.frame_selection_mode,
                       'screened_frames': int(selection.accepted.sum()),
                       'selected_frames': int(accepted.sum()),
                       'additional_exclusions': int(selection.accepted.sum() - accepted.sum()),
                       'ranking': 'cached quality descending; equal scores use earliest frame'}
+            if config.frame_selection_mode == 'quality_range':
+                low, high = quality_range(selection)
+                detail.update(quality_minimum=low, quality_maximum=high,
+                              quality_cutoff=None if low is None else low+(high-low)*(1-config.stack_percent/100.),
+                              ranking='strictly above capture quality-range cutoff; screening still applies')
             selection = replace(selection, accepted=accepted,
                                 summary={**selection.summary, 'best_frame_selection': detail})
         if selection is not None:

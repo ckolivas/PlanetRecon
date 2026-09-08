@@ -163,18 +163,47 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
     return FrameSelection(accepted, metrics, summary, stopped)
 
 
-def best_frame_mask(selection, percent):
+def quality_range(selection):
+    """Worst/best finite quality measured across the capture, before screening."""
+    scores = selection.measurements[:, 0]
+    scores = scores[np.isfinite(scores)]
+    return (float(scores.min()), float(scores.max())) if scores.size else (None, None)
+
+
+def quality_range_counts(selection):
+    low, high = quality_range(selection)
+    scores = np.sort(selection.measurements[selection.accepted, 0])
+    if low is None or high == low:
+        counts = [len(scores)] * 100
+    else:
+        cutoffs = low + (high-low)*(1-np.arange(1, 101)/100.)
+        counts = (len(scores)-np.searchsorted(scores, cutoffs, side='right')).tolist()
+        counts[-1] = len(scores)  # 100% retains all screened frames, including the minimum.
+    return {'minimum': low, 'maximum': high, 'retained_counts': counts,
+            'range_scope': 'all finite measured capture qualities; screening still applies'}
+
+
+def best_frame_mask(selection, percent, mode='frame_count'):
     """Rank screened frames without overwriting cached measurements or decisions.
 
-    Keep the requested percentage, rounded up. Equal scores retain earlier
-    frames first. Percentage refers to frames surviving quality/shape screening.
+    Count mode rounds up and breaks ties by frame index. Quality-range mode keeps
+    scores strictly above low + (high-low)*(1-percent/100), then applies screening.
+    A flat quality range and 100% retain all screened frames.
     """
     if type(percent) is not int or not 1 <= percent <= 100:
         raise ValueError('stack_percent must be an integer from 1 to 100')
+    if mode not in ('frame_count', 'quality_range'):
+        raise ValueError('unknown frame_selection_mode')
     indices = np.flatnonzero(selection.accepted)
     scores = selection.measurements[indices, 0]
     if not np.isfinite(scores).all():
         raise ValueError('retained preprocessing quality scores must be finite')
+    if mode == 'quality_range':
+        low, high = quality_range(selection)
+        if low is None or low == high or percent == 100:
+            return selection.accepted.copy()
+        cutoff = low + (high-low)*(1-percent/100.)
+        return selection.accepted & (selection.measurements[:, 0] > cutoff)
     count = (len(indices) * percent + 99) // 100
     order = np.argsort(-scores, kind='stable')
     mask = np.zeros_like(selection.accepted)

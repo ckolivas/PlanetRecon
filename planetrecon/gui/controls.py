@@ -37,9 +37,18 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
-        self._integer(capture, 'stack_percent', 'Best retained frames (%)', 1, 100)
-        self.fields['stack_percent'].setEnabled(config.frame_preselection)
-        self.fields['frame_preselection'].toggled.connect(self.fields['stack_percent'].setEnabled)
+        self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
+                     ['quality_range', 'frame_count'])
+        mode = self.fields['frame_selection_mode']
+        mode.setItemText(0, 'Quality range')
+        mode.setItemText(1, 'Frame count')
+        self._integer(capture, 'stack_percent', 'Upper quality range (%)', 1, 100)
+        self.stack_percent_label = capture.labelForField(self.fields['stack_percent'])
+        mode.currentIndexChanged.connect(self._selection_mode_changed)
+        self._selection_mode_changed()
+        for key in ('stack_percent', 'frame_selection_mode'):
+            self.fields[key].setEnabled(config.frame_preselection)
+            self.fields['frame_preselection'].toggled.connect(self.fields[key].setEnabled)
         self._integer(capture, 'reference_index', 'Reference frame (0 = automatic)', 0, 2**31-1)
         self._number(capture, 'max_shift_px', 'Maximum shift (px)')
         self._number(capture, 'cadence_s', 'Cadence (s; blank = timestamps)')
@@ -111,6 +120,11 @@ class ConfigControls(QTabWidget):
                 button.setToolTip('Scroll the settings tabs to the left.')
             elif button.objectName() == 'ScrollRightButton':
                 button.setToolTip('Scroll the settings tabs to the right.')
+
+    def _selection_mode_changed(self):
+        self.stack_percent_label.setText(
+            'Upper quality range (%)' if self.fields['frame_selection_mode'].currentData() == 'quality_range'
+            else 'Best retained frames (%)')
 
     def _tab(self, name):
         scroll = QScrollArea()

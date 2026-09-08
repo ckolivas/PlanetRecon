@@ -32,6 +32,7 @@ class ReconstructionConfig:
     reject_saturated: bool = True
     frame_preselection: bool = True
     stack_percent: int = 100
+    frame_selection_mode: str = 'quality_range'
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -73,6 +74,8 @@ class ReconstructionConfig:
     def __post_init__(self) -> None:
         if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:
             raise ValueError('stack_percent must be an integer from 1 to 100')
+        if self.frame_selection_mode not in ('quality_range', 'frame_count'):
+            raise ValueError('unknown frame_selection_mode')
         if type(self.frame_preselection) is not bool:
             raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):
@@ -236,4 +239,7 @@ class ReconstructionConfig:
         known = set(cls.__dataclass_fields__)
         if set(data) - known:
             raise ValueError(f"unknown config fields: {sorted(set(data) - known)}")
+        # Earlier saved percentages selected a fixed count. Preserve that meaning.
+        if 'stack_percent' in data and 'frame_selection_mode' not in data:
+            data = {**data, 'frame_selection_mode': 'frame_count'}
         return cls(**data)
