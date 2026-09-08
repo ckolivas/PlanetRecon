@@ -68,6 +68,9 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
                 x,info=solve(problem,maxiter=budget,tolerance=1e-5,callback=callback,
                              deadline=min(deadline,time.monotonic()+fit_budget_s),iteration_checkpoint=checkpoint)
                 info['reference_certificate']=reference.certificate(x)
+                if not info['converged'] and info['reason']=='wall_budget':
+                    write_json(directory/f'incomplete-{name}-{budget}-{time.time_ns()}.json',info)
+                    raise TimeoutError('wall budget exhausted; compatible iteration state retained')
                 return x,info
             try:
                 x,info=store.run(f'{name}-{budget}',compute)

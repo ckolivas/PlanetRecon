@@ -94,21 +94,26 @@ def test_full_rgb_and_all_bayer_patterns(pattern):
 
 
 @pytest.mark.hardware
-def test_cuda_solver_checkpoint_resume_and_cpu_certificate(tmp_path):
+@pytest.mark.parametrize("ridge",[.005,.1])
+def test_cuda_solver_checkpoint_resume_and_cpu_certificate(tmp_path,ridge):
     import torch
     from tools.scene_quadratic import SceneQuadratic,solve
     from tools.scene_iteration_state import IterationCheckpoint
     if not torch.cuda.is_available():pytest.skip('CUDA unavailable')
     ops=operators(True,True);rng=np.random.default_rng(773)
     images=[rng.normal(1.,1.,o.output_shape) for o in ops];variances=[1.]*len(ops)
-    cpu=SceneQuadratic(ops,images,variances,ridge=.005)
-    gpu=SceneQuadratic(ops,images,variances,ridge=.005,batch=SceneFFTBatch(ops,device='cuda'))
+    cpu=SceneQuadratic(ops,images,variances,ridge=ridge)
+    gpu=SceneQuadratic(ops,images,variances,ridge=ridge,batch=SceneFFTBatch(ops,device='cuda'))
     expected,ref=solve(gpu,maxiter=500,tolerance=1e-7)
     checkpoint=IterationCheckpoint(tmp_path/'gpu.npz',{'data':'fixed','operator':'fixed','runtime':'fixed'})
     def stop(n,x,info):
         if n==20:raise KeyboardInterrupt()
     with pytest.raises(KeyboardInterrupt):solve(gpu,maxiter=500,tolerance=1e-7,iteration_checkpoint=checkpoint,callback=stop)
     actual,info=solve(gpu,maxiter=500,tolerance=1e-7,iteration_checkpoint=checkpoint)
-    assert info['converged'] and ref['converged'] and info['resume_from_iteration']==20
+    assert info['converged']==ref['converged'] and info['resume_from_iteration']==20
+    assert info['n_iter']==ref['n_iter']
+    assert info['converged'] is (ridge==.1)
     np.testing.assert_allclose(actual,expected,atol=1e-12,rtol=1e-12)
-    assert cpu.certificate(actual)['relative_solution_error_bound']<=1e-7
+    checked=cpu.certificate(actual)['relative_solution_error_bound']
+    assert checked==pytest.approx(info['relative_solution_error_bound'],rel=1e-6,abs=1e-11)
+    assert (checked<=1e-7)==info['converged']
