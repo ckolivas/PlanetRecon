@@ -1,0 +1,64 @@
+{
+  "count": 11,
+  "indices": [
+    0,
+    49,
+    99,
+    149,
+    199,
+    249,
+    299,
+    349,
+    399,
+    449,
+    499
+  ],
+  "passed": true,
+  "relative_errors": {
+    "normal": 6.801370926716868e-16,
+    "linear": 5.096269328780342e-16,
+    "objective": 3.742160930766044e-16
+  },
+  "data_psf_setup_s": 31.01534563797759,
+  "setup_s": 0.08120481498190202,
+  "cpu_setup_s": 1.8658081169996876,
+  "normal_s": [
+    0.034212783008115366,
+    0.03682238899637014
+  ],
+  "cpu_normal_s": 1.2839678349846508,
+  "cpu_certificate_s": 1.3285624189884402,
+  "probe_certificate": {
+    "feasible": true,
+    "kkt_residual_norm": 292.7422724967963,
+    "absolute_solution_error_bound": 10733883.324882533,
+    "relative_solution_error_bound": 159.34317262123602,
+    "objective_gap_upper_bound": 1571130698.6207902,
+    "strong_convexity_lower_bound": 2.727272727272727e-05,
+    "gradient_lipschitz_upper_bound": 0.01434439850076062
+  },
+  "objective_s": 0.017197030974784866,
+  "cpu_objective_s": 0.7070482130220626,
+  "cache_before_normals": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 194912256,
+    "peak_bytes": 194912256,
+    "hits": 11,
+    "misses": 11,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  },
+  "cache_after_normals": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 194912256,
+    "peak_bytes": 194912256,
+    "hits": 33,
+    "misses": 11,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  },
+  "gpu_free_before_bytes": 2193227776,
+  "gpu_total_bytes": 12343050240,
+  "gpu_name": "NVIDIA GeForce RTX 5070",
+  "torch_peak_allocated_bytes": 301465600,
+  "torch_peak_reserved_bytes": 322961408,
+  "process_peak_rss_bytes": 2506043392
+}
