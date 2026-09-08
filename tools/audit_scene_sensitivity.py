@@ -29,7 +29,7 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
         if prior['status']!='valid' or prior['selected_strength'] is None:raise ValueError('prior selection is incomplete')
         if prior['input_sha256']!=file_hash(path):raise ValueError('prior report input mismatch')
         strength=prior['selected_strength']
-    dependencies=[Path(__file__),Path('tools/scene_fft.py'),Path('tools/scene_study.py'),Path('tools/scene_quadratic.py'),Path('docs/scene-sensitivity-protocol.md'),Path('docs/scene-prior-extension-protocol.md')]
+    dependencies=[Path(__file__),Path('tools/scene_fft.py'),Path('tools/scene_study.py'),Path('tools/scene_quadratic.py'),Path('tools/scene_iteration_state.py'),Path('docs/scene-sensitivity-protocol.md'),Path('docs/scene-prior-extension-protocol.md')]
     identity=identities(dependencies)
     protocol={'phase':phase,'identities':identity,'input_sha256':file_hash(path),
               'prior_report_sha256':None if prior_report is None else file_hash(prior_report),
@@ -62,8 +62,11 @@ def run(path,directory,*,phase='prior',prior_report=None,device='cpu',resume=Fal
             def compute():
                 def callback(n,x,cert):
                     write_json(directory/'progress.json',{'case':name,'budget':budget,'iteration':n,'certificate':cert})
+                from tools.scene_iteration_state import IterationCheckpoint
+                checkpoint=IterationCheckpoint(directory/'iterations'/f'{name}-{budget}.npz',
+                    {'protocol':protocol,'case':name,'mean_cell_ridge':ridge})
                 x,info=solve(problem,maxiter=budget,tolerance=1e-5,callback=callback,
-                             deadline=min(deadline,time.monotonic()+fit_budget_s))
+                             deadline=min(deadline,time.monotonic()+fit_budget_s),iteration_checkpoint=checkpoint)
                 info['reference_certificate']=reference.certificate(x)
                 return x,info
             try:

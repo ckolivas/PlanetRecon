@@ -102,3 +102,15 @@ preserves positivity and the objective. The certificate is still evaluated in th
 original scene coordinates with the original ridge, independently of scaling.
 Dense tests check both the majorizer's positive-semidefinite difference and
 agreement of global/diagonal methods with the same constrained optimum.
+
+## Iteration continuation
+
+The solver can atomically checkpoint its nonnegative iterate, accelerated
+extrapolate, completed iteration and elapsed solver time in one checksum-verified
+NPZ. The caller binds input/operator/protocol/runtime identities, and the solver
+also binds its version, shape, iteration cap, tolerance and scaling. Cancellation
+saves only a coherent completed state. The same stage can resume its momentum;
+a larger-budget validation fit rejects the smaller-budget checkpoint and starts
+independently. Failed writes preserve the prior file. Audit stage snapshots remain
+separate from these exact iteration states. CPU tests compare uninterrupted and
+resumed arrays exactly; CUDA tests check numerical parity and a CPU certificate.

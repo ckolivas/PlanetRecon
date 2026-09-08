@@ -1,0 +1,93 @@
+{
+  "case": "ridge-3e-05",
+  "margin": null,
+  "factor": 1,
+  "indices": [
+    0,
+    249,
+    499
+  ],
+  "sum_native_strength": 3e-05,
+  "mean_cell_ridge": 1e-05,
+  "native_shape": [
+    1152,
+    1152
+  ],
+  "scene_shape": [
+    1152,
+    1152
+  ],
+  "numerical_passed": true,
+  "runs": [
+    {
+      "solver": "extended_scene_projected_acceleration_v3",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "scaling": "diagonal",
+      "majorizer_min": 1.0000000014214018e-05,
+      "majorizer_max": 0.014214017956172366,
+      "n_iter": 390,
+      "maxiter": 1500,
+      "tolerance": 1e-05,
+      "objective": 17481.34378850166,
+      "wall_s": 19.06744984400575,
+      "feasible": true,
+      "kkt_residual_norm": 3.7077239663169627e-06,
+      "absolute_solution_error_bound": 0.37077239663169625,
+      "relative_solution_error_bound": 7.89331131430493e-06,
+      "objective_gap_upper_bound": 6.873608505200594e-07,
+      "strong_convexity_lower_bound": 1e-05,
+      "gradient_lipschitz_upper_bound": 0.014214017956172366,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 3.7077239665436812e-06,
+        "absolute_solution_error_bound": 0.3707723966543681,
+        "relative_solution_error_bound": 7.893311314787589e-06,
+        "objective_gap_upper_bound": 6.873608506041205e-07,
+        "strong_convexity_lower_bound": 1e-05,
+        "gradient_lipschitz_upper_bound": 0.014214017956172368
+      }
+    },
+    {
+      "solver": "extended_scene_projected_acceleration_v3",
+      "converged": true,
+      "status": "valid",
+      "reason": "certified",
+      "scaling": "diagonal",
+      "majorizer_min": 1.0000000014214018e-05,
+      "majorizer_max": 0.014214017956172366,
+      "n_iter": 390,
+      "maxiter": 3000,
+      "tolerance": 1e-05,
+      "objective": 17481.34378850166,
+      "wall_s": 19.66773491501226,
+      "feasible": true,
+      "kkt_residual_norm": 3.7077239663169627e-06,
+      "absolute_solution_error_bound": 0.37077239663169625,
+      "relative_solution_error_bound": 7.89331131430493e-06,
+      "objective_gap_upper_bound": 6.873608505200594e-07,
+      "strong_convexity_lower_bound": 1e-05,
+      "gradient_lipschitz_upper_bound": 0.014214017956172366,
+      "reference_certificate": {
+        "feasible": true,
+        "kkt_residual_norm": 3.7077239665436812e-06,
+        "absolute_solution_error_bound": 0.3707723966543681,
+        "relative_solution_error_bound": 7.893311314787589e-06,
+        "objective_gap_upper_bound": 6.873608506041205e-07,
+        "strong_convexity_lower_bound": 1e-05,
+        "gradient_lipschitz_upper_bound": 0.014214017956172368
+      }
+    }
+  ],
+  "image_relative_budget_change": 0.0,
+  "selection_score": 2.103705733623565,
+  "cache": {
+    "limit_bytes": 268435456,
+    "resident_bytes": 71746560,
+    "peak_bytes": 71746560,
+    "hits": 2595,
+    "misses": 3,
+    "scope": "retained PSF spectra only; excludes operators, workspaces, outputs and driver allocations"
+  }
+}
