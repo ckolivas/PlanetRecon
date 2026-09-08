@@ -20,6 +20,8 @@ def test_correction_bound_covers_dense_constrained_gap_and_distance(seed, rgb):
     corrections.append(correction)
     for y in corrections:
         bound = correction_bound(x, gradient, y, p.normal(y), p.ridge)
+        exact_dual_energy = .5*float(np.vdot(residual, exact).real)
+        assert bound['objective_gap_upper_bound'] >= exact_dual_energy-1e-10
         assert p.objective(x)-p.objective(optimum) <= bound['objective_gap_upper_bound']+1e-10
         assert np.linalg.norm(x-optimum) <= bound['absolute_solution_error_bound']+1e-10
     refined = correction_bound(x, gradient, exact, p.normal(exact), p.ridge)
@@ -32,6 +34,7 @@ def test_diagonal_preconditioning_solves_diagonal_hessian_and_retains_trace():
     x, info = probe_cg(lambda x: diagonal*x, rhs, diagonal, steps=8, callback=lambda row, y: events.append(row))
     np.testing.assert_allclose(diagonal*x, rhs, rtol=1e-12)
     assert info['iterations'] == 1 and len(events) == 1 and not info['scene_updated']
+    assert events[0]['scaled_direction_rayleigh'] == pytest.approx(1.)
     _, plain = probe_cg(lambda x: diagonal*x, rhs, np.ones_like(rhs), steps=8)
     assert plain['trace'][-1]['recursive_relative_residual'] > 1e-3
 
