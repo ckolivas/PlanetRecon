@@ -1,6 +1,6 @@
 # Development plan
 
-Updated 2026-09-09 with coupled-inverse regressions and window/state diagnostics.
+Updated 2026-09-09 with certified full-count reference stability and the full-family protocol.
 This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
 completed features and archived scientific results remain intact.
@@ -26,7 +26,7 @@ completed features and archived scientific results remain intact.
   observed selection manifest is now frozen; the 25-frame endpoint passes both
   original solvers. A safeguarded Newton-CG implementation now also passes the
   25-frame endpoint (13 updates, 293 products, independent bound 6.29459e-6).
-  All three solvers remain incomplete at 500 frames under the declared budgets.
+  The original endpoint studies remain incomplete at 500 frames under their declared budgets.
   Newton-CG reaches nine updates and bound 0.167701 in each 300-second fit;
   identical terminal images across caps do not qualify an unconverged solve.
   Three frozen-iterate 32-product probes (identity, existing majorizer and true
@@ -39,7 +39,13 @@ completed features and archived scientific results remain intact.
   experiment from zero regresses: neither 25-frame cap passes, and both 500-frame
   fits stop with bound 38.803. It is not adopted. Inner progress is now retained,
   including interrupted directions. A geometry-derived window-average inverse
-  has dense controls only; broader state/boundary diagnostics are required next.
+  now has twelve independently checked state probes, but the later projection
+  candidate still fails its full-count extension. The qualified cropped FFT
+  backend now allows the reference to certify 500 frames at iteration 1410.
+  A separate 1500/3000-cap stability study passes both fresh independent CPU
+  certificates (9.859417e-6) with identical images. The original 750/1500 study
+  remains incomplete. The complete 60-selection family is the next requirement;
+  no scientific prior or production adoption follows from this one endpoint.
 - **P5 early work:** shared CPU/CUDA scene FFTs, bounded retained PSF spectra and
   exact iteration resume are implemented. In the three-frame benchmark, solve
   time was 20.37 s for the reference and 1.51 s for shared CUDA, with a 3.97e-15
@@ -409,14 +415,22 @@ full qualification is not supported by the current evidence.
    local normal-product time from 1.052 to 0.391 seconds with 4 GiB retention
    (all spectra) and the declared 1 GiB additional headroom. The cropped 3 GiB
    mode also passes at 0.436 seconds. Adopt only in a new audit study identity.
-   Next compare the earlier reference and diagonal Newton methods at the same
-   objective and independent criteria; retain the 25-frame control and full-count
-   doubled-budget checks. Use these measured costs and retained trajectories to
-   predeclare execution limits, recording any new budget as a new experiment.
-   The failed projection candidate is not established as the best full-count solver.
+   The [new comparison](../results/p2-cropped-comparison/DECISION.md) is complete:
+   both methods pass 25 frames; diagonal Newton fails 500 frames at both actual
+   product caps. Reference certifies 500 frames at iteration 1410 under the 1500
+   cap. Its original 750/1500 stability remains failed. A separately declared
+   [1500/3000 check](../results/p2-reference-stability/DECISION.md) now passes both
+   fresh independent CPU bounds and image stability. Keep each historical failure.
+   The failed projection candidate is not adopted.
 3. Qualify the full 5/10/25/50/100% selection matrix across all seeds, seeing regimes
    and crops, with independent certificates and budget stability. The one-case
    endpoint comparison does not replace the complete family or settle the prior.
+   Execute the [declared complete-family protocol](scene-selection-family-protocol.md)
+   in manifest order, case indices 0 through 11. Each case runs all five fractions
+   at fresh 1500/3000 caps with the qualified cropped FFT and independent CPU
+   certificates. The runner gates execution on the archived stability check and
+   binds source/input/runtime identities. Preserve every attempt, including failed
+   fits and incomplete cases; require all 60 selections for a family pass.
 4. Resolve prior/likelihood/phase and exposure sensitivity under P3, including
    identifiability and signal loss. Do not automatically extend the prior grid
    again or reuse the inspected pilot assessment as untouched final evaluation.

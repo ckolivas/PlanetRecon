@@ -2,8 +2,8 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 888 passed, 60 skipped. The new projection solver
-and cropped-FFT controls also pass with CUDA enabled (19 and 36 tests respectively).
+Latest complete regression: 913 passed, 64 skipped. The new projection solver
+and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
 
 | Area | Implemented | Qualification / remaining work |
 |---|---|---|
@@ -13,7 +13,7 @@ and cropped-FFT controls also pass with CUDA enabled (19 and 36 tests respective
 | GUI/export | Updated per-run controls, tooltips, cancel/resume, PNG16/TIFF16/float32 and provenance | Full independent capture workflow and refreshed bundle acceptance remain |
 | Compute/resources | Local RTX 5070 venv support, CPU/CUDA translation, scoped Linux RAM/Torch allocator limits, recovery | Shared CPU/CUDA operators pass all 500-frame parity; bounded parallel independent CPU verification is qualified; full reconstruction performance and production integration remain |
 | Scientific inputs | 30 certified full-resolution files under recorded generation identity | Input certification does not qualify a changed reconstruction method |
-| Scientific reconstruction | Legacy estimators, constrained Newton-CG, coupled-inverse and projection-phase experiments | Extended model matches all 3,000 development frames; the 12-case, 11-frame pilot passes; reference, L-BFGS-B and diagonal Newton-CG pass 25 frames; projection-phase/window solver also passes 25 frames but fails 500; full-count convergence remains incomplete |
+| Scientific reconstruction | Legacy estimators, constrained Newton-CG, coupled-inverse and projection-phase experiments | Extended model matches all 3,000 development frames; the 12-case, 11-frame pilot passes; reference, L-BFGS-B and diagonal Newton-CG pass 25 frames; projection-phase/window solver also passes 25 frames but fails 500; one 500-frame reference endpoint now passes independent accuracy and cap stability; the full 60-selection family remains incomplete |
 | Gate-1/Q2/Q3 | Historical reports preserved | Requalification required; Q3 is not authorized |
 | Experiment execution | Atomic per-estimator/subset/crop/budget checkpoints in full Gate-1 audit; exact identity resume, failure records and stage-boundary wall budget | Reference sensitivity/family/endpoint runners retain exact iterate/momentum resume and incomplete outcomes; alternative solver has completed-stage resume only |
 | Releases | Five native GitHub tag-build targets, Linux local CPU/CUDA packaging | Refresh artifacts; owner license/signing decisions for publication; Windows/macOS runtime tests excluded |
@@ -48,12 +48,21 @@ no fitted scene is qualified. A separately implemented gradient-projection/CG
 candidate passes 19 CPU/CUDA controls and [both 25-frame caps](../results/p2-projection-ablation/DECISION.md)
 at 556 products. Its [500-frame extension fails](../results/p2-projection-full-count/DECISION.md)
 at both wall limits with bound 2.793714; identical outputs do not establish
-convergence. A new exact detector-crop FFT embedding passes 36 CPU/CUDA controls,
+convergence. A new exact detector-crop FFT embedding passes 40 CPU/CUDA controls,
 including independent fitted-scene certificates; [full-count operator/resource qualification](../results/p5-cropped-fft/DECISION.md)
 now passes. Its 4 GiB retained spectra reduce local normal-product time from
 1.052 to 0.391 seconds (about 2.69 times faster) while preserving independent
-operator parity. Next compare the earlier reference/diagonal solvers under a new
-backend identity; production defaults and numerical criteria remain unchanged.
+operator parity. The [cropped-backend solver comparison](../results/p2-cropped-comparison/DECISION.md)
+now retains both completed studies: diagonal Newton reaches its full product caps
+but fails 500-frame accuracy and stability. The reference first meets the full-count
+independent bound at iteration 1410 under the 1500 cap, while its original 750-cap
+fit remains incomplete. A separately declared [1500/3000 stability check](../results/p2-reference-stability/DECISION.md)
+now passes: the frozen lower scene and fresh zero-start upper solve both have
+independent bound 9.859417e-6 and identical latent/detector images. This qualifies
+one endpoint, not the complete numerical family or scientific quality. The
+[gated full-family protocol](scene-selection-family-protocol.md) is ready for
+all 12 cases and 60 observed selections, one case at a time in manifest order.
+Production defaults and numerical criteria remain unchanged.
 
 Independent-data preparation: [seven-capture intake](../results/real-data/README.md)
 records whole-file hashes and unknown permissions without publishing pixels or
