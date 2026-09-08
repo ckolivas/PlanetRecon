@@ -431,8 +431,10 @@ full qualification is not supported by the current evidence.
    certificates. The runner gates execution on the archived stability check and
    binds source/input/runtime identities. Preserve every attempt, including failed
    fits and incomplete cases; require all 60 selections for a family pass.
-   Case 0 is running in `out/p2-selection-family/case-00`; verify completion before
-   another scientific invocation. Archive its outcome and use the
+   Case 0 has passed all five selections and is archived with a cumulative
+   summary (1/12 cases, 5/60 selections). Case 1 is running in
+   `out/p2-selection-family/case-01`; verify completion before another scientific
+   invocation. Archive its outcome and use the
    [tested report checker](scene-selection-family-summary.md) to write an immutable
    cumulative summary. Continue with the next missing case in manifest order;
    do not rerun completed failures or extend their budgets implicitly.

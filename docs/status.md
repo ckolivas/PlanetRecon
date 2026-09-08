@@ -2,7 +2,7 @@
 
 Updated 2026-09-09. This matrix supersedes current-status wording in the historical
 R10 roadmap; archived experiments and their original decisions remain unchanged.
-Latest complete regression: 913 passed, 64 skipped. The new projection solver
+Latest complete regression: 946 passed, 64 skipped. The new projection solver
 and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respectively).
 
 | Area | Implemented | Qualification / remaining work |
@@ -62,12 +62,17 @@ independent bound 9.859417e-6 and identical latent/detector images. This qualifi
 one endpoint, not the complete numerical family or scientific quality. The
 [gated full-family protocol](scene-selection-family-protocol.md) is ready for
 all 12 cases and 60 observed selections, one case at a time in manifest order.
-Case 0 (seed 1001, Dr0=4, feature crop) is now running in
-`out/p2-selection-family/case-00`; check its process and final report before
-starting another case. Its first two selections pass, but the case has not yet
-completed. The [family report checker](scene-selection-family-summary.md) now
+[Case 0 (seed 1001, Dr0=4, feature crop)](../results/p2-selection-family/case-00/DECISION.md)
+now passes all five selections at both caps, with identical latent/detector
+images and independent bounds below 1e-5. The cumulative check counts 1/12 cases
+and 5/60 selections passed. Case 1 (the same seed/seeing, bland crop) is now
+running in `out/p2-selection-family/case-01`; check its process and final report
+before starting another scientific case. The [family report checker](scene-selection-family-summary.md) now
 revalidates all 60 selections and shared identities, with 33 additional tests
 passing. It retains missing/failed cases and refuses to overwrite earlier summaries.
+Work accounting now validates only the solvers used by each report, allowing
+reference-only family reports while rejecting a changed solver hash; 16 focused
+work-accounting tests pass.
 Production defaults and numerical criteria remain unchanged.
 
 Independent-data preparation: [seven-capture intake](../results/real-data/README.md)
