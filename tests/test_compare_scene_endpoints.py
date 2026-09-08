@@ -46,3 +46,23 @@ def test_stale_pass_flag_cannot_hide_failed_certificate():
     p, a = fixture(); b = copy.deepcopy(a)
     b['rows'][0]['runs'][0]['reference_certificate']['relative_solution_error_bound'] = .1
     assert not compare(a, b, p, p)['candidate_endpoints_passed']
+
+
+def test_product_caps_compare_objectives_without_claiming_equal_work():
+    p, a = fixture(); q = copy.deepcopy(p); b = copy.deepcopy(a)
+    q['budget_unit'] = 'Hessian products'
+    fit = b['rows'][0]['runs'][0]
+    fit['max_products'] = fit.pop('maxiter')
+    result = compare(a, b, p, q)
+    assert result['candidate_endpoints_passed'] and result['certified_pair_count'] == 1
+    assert result['reference_budget_unit'] == 'outer iterations'
+    assert result['candidate_budget_unit'] == 'Hessian products'
+    assert not result['equal_nominal_caps_imply_equal_work']
+
+
+def test_absent_certified_pairs_are_explicit():
+    p, a = fixture(); b = copy.deepcopy(a)
+    b['rows'][0]['runs'][0]['converged'] = False
+    result = compare(a, b, p, p)
+    assert result['certified_pair_count'] == 0
+    assert result['rows'][0]['fits'][0]['objective_absolute_difference'] is None

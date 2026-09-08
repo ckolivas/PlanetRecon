@@ -14,6 +14,8 @@ def compare(reference, candidate, reference_protocol, candidate_protocol):
         raise ValueError('same observations, selections, domain, prior and numerical criteria required')
     if not reference['source_input_unchanged'] or not candidate['source_input_unchanged']:
         raise ValueError('study source/input identities changed')
+    fields = ['max_products' if 'budget_unit' in p else 'maxiter'
+              for p in (reference_protocol, candidate_protocol)]
     rows = []
     for fraction in reference_protocol['fractions']:
         blocks = []
@@ -24,18 +26,18 @@ def compare(reference, candidate, reference_protocol, candidate_protocol):
         a, b = blocks
         if a and b and any(a[k] != b[k] for k in ('indices', 'mean_ridge', 'observed_electron_sum')):
             raise ValueError('actual numerical inputs differ')
-        def qualified(block):
+        def qualified(block, field):
             return bool(block and block['numerical_passed']
-                        and [f['maxiter'] for f in block['runs']] == reference_protocol['budgets']
+                        and [f[field] for f in block['runs']] == reference_protocol['budgets']
                         and all(f.get('converged') and f.get('reference_certificate', {}).get('feasible')
                                 and f['reference_certificate']['relative_solution_error_bound'] <= reference_protocol['tolerance']
                                 for f in block['runs']))
-        row = {'fraction': fraction, 'reference_passed': qualified(a),
-               'candidate_passed': qualified(b), 'fits': []}
+        row = {'fraction': fraction, 'reference_passed': qualified(a, fields[0]),
+               'candidate_passed': qualified(b, fields[1]), 'fits': []}
         for cap in reference_protocol['budgets']:
             fits = []
-            for block in blocks:
-                matches = [] if block is None else [f for f in block['runs'] if f['maxiter'] == cap]
+            for block, field in zip(blocks, fields):
+                matches = [] if block is None else [f for f in block['runs'] if f[field] == cap]
                 if len(matches) > 1: raise ValueError('duplicate solver cap')
                 fits.append(matches[0] if matches else None)
             fa, fb = fits
@@ -44,13 +46,17 @@ def compare(reference, candidate, reference_protocol, candidate_protocol):
             difference = abs(fa['objective']-fb['objective']) if both else None
             gap_sum = sum(f['reference_certificate']['objective_gap_upper_bound'] for f in fits) if both else None
             roundoff = 1e-10*max(1., abs(fa['objective']), abs(fb['objective'])) if both else None
-            row['fits'].append({'maxiter': cap, 'both_independently_certified': bool(both),
+            row['fits'].append({'nominal_budget': cap, 'both_independently_certified': bool(both),
                 'objective_absolute_difference': difference, 'summed_objective_gap_bounds': gap_sum,
                 'objective_roundoff_allowance': roundoff,
                 'objective_consistent_with_bounds': None if not both else difference <= gap_sum+roundoff,
                 'reference': fa, 'candidate': fb})
         rows.append(row)
     return {'rows': rows,
+            'reference_budget_unit': reference_protocol.get('budget_unit', 'outer iterations'),
+            'candidate_budget_unit': candidate_protocol.get('budget_unit', 'outer iterations'),
+            'equal_nominal_caps_imply_equal_work': False,
+            'certified_pair_count': sum(f['both_independently_certified'] for r in rows for f in r['fits']),
             'certified_objectives_consistent': all(f['objective_consistent_with_bounds'] is not False for r in rows for f in r['fits']),
             'candidate_endpoints_passed': all(r['candidate_passed'] for r in rows),
             'reference_endpoints_passed': all(r['reference_passed'] for r in rows),
