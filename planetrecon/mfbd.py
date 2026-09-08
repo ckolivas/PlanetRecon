@@ -491,6 +491,55 @@ def holdout_split(n: int, frac: float, seed: int) -> tuple[np.ndarray, np.ndarra
     return train, ho
 
 
+def assessment_split(n: int, frac: float, seed: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Preassign disjoint training, selection and untouched assessment frames.
+
+    This separates uses of data within a capture; it does not claim independent
+    nights or independent atmospheric samples from temporally correlated frames.
+    """
+    if n < 3 or not np.isfinite(frac) or not 0 < frac < .5:
+        raise ValueError('three-way assessment requires at least three frames and 0 < fraction < 0.5')
+    count = min(max(1, int(round(frac*n))), (n-1)//2)
+    shuffled = np.random.default_rng(int(seed)+917_402).permutation(n)
+    assess = np.sort(shuffled[:count])
+    select = np.sort(shuffled[count:2*count])
+    train = np.sort(shuffled[2*count:])
+    return train, select, assess
+
+
+def assess_selected_fit(fwd, fit, images, sigma2, indices, alpha0, *,
+                        alpha_iters=C.Q2_ALPHA_ITERS, frame_workers=1):
+    """Profile phase nuisance parameters once after freezing the selected model.
+
+    The training object is never updated and assessment phases start from the
+    externally specified shift calibration, not an all-frame fit. The residual
+    is a phase-profiled diagnostic, not an unfitted predictive likelihood.
+    """
+    indices = np.asarray(indices, dtype=np.int64)
+    used = np.union1d(fit['train_idx'], fit['holdout_idx'])
+    if (indices.ndim != 1 or indices.size == 0 or np.unique(indices).size != indices.size
+            or np.any(indices < 0) or np.any(indices >= images.shape[0])
+            or np.intersect1d(indices, used).size):
+        raise ValueError('assessment indices must be nonempty, unique and excluded from training and selection')
+    m = fit['stages'][-1]['M']
+    alphas = np.asarray(alpha0, dtype=np.float64).copy()
+    obj = np.asarray(fit['object'], dtype=np.float64).copy()
+    phase_info = _fit_frames(fwd, alphas, m, fft2(obj, workers=1), images, sigma2,
+                             indices, alpha_iters, frame_workers, freeze_tip_tilt=True)
+    otfs = fwd.otfs(alphas[indices, :m])
+    loss = data_residual(otfs, obj, images[indices], sigma2[indices])
+    finite = bool(np.isfinite(loss) and loss >= 0)
+    converged = all(st['object_info'].get('converged', False)
+                    and all(fr['success'] for batch in st['phase_fits'] for fr in batch['frames'])
+                    for st in fit['stages']) and all(fr['success'] for fr in phase_info)
+    return {'partition_role': 'assessment only after model selection',
+            'metric_role': 'phase-profiled residual with frozen training object; not unfitted prediction',
+            'sampling_limit': 'disjoint frames in one capture; temporal correlation remains',
+            'indices': indices.tolist(), 'n_frames': int(indices.size), 'M': int(m),
+            'loss': float(loss) if finite else None, 'phase_fits': phase_info,
+            'status': 'invalid' if not finite else 'valid' if converged else 'incomplete'}
+
+
 def select_init(results: dict[str, dict]) -> str:
     """Choose an initialisation from held-out loss, else training loss. No truth."""
     if not results:

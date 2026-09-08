@@ -419,9 +419,14 @@ Windows or macOS releases.
   starts the object from all frames; `subset` starts it from \(\mathcal S_{10}\).
   The reported D is the better of the two by held-out residual if present,
   otherwise by training residual. Truth \(E_H\) is not used to pick an init.
-- **Held-out prediction.** Development family fits a disjoint 10% of frames
-  phase-only against an object estimated on the complementary 90%. Evaluation
-  closure uses all-frame D.
+- **Selection and assessment.** Development runs preassign approximately 80%
+  training, 10% initialization selection and 10% assessment frames, with at least
+  one frame in each partition. Subset initialization ranks training frames only.
+  After initialization selection, the assessment frames receive a phase-only fit
+  against the frozen training object. Their residual cannot select the model or
+  update its object. This is a phase-profiled diagnostic, not an unfitted
+  predictive likelihood; disjoint frames can still be temporally correlated.
+  Synthetic-truth closure remains a separate metric on the selected all-frame D.
 - **Closure.** \(C=(E_H(\mathrm{A1o})-E_H(D))/(E_H(\mathrm{A1o})-E_H(\mathrm{E2}^*))\).
   Target: median \(C\ge 0.40\) on the feature-rich crop at \(D/r_0=4\)
   (strong G1, moderate seeing). Crops are never shrunk to fit more modes.
@@ -449,7 +454,8 @@ Hard RAM limits and geometry resume remain unqualified.
 W02 science repairs: frozen tip/tilt includes one/two-mode fits; phase optimizers
 report status, gradient norm, actual iterations and objective traces. Blind TV
 and oracle reference choices are frozen inputs, independent of evaluation truth.
-Held-out scores are labelled model-selection data. Nonfinite starts are rejected,
+Selection scores and the separate post-selection assessment are labelled by role.
+Assessment inherits incomplete training/phase-fit status. Nonfinite starts are rejected,
 closure requires a positive well-conditioned gap, and a family cannot pass without
 its declared complete seed/regime set and valid converged crop results. JSON
 preserves booleans/nulls. New Q2 runs write only to the chosen experiment directory;

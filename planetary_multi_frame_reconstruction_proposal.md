@@ -2438,3 +2438,19 @@ controls remain incomplete at 512. Protocols, failures, noise-map controls and
 the bounded decision are preserved in `results/r10-constraint-operator-audit-v2`
 and `results/r10-constraint-operator-audit-v3`. This advances W01 without claiming
 complete convergence qualification or authorizing Q3.
+
+**W02 separate assessment continuation (2026-09-08):** Q2 development/`--holdout`
+runs now preassign training, initialization-selection and assessment frames.
+The third partition receives a phase-only fit after choosing the initialization,
+with the training object frozen and phases initialized from external shifts.
+Reports distinguish that phase-profiled diagnostic from synthetic-truth closure
+on the selected all-frame refit and propagate incomplete optimizer status.
+Changing assessment pixels cannot change initialization selection or its object.
+The 12-case reduced-grid development rerun (three seeds, both regimes/crops,
+two starts, modes 15/35/60) completed in 139.87 s; all reconstruction/assessment
+statuses remain incomplete at the declared 1-outer/2-phase budget. Evidence and
+the bounded decision are in `results/r10-development-assessment`. This completes
+the separate assessment implementation, not scientific convergence or Q3.
+Local regression validation: 512 tests passed and 41 skipped; the subsequently
+added assessment-manifest integrity check and its 18 targeted companions also
+pass. No new GPU operator or native runtime qualification is claimed here.

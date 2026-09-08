@@ -106,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         "--family",
         choices=("dev", "eval", "ext"),
         default="dev",
-        help="seed family; development also runs held-out prediction by default",
+        help="seed family; development also runs separate selection/assessment diagnostics",
     )
     q2.add_argument(
         "--dr0",
@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
     hold.add_argument(
         "--holdout",
         action="store_true",
-        help="fit a 90/10 held-out diagnostic in addition to all-frame D",
+        help="add training/selection/assessment partitions (approximately 80/10/10; at least 3 frames)",
     )
     hold.add_argument(
         "--no-holdout",

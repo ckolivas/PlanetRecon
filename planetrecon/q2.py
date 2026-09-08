@@ -30,7 +30,8 @@ from planetrecon.metric import eh_metric
 from planetrecon.mfbd import (
     PupilForward,
     d_tail,
-    holdout_split,
+    assessment_split,
+    assess_selected_fit,
     initial_object,
     select_init,
     tip_tilt_from_shifts,
@@ -296,6 +297,7 @@ def evaluate_q2_crop(
     frame_workers: int = C.Q2_FRAME_WORKERS,
 ) -> dict:
     n = crop.observed.shape[0]
+    partitions = assessment_split(n, C.Q2_HOLDOUT_FRAC, extras['seed']) if holdout else None
     sigma2 = frame_noise_variance(crop.expected, extras["read_noise_e"])
     registered = register_images(crop.observed, crop.shifts)
     scores = score_sequence(registered, sky_mask=crop.sky_mask)
@@ -369,8 +371,9 @@ def evaluate_q2_crop(
 
     holdout_block = None
     holdout_fits = None
+    assessment = None
     if holdout:
-        train, ho = holdout_split(n, C.Q2_HOLDOUT_FRAC, extras["seed"])
+        train, ho, assess = partitions
         holdout_fits = {
             name: fit_initialisation(name, train, ho) for name in inits
         }
@@ -405,6 +408,7 @@ def evaluate_q2_crop(
             }
         holdout_block = {
             "n_train": int(train.size),
+            "train_indices": train.tolist(),
             "n_holdout": int(ho.size),
             "indices": ho.tolist(),
             "chosen_init": holdout_chosen,
@@ -420,6 +424,9 @@ def evaluate_q2_crop(
             ),
             "metrics": _metrics(chosen_fit["object"], crop),
         }
+        assessment = assess_selected_fit(fwd, chosen_fit, crop.observed, sigma2, assess, alpha_tt,
+                                         alpha_iters=alpha_iters, frame_workers=frame_workers)
+        assessment['chosen_init'] = holdout_chosen
 
     # The held-out comparison selects the initialization, but closure is
     # always measured on the corresponding all-frame reconstruction.
@@ -436,6 +443,11 @@ def evaluate_q2_crop(
     known_converged = all(known[key].get("_info", {}).get("converged", False)
         for key in ("E2a_S10", "E2a_S100", "E2b_S10", "E2b_S100", "A1o_S10"))
     status = "invalid" if not metric_valid else ("valid" if converged and known_converged else "incomplete")
+    if assessment is not None:
+        if assessment['status'] == 'invalid':
+            status = 'invalid'
+        elif assessment['status'] != 'valid' and status == 'valid':
+            status = 'incomplete'
 
     init_public = {}
     for name, block in inits_out.items():
@@ -458,7 +470,8 @@ def evaluate_q2_crop(
         "blind_prior_selection": "frozen development tv_mu",
         "reference_selection": "frozen development reference_star",
         "tip_tilt_calibration": tilt_info,
-        "assessment_role": "synthetic truth metric; holdout reused for model selection",
+        "assessment_role": "synthetic truth closure on all-frame refit; separate frame assessment after selection" if holdout
+                           else "synthetic truth metric only; no separate frame assessment",
         "ranking_hash": ranking_config_hash(),
         "n_frames": n,
         "subset_S10": idx10.tolist(),
@@ -474,6 +487,7 @@ def evaluate_q2_crop(
         "E2_star": known["E2_star"],
         "prior_limited": known["prior_limited"],
         "holdout": holdout_block,
+        "assessment": assessment,
         "regularisation": asdict(reg),
         "tv_mu_D": tv_d,
     }

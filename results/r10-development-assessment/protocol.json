@@ -1,0 +1,38 @@
+{
+  "seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "regimes": [
+    4.0,
+    8.0
+  ],
+  "crops": [
+    "feature",
+    "bland"
+  ],
+  "n_frames": 8,
+  "n_diam": 16,
+  "pupil_pad_factor": 8.0,
+  "eval_size": 32,
+  "stages": [
+    15,
+    35,
+    60
+  ],
+  "outer_iters": [
+    1,
+    1,
+    1
+  ],
+  "alpha_iters": 2,
+  "inits": [
+    "zero",
+    "subset"
+  ],
+  "holdout_role": "model_selection",
+  "assessment_role": "separate frames; phase-profiled residual with frozen selected training object",
+  "partition_fraction": 0.1,
+  "gates_enabled": false
+}

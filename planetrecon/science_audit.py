@@ -31,6 +31,8 @@ def run(directory: Path):
         n_frames=8, n_diam=16, pupil_pad_factor=8., eval_size=32,
         stages=list(C.M_FIT_GRID), outer_iters=[1,1,1], alpha_iters=2,
         inits=['zero','subset'], holdout_role='model_selection',
+        assessment_role='separate frames; phase-profiled residual with frozen selected training object',
+        partition_fraction=C.Q2_HOLDOUT_FRAC,
         gates_enabled=False)
     (directory/'protocol.json').write_text(json.dumps(protocol,indent=2)+'\n')
     records=[]
