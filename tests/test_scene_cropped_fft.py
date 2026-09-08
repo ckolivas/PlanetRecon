@@ -83,3 +83,23 @@ def test_unit_and_larger_than_scene_psfs(kernel):
     batch=CroppedSceneFFTBatch([op]);x=rng.normal(size=(8,8));y=rng.normal(size=(3,4))
     np.testing.assert_allclose(batch.forward(x)[0],op.forward(x),atol=1e-12)
     np.testing.assert_allclose(batch.adjoint([y]),op.adjoint(y),atol=1e-12)
+
+
+@pytest.mark.hardware
+@pytest.mark.parametrize('method',['reference','newton'])
+@pytest.mark.parametrize('rgb',[False,True])
+def test_reference_and_diagonal_newton_with_cropped_cuda(method,rgb):
+    import torch
+    from test_scene_fft import operators
+    from tools.scene_quadratic import SceneQuadratic,solve as reference_solve
+    from tools.scene_projected_newton import solve as newton_solve
+    if not torch.cuda.is_available(): pytest.skip('CUDA unavailable')
+    ops=operators(rgb,True);rng=np.random.default_rng(722)
+    images=[rng.normal(size=o.output_shape) for o in ops]
+    variances=[rng.uniform(.4,3.,size=o.output_shape) for o in ops]
+    cpu=SceneQuadratic(ops,images,variances,ridge=.1,smoothness=.02)
+    gpu=SceneQuadratic(ops,images,variances,ridge=.1,smoothness=.02,batch=CroppedSceneFFTBatch(ops,device='cuda'))
+    solve=reference_solve if method=='reference' else newton_solve
+    x,info=solve(gpu,tolerance=1e-5)
+    cert=cpu.certificate(x)
+    assert info['converged'] and cert['feasible'] and cert['relative_solution_error_bound']<=1e-5
