@@ -22,7 +22,8 @@ def file_hash(path):
 
 def write_json(path, value):
     from planetrecon.evaluate import _to_jsonable
-    path.write_text(json.dumps(_to_jsonable(value), indent=2, allow_nan=False)+'\n')
+    from tools.experiment_stages import atomic_write
+    atomic_write(path, (json.dumps(_to_jsonable(value), indent=2, allow_nan=False)+'\n').encode())
 
 
 def compare(runs, images, image_tolerance, gap_tolerance):
@@ -55,7 +56,7 @@ def evaluate_case(payload):
     from planetrecon.physics_audit import peak_rss_bytes
     from planetrecon.runtime import apply_thread_limits
     apply_thread_limits(2)
-    path, crop_name, directory, protocol = payload
+    path, crop_name, directory, protocol, deadline = payload
     if protocol.get('solver') == 'admm':
         # A1o delegates to estimators.e2a; evaluate_crop imported its own alias.
         # Both must use this explicitly recorded experimental candidate.
@@ -72,10 +73,15 @@ def evaluate_case(payload):
         raise ValueError('full-resolution audit requires the locked 500-frame, 128-pixel, 64-sample pupil configuration')
     started = time.monotonic()
     runs, images = [], []
+    from tools.experiment_stages import StageStore
     for budget in protocol['budgets']:
+        store = StageStore(directory/'stages'/f'{cfg.seed}-{int(cfg.dr0)}-{crop_name}-{budget}',
+                           {'protocol': protocol, 'input_sha256': identity,
+                            'crop': crop_name, 'budget': budget, 'initialization': 'default'},
+                           deadline=deadline)
         t0 = time.monotonic()
         result = evaluate_crop(cfg, crop, extras, maxiter=budget,
-                               require_convergence=False, return_reconstructions=True)
+                               require_convergence=False, return_reconstructions=True, stage_runner=store.run)
         images.append(result.pop('_reconstructions'))
         runs.append({'maxiter': budget, 'wall_s': time.monotonic()-t0, 'result': result})
     comparison = compare(runs, images, protocol['image_tolerance'], protocol['gap_tolerance'])
@@ -94,7 +100,7 @@ def evaluate_case(payload):
     return summary
 
 
-def run(inputs, directory, family='development', workers=3, budgets=(512, 1024), solver='fista'):
+def run(inputs, directory, family='development', workers=3, budgets=(512, 1024), solver='fista', *, resume=False, wall_budget_s=3600., background_workload='unspecified'):
     from planetrecon import constants as C
     from planetrecon.evaluate import REG, aggregate_family, family_paths
     from planetrecon.provenance import source_hash
@@ -105,7 +111,9 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024),
         raise ValueError('two positive increasing solver budgets are required')
     if not 1 <= workers <= 16:
         raise ValueError('workers must be 1–16 (two CPU threads each)')
-    directory.mkdir(parents=True, exist_ok=False)
+    if wall_budget_s <= 0 or not __import__('math').isfinite(wall_budget_s):
+        raise ValueError('wall budget must be finite and positive')
+    directory.mkdir(parents=True, exist_ok=resume)
     identity = source_hash()
     runner_identity = file_hash(__file__)
     solver_path = Path(__file__).with_name('quadratic_admm.py') if solver == 'admm' else None
@@ -118,14 +126,22 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024),
                 'source_hash': identity, 'runner_sha256': runner_identity,
                 'solver': solver, 'solver_source_sha256': solver_identity,
                 'admm_relative_solution_error_bound_tolerance': 1e-4 if solver == 'admm' else None,
-                'workers': workers, 'threads_per_worker': 2, 'q3_authorized': False,
+                'workers': workers, 'threads_per_worker': 2,
+                'wall_budget_s': wall_budget_s, 'background_workload': background_workload,
+                'checkpoint_runner_sha256': file_hash(Path(__file__).with_name('experiment_stages.py')),
+                'input_sha256': {str(p.resolve()): file_hash(p) for p in family_paths(inputs, seeds)}, 'q3_authorized': False,
                 'design': 'Known-transfer full-resolution Gate-1 reconstruction and gap budget stability. '
                           'Fixed regularisation, rankings and physical inputs; no MFBD/model/noise qualification.'}
-    write_json(directory/'protocol.json', protocol)
+    protocol_path = directory/'protocol.json'
+    if resume:
+        if not protocol_path.exists() or json.loads(protocol_path.read_text()) != protocol:
+            raise ValueError('resume protocol/input/source identity mismatch')
+    else:
+        write_json(protocol_path, protocol)
     started = time.monotonic()
     rows, failures = [], []
     with ProcessPoolExecutor(max_workers=workers) as pool:
-        pending = {pool.submit(evaluate_case, (path, crop, directory, protocol)): (path, crop)
+        pending = {pool.submit(evaluate_case, (path, crop, directory, protocol, started+wall_budget_s)): (path, crop)
                    for path in family_paths(inputs, seeds) for crop in protocol['crops']}
         for future in as_completed(pending):
             path, crop = pending[future]
@@ -158,6 +174,7 @@ def run(inputs, directory, family='development', workers=3, budgets=(512, 1024),
               'complete': complete, 'source_hash': identity, 'source_unchanged': unchanged,
               'full_resolution_budget_convergence_passed': passed, 'cases': rows,
               'failures': failures, 'tables': tables, 'wall_s': time.monotonic()-started}
+    write_json(directory/f'attempt-{time.time_ns()}.json', report)
     write_json(directory/'report.json', report)
     return report
 
@@ -170,6 +187,10 @@ if __name__ == '__main__':
     parser.add_argument('--workers', type=int, default=3)
     parser.add_argument('--budgets', type=int, nargs=2, default=(512, 1024))
     parser.add_argument('--solver', choices=('fista', 'admm'), default='fista')
+    parser.add_argument('--resume', action='store_true')
+    parser.add_argument('--wall-budget-s', type=float, default=3600.)
+    parser.add_argument('--background-workload', default='unspecified')
     args = parser.parse_args()
-    report = run(args.inputs, args.out, args.family, args.workers, tuple(args.budgets), args.solver)
+    report = run(args.inputs, args.out, args.family, args.workers, tuple(args.budgets), args.solver,
+                 resume=args.resume, wall_budget_s=args.wall_budget_s, background_workload=args.background_workload)
     sys.exit(0 if report['full_resolution_budget_convergence_passed'] else 1)

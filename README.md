@@ -18,7 +18,19 @@ Prompt 1 is the synthetic simulator and its validation tests (Python, NumPy/SciP
 Prompt 2 is the known-transfer estimators, Laplacian ranking, and G1/G2/G3
 tables. Q2 is E2b plus all-frame blind D / D-tail and the 40% closure gate.
 
-## Status
+## Current status
+
+The [current status matrix](docs/status.md) distinguishes implemented application
+features from numerical and scientific qualification. Follow the
+[updated development plan](docs/development-plan.md) for remaining work.
+Full-resolution development solves remain incomplete and the scene-to-detector
+model needs correction; no current Gate-1/Q2 pass or Q3 authorization is claimed.
+
+## Historical scientific results and application foundations
+
+The following R9 tables describe the archived method, not qualification of the
+current solver. Later evidence and corrections are linked in the status matrix.
+
 
 Prompt 1 simulator is implemented. Prompt 2 estimators, Laplacian ranking,
 and G1/G2/G3 tables are implemented. E2b and Q2 all-frame MFBD (D / D-tail)
@@ -82,7 +94,7 @@ coverage, reject non-finite frames and unsupported colour modes, validate SER
 headers/trailers, and retain calibrated units. Progress counts processed frames,
 including rejections. Window close cancels and joins its worker; preview traffic
 cannot stall the stack. Checkpoints store arrays and metadata atomically in one
-NPZ file (schema 1.1); they are snapshots, with no resume implementation yet.
+NPZ file (schema 1.1); they are image snapshots; resumable accumulator state is stored separately (see below).
 Older split NPZ/JSON checkpoints are rejected. CLI NPZ output includes validity,
 units and provenance.
 
@@ -94,17 +106,14 @@ longitude are separate operators; unseen longitudes are left at zero coverage
 rather than filled. Saturn rings are a static equatorial annulus with near/far
 occlusion and do not inherit globe spin. CFA parity stays in detector
 coordinates under rotation. Freeze-mid-exposure is the default and warns when
-limb motion during \(T_{\rm exp}\) is large. The iterative raw-CFA inverse solve, explicit RAM/VRAM
-budget enforcement, parent-crash recovery and full W04–W08 acceptance remain
-outstanding. Explicit memory-budget settings are rejected until enforcement
-exists. The Linux PyInstaller spec is a local packaging spike; clean-system and
-cross-platform release acceptance remain planned.
-
-Historical R9 tables are unchanged. Q3 does not start. W02/W03 remain the
-next scientific work; W11 adds production MFBD. W13 scientific export is implemented;
-W14 connects the Qt capture/geometry/calibration workflow and scientific save controls.
-Large-input hardening and later release qualification remain planned.
-Advanced atmospheric claims stay gated by W03.
+limb motion during \(T_{\rm exp}\) is large. The iterative physical raw-CFA inverse solve and production MFBD remain
+unqualified. CPU/auto/CUDA translation and CPU geometry support compatible
+accumulator resume. Linux process RAM and Torch allocator limits have scoped
+checks; neither is a total GUI/process-tree or all-driver-memory guarantee.
+Native version-tag build automation covers Linux CPU/CUDA, Windows x64 CPU and
+macOS Intel/Apple Silicon CPU. Windows/macOS runtime testing is excluded by the
+owner. Independent capture acceptance and refreshed release artifacts remain.
+Advanced atmospheric claims stay gated by scientific requalification.
 
 Geometry currently runs on CPU float64, including when Auto/GPU is selected.
 Rates in seconds require measured timestamps or an explicit `--cadence`; duplicate
@@ -114,7 +123,8 @@ time in seconds from the first frame start; exposure midpoints affect observed
 poses only. Exposure integration beyond the midpoint approximation is unsupported.
 `reference_index` selects the disc-fit anchor, while `reference_epoch_s` selects the
 output pose. The current prototype assumes a fixed centre and rigid rates;
-tracking drift and surface spin estimation remain unimplemented. Sparse field-angle
+translation tracking is retained and preprocessing provides surface-spin diagnostics;
+unresolved rotation remains explicit. Sparse field-angle
 estimates can alias large rotations between sampled frames; use a declared rate
 for those captures. Moment-based radius estimates are approximate for textured or
 limb-darkened discs, so use a measured radius for surface reconstruction.
@@ -181,7 +191,7 @@ to opt in. Do not put expensive simulations in the default suite.
 
 `python3 -m planetrecon evidence` verifies the archived bundle's checksums and
 writes `results/manifests/` without modifying or relabelling archived R9 tables.
-Their estimator version is `1.0`; new results use `1.2`. Legacy HDF5 files remain
+Their estimator version is `1.0`; current legacy estimators use `1.7`. Legacy HDF5 files remain
 readable, but absent/stale generation identities or certificates cannot authorize
 new Gate tables. They require explicit revalidation/regeneration, not an automatic
 stamp from current code. No historical capture or result was regenerated here.
@@ -243,8 +253,8 @@ if cooperative cancellation does not finish within the grace period.
 Window close joins the processing worker and cancels an active save before its
 publication. A save already inside an encoder must return before the window closes;
 large or slow disk writes can delay that step. This is bounded-prototype workflow
-validation, not a promise for arbitrary capture sizes: RAM/VRAM budgets, checkpoint
-resume, parent-crash recovery and all-platform lifecycle qualification remain open.
+validation, not a promise for arbitrary capture sizes: resource limits have a declared scope and large-input and independent-capture
+acceptance remain incomplete; Windows/macOS runtime testing is excluded.
 A bounded local check with 32 busy CPU processes recorded an 82 ms maximum Qt
 heartbeat gap; latency depends on hardware, frame size and processing stage.
 
@@ -383,7 +393,7 @@ Windows or macOS releases.
   clip-then-support-then-clip. A1o registers with the known Fourier shift,
   forms the uniform mean stack, uses \(H_{\rm eff}=\mathrm{mean}(H_k)\) of the
   registered OTFs, and the exact stacked white-noise variance
-  \(\mathrm{mean}(\sigma_k^2)/|S|\). Estimator operator version: `1.2`.
+  \(\mathrm{mean}(\sigma_k^2)/|S|\). Current legacy estimator operator version: `1.7`.
   Convergence requires feasibility and a projected-gradient residual, with
   correctly rebased warm-start duals. Iteration exhaustion is not convergence.
   Simulator convolution remains the padded linear operator (version `1.0`);
@@ -453,7 +463,7 @@ a parent crash can leave `planetrecon-events-*` in the system temporary director
 Checkpoint write failures preserve the prior checkpoint and clean temporary
 files. Image checkpoints remain inspectable/exportable results; exact CPU
 translation accumulator resume uses separate state files as described below.
-Hard RAM limits and geometry resume remain unqualified.
+Scoped Linux RAM limits and CPU geometry resume are implemented; see the current status matrix.
 
 W02 science repairs: frozen tip/tilt includes one/two-mode fits; phase optimizers
 report status, gradient norm, actual iterations and objective traces. Blind TV

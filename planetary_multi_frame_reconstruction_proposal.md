@@ -1,7 +1,9 @@
 # Planetary Multi-Frame Atmospheric Reconstruction
 ## Evidence review and implementation roadmap — revision R10
 
-**Status:** Synthetic prototype implemented; scientific qualification incomplete; desktop application planned
+**Current status:** Desktop baseline implemented; scientific qualification incomplete.
+See the [current status matrix](docs/status.md) and [updated development order](docs/development-plan.md).
+The sections below retain historical contracts and dated implementation evidence.
 
 **Revision:** R10 — 2026-09-05
 
@@ -15,9 +17,8 @@ This is MOMFBD / short-exposure inverse imaging in an amateur-planetary regime, 
 
 R10 retains the R9 synthetic experiment as a reproducible historical baseline.
 Sections 0–20 specify that experiment, not a claim that the current code passes
-every requirement. Sections 21–26 are the current evidence review, product
-contracts, implementation sequence and release criteria; start there for the
-next code changes. The user's expanded application requirements explicitly
+every requirement. Sections 21–26 retain the evidence review, product
+contracts and original implementation sequence. Use the updated plan for next changes. The user's expanded application requirements explicitly
 supersede R9's restriction against planning further product work. They do not
 relax the scientific stop rules or turn a failed Q2 evaluation into a pass.
 

@@ -187,7 +187,13 @@ def evaluate_crop(
     maxiter: int = C.E2A_FISTA_MAXITER,
     require_convergence: bool = True,
     return_reconstructions: bool = False,
+    stage_runner=None,
 ) -> dict:
+    # The caller binds input/configuration/source identities before supplying a
+    # durable stage runner. Each budget/crop/initialization needs its own store.
+    def stage(p, name, compute):
+        return compute() if stage_runner is None else stage_runner(f"p{p}-{name}", compute)
+
     n = crop.observed.shape[0]
     sigma2 = frame_noise_variance(crop.expected, extras["read_noise_e"])
     registered = register_images(crop.observed, crop.shifts)
@@ -212,11 +218,11 @@ def evaluate_crop(
         otf_s = crop.otf[idx]
         obs_s = crop.observed[idx]
         sig_s = sigma2[idx]
-        e1_img = e1(otf_s, obs_s, sig_s, lam_e1)
-        e2_img, e2_info = e2a(otf_s, obs_s, sig_s, lam_e2, crop.support, maxiter=maxiter)
-        a1_img, a1_info = a1o(
-            otf_s, obs_s, sig_s, lam_e2, crop.support, shifts=crop.shifts[idx], maxiter=maxiter
-        )
+        e1_img, _ = stage(p, "E1", lambda: (e1(otf_s, obs_s, sig_s, lam_e1), {}))
+        e2_img, e2_info = stage(p, "E2a", lambda: e2a(
+            otf_s, obs_s, sig_s, lam_e2, crop.support, maxiter=maxiter))
+        a1_img, a1_info = stage(p, "A1o", lambda: a1o(
+            otf_s, obs_s, sig_s, lam_e2, crop.support, shifts=crop.shifts[idx], maxiter=maxiter))
         if require_convergence and (not e2_info["converged"] or not a1_info["converged"]):
             raise RuntimeError(
                 f"{crop.name} p={p} constrained estimator did not converge: "
@@ -243,7 +249,7 @@ def evaluate_crop(
         if p in (DECISION_P, 100):
             # This must be an independent numerical solve, not a CG solve seeded
             # at the analytical answer it is intended to verify.
-            e20_img, e20_info = e2a0(otf_s, obs_s, sig_s, lam_e1)
+            e20_img, e20_info = stage(p, "E2a0", lambda: e2a0(otf_s, obs_s, sig_s, lam_e1))
             recs["E2a0"] = e20_img
             infos["E2a0"] = e20_info
             eh_e1 = eh_metric(e1_img, crop.truth_e, crop.window, crop.mtf, crop.hmask)
