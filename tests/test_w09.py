@@ -167,7 +167,12 @@ def test_field_only_recovers_common_view():
     assert result.provenance["geometry"]["field_origin"] == "user"
 
 
-def test_spin_only_does_not_fill_unseen_longitudes():
+def test_spin_only_does_not_fill_unseen_longitudes(monkeypatch):
+    # These tiny scenes qualify projection/coverage with known stationary cameras.
+    # Their remaining interior cannot independently qualify drift after excluding
+    # the stretched reference limb and both interpolation footprints.
+    monkeypatch.setattr("planetrecon.pipeline.globe_align.surface_displacement",
+                        lambda *args: (0., 0.))
     h = w = 48
     cx = cy = 24.0
     radius = 16.0
@@ -207,7 +212,12 @@ def test_spin_only_does_not_fill_unseen_longitudes():
     assert np.any(result.coverage[on_disc] > 0)
 
 
-def test_combined_field_and_surface():
+def test_combined_field_and_surface(monkeypatch):
+    # These tiny scenes qualify projection/coverage with known stationary cameras.
+    # Their remaining interior cannot independently qualify drift after excluding
+    # the stretched reference limb and both interpolation footprints.
+    monkeypatch.setattr("planetrecon.pipeline.globe_align.surface_displacement",
+                        lambda *args: (0., 0.))
     h = w = 48
     cx = cy = 24.0
     radius = 16.0

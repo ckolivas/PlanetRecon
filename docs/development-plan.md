@@ -317,6 +317,34 @@ All 14 new angle/stack controls fail with the previous estimator. The retry pass
 158 focused controls and all 20 final new controls, followed by 1,283 default
 regression tests with 78 skips.
 
+The colour-motion follow-up addresses two linked failures. Green-only Bayer
+tracking can miss usable red/blue detail, while a warped reference limb can
+provide false green drift on a flat globe. Shared-surface support now requires
+an observed reference pixel neighbourhood before warping, followed by the existing
+source-side smoothing-footprint exclusion. An unresolved Bayer geometry/tracking
+preflight retries RGB luminance; later unresolved green matches can retry colour
+against the same reference. Existing peak/support gates still apply and failure
+in every colour refuses the run. Raw CFA accumulation and green/cached scalar
+weights are preserved. The policies bind checkpoint identity.
+A blanket RGB replacement was rejected after eight Saturn Bayer drift regressions.
+Colour retries without the reference-limb fix also failed image controls; they
+accepted artificial green structure with large drift errors. The combined fix
+passes signed red/blue globe motion on all four Bayer layouts, automatic field
+rotation from red detail, late-frame colour tracking, flat-globe refusal, exact
+resume and old-checkpoint rejection. Independent camera-shift image differences
+remain below 0.15 at roughly 100-unit brightness. These are synthetic controls,
+not real-capture qualification. Failed candidates and logs are retained in
+`out/colour-motion/`. Work was isolated while a user GUI processing job was active.
+The first full regression exposed two 32-pixel-wide legacy operator fixtures:
+one has only 12 supported registration pixels (below the existing 32-pixel minimum),
+and the other's competing peak is 0.98355 versus 0.99850, failing the existing
+0.02 uniqueness margin. Their projection/coverage tests now supply their known
+zero camera drift explicitly; application tracking keeps both refusal gates.
+The failed regression is retained in `out/colour-motion/old-fixture-regression.log`.
+Validation: 24 of 30 selected new controls fail with the previous implementation;
+all 33 final new controls and 51 focused operator/colour checks pass. The final
+default regression passes 1,316 tests with 78 skips.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

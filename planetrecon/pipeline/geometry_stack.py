@@ -27,6 +27,10 @@ from planetrecon.pipeline.colour import complete_bayer_rgb
 from planetrecon.pipeline.align import phase_correlation_shift
 
 
+class _UnresolvedMotion(ValueError):
+    """A geometry or tracking estimate cannot yet authorize accumulation."""
+
+
 PreviewFn = Callable[[ReconstructionResult, dict], None]
 CancelFn = Callable[[], bool]
 
@@ -461,6 +465,7 @@ def stack_source_geometry(
 
     sample_idx = []
     sample_planes = []
+    sample_frames = []
     chosen_reference = (config.reference_index if config.reference_index or selection is None else
                         selection.best_reference_index)
     candidates = sorted({0, n // 2, n - 1, chosen_reference})
@@ -480,6 +485,7 @@ def stack_source_geometry(
             continue
         sample_idx.append(index)
         sample_planes.append(_alignment_plane(frame, color))
+        sample_frames.append(frame)
     if not sample_planes:
         for index in range(n):
             if should_cancel is not None and should_cancel():
@@ -492,84 +498,123 @@ def stack_source_geometry(
             if frame is not None:
                 sample_idx.append(index)
                 sample_planes.append(_alignment_plane(frame, color))
+                sample_frames.append(frame)
                 break
     if not sample_planes:
         raise ValueError("no usable frames remain for geometry estimation")
-    poses, model, diagnostics, geo_warnings = prepare_geometry(
-        source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
-    )
-    if diagnostics.get('unavailable_motion'):
-        raise ValueError('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
-                         + '. Correct the geometry or choose Motion model None for ordinary stacking.')
-    ref_pose = _reference_pose(poses, config)
-    anchor_index = diagnostics['reference_index']
-    anchor_plane = sample_planes[sample_idx.index(anchor_index)]
-    anchor_pose = poses[anchor_index]
-    static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
-        diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
-    # Whole-frame Saturn predictions have visibility holes during rotation.
-    # Static layers can share generic translation tracking; rotating layers use
-    # exposed rings below. Moon tracks retain absolute detector coordinates.
-    track_translation = (not isinstance(model, SaturnSceneModel)
-                         or (model.moon is None and static_attitude))
-    ring_registration = None
-    if (isinstance(model, SaturnSceneModel) and model.moon is None
-            and not model.edge_on
-            and not static_attitude):
-        from planetrecon.pipeline.ring_align import RingRegistration
-        ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
-            model.globe.equatorial_radius_px, model.rings.outer_radius_px)
-    track_surface = (isinstance(model, OblateGlobeModel)
-                     and diagnostics['surface_rate_rad_s'] != 0)
-    track_field = (config.geometry_mode == 'field' and not static_attitude
-                   and diagnostics['radius'] > min(anchor_pose.cx-.5, w-.5-anchor_pose.cx,
-                       anchor_pose.cy-.5, h-.5-anchor_pose.cy))
-    if track_field:
-        diagnostics['registration'] = 'shared observed field; unresolved tracking stops the run'
-    elif track_surface:
-        diagnostics['registration'] = 'shared visible surface; unresolved tracking stops the run'
-    elif track_translation:
-        diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
-    elif ring_registration is not None:
-        diagnostics['registration'] = (
-            'exposed stationary rings; unresolved tracking stops the run'
-            if diagnostics['field_rate_rad_s'] == 0 else
-            'exposed rings with interpolation-gated field tracking; unresolved tracking stops the run')
-    else:
-        diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
-                                       else 'fixed centre (Saturn moving layers)')
-    if track_field or track_surface or ring_registration is not None:
-        # Part of resume identity: older sums used independent axis peak fits.
-        diagnostics['registration_peak'] = 'joint two-dimensional quadratic'
-    def required_displacement(index, plane):
-        if index == anchor_index:
-            return 0., 0.
-        pose = poses[index]
-        if ring_registration is not None:
-            displacement = (ring_registration.displacement(plane)
+    # Try all observed colours only when green cannot authorize the run. The
+    # selected geometry proxy and per-frame tracking retry bind checkpoint identity.
+    # Preflight emits no output and cannot mix differently registered sums.
+    for colour_retry in ((False, True) if bayer else (False,)):
+        if colour_retry:
+            sample_planes = [_alignment_plane(bilinear_demosaic(frame, color), 'RGB')
+                             for frame in sample_frames]
+        try:
+            poses, model, diagnostics, geo_warnings = prepare_geometry(
+                source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
+            )
+            if diagnostics.get('unavailable_motion'):
+                raise _UnresolvedMotion('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
+                                 + '. Correct the geometry or choose Motion model None for ordinary stacking.')
+            if colour_retry:
+                diagnostics['registration_proxy'] = 'RGB luminance after unresolved green preflight'
+            ref_pose = _reference_pose(poses, config)
+            anchor_index = diagnostics['reference_index']
+            anchor_plane = sample_planes[sample_idx.index(anchor_index)]
+            anchor_pose = poses[anchor_index]
+            static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
+                diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
+            # Whole-frame Saturn predictions have visibility holes during rotation.
+            # Static layers can share generic translation tracking; rotating layers use
+            # exposed rings below. Moon tracks retain absolute detector coordinates.
+            track_translation = (not isinstance(model, SaturnSceneModel)
+                                 or (model.moon is None and static_attitude))
+            ring_registration = None
+            if (isinstance(model, SaturnSceneModel) and model.moon is None
+                    and not model.edge_on
+                    and not static_attitude):
+                from planetrecon.pipeline.ring_align import RingRegistration
+                ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
+                    model.globe.equatorial_radius_px, model.rings.outer_radius_px)
+            track_surface = (isinstance(model, OblateGlobeModel)
+                             and diagnostics['surface_rate_rad_s'] != 0)
+            track_field = (config.geometry_mode == 'field' and not static_attitude
+                           and diagnostics['radius'] > min(anchor_pose.cx-.5, w-.5-anchor_pose.cx,
+                               anchor_pose.cy-.5, h-.5-anchor_pose.cy))
+            if track_field:
+                diagnostics['registration'] = 'shared observed field; unresolved tracking stops the run'
+            elif track_surface:
+                diagnostics['registration'] = 'shared visible surface; unresolved tracking stops the run'
+            elif track_translation:
+                diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
+            elif ring_registration is not None:
+                diagnostics['registration'] = (
+                    'exposed stationary rings; unresolved tracking stops the run'
+                    if diagnostics['field_rate_rad_s'] == 0 else
+                    'exposed rings with interpolation-gated field tracking; unresolved tracking stops the run')
+            else:
+                diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
+                                               else 'fixed centre (Saturn moving layers)')
+            if track_field or track_surface or ring_registration is not None:
+                # Part of resume identity: older sums used independent axis peak fits.
+                diagnostics['registration_peak'] = 'joint two-dimensional quadratic'
+            if track_surface:
+                diagnostics['reference_support'] = 'observed reference limb neighbourhood'
+            colour_anchor = None
+            colour_rings = None
+            if bayer and (track_surface or track_field or ring_registration is not None):
+                diagnostics['colour_tracking_retry'] = 'unresolved green drift retries RGB luminance'
+            def required_displacement(index, plane, frame=None):
+                nonlocal colour_anchor, colour_rings
+                if index == anchor_index:
+                    return 0., 0.
+                pose = poses[index]
+                if ring_registration is not None:
+                    displacement = (ring_registration.displacement(plane)
+                                    if diagnostics['field_rate_rad_s'] == 0 else
+                                    ring_registration.displacement_at_pose(plane, pose, anchor_pose))
+                    feature = 'exposed rings'
+                elif track_field:
+                    from planetrecon.pipeline.field_align import field_displacement
+                    displacement = field_displacement(anchor_plane, plane, pose, anchor_pose,
+                                                      diagnostics['radius'])
+                    feature = 'shared observed field'
+                else:
+                    from planetrecon.pipeline.globe_align import surface_displacement
+                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
+                    feature = 'shared visible surface'
+                if displacement is None and bayer and not colour_retry and frame is not None:
+                    if colour_anchor is None:
+                        anchor_frame = sample_frames[sample_idx.index(anchor_index)]
+                        colour_anchor = _alignment_plane(bilinear_demosaic(anchor_frame, color), 'RGB')
+                        if ring_registration is not None:
+                            colour_rings = RingRegistration(colour_anchor, anchor_pose.cx, anchor_pose.cy,
+                                model.globe.equatorial_radius_px, model.rings.outer_radius_px)
+                    colour_plane = _alignment_plane(bilinear_demosaic(frame, color), 'RGB')
+                    if colour_rings is not None:
+                        displacement = (colour_rings.displacement(colour_plane)
                             if diagnostics['field_rate_rad_s'] == 0 else
-                            ring_registration.displacement_at_pose(plane, pose, anchor_pose))
-            feature = 'exposed rings'
-        elif track_field:
-            from planetrecon.pipeline.field_align import field_displacement
-            displacement = field_displacement(anchor_plane, plane, pose, anchor_pose,
-                                              diagnostics['radius'])
-            feature = 'shared observed field'
-        else:
-            from planetrecon.pipeline.globe_align import surface_displacement
-            displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
-            feature = 'shared visible surface'
-        if displacement is None:
-            raise ValueError(f'Motion compensation cannot run: {feature} cannot constrain camera drift '
-                f'at frame {index+1}. Check the geometry and reference frame, or choose '
-                'Motion model None for ordinary stacking.')
-        return displacement
+                            colour_rings.displacement_at_pose(colour_plane, pose, anchor_pose))
+                    elif track_field:
+                        displacement = field_displacement(colour_anchor, colour_plane, pose, anchor_pose,
+                                                          diagnostics['radius'])
+                    else:
+                        displacement = surface_displacement(colour_anchor, colour_plane, model, pose, anchor_pose)
+                if displacement is None:
+                    raise _UnresolvedMotion(f'Motion compensation cannot run: {feature} cannot constrain camera drift '
+                        f'at frame {index+1}. Check the geometry and reference frame, or choose '
+                        'Motion model None for ordinary stacking.')
+                return displacement
 
-    # Diagnose the already-read estimation frames before emitting a reconstruction
-    # preview or saving sums. Other frames are checked as they are read.
-    sampled_displacements = ({index: required_displacement(index, plane)
-                              for index, plane in zip(sample_idx, sample_planes)}
-                             if ring_registration is not None or track_surface or track_field else {})
+            # Diagnose the already-read estimation frames before emitting a reconstruction
+            # preview or saving sums. Other frames are checked as they are read.
+            sampled_displacements = ({index: required_displacement(index, plane)
+                                      for index, plane in zip(sample_idx, sample_planes)}
+                                     if ring_registration is not None or track_surface or track_field else {})
+            break
+        except _UnresolvedMotion:
+            if not bayer or colour_retry:
+                raise
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
@@ -674,11 +719,13 @@ def stack_source_geometry(
             if calibrated is None:
                 n_rejected += 1
                 continue
-            plane = _alignment_plane(calibrated, color)
+            quality_plane = _alignment_plane(calibrated, color)
+            plane = (_alignment_plane(bilinear_demosaic(calibrated, color), 'RGB')
+                     if colour_retry else quality_plane)
             pose = poses[int(index)]
             if ring_registration is not None or track_surface or track_field:
                 dx, dy = (sampled_displacements[int(index)] if int(index) in sampled_displacements
-                          else required_displacement(int(index), plane))
+                          else required_displacement(int(index), plane, calibrated))
             elif track_translation:
                 # Predict the anchor before fitting camera translation, so
                 # registration does not absorb the selected field rotation.
@@ -705,10 +752,10 @@ def stack_source_geometry(
                               | binary_erosion(source_regions == 3, iterations=2 if bayer else 1))
                 score_mask[:2] = score_mask[-2:] = False
                 score_mask[:, :2] = score_mask[:, -2:] = False
-                lap = convolve(plane, LAPLACIAN_KERNEL, mode="nearest")
+                lap = convolve(quality_plane, LAPLACIAN_KERNEL, mode="nearest")
                 score = max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12
             else:
-                score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
+                score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(quality_plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
                 continue

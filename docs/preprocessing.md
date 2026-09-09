@@ -424,7 +424,18 @@ before estimating the remaining translation, then backproject raw observations
 once with the combined transform. Surface and combined modes with nonzero globe
 spin match only shared visible interior texture. Newly exposed longitudes and
 the interpolated limb, including their full smoothing footprints, cannot set a
-camera displacement. Weak or ambiguous surface matches stop the run with the
+camera displacement. The reference globe also needs a complete observed pixel
+neighbourhood before its support is warped: foreshortening can otherwise stretch
+an interpolated reference limb into apparently useful interior texture.
+For Bayer captures, an unresolved initial geometry or tracking preflight retries
+with RGB luminance. A later frame whose green tracking fails can likewise retry
+using observed colour detail against the same reference frame. This lets red or
+blue structure constrain motion when green is flat. Both attempts use the same
+support, peak and ambiguity checks; failure in every colour still stops the run.
+The colour proxy is bilinear RGB luminance for estimation only; original CFA
+pixels enter accumulation directly and existing green/cached quality weights
+are retained. Reference-support and colour-retry policies bind checkpoint identity.
+Weak or ambiguous surface matches stop the run with the
 frame number and a description of the unresolved tracking. This requires resolvable shared texture and correct supplied
 geometry; it does not determine an unknown rotation rate. Zero-spin tracking
 keeps its existing whole-image matcher. The configured centre anchors the reference
