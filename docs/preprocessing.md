@@ -149,8 +149,12 @@ before conversion to seconds, preserving small intervals at large absolute
 epochs. Irregular cadence and dropped-frame gaps remain part of the duration;
 the last exposure's unknown length is not added. Measured timestamps take
 precedence over a supplied cadence. Missing timestamps require an explicit
-cadence to estimate seconds; duplicate or reversed times show an invalid timing
-report instead of a guessed duration. A single timestamp has zero span.
+cadence to estimate seconds. Equal timestamps are retained at their recorded
+time, without deleting images or interpolating a guessed cadence. Duration
+remains the recorded first-to-last span; timing reports count duplicate
+intervals. Rotation-rate fitting excludes zero-length intervals. Reversed times
+or a multi-frame recording with no positive time span remain invalid.
+A single timestamp has zero span.
 The GUI capture line, SER metadata and preprocessing report expose this timing.
 
 Cache identity hashes **all observed pixels**, frame layout/colour, bit depth,

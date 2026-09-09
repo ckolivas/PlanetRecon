@@ -173,7 +173,7 @@ def prepare_geometry(
             angles = unwrap_angles([estimate["angle_rad"] for estimate in estimates])
             dt = np.diff(times[indices])
             usable = np.array([not estimate["degeneracy"] for estimate in estimates])
-            pairs = usable[:-1] & usable[1:]
+            pairs = usable[:-1] & usable[1:] & (dt > 0)
             if np.any(pairs):
                 field_rate = float(np.median(np.diff(angles)[pairs] / dt[pairs]))
             else:
@@ -240,6 +240,7 @@ def prepare_geometry(
     )
     diagnostics = {
         "time_origin": time_origin,
+        "timestamp_duplicate_intervals": int(np.count_nonzero(np.diff(times) == 0)),
         "time_unit": "frame" if time_origin == "inferred" else "s",
         "centre_origin": centre_origin,
         "field_origin": field_origin,
@@ -269,6 +270,8 @@ def prepare_geometry(
     warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate,
                                            None if rings is None else rings.outer_radius_px)
                 if time_origin != "inferred" else [])
+    if diagnostics['timestamp_duplicate_intervals']:
+        warnings.append('timestamp_ties: frames with equal recorded timestamps are retained at the same time; zero intervals are excluded from rate estimation')
     if time_origin == "inferred":
         warnings.append("cadence_unknown: relative field motion uses frame indices; physical seconds are unmeasured")
     if "roll_unconstrained" in degeneracy_t and config.geometry_mode in ("field", "combined", "saturn"):

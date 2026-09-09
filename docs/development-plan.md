@@ -171,7 +171,10 @@ capture header includes it; manual values retain priority.
 - **P7 intake:** all seven local SER files are now hashed and inventoried without
   image pixels or private filenames. IR642/L3 remain RGGB; three Saturn R/G/B
   files are mono. OSC Saturn and both Mars files contain duplicate timestamps,
-  so the current timing contract reports no valid duration. Independent group
+  which the original intake timing contract rejected. The timestamp-tie fix now
+  retains their recorded equal times and first-to-last duration, excluding zero
+  intervals from rate fitting without removing frames or inventing cadence.
+  Reversed clocks and multi-frame clocks with no positive span remain invalid. Independent group
   provenance and distribution permissions remain unknown; true mono Mars is absent.
   Bounded raw-pixel checks found distinct frames in all 64 sampled equal-timestamp
   pairs per affected capture. Timestamp duplication alone cannot justify deleting

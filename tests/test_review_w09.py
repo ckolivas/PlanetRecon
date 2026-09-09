@@ -85,10 +85,10 @@ def test_array_timestamp_units_do_not_depend_on_magnitude():
     np.testing.assert_array_equal(times, [0., 2.])
 
 
-@pytest.mark.parametrize("times", [[0., 0., 1.], [0., 2., 1.]])
+@pytest.mark.parametrize("times", [[0., 2., 1.], [2., 1., 1.]])
 def test_bad_time_order_is_rejected(times):
     src = ArraySource(np.zeros((3, 8, 8)), timestamps=np.array(times))
-    with pytest.raises(ValueError, match="strictly increasing"):
+    with pytest.raises(ValueError, match="nondecreasing"):
         source_times_s(src)
 
 

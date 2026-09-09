@@ -40,7 +40,7 @@ def source_times_s(
     cadence_s: float | None = None,
     n_frames: int | None = None,
 ) -> tuple[np.ndarray, str]:
-    """Time from the first sample using declared timestamp units or index*cadence."""
+    """Recorded nondecreasing frame times; ties retain their measured time."""
     n = int(source.n_frames() if n_frames is None else n_frames)
     if n == 0:
         return np.empty(0, dtype=np.float64), "measured" if source.timestamps() is not None else "inferred"
@@ -51,8 +51,10 @@ def source_times_s(
             raise ValueError("timestamp count must match the frame count")
         if not np.all(np.isfinite(t)):
             raise ValueError("timestamps must be finite")
-        if np.any(t[1:] <= t[:-1]):
-            raise ValueError("timestamps must be strictly increasing (duplicates or reversed times)")
+        if np.any(t[1:] < t[:-1]):
+            raise ValueError("timestamps must be nondecreasing (reversed times)")
+        if n > 1 and t[-1] == t[0]:
+            raise ValueError("timestamps have no positive time span")
         scale = float(source.timestamp_scale_s())
         if not np.isfinite(scale) or scale <= 0:
             raise ValueError("timestamp scale must be positive and finite")
@@ -82,6 +84,7 @@ def capture_timing(source: FrameSource, *, cadence_s: float | None = None) -> di
     intervals = np.diff(times)
     return {'status': 'available', 'origin': origin, 'duration_s': float(times[-1]-times[0]),
             'n_frames': len(times), 'median_cadence_s': float(np.median(intervals)) if intervals.size else None,
+            'duplicate_intervals': int(np.count_nonzero(intervals == 0)),
             'minimum_interval_s': float(intervals.min()) if intervals.size else None,
             'maximum_interval_s': float(intervals.max()) if intervals.size else None,
             'definition': 'First-to-last frame-start timestamp; final exposure length is not included.'}
