@@ -162,7 +162,7 @@ def prepare_geometry(
             # Camera drift otherwise appears as rotation (even with no spin).
             # Resample these estimation proxies only; raw accumulation still
             # combines the fitted motion and translation in a single warp.
-            angle_planes = []
+            estimates = []
             field_sample_shifts = []
             registered = []
             angle_radius = radius
@@ -184,7 +184,12 @@ def prepare_geometry(
                                       cx, cy, angle_radius)['angle_rad']
                     # Alternate angle and displacement about the configured
                     # centre, rather than letting translation absorb rotation.
-                    for _ in range(4):
+                    # Cropped texture couples translation and rotation strongly.
+                    # Stop on stable detector displacement, not four rounds that
+                    # can still leave several pixels of rotational motion.
+                    converged = not cropped_field
+                    for _ in range(64 if cropped_field else 4):
+                        previous = np.array([dx, dy, angle*angle_radius])
                         predicted = (None if cropped_field else
                             render_observed(planes[anchor], FieldOnlyModel(),
                                 FramePose(0., angle, cx, cy), reference_pose))
@@ -210,15 +215,28 @@ def prepare_geometry(
                                 and abs(dy) <= config.max_shift_px)
                         if not good:
                             break
-                        aligned = shift(plane, (-dy, -dx), order=1, mode='constant',
-                                        cval=float(np.median(plane)), prefilter=False)
-                        angle = fit_angle(angular_reference, np.where(annulus, aligned, 0.),
-                                          cx, cy, angle_radius)['angle_rad']
+                        if cropped_field:
+                            angle = fit_angle(angular_reference, plane, cx, cy,
+                                angle_radius, frame_center=(cx+dx, cy+dy))['angle_rad']
+                        else:
+                            aligned = shift(plane, (-dy, -dx), order=1, mode='constant',
+                                            cval=float(np.median(plane)), prefilter=False)
+                            angle = fit_angle(angular_reference, np.where(annulus, aligned, 0.),
+                                              cx, cy, angle_radius)['angle_rad']
+                        if cropped_field and np.max(np.abs(
+                                np.array([dx, dy, angle*angle_radius])-previous)) < .001:
+                            converged = True
+                            break
+                    good = good and converged
                 registered.append(good)
                 field_sample_shifts.append([float(dx), float(dy)] if good else None)
-                angle_planes.append(np.where(annulus, aligned, 0.))
-            estimates = [estimate_field_angle(angle_planes[anchor], plane, cx, cy, angle_radius)
-                         for plane in angle_planes]
+                if cropped_field:
+                    estimates.append(estimate_field_angle(angular_reference, plane,
+                        cx, cy, angle_radius,
+                        frame_center=(cx+dx, cy+dy) if good else (cx, cy)))
+                else:
+                    estimates.append(estimate_field_angle(angular_reference,
+                        np.where(annulus, aligned, 0.), cx, cy, angle_radius))
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
             raw_angles = np.array([estimate["angle_rad"] for estimate in estimates])
@@ -326,6 +344,8 @@ def prepare_geometry(
         "edge_on_rings": bool(getattr(model, "edge_on", False)),
         "low_opening": bool(getattr(model, "low_opening", False)),
     }
+    if cropped_field and field_origin == 'inferred':
+        diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     unavailable = []
     if config.geometry_mode in ('field', 'combined', 'saturn') and not field_resolved:
         unavailable.append('field rotation could not be estimated; supply a known field rate '

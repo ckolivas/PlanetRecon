@@ -276,6 +276,27 @@ improvements, not real-capture qualification. Private logs are in
 drift/image controls passed, followed by 1,240 default regression tests with 78
 skips, including the additional checkpoint-identity control.
 
+The drifting-crop follow-up corrects incomplete joint field/drift fits. Four fixed
+refinement rounds left roughly 24–25% rotation-rate error in independent signed
+nine-frame controls with fractional camera drift. Direct polar sampling alone
+worsened those fits; retaining image recentering and adding rounds also left
+substantial error. The adopted cropped-field path samples original estimation
+planes about their fitted centres, restricts radial support to circles observed
+in both frames, and requires successive joint updates below 0.001 detector pixels
+(including rotation at the configured radius), with a 64-round cap. Unsettled
+samples cannot authorize an automatic motion run. This does not certify physical
+geometry or change manual rates, ordinary global stacking, Saturn or surface fits.
+Signed mono RMS decreases from 0.00361815/0.00343317 to 0.00033951/0.00050679,
+retaining all nine frames, versus known-rate RMS 0.00028461/0.00029263. These are
+synthetic gains, not real-capture qualification. Mono/RGB and all four CFA layouts
+recover rates within 4%; CFA outputs remain within 10% of the corresponding
+known-rate colour reconstruction, accounting for its separate sampling floor.
+Direct translated-support, nonconvergence refusal and old-checkpoint rejection
+controls pass. Failed intermediate comparisons and test logs are preserved in
+`out/translated-polar/`. All 12 drifting-crop image controls fail with the previous
+implementation. The 23 new controls pass, followed by 1,263 default regression
+tests with 78 skips.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

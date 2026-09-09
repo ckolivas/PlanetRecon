@@ -393,6 +393,15 @@ in Field mode, camera drift is also fitted on shared observed interior pixels,
 excluding the rotated detector boundary, the sampled limb and their complete
 smoothing footprints. Unresolved matching stops the run. Explicit zero field
 rates retain ordinary static translation tracking.
+For automatic cropped-field rates, polar samples come directly from each frame
+about its fitted centre, using only circles observed in both frames. This avoids
+a second interpolation and filled borders from recentering. Rotation and drift
+are refined together until successive offsets and the rotation displacement at
+the configured radius change by less than 0.001 pixels, with a 64-round limit.
+Samples that do not settle cannot supply an automatic rate. This is a numerical
+stability check, not a guarantee of physically correct geometry. The estimator
+method binds checkpoint identity so older accumulated sums cannot be resumed
+under the changed fit.
 Shared-surface, exposed-ring and cropped-field matchers refine translation with
 a joint two-dimensional quadratic peak fit. Tilted features couple the horizontal
 and vertical offsets, so fitting those axes separately can bias both coordinates.

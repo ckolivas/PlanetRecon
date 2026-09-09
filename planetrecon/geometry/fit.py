@@ -61,6 +61,8 @@ def estimate_field_angle(
     cx: float,
     cy: float,
     radius: float,
+    *,
+    frame_center: tuple[float, float] | None = None,
 ) -> dict:
     """Polar correlation around the disc. Circular featureless discs are unconstrained."""
     ref = np.asarray(reference, dtype=np.float64)
@@ -73,8 +75,11 @@ def estimate_field_angle(
     # Off-detector padding is not observed dark sky: correlating it would lock
     # onto the fixed capture boundary instead of the planet's orientation.
     h, w = ref.shape
+    frame_cx, frame_cy = (cx, cy) if frame_center is None else frame_center
+    ih, iw = img.shape
     r_max = min(max(float(radius), 4.0), float(cx)-.5, w-.5-float(cx),
-                float(cy)-.5, h-.5-float(cy))
+                float(cy)-.5, h-.5-float(cy), frame_cx-.5,
+                iw-.5-frame_cx, frame_cy-.5, ih-.5-frame_cy)
     if r_max < 4.0:
         return {
             "angle_rad": 0.0, "peak": 0.0,
@@ -96,7 +101,10 @@ def estimate_field_angle(
     y = float(cy) - sy
     coords = np.stack([y - 0.5, x - 0.5], axis=0)
     polar_ref = map_coordinates(ref, coords, order=1, mode="constant", cval=0.0)
-    polar_img = map_coordinates(img, coords, order=1, mode="constant", cval=0.0)
+    # Sample the original frame about its own centre. Recentering an image
+    # first both interpolates twice and fills detector regions never observed.
+    frame_coords = coords + np.array([frame_cy-cy, frame_cx-cx])[:, None, None]
+    polar_img = map_coordinates(img, frame_coords, order=1, mode="constant", cval=0.0)
     # Drop the outermost limb ring so a circular edge is not treated as texture.
     polar_ref = polar_ref[:-2]
     polar_img = polar_img[:-2]
