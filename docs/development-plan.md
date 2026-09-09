@@ -362,6 +362,23 @@ under the old policy; the new policy passes 91 focused checks and the complete
 1,331-test default regression with 78 skips, including both old-policy and
 reference-support checkpoint rejection.
 
+The [global joint-peak comparison](../results/real-data/global-joint-peak-comparison.json)
+is complete and is not adopted. A joint quadratic peak reduces maximum error
+from 0.43004 to 0.04162 pixels in 15 independently sampled tilted-Gaussian
+translations. However, its paired 512-frame real-capture comparisons improve
+RMS by only 0.002085% on Jupiter and 0.006017% on mono Saturn, with fine-detail
+correlation increases of 0.00002430 and 0.00000569. Both two-metric gates pass,
+but these very small gains do not establish a useful default-application benefit.
+Both arms retain all 512 selected frames, identical cached/frozen quality weights,
+best selected anchors (1638 and 24683), comparison crops and the original
+comparison-registration estimator. Source/sample identities were verified and
+application code stayed frozen. The conventional references are not ground truth.
+Keep the current default global fit; do not expand to full captures or tune this
+candidate on these references. This does not undo the separately qualified joint
+peak for masked motion matching. Further application work should target spatially
+varying image residuals or a concrete new defect. Private candidate code, controls,
+logs and paired output snapshots are retained in `out/global-joint-peak/`.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

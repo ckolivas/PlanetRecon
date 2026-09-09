@@ -1,0 +1,175 @@
+{
+  "scope": "Two bounded developmental comparisons against conventional unsharpened stacks; not scientific qualification.",
+  "candidate": "Joint 3x3 quadratic translation peak, requiring negative-definite curvature and offsets within one pixel; retain original axis fit otherwise.",
+  "independent_controls": {
+    "scene": "15 directly sampled tilted Gaussian translations, with no application warp used to create frames",
+    "results": [
+      {
+        "method": "axis",
+        "max_error_px": 0.43004137538678,
+        "rms_error_px": 0.3108515222630958
+      },
+      {
+        "method": "joint",
+        "max_error_px": 0.04161640476489453,
+        "rms_error_px": 0.031283226789141444
+      }
+    ]
+  },
+  "comparisons": {
+    "jupiter": {
+      "scope": "Bounded developmental comparison; conventional reference is not ground truth",
+      "application_source_hash": "46a29f6f41e294f5ea140cad518ccf9405e4ed045c502e839018be4cf022ccfa",
+      "candidate_sha256": "691ca5c1ef46465e44991f3664a7957d54769998d083dec0eb5fbf5f2ddd96ad",
+      "frames_sha256": "c661d0f5d254a5201f61cc16dad4dc365264c8943fc5590cae4e5ac7f4ef6a2d",
+      "reference_capture_index": 1638,
+      "n_frames": 512,
+      "weights": "Identical cached scalar quality in both arms",
+      "comparison_registration": "Unchanged original estimator in both arms",
+      "metrics": {
+        "axis": {
+          "role": "development comparison; reference is not ground truth",
+          "reference_precision": "16-bit RGB",
+          "n_used": 512,
+          "n_rejected": 0,
+          "interior_pixels": 94012,
+          "registration_xy_px": [
+            -24.25100801543393,
+            0.1360079933703401
+          ],
+          "per_channel_gain_offset": [
+            [
+              233.24600307748076,
+              18.932965132124007
+            ],
+            [
+              233.30779749993795,
+              16.364105541818212
+            ],
+            [
+              232.99535639657455,
+              49.92244832282654
+            ]
+          ],
+          "relative_rmse": 0.005626458066347317,
+          "highpass_correlation_sigma3": 0.8855369345223543,
+          "registration_method": "axis subpixel peak; common cached quality weights",
+          "wall_s": 87.62160297499997
+        },
+        "joint": {
+          "role": "development comparison; reference is not ground truth",
+          "reference_precision": "16-bit RGB",
+          "n_used": 512,
+          "n_rejected": 0,
+          "interior_pixels": 94012,
+          "registration_xy_px": [
+            -24.25137104899915,
+            0.13613465068277675
+          ],
+          "per_channel_gain_offset": [
+            [
+              233.24605321831976,
+              18.928775135173623
+            ],
+            [
+              233.3077938770386,
+              16.364954705650867
+            ],
+            [
+              232.99540375312463,
+              49.91810355175631
+            ]
+          ],
+          "relative_rmse": 0.005626340754386743,
+          "highpass_correlation_sigma3": 0.8855612306062097,
+          "registration_method": "joint subpixel peak; common cached quality weights",
+          "wall_s": 74.90289724800004
+        }
+      },
+      "passes_both_metrics": true,
+      "relative_rmse_reduction_percent": 0.0020850055077495304,
+      "highpass_correlation_change": 2.429608385545734e-05
+    },
+    "saturn_mono": {
+      "scope": "Bounded mono Saturn development comparison; conventional reference is not ground truth",
+      "application_source_hash": "46a29f6f41e294f5ea140cad518ccf9405e4ed045c502e839018be4cf022ccfa",
+      "candidate_sha256": "691ca5c1ef46465e44991f3664a7957d54769998d083dec0eb5fbf5f2ddd96ad",
+      "n_frames": 512,
+      "sample_pixels_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+      "reference_capture_index": 24683,
+      "weights": "Identical frozen sampled-screening quality in both arms",
+      "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+      "comparison_registration": "Unchanged original estimator in both arms",
+      "metrics": {
+        "axis": {
+          "role": "development comparison; reference is not ground truth",
+          "reference_precision": "16-bit RGB",
+          "n_used": 512,
+          "n_rejected": 0,
+          "interior_pixels": 24087,
+          "registration_xy_px": [
+            0.42511621802019833,
+            1.487972738895453
+          ],
+          "per_channel_gain_offset": [
+            [
+              308.6864676156343,
+              -72.78159761890662
+            ],
+            [
+              308.6864676156343,
+              -72.78159761890662
+            ],
+            [
+              308.6864676156343,
+              -72.78159761890662
+            ]
+          ],
+          "relative_rmse": 0.008483687046903915,
+          "highpass_correlation_sigma3": 0.9821299824875658,
+          "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+          "wall_s": 21.360502519999955
+        },
+        "joint": {
+          "role": "development comparison; reference is not ground truth",
+          "reference_precision": "16-bit RGB",
+          "n_used": 512,
+          "n_rejected": 0,
+          "interior_pixels": 24087,
+          "registration_xy_px": [
+            0.42563932696727536,
+            1.4881211929330949
+          ],
+          "per_channel_gain_offset": [
+            [
+              308.686295422379,
+              -72.76242227812729
+            ],
+            [
+              308.686295422379,
+              -72.76242227812729
+            ],
+            [
+              308.686295422379,
+              -72.76242227812729
+            ]
+          ],
+          "relative_rmse": 0.008483176546461487,
+          "highpass_correlation_sigma3": 0.9821356705385712,
+          "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+          "wall_s": 20.07428339499984
+        }
+      },
+      "passes_both_metrics": true,
+      "relative_rmse_reduction_percent": 0.006017436046439587,
+      "highpass_correlation_change": 5.688051005425798e-06
+    }
+  },
+  "decision": {
+    "adopted": false,
+    "two_metric_gates_passed": true,
+    "reason": "Both real-image gains are below 0.01 percent RMS. Despite much better tilted-Gaussian accuracy, these captures do not establish enough application benefit to justify changing default registration.",
+    "next": "Keep the current global matcher. Do not run full-capture repetitions or tune this candidate on these references; prioritize spatially varying image residuals or a newly reported defect."
+  },
+  "private_evidence": "out/global-joint-peak/; no source pixels are included in this report."
+}
