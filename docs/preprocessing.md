@@ -371,8 +371,10 @@ refinements. Otherwise camera drift can be mistaken for rotation, or translation
 can absorb genuine rotation. Saturn uses exposed rings to constrain translation,
 keeping a spinning bright globe feature out of that estimate; an unresolved ring
 match cannot supply a measured translation or a field-rate sample. Samples whose translations exceed
-`max_shift_px` do not contribute to the rate fit; measured timestamps still
-determine its time intervals. The fitted sample translations are recorded in
+`max_shift_px` do not contribute to the rate fit. Remaining valid samples are
+paired using their actual measured elapsed times, so an unusable middle sample
+does not disconnect valid endpoints. Rejected angles are excluded before angle
+unwrapping and equal timestamps still cannot supply a rate. The fitted sample translations are recorded in
 geometry diagnostics. This alignment resamples estimation images only.
 
 Field, surface and combined modes retain subpixel translation tracking. They predict

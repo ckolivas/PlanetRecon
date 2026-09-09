@@ -209,14 +209,19 @@ def prepare_geometry(
                          for plane in angle_planes]
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
-            angles = unwrap_angles([estimate["angle_rad"] for estimate in estimates])
-            dt = np.diff(times[indices])
+            raw_angles = np.array([estimate["angle_rad"] for estimate in estimates])
+            angles = unwrap_angles(raw_angles)
             usable = np.array([good and not estimate["degeneracy"]
                                for good, estimate in zip(registered, estimates)])
-            pairs = usable[:-1] & usable[1:] & (dt > 0)
+            # A rejected sample must neither disconnect the valid endpoints nor
+            # introduce an angle-wrap branch into their rate. Use actual elapsed
+            # time between retained samples; timestamp ties still supply no rate.
+            valid_angles = unwrap_angles(raw_angles[usable])
+            dt = np.diff(times[indices[usable]])
+            pairs = dt > 0
             if np.any(pairs):
                 field_resolved = True
-                field_rate = float(np.median(np.diff(angles)[pairs] / dt[pairs]))
+                field_rate = float(np.median(np.diff(valid_angles)[pairs] / dt[pairs]))
             else:
                 field_rate = 0.0
                 degeneracy.append("roll_unconstrained")

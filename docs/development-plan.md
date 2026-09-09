@@ -227,6 +227,16 @@ A follow-up closes a Saturn estimation loophole: failed ring translation is now
 marked unusable before fitting the automatic field rate. Angular texture alone
 cannot certify a rate when its sampled camera drift is unresolved. All 90 focused
 motion, angle, timestamp and Saturn controls pass.
+The next bounded control exposed the opposite failure: a rejected middle sample
+prevented valid endpoints from establishing a field rate. Rate fitting now pairs
+consecutive usable samples at their actual measured times, excluding rejected
+angles before unwrapping so they cannot change the valid branch. A nine-frame
+analytic one-degree control with a 15-pixel middle displacement now retains its
+eight within-limit frames instead of refusing an otherwise resolved field run.
+Matched unsharpened RMS is 0.000274 versus 0.004612 with explicitly zero field
+correction. All 92 focused rate/refusal/timestamp/Saturn controls pass. Failed
+ring tracking remains unusable, and unresolved model tracking still stops a run.
+Full regression after both rate-validity fixes: 1,163 passed, 78 skipped.
 
 ## Execution progress (2026-09-09)
 

@@ -103,3 +103,38 @@ def test_out_of_range_estimation_samples_cannot_set_a_rotation_rate():
     assert diagnostic['field_sample_shifts_px'] == [[0., 0.], None, None]
     assert diagnostic['field_rate_rad_s'] == 0
     assert any('roll_unconstrained:' in warning for warning in warnings)
+
+
+def test_rejected_middle_sample_does_not_discard_valid_endpoint_rate():
+    angles = np.linspace(0, np.deg2rad(1), 9)
+    frames = np.array([scene(angle)[0] for angle in angles])
+    frames[4] = shift(frames[4], (0, 15), order=1, mode='constant')
+    src = ArraySource(frames, bit_depth=32, timestamps=np.arange(9.))
+    cfg = ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+        geometry_mode='field', field_center_x=96, field_center_y=96,
+        equatorial_radius_px=70, max_shift_px=6)
+    result = stack_source(src, cfg)
+    assert result.n_used == 8 and result.n_rejected == 1
+    diagnostics = result.provenance['geometry']
+    assert diagnostics['field_sample_shifts_px'][1] is None
+    assert diagnostics['field_rate_rad_s'] == pytest.approx(angles[-1]/8, abs=3e-5)
+    reference, radius = scene(0)
+    mask = (radius > 10) & (radius < 60)
+    old_zero = stack_source(src, replace(cfg, field_rate_rad_s=0.))
+    error = lambda r: np.sqrt(np.mean((r.image[mask]-reference[mask])**2))
+    assert error(result) < .1*error(old_zero)
+
+
+def test_rejected_angle_cannot_change_unwrap_branch(monkeypatch):
+    import planetrecon.pipeline.geometry_stack as module
+    image, _ = scene(0)
+    frames = np.stack([image, shift(image, (0, 15), order=1, mode='constant'), image])
+    src = ArraySource(frames, bit_depth=32, timestamps=np.array([0., 2., 8.]))
+    cfg = ReconstructionConfig(geometry_mode='field', field_center_x=96,
+        field_center_y=96, equatorial_radius_px=70, max_shift_px=6)
+    angles = iter([0., 3.2, .1])
+    monkeypatch.setattr(module, 'estimate_field_angle',
+        lambda *args: {'angle_rad': next(angles), 'degeneracy': []})
+    _, _, diagnostics, _ = prepare_geometry(src, cfg)
+    assert diagnostics['field_sample_shifts_px'][1] is None
+    assert diagnostics['field_rate_rad_s'] == pytest.approx(.1/8)
