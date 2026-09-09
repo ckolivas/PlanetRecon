@@ -62,3 +62,17 @@ def test_later_tracking_failure_never_returns_a_completed_stack():
     with pytest.raises(ValueError, match='frame 2'):
         stack_source(src, config(), on_event=lambda result, info: events.append(result))
     assert all(result.incomplete for result in events)
+
+
+def test_unresolved_saturn_ring_translation_cannot_supply_a_field_rate(monkeypatch):
+    from test_ring_registration import source as ring_source, config as ring_config
+    from planetrecon.pipeline.ring_align import RingRegistration
+    # Polar texture alone must not certify a rate when camera registration fails.
+    monkeypatch.setattr(RingRegistration, 'displacement', lambda *args, **kwargs: None)
+    src = ring_source('mono', [(0, 0)]*5, field_rate=.03)
+    cfg = replace(ring_config(), field_rate_rad_s=None)
+    _, _, diagnostics, _ = prepare_geometry(src, cfg)
+    assert diagnostics['field_sample_shifts_px'] == [[0., 0.], None, None]
+    assert diagnostics['unavailable_motion']
+    with pytest.raises(ValueError, match='field rotation could not be estimated'):
+        stack_source(src, cfg)

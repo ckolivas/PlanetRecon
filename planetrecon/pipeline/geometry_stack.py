@@ -189,6 +189,7 @@ def prepare_geometry(
                             displacement = RingRegistration(predicted, cx, cy, radius,
                                 angle_radius).displacement(plane)
                             if displacement is None:
+                                good = False
                                 break
                             dx, dy = displacement
                         else:

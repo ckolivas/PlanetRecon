@@ -223,6 +223,10 @@ now use resolved spinning-globe fixtures rather than relying on unobservable
 nine-pixel globes silently retaining their centres.
 Validation: 1,160 default regression tests passed, 78 skipped; 49 focused motion
 refusal and globe/ring image controls passed.
+A follow-up closes a Saturn estimation loophole: failed ring translation is now
+marked unusable before fitting the automatic field rate. Angular texture alone
+cannot certify a rate when its sampled camera drift is unresolved. All 90 focused
+motion, angle, timestamp and Saturn controls pass.
 
 ## Execution progress (2026-09-09)
 
