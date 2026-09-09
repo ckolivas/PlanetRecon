@@ -361,8 +361,14 @@ surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model
 before estimating the remaining translation, then backproject raw observations
 once with the combined transform. The configured centre anchors the reference
-frame; `max_shift_px` rejects excessive tracking displacement. Saturn retains
-its fixed-centre contract because its moon tracks use detector coordinates.
+frame; `max_shift_px` rejects excessive tracking displacement. Saturn without
+moon tracks also follows camera drift when field rotation is zero. Static
+geometry uses the whole reference; globe-spin correction instead matches the
+stationary exposed rings, excluding the globe and its smoothing footprint.
+Weak or ambiguous ring matches retain the configured centre with a warning.
+This requires the supplied globe/ring dimensions and does not detect physical
+ring geometry. Saturn with nonzero field rotation or explicit detector moon
+tracks retains fixed centres; a moving-layer registration method is still needed.
 
 Zero surface rotation bypasses the spherical round trip; bilinear coordinates
 within 10⁻¹⁰ pixels of integer sites are snapped consistently in sampling and its

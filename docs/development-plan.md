@@ -127,10 +127,19 @@ Five-frame integer-drift controls recover the stationary image and both layer
 coverage maps to numerical precision in mono and all four Bayer layouts, with
 all frames retained. The unrestricted moving-layer trial failed existing region
 isolation controls: visibility holes biased its generic correlation. It is not
-adopted. Active rotation and explicit detector moon tracks keep fixed centres
-until a visibility-aware registration method is validated; diagnostics state
-which restriction applies. This does not supply missing physical ring geometry.
-Combined default regression after both fixes: 1,088 passed, 78 skipped.
+adopted. A subsequent ring-only matcher now supports globe spin when field
+rotation is zero and no moon track is supplied. It uses normalized correlation
+over exposed rings and nearby sky, excluding the globe and smoothing footprint;
+unobserved padding, low correlation and ambiguous peaks cannot set a drift.
+Unconstrained frames keep the configured centre with a warning. Integer-drift
+controls reproduce stationary rotating-scene images and both layer coverage maps
+in mono and all four Bayer layouts. Noisy fractional shifts are recovered within
+0.02 pixels; the five-frame noisy spin control reduces unsharpened RMS from
+0.16194 to 0.03375 with every frame retained. Large globe-brightness changes,
+repeating texture, shift limits and exact mono/Bayer resume are covered. Field
+rotation and explicit detector moon tracks still keep fixed centres. This does
+not supply missing physical ring geometry or establish real-capture accuracy.
+Default regression after the ring-only extension: 1,103 passed, 78 skipped.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

@@ -56,7 +56,7 @@ def test_explicit_moon_tracks_keep_fixed_detector_centres():
     assert result.provenance['geometry']['registration'] == 'fixed centre (Saturn detector tracks)'
 
 
-@pytest.mark.parametrize('rate', ['field_rate_rad_s', 'surface_rate_rad_s'])
+@pytest.mark.parametrize('rate', ['field_rate_rad_s'])
 def test_moving_layers_keep_fixed_centres_until_registration_handles_visibility(rate):
     result = stack_source(capture('mono', [(0, 0), (0, 0)]),
                           replace(settings(), **{rate: .1}))

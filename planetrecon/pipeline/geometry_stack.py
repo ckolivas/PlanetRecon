@@ -409,13 +409,22 @@ def stack_source_geometry(
     anchor_pose = poses[anchor_index]
     static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
         diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
-    # Static Saturn layers share a translation, but a moving-layer prediction
-    # has visibility holes that can bias generic correlation. Moon tracks also
-    # still use absolute detector coordinates. Preserve fixed centres for both.
+    # Whole-frame Saturn predictions have visibility holes during rotation.
+    # Static layers can share generic translation tracking; globe spin uses
+    # exposed rings below. Moon tracks retain absolute detector coordinates.
     track_translation = (not isinstance(model, SaturnSceneModel)
                          or (model.moon is None and static_attitude))
+    ring_registration = None
+    if (isinstance(model, SaturnSceneModel) and model.moon is None
+            and not model.edge_on and diagnostics['field_rate_rad_s'] == 0
+            and not static_attitude):
+        from planetrecon.pipeline.ring_align import RingRegistration
+        ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
+            model.globe.equatorial_radius_px, model.rings.outer_radius_px)
     diagnostics['registration'] = ('model-predicted reference plus Gaussian 1.5px subpixel translation'
                                    if track_translation else
+                                   'exposed stationary rings; unconstrained matches keep fixed centre'
+                                   if ring_registration is not None else
                                    'fixed centre (Saturn detector tracks)' if model.moon is not None else
                                    'fixed centre (Saturn moving layers)')
     xg, yg = detector_xy_grids(h, w)
@@ -524,6 +533,20 @@ def stack_source_geometry(
                 continue
             plane = _alignment_plane(calibrated, color)
             pose = poses[int(index)]
+            if ring_registration is not None:
+                displacement = ((0., 0.) if int(index) == anchor_index else
+                                ring_registration.displacement(plane))
+                if displacement is None:
+                    warning = 'ring_registration_unconstrained: exposed rings cannot constrain camera drift; retaining configured centre'
+                    if warning not in warnings:
+                        warnings.append(warning)
+                else:
+                    dx, dy = displacement
+                    if (not np.isfinite([dx, dy]).all() or abs(dx) > config.max_shift_px
+                            or abs(dy) > config.max_shift_px):
+                        n_rejected += 1
+                        continue
+                    pose = replace(pose, cx=pose.cx + dx, cy=pose.cy + dy)
             if track_translation:
                 # Predict the anchor at this frame's time before fitting camera
                 # translation, so registration does not absorb the chosen spin.
