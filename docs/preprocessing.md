@@ -381,6 +381,14 @@ their evidence. Opposite angular patterns at different radii therefore cannot
 cancel through a radial average. Each ring's mean brightness is removed, so a
 radial brightness profile alone does not supply rotation information. Angular
 sampling scales with the observed radius to resolve detector-scale detail.
+If the initial polar fit is unresolved, a second pass samples radii no more than
+one detector pixel apart with cubic interpolation of the estimation planes.
+This can recover narrow visible features missed by the initial 24 radii. The
+retry preserves the same limb exclusion and correlation/texture thresholds;
+radial brightness alone and uncorrelated noise still cannot supply rotation.
+Already-resolved fits keep their initial estimate. A blanket change regressed
+Bayer drift controls, so dense sampling is limited to this unresolved-fit retry.
+The sampling policy is recorded in geometry checkpoint identity.
 The periodic correlation is interpolated before choosing its strongest peak,
 reducing the risk of a weaker repeated feature winning by landing on a coarse grid bin.
 This interpolates estimation evidence only; raw image samples are unchanged. This does

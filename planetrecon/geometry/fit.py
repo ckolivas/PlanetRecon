@@ -65,6 +65,17 @@ def estimate_field_angle(
     frame_center: tuple[float, float] | None = None,
 ) -> dict:
     """Polar correlation around the disc. Circular featureless discs are unconstrained."""
+    estimate = _field_angle(reference, frame, cx, cy, radius, frame_center, dense=False)
+    if not estimate['degeneracy']:
+        return estimate
+    # Sparse radii can miss observed narrow detail. Retry an unresolved fit
+    # with detector-scale sampling and cubic interpolation of estimation pixels.
+    # A blanket replacement biases already-resolved Bayer drift estimates.
+    retry = _field_angle(reference, frame, cx, cy, radius, frame_center, dense=True)
+    return retry if not retry['degeneracy'] else estimate
+
+
+def _field_angle(reference, frame, cx, cy, radius, frame_center, *, dense):
     ref = np.asarray(reference, dtype=np.float64)
     img = np.asarray(frame, dtype=np.float64)
     if ref.ndim == 3:
@@ -91,23 +102,28 @@ def estimate_field_angle(
     # 128-bin grid aliases fine angular texture on larger planets, potentially
     # reporting a different rotation direction or a distant correlation peak.
     n_theta = max(128, 1 << int(np.ceil(np.log2(2*np.pi*r_max))))
-    n_r = 24
+    # Keep the existing limb exclusion (the last two of 24 radii), but resolve
+    # detector-scale radial structure inside it. Sparse rings can miss visible
+    # narrow features entirely and incorrectly report an unconstrained angle.
+    sample_radius = 1.0 + (r_max-1.0)*21.0/23.0 if dense else r_max
+    n_r = max(22, int(np.ceil(sample_radius))) if dense else 24
     theta = np.linspace(0.0, 2.0 * np.pi, n_theta, endpoint=False)
-    rr = np.linspace(1.0, r_max, n_r)
+    rr = np.linspace(1.0, sample_radius, n_r)
     tt, rgrid = np.meshgrid(theta, rr)
     sx = rgrid * np.cos(tt)
     sy = rgrid * np.sin(tt)
     x = sx + float(cx)
     y = float(cy) - sy
     coords = np.stack([y - 0.5, x - 0.5], axis=0)
-    polar_ref = map_coordinates(ref, coords, order=1, mode="constant", cval=0.0)
+    order = 3 if dense else 1
+    polar_ref = map_coordinates(ref, coords, order=order, mode="constant", cval=0.0)
     # Sample the original frame about its own centre. Recentering an image
     # first both interpolates twice and fills detector regions never observed.
     frame_coords = coords + np.array([frame_cy-cy, frame_cx-cx])[:, None, None]
-    polar_img = map_coordinates(img, frame_coords, order=1, mode="constant", cval=0.0)
-    # Drop the outermost limb ring so a circular edge is not treated as texture.
-    polar_ref = polar_ref[:-2]
-    polar_img = polar_img[:-2]
+    polar_img = map_coordinates(img, frame_coords, order=order, mode="constant", cval=0.0)
+    if not dense:
+        polar_ref = polar_ref[:-2]
+        polar_img = polar_img[:-2]
     # Remove the radial brightness profile, then correlate matching radii.
     # Averaging rings first cancels real angular structure when features at
     # different radii have opposite contrast or phase.

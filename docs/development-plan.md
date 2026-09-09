@@ -297,6 +297,26 @@ controls pass. Failed intermediate comparisons and test logs are preserved in
 implementation. The 23 new controls pass, followed by 1,263 default regression
 tests with 78 skips.
 
+The narrow-detail follow-up adds a retry for unresolved polar rotation fits.
+The initial 24 radii can miss an observed roughly three-pixel-wide textured band,
+incorrectly refusing automatic Field motion. The retry uses detector-scale radial
+sampling with cubic interpolation of estimation pixels and preserves the original
+limb exclusion, texture floor and correlation threshold. Initial resolved fits
+are retained. Two broader replacements were rejected: dense bilinear sampling
+left narrow-feature angle bias and failed colour image controls; dense cubic
+sampling fixed those controls but regressed eight previously passing Bayer drift
+cases. The retry has deliberately narrower scope and does not fix already-resolved
+small-image angle biases observed in the full-replacement experiment.
+New controls cover signed rotations on 384/576-pixel independent scenes, nine-frame
+mono/RGB/RGGB stacks, circular radial brightness, independent noise and checkpoint
+identity. All frames are retained in successful stacks, whose RMS is within 5%
+of their corresponding known-rate reconstructions. These are synthetic controls,
+not real-capture qualification. Both rejected implementations and their failures
+are retained under `out/radial-sampling/`; do not adopt either as a blanket change.
+All 14 new angle/stack controls fail with the previous estimator. The retry passes
+158 focused controls and all 20 final new controls, followed by 1,283 default
+regression tests with 78 skips.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

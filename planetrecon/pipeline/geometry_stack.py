@@ -346,6 +346,8 @@ def prepare_geometry(
     }
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
+    if field_origin == 'inferred':
+        diagnostics['field_polar_sampling'] = 'sparse radii; unresolved fits retry dense cubic'
     unavailable = []
     if config.geometry_mode in ('field', 'combined', 'saturn') and not field_resolved:
         unavailable.append('field rotation could not be estimated; supply a known field rate '
