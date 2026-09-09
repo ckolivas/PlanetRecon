@@ -235,7 +235,9 @@ def test_field_angle_estimate_uses_static_rings_instead_of_spinning_globe(field_
     def bright_spot(lon, lat):
         da = np.arctan2(np.sin(lon-.5), np.cos(lon-.5))
         return 1. + 20.*np.exp(-((da/.2)**2 + (lat/.2)**2)/2)
-    frames = [render_saturn(48, 64, FramePose(t, field_rate*t, 32., 24.), model.globe, model.rings, bright_spot)
+    # Ring asymmetry is required to distinguish half-turns without a rate prior.
+    frames = [render_saturn(48, 64, FramePose(t, field_rate*t, 32., 24.), model.globe, model.rings, bright_spot,
+                           ring_tex=lambda r, theta: 1+.4*np.cos(theta))
               for t in times]
     src = ArraySource(np.stack(frames), bit_depth=32, timestamps=times)
     _, _, diag, _ = prepare_geometry(src, config(field_rate_rad_s=None, surface_rate_rad_s=1.2))

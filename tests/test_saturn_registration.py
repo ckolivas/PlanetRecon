@@ -15,11 +15,11 @@ from planetrecon.pipeline.baseline import stack_source
 from planetrecon.reconstruction import ReconstructionConfig
 
 
-def capture(colour, offsets):
+def capture(colour, offsets, ring_texture=None):
     globe = GlobeParams(equatorial_radius_px=20, flattening=.1, sub_obs_lat_rad=.4)
     rings = RingParams(26, 42, transmission=0)
     image = render_saturn(112, 112, FramePose(0, 0, 56, 56), globe, rings,
-        lambda lon, lat: 1 + .2*np.cos(5*lon)*np.cos(3*lat))
+        lambda lon, lat: 1 + .2*np.cos(5*lon)*np.cos(3*lat), ring_tex=ring_texture)
     if colour != 'mono':
         labels = cfa_labels(112, 112, colour)
         image *= sum((labels == name)*value for name, value in zip('RGB', (.8, 1., .6)))
@@ -63,10 +63,32 @@ def test_static_saturn_uses_existing_camera_shift_limit():
 
 @pytest.mark.parametrize('colour', ['mono', 'RGGB'])
 def test_saturn_auto_field_rate_recognizes_camera_drift(colour):
-    src = capture(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)])
+    # Asymmetric ring detail distinguishes the two half-turn branches.
+    src = capture(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)],
+                  ring_texture=lambda r, theta: 1+.4*np.cos(theta))
     inferred = stack_source(src, replace(settings(), field_rate_rad_s=None))
     known = stack_source(src, settings())
-    assert inferred.provenance['geometry']['field_rate_rad_s'] == 0
+    assert inferred.provenance['geometry']['field_rate_rad_s'] == pytest.approx(0., abs=1e-6)
     assert inferred.n_used == known.n_used == 5
-    np.testing.assert_array_equal(inferred.image, known.image)
-    np.testing.assert_array_equal(inferred.coverage, known.coverage)
+    if colour == 'mono':
+        np.testing.assert_array_equal(inferred.image, known.image)
+        np.testing.assert_array_equal(inferred.coverage, known.coverage)
+    else:
+        # A tiny nonzero angle creates fractional CFA support, so completed
+        # colours need not use the same neighbours as an exact zero-angle run.
+        # Check measured interior colours and subpixel camera accuracy here.
+        direct = np.stack([known.layer_coverage['cfa_direct_'+c] for c in 'RGB'], axis=-1)
+        y, x = np.indices(direct.shape[:2])
+        interior = np.hypot(x+.5-56, y+.5-56) < 17
+        measured = (direct > 0) & interior[..., None]
+        np.testing.assert_allclose(inferred.image[measured], known.image[measured], atol=1e-5, rtol=0)
+        np.testing.assert_allclose(inferred.provenance['geometry']['field_sample_shifts_px'],
+                                   [(0, 0), (-4, 2), (-2, -2)], atol=.01, rtol=0)
+
+
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_symmetric_rings_cannot_supply_an_automatic_field_rate(colour):
+    src = capture(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)])
+    with pytest.raises(ValueError, match='ambiguous'):
+        stack_source(src, replace(settings(), field_rate_rad_s=None))
+    assert stack_source(src, settings()).n_used == 5

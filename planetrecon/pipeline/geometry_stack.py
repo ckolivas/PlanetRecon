@@ -352,9 +352,12 @@ def prepare_geometry(
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if field_origin == 'inferred':
         diagnostics['field_polar_sampling'] = 'sparse radii; unresolved fits retry dense cubic'
+        diagnostics['field_peak_uniqueness'] = 'distinct angular peaks separated by 0.001 normalized correlation'
     unavailable = []
     if config.geometry_mode in ('field', 'combined', 'saturn') and not field_resolved:
-        unavailable.append('field rotation could not be estimated; supply a known field rate '
+        reason = ('field rotation could not be estimated: ambiguous repeated angular features'
+                  if 'roll_ambiguous' in degeneracy_t else 'field rotation could not be estimated')
+        unavailable.append(reason + '; supply a known field rate '
                            '(0 explicitly disables field rotation)')
     if diagnostics['edge_on_rings']:
         unavailable.append('edge-on rings cannot be reconstructed by the Saturn motion model')
@@ -368,7 +371,7 @@ def prepare_geometry(
     if time_origin == "inferred":
         warnings.append("cadence_unknown: relative field motion uses frame indices; physical seconds are unmeasured")
     if "roll_unconstrained" in degeneracy_t and config.geometry_mode in ("field", "combined", "saturn"):
-        warnings.append("roll_unconstrained: near-circular or featureless disc cannot constrain field angle")
+        warnings.append("roll_unconstrained: insufficient or ambiguous angular detail cannot constrain field angle")
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
     if isinstance(model, SaturnSceneModel) and model.transmission > 0:

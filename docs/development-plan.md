@@ -419,6 +419,39 @@ still requires whole-frame global fallback.
 
 ## Motion execution requirement
 
+Automatic field fitting now checks whether another distinct angular-correlation
+peak is within 0.001 of the winner after normalization by the two polar-texture
+norms. Such competing branches are marked `roll_ambiguous` and cannot supply an
+automatic field rate. Previously, a directly evaluated twofold-symmetric scene
+rotated by -0.07 radians returned +3.07159 radians without a degeneracy flag;
+threefold and fourfold scenes also selected arbitrary distant branches. Sparse
+fits retain the existing dense retry, which can still resolve a branch if it
+finds additional asymmetric detail. This separation floor is an observability
+guard, not a statistical confidence interval. Tests cover signed two-, three-
+and fourfold patterns, useful asymmetric detail, mono/RGB/all Bayer layouts,
+refusal before preview or checkpoint replacement, and exact new-policy resume.
+A supplied known rate remains usable and improves the nine-frame test stacks
+over zero rotation. Inferred-rate checkpoints bind the new uniqueness policy.
+Thirteen checks fail against the old code; six asymmetric-angle controls already
+pass. All 82 focused rotation/radial/drifting-crop checks pass with the fix.
+Evidence is retained in `out/field-ambiguity/`; this is not real-motion qualification.
+Legacy Saturn recovery fixtures now contain asymmetric ring detail; symmetric
+ring fixtures explicitly require a supplied rate. The Bayer asymmetric drift
+fixture recovers a near-zero rate within 1e-6 rad/s and sampled camera shifts
+within 0.01 pixel; directly observed interior colours agree within 1e-5. Exact
+whole-image/coverage equality is inappropriate for its small fractional fit.
+The initial suite failures and those fixture checks are preserved in the evidence
+directory. A concrete next output investigation is the sensitivity of CFA colour
+completion to vanishingly small fractional support: this fixture's inferred
+5.343e-7 rad/s rate has direct interior colour RMS difference 3.57e-8 versus a
+known zero rate, but completed common-valid image RMS differs by 0.01554. Separate
+finite camera-fit error from the zero-support transition before changing colour
+completion; retain direct coverage and the no-unobserved-footprint rule.
+Final validation: 62 focused ambiguity/Saturn/refusal checks pass, alongside the
+earlier 82 rotation/radial/drifting-crop checks; the full default suite passes
+1,367 tests with 79 skips in 183.34 seconds. The automatic angle calculation
+remains CPU NumPy; no GPU operator was changed.
+
 Requested motion compensation must be performable. Surface/Combined/Saturn runs
 now require a resolved surface rate; blank no longer means zero correction.
 Automatic field fitting must contain a valid positive-time sample pair. Explicit

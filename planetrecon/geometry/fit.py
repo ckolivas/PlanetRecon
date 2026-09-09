@@ -163,10 +163,22 @@ def _field_angle(reference, frame, cx, cy, radius, frame_center, *, dense):
     denom = float(np.linalg.norm(a) * np.linalg.norm(b))
     if denom <= 0 or peak < 0.2 * denom:
         degeneracy.append("roll_unconstrained")
+    # A high correlation does not identify a unique rotation: repeated angular
+    # structure can have equally good peaks on different rotation branches.
+    # Compare distinct local maxima, excluding one original angular bin around
+    # the refined winner. The 8x interpolation must not count its neighbours
+    # as alternative solutions.
+    maxima = (corr >= np.roll(corr, 1)) & (corr >= np.roll(corr, -1))
+    distance = np.abs(np.arange(n_theta) - peak_i)
+    distance = np.minimum(distance, n_theta-distance)
+    competitors = corr[maxima & (distance > 8)]
+    if (denom > 0 and competitors.size
+            and peak - float(competitors.max()) <= 1e-3 * denom):
+        degeneracy.extend(('roll_unconstrained', 'roll_ambiguous'))
     return {
         "angle_rad": angle,
         "peak": peak,
-        "degeneracy": tuple(degeneracy),
+        "degeneracy": tuple(dict.fromkeys(degeneracy)),
         "texture": disc_score,
         "polar_energy": energy,
         "polar_rel_energy": rel_energy,
