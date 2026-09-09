@@ -465,6 +465,22 @@ sampling/noise controls that preserve sufficiently observed colours. Do not tune
 a threshold against these inspected Jupiter references or rerun this failed broad
 blend. Private scripts, controls, reports and candidate snapshots are retained in
 `out/cfa-small-support/`. The colour-support discontinuity remains unresolved.
+The [sampling-position follow-up](../results/real-data/cfa-sampling-moments.json)
+now rules out using small coverage alone as a noise-reliability test: independent
+16-frame controls reduce coverage by a trillion while normalized noise remains
+nearly unchanged. The contributing colour samples remain up to 1.414 pixels from
+the requested location. A first-moment correction removes affine-scene bias to
+floating precision, reduces noisy curved-scene RMS from about 0.5864 to 0.1277,
+and leaves balanced-dither images bitwise unchanged in all four Bayer layouts.
+However, its curved-scene zero-displacement jump remains finite: about 0.0301 RMS
+versus 1.12 originally. The fixed 512-frame global Jupiter pilot retains all
+frames, cached weights, anchor 1638 and registration; both metrics improve, but
+RMS gains only 0.0103% and detail correlation 0.000191. The first-order prototype
+is not adopted. Its comparison coverage and transport through motion geometry
+are not qualified. Next establish a curved-scene interpolation model using the
+sampling positions/footprints, with an explicit noise and coverage contract;
+do not tune a coverage threshold or repeat the completed first-order pilot.
+Private controls, sums, snapshots and reports are retained in `out/cfa-moments/`.
 Final validation: 62 focused ambiguity/Saturn/refusal checks pass, alongside the
 earlier 82 rotation/radial/drifting-crop checks; the full default suite passes
 1,367 tests with 79 skips in 183.34 seconds. The automatic angle calculation
