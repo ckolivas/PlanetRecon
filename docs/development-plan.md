@@ -120,6 +120,17 @@ frame. Featureless discs still report unconstrained rotation. This removes a
 measured quantization error; it does not establish real-capture motion accuracy.
 Existing checkpoint identities bind the estimated angles and every frame pose,
 preventing continuation when this refinement changes the fitted geometry.
+Saturn runs with zero field/surface rates and no moon track now register camera
+translation before classifying and accumulating globe/ring layers. Previously
+all Saturn runs held the centre fixed, smearing even a static drifting scene.
+Five-frame integer-drift controls recover the stationary image and both layer
+coverage maps to numerical precision in mono and all four Bayer layouts, with
+all frames retained. The unrestricted moving-layer trial failed existing region
+isolation controls: visibility holes biased its generic correlation. It is not
+adopted. Active rotation and explicit detector moon tracks keep fixed centres
+until a visibility-aware registration method is validated; diagnostics state
+which restriction applies. This does not supply missing physical ring geometry.
+Combined default regression after both fixes: 1,088 passed, 78 skipped.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

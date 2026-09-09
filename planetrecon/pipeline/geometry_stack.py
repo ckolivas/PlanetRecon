@@ -407,13 +407,17 @@ def stack_source_geometry(
     anchor_index = diagnostics['reference_index']
     anchor_plane = sample_planes[sample_idx.index(anchor_index)]
     anchor_pose = poses[anchor_index]
-    # Saturn's moon masks currently use absolute detector tracks; keep that
-    # model's fixed-centre contract until those tracks also support jitter.
-    track_translation = not isinstance(model, SaturnSceneModel)
     static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
         diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
+    # Static Saturn layers share a translation, but a moving-layer prediction
+    # has visibility holes that can bias generic correlation. Moon tracks also
+    # still use absolute detector coordinates. Preserve fixed centres for both.
+    track_translation = (not isinstance(model, SaturnSceneModel)
+                         or (model.moon is None and static_attitude))
     diagnostics['registration'] = ('model-predicted reference plus Gaussian 1.5px subpixel translation'
-                                   if track_translation else 'fixed centre (Saturn detector tracks)')
+                                   if track_translation else
+                                   'fixed centre (Saturn detector tracks)' if model.moon is not None else
+                                   'fixed centre (Saturn moving layers)')
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
