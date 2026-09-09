@@ -204,6 +204,26 @@ Do not expand reporting tools or the deferred broad numerical matrix.
 Recorded SER exposure already supplies geometry midpoint timing where the
 capture header includes it; manual values retain priority.
 
+## Motion execution requirement
+
+Requested motion compensation must be performable. Surface/Combined/Saturn runs
+now require a resolved surface rate; blank no longer means zero correction.
+Automatic field fitting must contain a valid positive-time sample pair. Explicit
+zero rates remain supported as a deliberate choice to disable a component.
+Edge-on Saturn rings block the run. Unresolved shared-surface or exposed-ring
+tracking stops processing instead of retaining a fixed centre. The already-read
+sample frames are checked before reconstruction previews or checkpoint writes;
+other frames are checked as processing reaches them. GUI Run lists missing
+parameters before launching a worker, while Inspect and Preprocess remain usable.
+Errors identify the missing estimate or failing frame and explain how to supply
+geometry or select ordinary stacking. These requirements supersede the historical
+fallback behavior recorded above; earlier measurements remain historical evidence.
+Changed tracking policy is part of checkpoint geometry identity. Resume controls
+now use resolved spinning-globe fixtures rather than relying on unobservable
+nine-pixel globes silently retaining their centres.
+Validation: 1,160 default regression tests passed, 78 skipped; 49 focused motion
+refusal and globe/ring image controls passed.
+
 ## Execution progress (2026-09-09)
 
 - **P0:** stage checkpoints plus atomic iterate/momentum resume now cover the new

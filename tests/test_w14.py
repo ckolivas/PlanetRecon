@@ -724,7 +724,8 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
     assert calls[-1][1] == {'inspect_only': True}
     win._finish_job()
     for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',
-                       'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60'}.items():
+                       'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60',
+                       'surface_rate_rad_s': '0'}.items():
         fields[key].setText(value)
     win._run()
     assert calls[-1][1] == {} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
@@ -735,4 +736,28 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
     fields['equatorial_radius_px'].clear()
     win._run()
     assert calls[-1][0].geometry_mode == 'none'
+    win._finish_job()
+
+
+def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_path, monkeypatch):
+    import planetrecon.gui.app as module
+    _, win = gui
+    calls = []
+    def start(path, cfg, **options):
+        calls.append((cfg, options))
+        return SimpleNamespace(snapshot_request=threading.Event(), close=lambda: None)
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    win.path = tmp_path/'input.ser'
+    fields = win.controls.fields
+    fields['geometry_mode'].setCurrentText('surface')
+    win._run()
+    assert not calls and win.job is None
+    assert 'Surface rotation rate' in win.error.text()
+    assert win.controls.currentIndex() == 2
+    win._preprocess()
+    assert calls[-1][1] == {'preprocess_only': True}
+    win._finish_job()
+    fields['surface_rate_rad_s'].setText('0')
+    win._run()
+    assert calls[-1][1] == {} and calls[-1][0].surface_rate_rad_s == 0.
     win._finish_job()

@@ -355,15 +355,22 @@ estimates clear stale automatic rates. Runs with an accumulator checkpoint
 retain their settings to preserve resume compatibility. Estimates remain in
 result metadata. The active reconstruction configuration is never changed.
 
-A blank surface rate applies **no surface rotation correction**: an unresolved
-estimate is not a measured zero or an inferred planetary rotation period.
+A blank surface rate **blocks Surface, Combined and Saturn runs**: an unresolved
+estimate is not a measured zero or an inferred planetary rotation period. Run
+Preprocess to obtain a supported estimate or supply a known rate. Entering zero
+explicitly disables that component. Motion model None performs ordinary stacking.
+If an automatic field-rate estimate is unresolved, the motion run also stops;
+enter a known field rate or explicitly select zero. Inspection and preprocessing
+remain available with incomplete geometry. Edge-on Saturn rings are unsupported
+by the reconstruction model and now block a Saturn run instead of disappearing
+behind a masked-output warning.
 
 When the field rate is blank, Field, Combined and Saturn modes alternate rotation
 and translation estimates on their sampled estimation images for four bounded
 refinements. Otherwise camera drift can be mistaken for rotation, or translation
 can absorb genuine rotation. Saturn uses exposed rings to constrain translation,
 keeping a spinning bright globe feature out of that estimate; an unresolved ring
-match retains the configured centre. Samples whose translations exceed
+match cannot supply a measured translation or a field-rate sample. Samples whose translations exceed
 `max_shift_px` do not contribute to the rate fit; measured timestamps still
 determine its time intervals. The fitted sample translations are recorded in
 geometry diagnostics. This alignment resamples estimation images only.
@@ -374,8 +381,8 @@ before estimating the remaining translation, then backproject raw observations
 once with the combined transform. Surface and combined modes with nonzero globe
 spin match only shared visible interior texture. Newly exposed longitudes and
 the interpolated limb, including their full smoothing footprints, cannot set a
-camera displacement. Weak or ambiguous surface matches retain the configured
-centre with a warning. This requires resolvable shared texture and correct supplied
+camera displacement. Weak or ambiguous surface matches stop the run with the
+frame number and a description of the unresolved tracking. This requires resolvable shared texture and correct supplied
 geometry; it does not determine an unknown rotation rate. Zero-spin tracking
 keeps its existing whole-image matcher. The configured centre anchors the reference
 frame; `max_shift_px` rejects excessive tracking displacement. Saturn without
@@ -387,7 +394,11 @@ must improve correlation beyond the interpolation mismatch measured by rotating
 the reference forward and back. This conservatively leaves smaller, unresolved
 corrections at zero. Missing rotated-capture pixels and their full smoothing
 footprints are excluded from matching.
-Weak or ambiguous ring matches retain the configured centre with a warning.
+Weak or ambiguous ring matches also stop the run. Already-read estimation frames
+are checked before publishing reconstruction previews or saving sums; a failure
+in another frame stops processing when that frame is read. A failed run is never
+returned as a completed stack. Check the geometry and reference frame or select
+Motion model None; the application does not silently fall back to fixed centres.
 This requires the supplied globe/ring dimensions and does not detect physical
 ring geometry. Explicit detector moon tracks still require fixed centres.
 
@@ -398,11 +409,12 @@ validity display levels start at zero so uniform positive support stays visible.
 
 The [Jupiter surface regression](../results/preprocessing/surface-tracking-validation.json)
 uses 96 frames distributed through the capture, with 89 retained by its own
-preprocessing pass. With the surface rate blank, the corrected surface result
+preprocessing pass. In that historical validation, with the surface rate blank, the corrected surface result
 matches the no-motion-model aligned stack within 3×10⁻¹³ ADU, with identical
 validity. Relative RMSE against the supplied conventional unsharpened stack
 improved from 0.017708 to 0.007212. This bounded development comparison does not
-establish Jupiter's rotation rate or replace full-capture qualification.
+establish Jupiter's rotation rate or replace full-capture qualification. Current
+runs require an explicit zero to request that tracking-only surface configuration.
 
 The synthetic validation covers both spin signs, tilted poles, tracking-only
 motion, both image-roll directions and signed viewing latitudes. The local

@@ -8,7 +8,21 @@ from planetrecon.pipeline.baseline import stack_source
 from planetrecon.reconstruction import ReconstructionConfig
 
 
-def capture(tmp_path, color):
+def capture(tmp_path, color, mode=None):
+    if mode in ('surface', 'combined'):
+        from test_globe_registration import sphere
+        from planetrecon.detector import cfa_labels
+        frames = np.array([sphere(i*.2, rate=.08, dx=i, field_rate=.04 if mode == 'combined' else 0.)
+                           for i in range(7)])*100
+        if color == 'RGB':
+            frames = frames[..., None]*[.8, 1., .6]
+        elif color == 'RGGB':
+            labels = cfa_labels(128, 128, color)
+            frames *= np.where(labels == 'R', .8, np.where(labels == 'B', .6, 1.))
+        frames = frames.astype('u2')
+        frames[2] = 65535
+        return write_ser(tmp_path/'in.ser', frames,
+                         color_id={'mono':0, 'RGB':COLOR_RGB, 'RGGB':COLOR_RGGB}[color])
     y,x=np.indices((40,48))
     frame=(100+600*np.exp(-((x-23.5)**2+(y-19.5)**2)/80)+20*np.cos(x/2)).astype('u2')
     if color=='RGB':frame=np.stack([frame,frame//2,frame//3],axis=-1)
@@ -29,7 +43,10 @@ def config(mode):
 @pytest.mark.parametrize('mode',['field','surface','combined','saturn'])
 @pytest.mark.parametrize('color',['mono','RGB','RGGB'])
 def test_geometry_continuation_is_exact(tmp_path,mode,color):
-    path=capture(tmp_path,color);cfg=config(mode);state=tmp_path/'state.npz'
+    path=capture(tmp_path,color,mode);cfg=config(mode);state=tmp_path/'state.npz'
+    if mode in ('surface', 'combined'):
+        cfg=replace(cfg,field_center_x=64.,field_center_y=64.,equatorial_radius_px=42.,
+                    sub_obs_lat_rad=0.,flattening=0.)
     with SERSource(path) as src:whole=stack_source(src,cfg)
     cancel=False
     def event(result,info):

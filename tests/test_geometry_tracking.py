@@ -15,7 +15,7 @@ from planetrecon.reconstruction import ReconstructionConfig
 
 @pytest.mark.parametrize('color', ['mono', 'RGB', 'RGGB'])
 @pytest.mark.parametrize('preprocessed', [False, True])
-def test_blank_surface_rate_matches_registered_stack(color, preprocessed):
+def test_explicit_zero_surface_rate_matches_registered_stack(color, preprocessed):
     y, x = np.indices((80, 96))
     scene = gaussian_filter((((x-48)/25)**2 + ((y-40)/22)**2 < 1)*
                             (100+15*np.cos(y/3)+10*np.cos(x/4)), .8)
@@ -31,9 +31,8 @@ def test_blank_surface_rate_matches_registered_stack(color, preprocessed):
         equatorial_radius_px=25., pole_pa_rad=.3, flattening=.1, sub_obs_lat_rad=.1)
     selection = preprocess_source(source, cfg) if preprocessed else None
     baseline = stack_source(source, cfg, preprocessing=selection)
-    surface = stack_source(source, replace(cfg, geometry_mode='surface'), preprocessing=selection)
+    surface = stack_source(source, replace(cfg, geometry_mode='surface', surface_rate_rad_s=0.), preprocessing=selection)
     assert surface.n_used == baseline.n_used
-    assert any('no surface rotation correction' in w for w in surface.warnings)
     np.testing.assert_allclose(surface.image, baseline.image, atol=1e-9)
     np.testing.assert_allclose(surface.coverage, baseline.coverage, atol=1e-9)
     np.testing.assert_array_equal(surface.validity, baseline.validity)
@@ -74,7 +73,7 @@ def test_surface_tracking_obeys_maximum_shift():
     frames = np.stack([scene, shift(scene, (0, 8), order=1)])
     src = ArraySource(frames, bit_depth=32, timestamps=np.arange(2.))
     cfg = ReconstructionConfig(device='cpu', threads=2, geometry_mode='surface',
-        field_center_x=32., field_center_y=32., equatorial_radius_px=15., max_shift_px=4.)
+        field_center_x=32., field_center_y=32., equatorial_radius_px=15., max_shift_px=4., surface_rate_rad_s=0.)
     result = stack_source(src, cfg)
     assert result.n_used == 1 and result.n_rejected == 1
 

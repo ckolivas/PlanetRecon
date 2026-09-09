@@ -92,7 +92,7 @@ class ConfigControls(QTabWidget):
             ('reference_epoch_s', 'Output epoch (s from start)'),
             ('field_angle0_rad', 'Reference field angle (°)'),
             ('field_rate_rad_s', 'Field rate (°/s; blank = fit)'),
-            ('surface_rate_rad_s', 'Surface rate (°/s; blank = no correction)'),
+            ('surface_rate_rad_s', 'Surface rate (°/s; required for spin)'),
             ('field_center_x', 'Centre x (px)'), ('field_center_y', 'Centre y (px)'),
             ('equatorial_radius_px', 'Globe equatorial radius (px)'), ('flattening', 'Globe flattening'),
             ('pole_pa_rad', 'Pole position angle (°)'), ('sub_obs_lat_rad', 'Signed observer latitude (°)'),

@@ -92,6 +92,22 @@ class ReconstructionConfig:
                 + '. Ring detection does not determine the signed viewing orientation. '
                   'For ordinary Saturn colour stacking, including its rings, choose Motion model None.')
 
+    def missing_motion_parameters(self) -> dict[str, str]:
+        missing = self.missing_saturn_geometry()
+        if self.geometry_mode in ('surface', 'combined', 'saturn') and self.surface_rate_rad_s is None:
+            missing['surface_rate_rad_s'] = 'Surface rotation rate (Geometry tab; degrees/second in the GUI)'
+        return missing
+
+    def require_motion_parameters(self) -> None:
+        missing = self.missing_motion_parameters()
+        if missing:
+            raise ValueError('Motion compensation cannot run. Required: ' + '; '.join(missing.values())
+                + '. Run Preprocess to estimate motion or supply known geometry and rates. '
+                  'Use an explicit rate of 0 only to disable that component, or choose Motion model None '
+                  'for ordinary stacking.'
+                + (' Saturn ring detection cannot determine signed viewing orientation.'
+                   if self.geometry_mode == 'saturn' else ''))
+
     def __post_init__(self) -> None:
         if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:
             raise ValueError('stack_percent must be an integer from 1 to 100')

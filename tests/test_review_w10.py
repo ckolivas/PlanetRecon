@@ -104,9 +104,8 @@ def test_edge_on_band_is_actually_masked_including_globe_overlap():
     _, _, valid = model.src_to_ref(x, y, pose, pose)
     assert not valid[band].any()
     src = ArraySource(np.where(band, 900., 10.)[None], bit_depth=32, timestamps=np.array([0.]))
-    result = stack_source(src, config(sub_obs_lat_rad=0.))
-    assert not result.validity[band].any()
-    np.testing.assert_allclose(result.image[result.validity], 10.)
+    with pytest.raises(ValueError, match="edge-on rings cannot be reconstructed"):
+        stack_source(src, config(sub_obs_lat_rad=0.))
 
 
 def test_moon_track_uses_reference_detector_axes_and_nonzero_field_angle():

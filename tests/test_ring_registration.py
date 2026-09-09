@@ -68,11 +68,10 @@ def test_flat_ring_region_is_unconstrained():
     assert matcher.displacement(np.ones((112, 112))) is None
 
 
-def test_unconstrained_ring_match_retains_frame_and_reports_fallback():
+def test_unconstrained_ring_match_refuses_run():
     flat = ArraySource(np.ones((2, 112, 112)), bit_depth=32, timestamps=np.arange(2.))
-    result = stack_source(flat, config())
-    assert result.n_used == 2 and result.n_rejected == 0
-    assert any('ring_registration_unconstrained:' in warning for warning in result.warnings)
+    with pytest.raises(ValueError, match='exposed rings cannot constrain camera drift'):
+        stack_source(flat, config())
 
 
 def test_large_camera_drift_uses_existing_shift_limit():

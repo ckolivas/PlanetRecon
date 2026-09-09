@@ -148,6 +148,7 @@ def prepare_geometry(
             degeneracy = list(dict.fromkeys([*degeneracy, *disc["degeneracy"]]))
     field_rate = config.field_rate_rad_s
     field_origin = "user"
+    field_resolved = field_rate is not None
     angles = None
     field_sample_shifts = None
     if field_rate is None and config.geometry_mode in ("field", "combined", "saturn"):
@@ -213,6 +214,7 @@ def prepare_geometry(
                                for good, estimate in zip(registered, estimates)])
             pairs = usable[:-1] & usable[1:] & (dt > 0)
             if np.any(pairs):
+                field_resolved = True
                 field_rate = float(np.median(np.diff(angles)[pairs] / dt[pairs]))
             else:
                 field_rate = 0.0
@@ -306,6 +308,14 @@ def prepare_geometry(
         "edge_on_rings": bool(getattr(model, "edge_on", False)),
         "low_opening": bool(getattr(model, "low_opening", False)),
     }
+    unavailable = []
+    if config.geometry_mode in ('field', 'combined', 'saturn') and not field_resolved:
+        unavailable.append('field rotation could not be estimated; supply a known field rate '
+                           '(0 explicitly disables field rotation)')
+    if diagnostics['edge_on_rings']:
+        unavailable.append('edge-on rings cannot be reconstructed by the Saturn motion model')
+    if unavailable:
+        diagnostics['unavailable_motion'] = unavailable
     warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate,
                                            None if rings is None else rings.outer_radius_px)
                 if time_origin != "inferred" else [])
@@ -323,7 +333,7 @@ def prepare_geometry(
         warnings.append("low_opening: globe/ring overlap is conservatively masked")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if config.surface_rate_rad_s is None:
-            warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; no surface rotation correction is applied")
+            warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")
         else:
             warnings.append("spin_unconstrained: image texture cannot constrain spin; using supplied surface rate")
     return poses, model, diagnostics, warnings
@@ -346,6 +356,7 @@ def stack_source_geometry(
         return stack_source(source, config, calibration=calibration, on_event=on_event,
                             should_cancel=should_cancel, resume_from=resume_from,
                             state_checkpoint=state_checkpoint)
+    config.require_motion_parameters()
     # All geometry operators currently execute in NumPy float64.
     if state_checkpoint is not None:
         from planetrecon import resume
@@ -447,6 +458,9 @@ def stack_source_geometry(
     poses, model, diagnostics, geo_warnings = prepare_geometry(
         source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
     )
+    if diagnostics.get('unavailable_motion'):
+        raise ValueError('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
+                         + '. Correct the geometry or choose Motion model None for ordinary stacking.')
     ref_pose = _reference_pose(poses, config)
     anchor_index = diagnostics['reference_index']
     anchor_plane = sample_planes[sample_idx.index(anchor_index)]
@@ -468,17 +482,41 @@ def stack_source_geometry(
     track_surface = (isinstance(model, OblateGlobeModel)
                      and diagnostics['surface_rate_rad_s'] != 0)
     if track_surface:
-        diagnostics['registration'] = 'shared visible surface; unconstrained matches keep fixed centre'
+        diagnostics['registration'] = 'shared visible surface; unresolved tracking stops the run'
     elif track_translation:
         diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
     elif ring_registration is not None:
         diagnostics['registration'] = (
-            'exposed stationary rings; unconstrained matches keep fixed centre'
+            'exposed stationary rings; unresolved tracking stops the run'
             if diagnostics['field_rate_rad_s'] == 0 else
-            'exposed rings with interpolation-gated field tracking; unconstrained matches keep fixed centre')
+            'exposed rings with interpolation-gated field tracking; unresolved tracking stops the run')
     else:
         diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
                                        else 'fixed centre (Saturn moving layers)')
+    def required_displacement(index, plane):
+        if index == anchor_index:
+            return 0., 0.
+        pose = poses[index]
+        if ring_registration is not None:
+            displacement = (ring_registration.displacement(plane)
+                            if diagnostics['field_rate_rad_s'] == 0 else
+                            ring_registration.displacement_at_pose(plane, pose, anchor_pose))
+            feature = 'exposed rings'
+        else:
+            from planetrecon.pipeline.globe_align import surface_displacement
+            displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
+            feature = 'shared visible surface'
+        if displacement is None:
+            raise ValueError(f'Motion compensation cannot run: {feature} cannot constrain camera drift '
+                f'at frame {index+1}. Check the geometry and reference frame, or choose '
+                'Motion model None for ordinary stacking.')
+        return displacement
+
+    # Diagnose the already-read estimation frames before emitting a reconstruction
+    # preview or saving sums. Other frames are checked as they are read.
+    sampled_displacements = ({index: required_displacement(index, plane)
+                              for index, plane in zip(sample_idx, sample_planes)}
+                             if ring_registration is not None or track_surface else {})
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
@@ -585,39 +623,16 @@ def stack_source_geometry(
                 continue
             plane = _alignment_plane(calibrated, color)
             pose = poses[int(index)]
-            if ring_registration is not None:
-                displacement = ((0., 0.) if int(index) == anchor_index else
-                                ring_registration.displacement(plane)
-                                if diagnostics['field_rate_rad_s'] == 0 else
-                                ring_registration.displacement_at_pose(plane, pose, anchor_pose))
-                if displacement is None:
-                    warning = 'ring_registration_unconstrained: exposed rings cannot constrain camera drift; retaining configured centre'
-                    if warning not in warnings:
-                        warnings.append(warning)
-                else:
-                    dx, dy = displacement
-                    if (not np.isfinite([dx, dy]).all() or abs(dx) > config.max_shift_px
-                            or abs(dy) > config.max_shift_px):
-                        n_rejected += 1
-                        continue
-                    pose = replace(pose, cx=pose.cx + dx, cy=pose.cy + dy)
-            if track_translation:
-                # Predict the anchor at this frame's time before fitting camera
-                # translation, so registration does not absorb the chosen spin.
-                if track_surface and int(index) != anchor_index:
-                    from planetrecon.pipeline.globe_align import surface_displacement
-                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
-                    if displacement is None:
-                        warning = ('surface_registration_unconstrained: shared visible surface cannot '
-                                   'constrain camera drift; retaining configured centre')
-                        if warning not in warnings:
-                            warnings.append(warning)
-                        displacement = (0., 0.)
-                    dx, dy = displacement
-                else:
-                    predicted = (anchor_plane if static_attitude or int(index) == anchor_index else
-                                 render_observed(anchor_plane, model, pose, anchor_pose))
-                    dx, dy = phase_correlation_shift(predicted, plane)
+            if ring_registration is not None or track_surface:
+                dx, dy = (sampled_displacements[int(index)] if int(index) in sampled_displacements
+                          else required_displacement(int(index), plane))
+            elif track_translation:
+                # Predict the anchor before fitting camera translation, so
+                # registration does not absorb the selected field rotation.
+                predicted = (anchor_plane if static_attitude or int(index) == anchor_index else
+                             render_observed(anchor_plane, model, pose, anchor_pose))
+                dx, dy = phase_correlation_shift(predicted, plane)
+            if ring_registration is not None or track_translation:
                 if (not np.isfinite([dx, dy]).all() or abs(dx) > config.max_shift_px
                         or abs(dy) > config.max_shift_px):
                     n_rejected += 1

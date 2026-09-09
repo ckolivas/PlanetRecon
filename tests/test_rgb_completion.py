@@ -22,7 +22,7 @@ def test_bayer_stack_publishes_and_exports_complete_rgb(pattern, geometry, tmp_p
     source = ArraySource(raw[None], color_mode=pattern, bit_depth=32,
                          timestamps=np.array([0.]))
     cfg = ReconstructionConfig(frame_preselection=False, device='cpu', threads=2, geometry_mode=geometry,
-                               field_rate_rad_s=0., field_center_x=5.5, field_center_y=4.5,
+                               field_rate_rad_s=0., surface_rate_rad_s=0., field_center_x=5.5, field_center_y=4.5,
                                equatorial_radius_px=3.2, pole_pa_rad=.17, flattening=.08,
                                sub_obs_lat_rad=.12,
                                freeze_mid_exposure=False, reject_saturated=False)

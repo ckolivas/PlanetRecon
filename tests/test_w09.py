@@ -255,8 +255,8 @@ def test_featureless_disc_reports_roll_degeneracy():
     assert "roll_unconstrained" in flags
     src = ArraySource(frames, color_mode="mono", bit_depth=32, timestamps=np.arange(3, dtype=float))
     cfg = ReconstructionConfig(device="cpu", threads=2, geometry_mode="field", freeze_mid_exposure=False)
-    result = stack_source(src, cfg)
-    assert any("roll_unconstrained" in w for w in result.warnings)
+    with pytest.raises(ValueError, match="field rotation could not be estimated"):
+        stack_source(src, cfg)
 
 
 def test_angle_wrap_estimation():

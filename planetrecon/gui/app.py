@@ -328,7 +328,7 @@ class MainWindow:
             cfg = self.controls.configuration()
             checkpoint_options = {}
             if not inspect_only and not preprocess_only:
-                missing = cfg.missing_saturn_geometry()
+                missing = cfg.missing_motion_parameters()
                 if missing:
                     edit = self.controls.fields[next(iter(missing))]
                     for tab in range(self.controls.count()):
@@ -337,7 +337,7 @@ class MainWindow:
                             break
                     edit.setFocus()
                     edit.selectAll()
-                    cfg.require_saturn_geometry()
+                    cfg.require_motion_parameters()
                 path = self.checkpoint_path.text().strip()
                 if self.resume_check.isChecked() and not path:
                     raise ValueError('Select an accumulator checkpoint to resume')
