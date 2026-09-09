@@ -162,5 +162,27 @@
   "limitations": "Sample-based screening is not full-capture screening. Global uses the best selected frame; both local arms use the same independent 64-frame template and identical raw projections. The mono array is replicated into identical channels only for the existing comparison calculation. No distributed capture pixels.",
   "reference_pixel_check": "Stored 16-bit replicated-mono RGB pixels span 0 to 45874; maximum occupies one spatial pixel. The clipped preview does not represent stored data.",
   "reference_file_sha256": "ef0360bf3333c361a4136174dc6bfd0e0a3399d8f3c9265b425903c4d8d439ea",
-  "private_artifacts": "out/saturn-local"
+  "private_artifacts": "out/saturn-local",
+  "residual_followup": {
+    "scope": "Exploratory diagnosis of the completed pilot; does not replace the pending full-capture gate.",
+    "interior_low_frequency_residual_rms_adu16": {
+      "global": 168.1795804806709,
+      "local_linear": 167.7437150375908,
+      "local_squared": 137.94155621702438
+    },
+    "interior_high_frequency_residual_rms_adu16": {
+      "global": 135.65195009464935,
+      "local_linear": 133.01238754457688,
+      "local_squared": 114.50944514308888
+    },
+    "frequency_split": "Gaussian sigma 3 residual component and its complement; components are not orthogonal.",
+    "sample_photometry": {
+      "n_retained": 918,
+      "total_background_subtracted_flux_cv": 0.008952250042909456,
+      "quality_flux_correlation": -0.04591160895552538,
+      "method": "Full-frame sum after subtracting median of the outer 12-pixel border. Same fixed 1024 sampled frames and screening decisions."
+    },
+    "interpretation": "Stronger weights reduce both broad and fine residuals. Small integrated-brightness variation and weak correlation with quality do not motivate adding brightness normalization from this sample. Await full-capture results before selecting another algorithm change.",
+    "private_photometry_arrays": "out/saturn-local/photometry-diagnostic.npz"
+  }
 }
