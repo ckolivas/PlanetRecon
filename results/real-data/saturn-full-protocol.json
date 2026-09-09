@@ -1,0 +1,43 @@
+{
+  "status": "Frozen full-capture validation protocol; not a completed comparison.",
+  "preprocessing": {
+    "n_captured": 27689,
+    "n_retained": 25476,
+    "n_excluded": 2213,
+    "reference_index": 22877,
+    "wall_s": 258.74144325499947,
+    "identity": {
+      "schema": "planetrecon-preprocessing-1",
+      "pixels_sha256": "cf487b7c4353255991170aa8f7c0ea1a87b4de7154d668906c107c63583b6ab8",
+      "shape": [
+        404,
+        696
+      ],
+      "n_frames": 27689,
+      "color_mode": "mono",
+      "bit_depth": 8,
+      "units": "adu",
+      "timestamps_sha256": "e8fe18c6a36900534f7b09101b240c8b90c4f82914ea8d3e58df6a38f5888d73",
+      "timestamp_scale_s": 1e-07,
+      "reject_saturated": true,
+      "calibration": {}
+    },
+    "digest": "9c485be50f3fe614058bcfde6f72f28fb6f1dd9541bcac709978e95dd4e53ee2"
+  },
+  "arms": [
+    "standard global registration, linear cached weights",
+    "local registration, linear cached weights",
+    "production local registration, squared cached weights"
+  ],
+  "protocol": "Use all retained frames with the same highest-quality anchor. Production local template uses its best 64 selected frames. Local arms share each raw mono projection; the global arm independently calculates standard best-frame shifts and uses the same cached linear scores. Abort if registration changes the paired frame set. No sharpening, exposure/geometry compensation, extra rejection or exponent sweep.",
+  "comparison": "Same conventional 16-bit mono reference and 24087-pixel eroded interior as the pilot if all arms retain common support; remove only two rows per vertical edge to match reference dimensions. Global translation and gain/offset fits only. Require both RMS and fine-detail correlation to improve for each claimed gain.",
+  "control": {
+    "status": "passed",
+    "n_selected": 11,
+    "result": "Both shadow linear arms reproduce separate production global/local runs bitwise for image, coverage and validity.",
+    "script_sha256": "3232abb64ae609f4ee529ec430d13f9160e7e61ed1e321460d63461ba90cf9a5"
+  },
+  "full_script_sha256": "6293c3bb8fa279af0d5c2451120e030b5b13e347a5e9cf9b4bc8b195c7aec6dd",
+  "limits": "A developmental conventional-stack comparison does not establish universal accuracy. Keep defaults and ambiguity/fold guards unchanged. Source dependencies must remain frozen during this run.",
+  "private_artifacts": "out/saturn-local/full/"
+}

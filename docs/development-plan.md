@@ -94,8 +94,11 @@ use the same 512 evaluation frames. Local alignment reduces RMS by 1.1%;
 stronger weighting reduces it a further 16.9%, with improved fine-detail
 correlation. Local arms share an independent 64-frame template and raw
 projections. The stored 16-bit reference has usable detail despite its clipped
-preview. Next preprocess the full 27,689-frame capture and compare all retained
-frames in one paired validation before broader claims. Preserve linear-weight
+preview. Full preprocessing is complete: 25,476 of 27,689 frames are retained, with
+reference frame 22,877. The [full paired protocol](../results/real-data/saturn-full-protocol.json)
+is frozen; its shadow sums match separate application runs bitwise on a small
+control. Run that one full comparison before broader claims, preserving its
+source dependencies and recording any failure or incomplete outcome. Preserve linear-weight
 defaults; do not sweep powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
