@@ -88,12 +88,15 @@ integrated into local alignment, with GUI/CLI settings, unchanged cached
 screening/template/anchor selection and exact resume checks. Default regression:
 1,055 passed, 78 skipped; nine weighting controls pass with hardware enabled,
 and the 37 existing local/colour CPU/CUDA controls pass. Linear checkpoint
-identities remain compatible. Next compare global alignment, local linear
-weighting and local squared weighting on a fixed screened mono Saturn pilot
-using the provided conventional stack. Its stored 16-bit pixels have usable
-detail (the clipped preview is a display issue). Keep frame sets fixed and
-validate both metrics before any full-capture extension or broader adoption. Preserve linear-weight defaults; do not sweep
-powers or introduce another rejection policy.
+identities remain compatible. The [mono Saturn pilot](../results/real-data/saturn-local-weighting-pilot.json)
+is complete: 918 of a fixed 1,024-frame sample pass screening; all three arms
+use the same 512 evaluation frames. Local alignment reduces RMS by 1.1%;
+stronger weighting reduces it a further 16.9%, with improved fine-detail
+correlation. Local arms share an independent 64-frame template and raw
+projections. The stored 16-bit reference has usable detail despite its clipped
+preview. Next preprocess the full 27,689-frame capture and compare all retained
+frames in one paired validation before broader claims. Preserve linear-weight
+defaults; do not sweep powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the

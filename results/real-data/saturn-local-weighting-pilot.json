@@ -1,0 +1,166 @@
+{
+  "scope": "Bounded mono Saturn development comparison; conventional unsharpened reference is not ground truth.",
+  "protocol": {
+    "sample_size": 1024,
+    "sample_screened": 918,
+    "n_frames": 512,
+    "n_template": 64,
+    "anchor_index": 24683,
+    "source_frames": 27689,
+    "source_shape": [
+      404,
+      696
+    ],
+    "sample_pixels_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+    "application_source_hash": "c16bfbf2404790bd475b78a5d751be88d9ca69085e6a0dcbf93843a380c6cd8d",
+    "screening_scope": "Two-sigma quality and shape statistics from the uniformly spaced 1024-frame sample, not a full-capture cache.",
+    "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+    "script_sha256": "6df7d7c8b8febeb1a3c6d81590d7bead02a68228d81169acfc922a99d04d275c"
+  },
+  "results": {
+    "global": {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 24087,
+      "registration_xy_px": [
+        0.4251162180195925,
+        1.487972738895453
+      ],
+      "per_channel_gain_offset": [
+        [
+          308.6864676156344,
+          -72.78159761892206
+        ],
+        [
+          308.6864676156344,
+          -72.78159761892206
+        ],
+        [
+          308.6864676156344,
+          -72.78159761892206
+        ]
+      ],
+      "relative_rmse": 0.008483687046903941,
+      "highpass_correlation_sigma3": 0.9821299824875646,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit",
+      "mode": "global",
+      "wall_s": 12.361072939998849,
+      "sample_size": 1024,
+      "sample_screened": 918,
+      "n_frames": 512,
+      "n_template": 64,
+      "anchor_index": 24683,
+      "source_frames": 27689,
+      "source_shape": [
+        404,
+        696
+      ],
+      "sample_pixels_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+      "application_source_hash": "c16bfbf2404790bd475b78a5d751be88d9ca69085e6a0dcbf93843a380c6cd8d",
+      "screening_scope": "Two-sigma quality and shape statistics from the uniformly spaced 1024-frame sample, not a full-capture cache.",
+      "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+      "script_sha256": "6df7d7c8b8febeb1a3c6d81590d7bead02a68228d81169acfc922a99d04d275c"
+    },
+    "local-linear": {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 24087,
+      "registration_xy_px": [
+        0.4614265258743564,
+        1.5224908877533643
+      ],
+      "per_channel_gain_offset": [
+        [
+          308.51587218013464,
+          -52.33987445314202
+        ],
+        [
+          308.51587218013464,
+          -52.33987445314202
+        ],
+        [
+          308.51587218013464,
+          -52.33987445314202
+        ]
+      ],
+      "relative_rmse": 0.008389074311720856,
+      "highpass_correlation_sigma3": 0.9827944328799129,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches",
+      "mode": "local-linear",
+      "wall_s": 57.46838772099909,
+      "sample_size": 1024,
+      "sample_screened": 918,
+      "n_frames": 512,
+      "n_template": 64,
+      "anchor_index": 24683,
+      "source_frames": 27689,
+      "source_shape": [
+        404,
+        696
+      ],
+      "sample_pixels_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+      "application_source_hash": "c16bfbf2404790bd475b78a5d751be88d9ca69085e6a0dcbf93843a380c6cd8d",
+      "screening_scope": "Two-sigma quality and shape statistics from the uniformly spaced 1024-frame sample, not a full-capture cache.",
+      "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+      "script_sha256": "6df7d7c8b8febeb1a3c6d81590d7bead02a68228d81169acfc922a99d04d275c"
+    },
+    "local-squared": {
+      "role": "development comparison; reference is not ground truth",
+      "reference_precision": "16-bit RGB",
+      "n_used": 512,
+      "n_rejected": 0,
+      "interior_pixels": 24087,
+      "registration_xy_px": [
+        0.46132100643718116,
+        1.5225135708426831
+      ],
+      "per_channel_gain_offset": [
+        [
+          308.41514815209604,
+          -49.0088046434525
+        ],
+        [
+          308.41514815209604,
+          -49.0088046434525
+        ],
+        [
+          308.41514815209604,
+          -49.0088046434525
+        ]
+      ],
+      "relative_rmse": 0.0069735756592716885,
+      "highpass_correlation_sigma3": 0.9862302439497713,
+      "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches",
+      "mode": "local-squared",
+      "wall_s": 57.796250209999926,
+      "sample_size": 1024,
+      "sample_screened": 918,
+      "n_frames": 512,
+      "n_template": 64,
+      "anchor_index": 24683,
+      "source_frames": 27689,
+      "source_shape": [
+        404,
+        696
+      ],
+      "sample_pixels_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+      "application_source_hash": "c16bfbf2404790bd475b78a5d751be88d9ca69085e6a0dcbf93843a380c6cd8d",
+      "screening_scope": "Two-sigma quality and shape statistics from the uniformly spaced 1024-frame sample, not a full-capture cache.",
+      "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+      "script_sha256": "6df7d7c8b8febeb1a3c6d81590d7bead02a68228d81169acfc922a99d04d275c"
+    }
+  },
+  "local_vs_global_rmse_percent": -1.1152313217118737,
+  "squared_vs_linear_rmse_percent": -16.873120917185027,
+  "squared_vs_global_rmse_percent": -17.800177909478123,
+  "squared_minus_linear_detail_correlation": 0.003435811069858463,
+  "decision": "Both optional improvements pass both pilot metrics. Proceed to full-capture preprocessing and one paired all-screened validation before broader claims. Keep global, linear and all-screened defaults; no sharpening or exponent sweep.",
+  "limitations": "Sample-based screening is not full-capture screening. Global uses the best selected frame; both local arms use the same independent 64-frame template and identical raw projections. The mono array is replicated into identical channels only for the existing comparison calculation. No distributed capture pixels.",
+  "reference_pixel_check": "Stored 16-bit replicated-mono RGB pixels span 0 to 45874; maximum occupies one spatial pixel. The clipped preview does not represent stored data.",
+  "reference_file_sha256": "ef0360bf3333c361a4136174dc6bfd0e0a3399d8f3c9265b425903c4d8d439ea",
+  "private_artifacts": "out/saturn-local"
+}
