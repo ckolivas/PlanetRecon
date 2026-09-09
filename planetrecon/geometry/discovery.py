@@ -16,6 +16,27 @@ from planetrecon.pipeline.preprocess import measurement_plane
 from planetrecon.geometry.shape import estimate_flattening
 
 
+SATURN_VIEW_DEPENDENT_KEYS = ('sub_obs_lat_rad', 'surface_rate_rad_s',
+                             'field_rate_rad_s', 'pole_pa_rad')
+
+
+def without_assumed_saturn_view(estimate):
+    """An inferred equator-on globe view is not a signed Saturn ring opening.
+
+    Existing discovery records only suggest latitude via that assumption.
+    Preserve the original record and independent centre/size suggestions.
+    """
+    suggestions = estimate.get('suggestions', {})
+    if 'sub_obs_lat_rad' not in suggestions:
+        return estimate
+    return {**estimate,
+            'suggestions': {key: value for key, value in suggestions.items()
+                            if key not in SATURN_VIEW_DEPENDENT_KEYS},
+            'status': 'unresolved',
+            'notes': [*estimate.get('notes', []),
+                      'Saturn needs a supplied signed viewing latitude; assumed equator-on latitude and dependent motion prefills are not applied.']}
+
+
 def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
     """Return surface displacement (x,y), CCW roll and nuisance translation.
 
@@ -199,6 +220,9 @@ def discover_geometry(source, config, selection, calibration=None, should_cancel
         report['surface_direction'] = ('left' if surface[0] < 0 else 'right') + (' / up' if surface[1] < 0 else ' / down')
         lat = config.sub_obs_lat_rad
         if lat is None:
+            if config.geometry_mode == 'saturn':
+                report['notes'].append('Saturn needs a supplied signed viewing latitude; an equator-on assumption would incorrectly make the rings edge-on.')
+                return report
             lat = 0.
             suggestions['sub_obs_lat_rad'] = 0.
             report['notes'].append('Surface rate assumes an equator-on view (observer latitude 0°); true rate may be larger.')

@@ -83,6 +83,9 @@ def exclusion_counts(selection):
 def cache_report(selection, path=None, config=None, source=None):
     estimate = selection.summary.get('geometry_estimate', {})
     if config is not None:
+        if config.geometry_mode == 'saturn':
+            from planetrecon.geometry.discovery import without_assumed_saturn_view
+            estimate = without_assumed_saturn_view(estimate)
         original = selection.summary.get('geometry_analysis_config', {})
         for key, value in original.items():
             current = getattr(config, key)

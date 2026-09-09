@@ -103,6 +103,11 @@ and preprocessing does not supply a complete physical Saturn setup. Run now
 lists all missing values together and opens the first required field. Inspect
 and Preprocess remain available before those values are supplied. Do not enter
 zero simply to bypass the check: zero means an edge-on ring plane.
+Saturn preprocessing therefore does not apply the equator-on latitude assumption
+used for unresolved viewing geometry in the globe model. Cached suggestions
+based on that assumption are also excluded. Switching to Saturn clears an
+automatically assumed latitude and its dependent motion prefills, while preserving
+values you entered yourself, including an explicit zero.
 
 After Preprocess, enable **Local patch alignment (experimental)** in Capture
 (or CLI `stack --local-alignment`). It applies only with cached preprocessing

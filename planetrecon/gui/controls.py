@@ -177,6 +177,21 @@ class ConfigControls(QTabWidget):
         form.addRow(label, edit)
 
     def _mode_changed(self):
+        if (self.fields['geometry_mode'].currentData() == 'saturn'
+                and 'sub_obs_lat_rad' in self.geometry_auto):
+            from planetrecon.geometry.discovery import SATURN_VIEW_DEPENDENT_KEYS
+            from planetrecon.reconstruction import ReconstructionConfig
+            defaults = ReconstructionConfig()
+            for key in SATURN_VIEW_DEPENDENT_KEYS:
+                old = self.geometry_auto.get(key)
+                if old is not None and key not in self.geometry_manual and self.fields[key].text() == old:
+                    value = getattr(defaults, key)
+                    self.fields[key].setText('' if value is None else str(math.degrees(value)))
+                    del self.geometry_auto[key]
+            # A user-supplied replacement latitude is retained, but it must not
+            # leave dependent auto rates from the old assumption attached.
+            self.geometry_auto.pop('sub_obs_lat_rad', None)
+            self.geometry_estimate_label.setText('Saturn needs a supplied signed viewing latitude; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
         self.fields['local_alignment'].setEnabled(
             self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')
@@ -255,6 +270,9 @@ class ConfigControls(QTabWidget):
 
     def prefill_geometry(self, estimate, *, allow_prefill=True):
         from planetrecon.reconstruction import ReconstructionConfig
+        if self.fields['geometry_mode'].currentData() == 'saturn':
+            from planetrecon.geometry.discovery import without_assumed_saturn_view
+            estimate = without_assumed_saturn_view(estimate)
         defaults = ReconstructionConfig()
         applicable = estimate.get('applicable', True)
         allow_prefill = allow_prefill and applicable

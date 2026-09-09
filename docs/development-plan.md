@@ -104,6 +104,12 @@ from 0.990972 to 0.994502. All arms share the 24,087-pixel comparison interior.
 Both optional improvements pass both metrics; keep current defaults and use
 concrete residual evidence to guide any further bounded output improvement. Preserve linear-weight
 defaults; do not sweep powers or introduce another rejection policy.
+The Saturn setup follow-up now blocks an invalid equator-on prefill: a generic
+globe-view assumption must not turn Saturn's rings edge-on. Discovery requires
+a supplied signed latitude for Saturn surface-rate suggestions; cached and GUI
+prefills exclude the old assumption and dependent rates. Switching modes clears
+only matching automatic values and preserves user edits. Ordinary Saturn colour
+stacking continues to use Motion model None without physical ring parameters.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the

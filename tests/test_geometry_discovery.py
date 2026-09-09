@@ -173,3 +173,57 @@ def test_estimates_reach_worker_without_mutating_active_config(tmp_path):
         assert final.provenance['preprocessing']['geometry_estimate'] == estimates[0]
     finally:
         handle.close()
+
+
+def test_saturn_motion_discovery_does_not_assume_edge_on_rings():
+    result = estimate(recording(), geometry_mode='saturn')
+    assert result['surface_resolved']
+    assert 'sub_obs_lat_rad' not in result['suggestions']
+    assert 'surface_rate_rad_s' not in result['suggestions']
+    assert any('signed viewing latitude' in note for note in result['notes'])
+    known = estimate(recording(latitude=.3), geometry_mode='saturn', sub_obs_lat_rad=.3)
+    assert known['suggestions']['surface_rate_rad_s'] == pytest.approx(.002, rel=.25)
+
+
+def test_saturn_cache_filters_equator_on_assumptions_without_changing_measurements():
+    from copy import deepcopy
+    from planetrecon.pipeline.preprocess_cache import cache_report
+    src = recording()
+    cfg = ReconstructionConfig(device='cpu', threads=2, equatorial_radius_px=40)
+    selection = screen_source(src, cfg)
+    selection.summary['geometry_estimate'] = {'suggestions': {
+        'sub_obs_lat_rad': 0., 'surface_rate_rad_s': .002, 'field_rate_rad_s': .001,
+        'pole_pa_rad': .4, 'field_center_x': 64., 'field_center_y': 56.}}
+    before = deepcopy(selection.summary)
+    report = cache_report(selection, config=replace(cfg, geometry_mode='saturn'))
+    assert report['geometry_estimate']['suggestions'] == {'field_center_x': 64., 'field_center_y': 56.}
+    assert selection.summary == before
+    assert cache_report(selection, config=cfg)['geometry_estimate'] == before['geometry_estimate']
+
+
+@pytest.mark.parametrize('manual_latitude', [None, '0', '-12'])
+def test_entering_saturn_clears_assumed_view_and_dependent_auto_rates(manual_latitude):
+    from planetrecon.gui.app import create_app
+    from planetrecon.gui.controls import ConfigControls
+    app = create_app(['saturn-view-test'])
+    controls = ConfigControls(ReconstructionConfig())
+    report = {'suggestions': {'sub_obs_lat_rad': 0., 'surface_rate_rad_s': .002,
+              'field_rate_rad_s': .001, 'pole_pa_rad': .4, 'field_center_x': 64.}}
+    try:
+        controls.prefill_geometry(report)
+        if manual_latitude is not None:
+            controls.fields['sub_obs_lat_rad'].setText(manual_latitude)
+            controls.fields['sub_obs_lat_rad'].textEdited.emit(manual_latitude)
+        controls.fields['pole_pa_rad'].setText('20')
+        controls.fields['pole_pa_rad'].textEdited.emit('20')
+        controls.fields['geometry_mode'].setCurrentText('saturn')
+        cfg = controls.configuration()
+        assert cfg.sub_obs_lat_rad == (None if manual_latitude is None else pytest.approx(np.radians(float(manual_latitude))))
+        assert cfg.surface_rate_rad_s is None and cfg.field_rate_rad_s is None
+        assert cfg.pole_pa_rad == pytest.approx(np.radians(20)) and cfg.field_center_x == 64
+        # A later cache refresh must not reintroduce the assumption.
+        controls.prefill_geometry(report)
+        assert controls.configuration() == cfg
+    finally:
+        controls.close()
+        app.processEvents()
