@@ -242,6 +242,7 @@ def _stack_source(
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         if config.local_alignment:
             state_identity['local_registration_version'] = 2 if colour_registration else 1
+            state_identity['local_patch_support'] = 'complete observed search footprint'
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -276,6 +277,7 @@ def _stack_source(
             'version': 2 if colour_registration else 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
             'window_px': 65, 'step_px': 32, 'maximum_residual_px': 3,
             'anchor_index': reference_index,
+            'patch_support': 'complete observed search footprint',
             'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
         }
         if colour_registration:

@@ -379,6 +379,23 @@ peak for masked motion matching. Further application work should target spatiall
 varying image residuals or a concrete new defect. Private candidate code, controls,
 logs and paired output snapshots are retained in `out/global-joint-peak/`.
 
+Local registration now excludes patches whose complete search footprint extends
+outside the observed detector after global translation. Previously, zero padding
+from the alignment pull could create a strong false local peak and deform an
+otherwise correctly aligned cropped scene. Five independently evaluated continuous
+translations produced up to 0.78845 pixels of false motion; the support check
+reduces the maximum to 0.01678 pixels. Their worst observed-interior image RMS
+falls from 1.31902 to 0.02977 (scene brightness about 300). A separate scene with
+actual spatial deformation still improves by more than 60% over global alignment
+inside the observed area. Unsupported patches retain global motion; the frame is
+not rejected. This is a detector-boundary fix, not real-capture qualification or
+a change to the default global matcher. Mono/Bayer checkpoints bind the new
+support policy and refuse older mixed-policy sums. All 46 focused checks pass,
+including CUDA parity, existing colour/local output controls and exact resume.
+The full default regression passes: 1,339 passed, 79 skipped in 144.29 seconds.
+The failing original controls and numerical probes are retained in
+`out/local-observed-support/`.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

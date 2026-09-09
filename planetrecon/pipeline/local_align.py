@@ -72,6 +72,12 @@ class LocalRegistration:
         for j, y in enumerate(self.ys):
             for i, x in enumerate(self.xs):
                 k = j * len(self.xs) + i
+                # Pulling the globally aligned proxy pads unobserved detector
+                # samples with zero. Every candidate must have real support;
+                # otherwise the padding edge can win or bias the local peak.
+                if (x-h-m+global_shift[0] < 0 or x+h+m+global_shift[0] > self.shape[1]-1
+                        or y-h-m+global_shift[1] < 0 or y+h+m+global_shift[1] > self.shape[0]-1):
+                    continue
                 if not self.texture_valid[k] or self.strength[k] < self.strength.max() * 0.08:
                     continue
                 if all_costs is not None:
