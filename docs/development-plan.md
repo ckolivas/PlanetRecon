@@ -60,10 +60,11 @@ are complete: bilinear RGB luminance improves aggregate translation accuracy by
 about 23% at Jupiter-like colour ratios and 31% with balanced colours. The weak
 red/blue case is roughly neutral overall, with up to 1.8% regressions in individual
 Bayer layouts, so this is not a universal replacement. Constant colours and
-flat-template/noise controls pass. Next run one paired Jupiter luminance-proxy
-pilot, keeping stack weights green-based, all 512 frames, the same 64 template
-candidates and the same best-frame origin. Only proceed to full application
-validation if both paired image metrics improve. Preserve global/all-screened
+flat-template/noise controls pass. The [paired Jupiter luminance-proxy pilot](../results/real-data/jupiter-colour-registration-pilot.json)
+is now complete with unchanged green-based stack weights, all 512 frames,
+template candidates and best-frame origin. RMS improves 0.405% and fine-detail
+correlation rises by 0.004536. Next validate the full 3,341-frame application
+output before integrating the candidate into the experimental local option. Preserve global/all-screened
 defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the

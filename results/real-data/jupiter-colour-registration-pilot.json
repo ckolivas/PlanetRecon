@@ -1,0 +1,78 @@
+{
+  "scope": "Paired 512-frame developmental image comparison, not scientific qualification.",
+  "baseline": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.272628639389776,
+      0.1286365787321331
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.2229557562671,
+        20.5490760175857
+      ],
+      [
+        233.29185427984584,
+        17.536015687093933
+      ],
+      [
+        232.98166922665388,
+        50.90501241455017
+      ]
+    ],
+    "relative_rmse": 0.005690950605278034,
+    "highpass_correlation_sigma3": 0.8879318710956717,
+    "registration_method": "Production confidence-gated local matcher using the fixed independent green-proxy template",
+    "mode": "local-baseline",
+    "noise_variance_fraction": 0.0,
+    "template_noise_subtraction": false,
+    "n_template": 64,
+    "reference_index": 1638,
+    "wall_s": 36.88640449900049
+  },
+  "candidate": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.29322282779922,
+      0.14763261447465817
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.26888293037098,
+        11.991900359815503
+      ],
+      [
+        233.3330327302105,
+        8.655499852690284
+      ],
+      [
+        233.0147100295255,
+        44.82342398598094
+      ]
+    ],
+    "relative_rmse": 0.005667905952773843,
+    "highpass_correlation_sigma3": 0.8924678196231389,
+    "registration_method": "Fixed independent bilinear RGB luminance template, production confidence-gated local patch matcher; unchanged green-based accumulation weights",
+    "mode": "all-colour-registration",
+    "n_template": 64,
+    "reference_index": 1638,
+    "wall_s": 90.0637266270005,
+    "application_source_hash": "aa29e1404b9ce71e9b1451616616fbb684de8029e94085d8d289cd8bace48ed8",
+    "script_sha256": "6b02f07939e75d5f2fc929886a6cef6e7b7c72fd189098088918412689268cc0",
+    "validity_same": true
+  },
+  "relative_rmse_change_percent": -0.40493502935726733,
+  "detail_correlation_change": 0.004535948527467193,
+  "protocol": "Same 512 selected frames, same 64 independent template candidates, same best-frame coordinate anchor 1638, unchanged dense CFA accumulation and green-based scalar weights. Only registration/template proxies use bilinear RGB luminance. The backend asserts each unchanged green plane matches the corresponding raw frame before creating its colour registration proxy. Original source hash and anchor pixels verified. No sharpening, new filtering of output measurements, or frame rejection.",
+  "decision": "Both metrics improve: proceed to the full 3341-frame application comparison. Do not adopt or change defaults from this pilot alone.",
+  "private_artifacts": "out/colour-registration/",
+  "script_sha256": "6b02f07939e75d5f2fc929886a6cef6e7b7c72fd189098088918412689268cc0"
+}
