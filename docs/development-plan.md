@@ -74,10 +74,14 @@ processing cost and the weak-red/blue limitation remain. Default regression:
 The [matched scalar-weight comparison](../results/real-data/jupiter-scalar-weighting.json)
 is complete: cached quality weighting beats equal weighting by about 1.5% in RMS
 and improves fine-detail correlation. Both arms share every raw projection,
-template and frame. Retain cached quality weighting. Next test one squared-quality
-candidate after known-blur/noise controls, keeping all screened frames and the
-same registration/template/anchor. Do not sweep powers or introduce another
-rejection policy; require both paired image metrics to improve before a full run.
+template and frame. Retain cached quality weighting. The [squared-quality controls](../results/real-data/squared-quality-controls.json)
+improve variable-blur error by 6–7%, with a tiny uniform-scene noise penalty.
+The [matched squared-quality pilot](../results/real-data/jupiter-squared-quality-pilot.json)
+improves RMS by 1.2% and fine-detail correlation by 0.00149, retaining all 512
+frames and sharing every raw projection. The linear arm reproduces the earlier
+result bitwise. Next validate both metrics on all 3,341 screened frames before
+optional application integration. Preserve linear-weight defaults; do not sweep
+powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the

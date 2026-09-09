@@ -1,0 +1,80 @@
+{
+  "scope": "Matched 512-frame development pilot; conventional unsharpened reference is not ground truth.",
+  "linear": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.293302084762608,
+      0.14872640322211617
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.26896892186875,
+        8.811430394474007
+      ],
+      [
+        233.31740188773,
+        7.114334055829657
+      ],
+      [
+        232.98172285957264,
+        45.424341792352685
+      ]
+    ],
+    "relative_rmse": 0.005583308948465089,
+    "highpass_correlation_sigma3": 0.8950184142726887,
+    "registration_method": "Fixed independent RGB luminance template, production local patch matcher",
+    "mode": "cached-quality",
+    "n_template": 64,
+    "reference_index": 1638,
+    "application_source_hash": "ef9a29dc3fd9a7e33e8f6009fc67dd672050510c4fb8138e2b2827870ae2f3ac",
+    "paired_wall_s": 78.93831724300071,
+    "script_sha256": "2abca32ef659513dd6c0d4f59fefc72d6c553b17db3613e460ebba72e8e2e2f7"
+  },
+  "squared": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.293360403176408,
+      0.14973296370540246
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.27469738263324,
+        4.49105590359094
+      ],
+      [
+        233.30705908851309,
+        4.317670540746083
+      ],
+      [
+        232.95303087121871,
+        45.116223288420855
+      ]
+    ],
+    "relative_rmse": 0.005515313517249921,
+    "highpass_correlation_sigma3": 0.8965076220321363,
+    "registration_method": "Fixed independent RGB luminance template, production local patch matcher",
+    "mode": "squared-quality",
+    "n_template": 64,
+    "reference_index": 1638,
+    "application_source_hash": "ef9a29dc3fd9a7e33e8f6009fc67dd672050510c4fb8138e2b2827870ae2f3ac",
+    "paired_wall_s": 79.64642479699978,
+    "script_sha256": "2abca32ef659513dd6c0d4f59fefc72d6c553b17db3613e460ebba72e8e2e2f7"
+  },
+  "relative_rmse_change_percent": -1.21783393759467,
+  "detail_correlation_change": 0.0014892077594476083,
+  "protocol": "Original cached scores and the same 512 screened frames, disjoint 64-frame RGB luminance template and anchor 1638. Both accumulators share each production local raw CFA backprojection. Constant-colour means independently verified within 1e-12. Linear image and coverage reproduce the previous pilot bitwise. Same output validity; no sharpening or extra rejection.",
+  "nominal_effective_frame_count": {
+    "1": 508.90598800657546,
+    "2": 499.8034164083234
+  },
+  "decision": "Both metrics improve. Proceed to a single full 3341-frame paired validation before any optional application integration; retain all-screened and linear-weight defaults. Do not sweep powers.",
+  "private_artifacts": "out/frame-weighting/squared"
+}
