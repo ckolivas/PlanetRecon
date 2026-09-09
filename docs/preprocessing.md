@@ -376,6 +376,12 @@ paired using their actual measured elapsed times, so an unusable middle sample
 does not disconnect valid endpoints. Rejected angles are excluded before angle
 unwrapping and equal timestamps still cannot supply a rate. The fitted sample translations are recorded in
 geometry diagnostics. This alignment resamples estimation images only.
+Polar rotation fitting correlates corresponding radial rings before combining
+their evidence. Opposite angular patterns at different radii therefore cannot
+cancel through a radial average. Each ring's mean brightness is removed, so a
+radial brightness profile alone does not supply rotation information. This does
+not resolve ambiguity between globe spin and field rotation or supply missing
+physical geometry.
 
 Field, surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model

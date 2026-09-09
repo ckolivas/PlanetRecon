@@ -204,6 +204,22 @@ Do not expand reporting tools or the deferred broad numerical matrix.
 Recorded SER exposure already supplies geometry midpoint timing where the
 capture header includes it; manual values retain priority.
 
+The next field-estimation fix preserves angular detail at different radii.
+Previously the estimator averaged concentric rings before correlation, allowing
+opposite radial contrasts to cancel. Seven independent continuous-scene controls
+failed with the old estimator, including refusal of an observable one-degree
+sequence. Corresponding rings now correlate separately after removal of their
+individual mean brightness; their correlations are then combined. Signed
+one/four-degree controls pass without weakening the texture threshold. In the
+nine-frame positive one-degree control, the inferred rate is 0.00219350 rad/s
+versus 0.00218166 known. Unsharpened interior RMS is 0.00005182 versus 0.00209330
+with explicit zero correction and 0.00005015 with the known rate; all nine frames
+remain. Existing drift, featureless-disc, Saturn and resume controls pass.
+This is synthetic output evidence, not real-capture motion qualification or a
+solution to spin/field ambiguity. Fitted diagnostics and poses continue to bind
+checkpoint identity. Validation: 78 focused tests and 1,170 default regression
+tests pass, with 78 skips; private logs are in `out/radial-field/`.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

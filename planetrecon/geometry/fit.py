@@ -84,10 +84,13 @@ def estimate_field_angle(
     # Drop the outermost limb ring so a circular edge is not treated as texture.
     polar_ref = polar_ref[:-2]
     polar_img = polar_img[:-2]
-    ang_ref = polar_ref.mean(axis=0)
-    ang_img = polar_img.mean(axis=0)
-    mean_ref = float(np.mean(ang_ref))
-    energy = float(np.var(ang_ref))
+    # Remove the radial brightness profile, then correlate matching radii.
+    # Averaging rings first cancels real angular structure when features at
+    # different radii have opposite contrast or phase.
+    a = polar_ref - polar_ref.mean(axis=1, keepdims=True)
+    b = polar_img - polar_img.mean(axis=1, keepdims=True)
+    mean_ref = float(np.mean(polar_ref))
+    energy = float(np.mean(a*a))
     rel_energy = energy / (mean_ref * mean_ref + 1e-15)
     disc_score = laplacian_score(ref)
     if rel_energy < 1e-4:
@@ -99,9 +102,8 @@ def estimate_field_angle(
             "polar_energy": energy,
             "polar_rel_energy": rel_energy,
         }
-    a = ang_ref - ang_ref.mean()
-    b = ang_img - ang_img.mean()
-    corr = np.fft.ifft(np.fft.fft(b) * np.conj(np.fft.fft(a))).real
+    corr = np.fft.ifft(np.sum(np.fft.fft(b, axis=1)
+        * np.conj(np.fft.fft(a, axis=1)), axis=0)).real
     peak_i = int(np.argmax(corr))
     peak = float(corr[peak_i])
     shift = peak_i if peak_i < n_theta / 2.0 else peak_i - n_theta

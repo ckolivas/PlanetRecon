@@ -138,3 +138,44 @@ def test_rejected_angle_cannot_change_unwrap_branch(monkeypatch):
     _, _, diagnostics, _ = prepare_geometry(src, cfg)
     assert diagnostics['field_sample_shifts_px'][1] is None
     assert diagnostics['field_rate_rad_s'] == pytest.approx(.1/8)
+
+
+def radial_scene(angle):
+    # Continuous inner/outer features have opposite contrast. Their separate
+    # orientations remain observable even when their angular averages cancel.
+    y, x = np.indices((192, 192), dtype=float)
+    radius = np.hypot(x+.5-96, 96-y-.5)
+    theta = np.arctan2(96-y-.5, x+.5-96)-angle
+    return ((radius < 70)*(1+.3*(radius-32)/35
+            * (np.cos(2*theta)+.5*np.sin(3*theta)))), radius
+
+
+@pytest.mark.parametrize('degrees', [-4., -1., 0., 1., 4.])
+def test_opposite_radial_features_retain_rotation_information(degrees):
+    reference, _ = radial_scene(0.)
+    frame, _ = radial_scene(np.deg2rad(degrees))
+    estimate = estimate_field_angle(reference, frame, 96, 96, 70)
+    assert not estimate['degeneracy']
+    assert np.rad2deg(estimate['angle_rad']) == pytest.approx(degrees, abs=.08)
+
+
+@pytest.mark.parametrize('direction', [-1., 1.])
+def test_radial_detail_recovers_automatic_field_stack(direction):
+    rate = direction*np.deg2rad(1)/8
+    frames = np.array([radial_scene(rate*i)[0] for i in range(9)])
+    src = ArraySource(frames, bit_depth=32, timestamps=np.arange(9.))
+    cfg = ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+        geometry_mode='field', field_center_x=96, field_center_y=96,
+        equatorial_radius_px=70)
+    inferred = stack_source(src, cfg)
+    uncorrected = stack_source(src, replace(cfg, field_rate_rad_s=0.))
+    oracle = stack_source(src, replace(cfg, field_rate_rad_s=rate))
+    _, radius = radial_scene(0.)
+    mask = (radius > 10) & (radius < 60)
+    def error(result):
+        assert result.n_used == 9 and result.n_rejected == 0
+        assert result.validity[mask].all()
+        return np.sqrt(np.mean((result.image[mask]-frames[0][mask])**2))
+    assert inferred.provenance['geometry']['field_rate_rad_s'] == pytest.approx(rate, rel=.02)
+    assert error(inferred) < .1*error(uncorrected)
+    assert error(inferred) < 1.1*error(oracle)
