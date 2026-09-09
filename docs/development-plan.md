@@ -111,6 +111,15 @@ prefills exclude the old assumption and dependent rates. Switching modes clears
 only matching automatic values and preserves user edits. Ordinary Saturn colour
 stacking continues to use Motion model None without physical ring parameters.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
+Automatic field-angle estimation now refines the periodic correlation peak
+between polar bins instead of rounding to 2.8125-degree increments. Independent
+continuous-scene controls recover signed 0.5–4-degree rotations within 0.08
+degrees. On a nine-frame sequence spanning one degree, unsharpened stack RMS
+falls from 0.004612 to 0.000280 (known-rate control: 0.000269), retaining every
+frame. Featureless discs still report unconstrained rotation. This removes a
+measured quantization error; it does not establish real-capture motion accuracy.
+Existing checkpoint identities bind the estimated angles and every frame pose,
+preventing continuation when this refinement changes the fitted geometry.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

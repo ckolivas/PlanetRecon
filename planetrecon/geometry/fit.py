@@ -105,6 +105,12 @@ def estimate_field_angle(
     peak_i = int(np.argmax(corr))
     peak = float(corr[peak_i])
     shift = peak_i if peak_i < n_theta / 2.0 else peak_i - n_theta
+    # Resolve rotations smaller than one polar bin. Wrap neighbours at zero:
+    # small negative rotations have their integer peak at zero too.
+    left, right = corr[(peak_i - 1) % n_theta], corr[(peak_i + 1) % n_theta]
+    curvature = left - 2.0 * peak + right
+    if curvature < 0.0:
+        shift += float(np.clip(0.5 * (left - right) / curvature, -0.5, 0.5))
     angle = float(shift) * (2.0 * np.pi / n_theta)
     degeneracy = []
     denom = float(np.linalg.norm(a) * np.linalg.norm(b))
