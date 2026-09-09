@@ -79,8 +79,11 @@ improve variable-blur error by 6–7%, with a tiny uniform-scene noise penalty.
 The [matched squared-quality pilot](../results/real-data/jupiter-squared-quality-pilot.json)
 improves RMS by 1.2% and fine-detail correlation by 0.00149, retaining all 512
 frames and sharing every raw projection. The linear arm reproduces the earlier
-result bitwise. Next validate both metrics on all 3,341 screened frames before
-optional application integration. Preserve linear-weight defaults; do not sweep
+result bitwise. The [full 3,341-frame comparison](../results/real-data/jupiter-squared-quality-full.json)
+also improves both metrics: RMS decreases 1.42% to 0.00521734 and detail
+correlation rises to 0.964811. Original application sums reproduce bitwise;
+all selected frames, template candidates and anchor 1947 are unchanged.
+Next integrate as an optional stronger quality weighting control in local alignment. Preserve linear-weight defaults; do not sweep
 powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
