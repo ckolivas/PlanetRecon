@@ -241,6 +241,23 @@ motion accuracy claim. Updated registration diagnostics bind checkpoint identity
 Validation: 107 focused tests pass, followed by 1,200 default regression tests
 with 78 skips (including the additional independent footprint control).
 
+The angular-sampling follow-up fixes a separate false-rotation mechanism. A fixed
+128-bin polar grid aliased resolved fine texture: an independent one-degree scene
+was fitted as nearly six degrees. Angular sampling now scales with observed radius
+to keep the outer sampling interval below one detector pixel. A denser grid alone
+still selected weaker repeated peaks that happened to land on integer bins; the
+periodic correlation is now interpolated eightfold before choosing its winner,
+then refined locally. All 20 new controls failed with the old code; the grid-only
+candidate passed 10, and the complete change passes all 20 across both rotation
+directions and 128/256/512-pixel images. In the nine-frame 256-pixel control,
+unsharpened RMS falls from 0.08079746 to 0.00644968, versus 0.00644813 with the
+known rate. Every frame remains, and both rotation signs show the same gain.
+This refines estimation only, with no raw-image resampling or sharpening added.
+Synthetic evidence does not establish real-capture accuracy or remove genuinely
+ambiguous motion. Private failures, the grid-only candidate and final metrics are
+retained in `out/field-angular-sampling/`. Validation: 96 focused controls and
+1,220 default regression tests pass, with 78 skips.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

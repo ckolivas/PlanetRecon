@@ -379,7 +379,11 @@ geometry diagnostics. This alignment resamples estimation images only.
 Polar rotation fitting correlates corresponding radial rings before combining
 their evidence. Opposite angular patterns at different radii therefore cannot
 cancel through a radial average. Each ring's mean brightness is removed, so a
-radial brightness profile alone does not supply rotation information. This does
+radial brightness profile alone does not supply rotation information. Angular
+sampling scales with the observed radius to resolve detector-scale detail.
+The periodic correlation is interpolated before choosing its strongest peak,
+reducing the risk of a weaker repeated feature winning by landing on a coarse grid bin.
+This interpolates estimation evidence only; raw image samples are unchanged. This does
 not resolve ambiguity between globe spin and field rotation or supply missing
 physical geometry.
 Only complete circles inside the observed detector are used for polar fitting.

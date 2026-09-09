@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.ndimage import map_coordinates
+from scipy.signal import resample
 
 from planetrecon.rank import laplacian_score
 
@@ -81,7 +82,10 @@ def estimate_field_angle(
             "texture": laplacian_score(ref),
             "polar_energy": 0.0, "polar_rel_energy": 0.0,
         }
-    n_theta = 128
+    # Resolve detector-scale structure at the outer sampled radius. A fixed
+    # 128-bin grid aliases fine angular texture on larger planets, potentially
+    # reporting a different rotation direction or a distant correlation peak.
+    n_theta = max(128, 1 << int(np.ceil(np.log2(2*np.pi*r_max))))
     n_r = 24
     theta = np.linspace(0.0, 2.0 * np.pi, n_theta, endpoint=False)
     rr = np.linspace(1.0, r_max, n_r)
@@ -116,6 +120,11 @@ def estimate_field_angle(
         }
     corr = np.fft.ifft(np.sum(np.fft.fft(b, axis=1)
         * np.conj(np.fft.fft(a, axis=1)), axis=0)).real
+    # Compare peaks between angular bins before choosing a winner. With fine
+    # repeated texture, the correct peak can lie between bins while a weaker
+    # competing peak happens to land on one. Refining only that winner is too late.
+    corr = resample(corr, 8*n_theta)
+    n_theta = len(corr)
     peak_i = int(np.argmax(corr))
     peak = float(corr[peak_i])
     shift = peak_i if peak_i < n_theta / 2.0 else peak_i - n_theta
