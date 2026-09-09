@@ -1,0 +1,375 @@
+{
+  "decision": "Not adopted: broad support-density colour blending fails the full-capture two-metric gate.",
+  "scope": "Bounded developmental output investigation. Conventional Jupiter reference is not ground truth. No production code changed.",
+  "physical_problem": "At an absent CFA colour, any positive interpolation weight switches from inferred neighbouring colour to a normalized direct estimate. Infinitesimal rotation can therefore change completed colour by a finite amount even with known zero camera drift.",
+  "control": "Three identical rendered mono Saturn frames sampled as RGGB with known channel ratios [0.8,1,0.6]. Ring camera displacement held at known zero. Compare globe interior radius below 17 pixels against the original full RGB values; rates are a limit check, not a tuned parameter sweep.",
+  "original_control": [
+    {
+      "rate": 0.0,
+      "truth_rms": 0.02613781252186052,
+      "zero_difference_rms": 0.0,
+      "min_positive_coverage": 0.006377693214755221,
+      "max_coverage": 0.006377693214755221,
+      "filled": 25079
+    },
+    {
+      "rate": 1e-05,
+      "truth_rms": 0.020026518072460774,
+      "zero_difference_rms": 0.029125878576753198,
+      "min_positive_coverage": 2.6573721720099666e-13,
+      "max_coverage": 0.0063776294380888205,
+      "filled": 543
+    },
+    {
+      "rate": 1e-07,
+      "truth_rms": 0.02002646898230267,
+      "zero_difference_rms": 0.02912580166187482,
+      "min_positive_coverage": 2.6573720838691506e-17,
+      "max_coverage": 0.006377692576985934,
+      "filled": 543
+    },
+    {
+      "rate": 1e-09,
+      "truth_rms": 0.020026468413014874,
+      "zero_difference_rms": 0.029125800961608533,
+      "min_positive_coverage": 2.6573612835322543e-21,
+      "max_coverage": 0.006377693208377535,
+      "filled": 543
+    },
+    {
+      "rate": 1e-12,
+      "truth_rms": 0.02613781252186052,
+      "zero_difference_rms": 0.0,
+      "min_positive_coverage": 0.006377693214755221,
+      "max_coverage": 0.006377693214755221,
+      "filled": 22415
+    },
+    {
+      "rate": -1e-07,
+      "truth_rms": 0.01999294449260483,
+      "zero_difference_rms": 0.03137760851988857,
+      "min_positive_coverage": 2.6573720838691506e-17,
+      "max_coverage": 0.006377692576985934,
+      "filled": 538
+    }
+  ],
+  "candidate_control": [
+    {
+      "rate": 0.0,
+      "truth_rms": 0.008969925777645108,
+      "zero_difference_rms": 0.0,
+      "min_positive_coverage": 0.006377693214755221,
+      "max_coverage": 0.006377693214755221,
+      "filled": 25079
+    },
+    {
+      "rate": 1e-05,
+      "truth_rms": 0.008970005342496043,
+      "zero_difference_rms": 4.9832694315073405e-06,
+      "min_positive_coverage": 2.6573721720099666e-13,
+      "max_coverage": 0.0063776294380888205,
+      "filled": 543
+    },
+    {
+      "rate": 1e-07,
+      "truth_rms": 0.008969926561259585,
+      "zero_difference_rms": 4.9835795506973546e-08,
+      "min_positive_coverage": 2.6573720838691506e-17,
+      "max_coverage": 0.006377692576985934,
+      "filled": 543
+    },
+    {
+      "rate": 1e-09,
+      "truth_rms": 0.008969925785480054,
+      "zero_difference_rms": 4.983582506680995e-10,
+      "min_positive_coverage": 2.6573612835322543e-21,
+      "max_coverage": 0.006377693208377535,
+      "filled": 543
+    },
+    {
+      "rate": 1e-12,
+      "truth_rms": 0.008969925777645108,
+      "zero_difference_rms": 0.0,
+      "min_positive_coverage": 0.006377693214755221,
+      "max_coverage": 0.006377693214755221,
+      "filled": 22415
+    },
+    {
+      "rate": -1e-07,
+      "truth_rms": 0.008969926037311778,
+      "zero_difference_rms": 4.9938531888372775e-08,
+      "min_positive_coverage": 2.6573720838691506e-17,
+      "max_coverage": 0.006377692576985934,
+      "filled": 538
+    }
+  ],
+  "candidate": "Expected channel weight is total local CFA weight times [0.25,0.5,0.25]. Clip actual/expected to [0,1] and blend under-supported colours with inverse-distance, direct-coverage-weighted same-region neighbours within one pixel. Preserve original direct coverage and observed footprint. This density assumption also blends adequately measured colours when dithering is not uniform.",
+  "paired_saved_results": {
+    "global-512": {
+      "input_snapshot": "out/global-joint-peak/axis.npz",
+      "input_sha256": "4204374f9253617523f26dc50faa589a2cc3f2f0677941eaf9bab1009c297658",
+      "baseline_reproduces_bitwise": true,
+      "frames": 512,
+      "before": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.25100801543393,
+          0.1360079933703401
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.24600307748076,
+            18.932965132124007
+          ],
+          [
+            233.30779749993795,
+            16.364105541818212
+          ],
+          [
+            232.99535639657455,
+            49.92244832282654
+          ]
+        ],
+        "relative_rmse": 0.005626458066347317,
+        "highpass_correlation_sigma3": 0.8855369345223543,
+        "registration_method": "axis subpixel peak; common cached quality weights"
+      },
+      "after": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.25099863571663,
+          0.13603014677280192
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.24422879416775,
+            19.22065475198881
+          ],
+          [
+            233.3078628822585,
+            16.358358936059243
+          ],
+          [
+            232.9948810682491,
+            50.06716253870638
+          ]
+        ],
+        "relative_rmse": 0.005616922373338376,
+        "highpass_correlation_sigma3": 0.887893986217458,
+        "registration_method": "axis subpixel peak; common cached quality weights"
+      },
+      "passes_both_metrics": true,
+      "rms_change_percent": -0.16947950018459945,
+      "detail_correlation_change": 0.0023570516951036957
+    },
+    "local-512": {
+      "input_snapshot": "out/local-boundary-taper/taper.npz",
+      "input_sha256": "f3337b49ce99b465d458603c979b7f3ee6818687a998101a62aec72dd5cdd56f",
+      "baseline_reproduces_bitwise": true,
+      "frames": 512,
+      "before": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.29330233931323,
+          0.14875890592507193
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.26896631004212,
+            8.81175038091017
+          ],
+          [
+            233.31740969980152,
+            7.113232436610344
+          ],
+          [
+            232.9817454176577,
+            45.421835127622806
+          ]
+        ],
+        "relative_rmse": 0.005583276124924779,
+        "highpass_correlation_sigma3": 0.8950217673814795,
+        "registration_method": "Fixed independent RGB luminance template, production local patch matcher"
+      },
+      "after": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.29323688270595,
+          0.14878066884131394
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.26859802373343,
+            8.85943671400452
+          ],
+          [
+            233.3178542902261,
+            7.049227336011809
+          ],
+          [
+            232.98084995659144,
+            45.511765538571346
+          ]
+        ],
+        "relative_rmse": 0.005577246842556107,
+        "highpass_correlation_sigma3": 0.8964765858934065,
+        "registration_method": "Fixed independent RGB luminance template, production local patch matcher"
+      },
+      "passes_both_metrics": true,
+      "rms_change_percent": -0.1079882533796983,
+      "detail_correlation_change": 0.0014548185119269696
+    },
+    "full-linear": {
+      "input_snapshot": "out/frame-weighting/full/linear.npz",
+      "input_sha256": "56dca358c668d036e61b7acb1670df623aefd65c5e16f991cc998393bf2a5267",
+      "baseline_reproduces_bitwise": true,
+      "frames": 3341,
+      "before": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 3341,
+        "n_rejected": 408,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -18.232013948989383,
+          -4.5021207244371535
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.28149349324167,
+            7.393374321610571
+          ],
+          [
+            233.30690450607798,
+            8.040284674873046
+          ],
+          [
+            232.98403221557103,
+            45.673021765526606
+          ]
+        ],
+        "relative_rmse": 0.005292679621981537,
+        "highpass_correlation_sigma3": 0.9639640714716958,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches"
+      },
+      "after": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 3341,
+        "n_rejected": 408,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -18.232018106552836,
+          -4.502125395298964
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.28142749678665,
+            7.405585918634373
+          ],
+          [
+            233.30694494139075,
+            8.039024574936047
+          ],
+          [
+            232.9842586048618,
+            45.653442094851734
+          ]
+        ],
+        "relative_rmse": 0.005293059164694032,
+        "highpass_correlation_sigma3": 0.9640104784896211,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches"
+      },
+      "passes_both_metrics": false,
+      "rms_change_percent": 0.00717108798571342,
+      "detail_correlation_change": 4.640701792524293e-05
+    },
+    "full-squared": {
+      "input_snapshot": "out/frame-weighting/full/squared.npz",
+      "input_sha256": "5ae43bea6c39c75faece784f490578116a5f7411d4bec7b0ec2695598eee5cae",
+      "baseline_reproduces_bitwise": true,
+      "frames": 3341,
+      "before": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 3341,
+        "n_rejected": 408,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -18.23234063569781,
+          -4.5014748590065015
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.2904239770947,
+            2.7632133508713626
+          ],
+          [
+            233.30005122599303,
+            4.8674590495001375
+          ],
+          [
+            232.95733626329772,
+            45.261480049681346
+          ]
+        ],
+        "relative_rmse": 0.005217340253488022,
+        "highpass_correlation_sigma3": 0.9648105731717409,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches"
+      },
+      "after": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 3341,
+        "n_rejected": 408,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -18.23234347267862,
+          -4.501478748809199
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.2903330472555,
+            2.779184231637153
+          ],
+          [
+            233.30010599476495,
+            4.86408061701547
+          ],
+          [
+            232.9575539028083,
+            45.243311030717486
+          ]
+        ],
+        "relative_rmse": 0.005217642288769242,
+        "highpass_correlation_sigma3": 0.9648572358152315,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit + confidence-gated normalized local patches"
+      },
+      "passes_both_metrics": false,
+      "rms_change_percent": 0.005789066201256077,
+      "detail_correlation_change": 4.666264349062477e-05
+    }
+  },
+  "validation": "For each saved result, rebuilding the original completion from its saved direct-channel image and weight layers reproduces image, coverage and validity bitwise. Candidate shares all frames, quality weights, geometry, anchors and direct observations. No capture restacking or new rejection occurred.",
+  "interpretation": "The zero-rate control improves RMS from 0.0261378 to 0.00896993; the 1e-9 rad/s jump falls from 0.0291258 to 4.98e-10. Both 512-frame Jupiter arms improve both metrics. Full linear/squared results instead worsen RMS about 0.00717%/0.00579%, so the broad candidate is rejected despite improved detail correlation.",
+  "next_step": "Preserve the measured discontinuity and failed broad candidate. Establish a support-reliability rule from independent CFA sampling/noise controls that leaves sufficiently observed colours intact; do not tune a support threshold against these inspected Jupiter references or repeat the same comparisons without a distinct qualified mechanism.",
+  "candidate_sha256": "62815c726189a7e97dd4b6a7c4cdc69f39a251a69625a2cee11113c122a7f47e",
+  "comparison_script_sha256": "b1932c03ff86be0da2ab91ac808248da4cf00048a03515db27beec396dd7dc32",
+  "private_evidence": "out/cfa-small-support/"
+}

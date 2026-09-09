@@ -447,6 +447,24 @@ completion to vanishingly small fractional support: this fixture's inferred
 known zero rate, but completed common-valid image RMS differs by 0.01554. Separate
 finite camera-fit error from the zero-support transition before changing colour
 completion; retain direct coverage and the no-unobserved-footprint rule.
+The [bounded colour-support investigation](../results/real-data/cfa-small-support-comparison.json)
+now isolates this discontinuity from camera error. With camera drift fixed to
+known zero, a 1e-9 rad/s field rate changes completed interior RGB by RMS 0.029126
+relative to zero rotation. A continuous support-density blend with same-region,
+direct-weighted neighbouring colours reduces that jump to 4.98e-10 and improves
+zero-rate truth RMS from 0.026138 to 0.008970. However, this broad candidate also
+blends adequately observed colours when dithering is not uniform. Four paired
+comparisons reuse saved direct samples and coverage; rebuilding the original
+completion reproduces every saved image/coverage/validity array bitwise. Both
+512-frame Jupiter arms improve both metrics, but the full 3,341-frame linear and
+squared arms worsen RMS by 0.00717% and 0.00579%, despite higher detail correlation.
+The candidate is not adopted; application code and defaults remain unchanged.
+No frames, anchors, weights, alignment, or direct coverage changed, and no capture
+restacking was needed. Next establish support reliability with independent CFA
+sampling/noise controls that preserve sufficiently observed colours. Do not tune
+a threshold against these inspected Jupiter references or rerun this failed broad
+blend. Private scripts, controls, reports and candidate snapshots are retained in
+`out/cfa-small-support/`. The colour-support discontinuity remains unresolved.
 Final validation: 62 focused ambiguity/Saturn/refusal checks pass, alongside the
 earlier 82 rotation/radial/drifting-crop checks; the full default suite passes
 1,367 tests with 79 skips in 183.34 seconds. The automatic angle calculation
