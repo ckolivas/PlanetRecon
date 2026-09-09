@@ -83,7 +83,16 @@ result bitwise. The [full 3,341-frame comparison](../results/real-data/jupiter-s
 also improves both metrics: RMS decreases 1.42% to 0.00521734 and detail
 correlation rises to 0.964811. Original application sums reproduce bitwise;
 all selected frames, template candidates and anchor 1947 are unchanged.
-Next integrate as an optional stronger quality weighting control in local alignment. Preserve linear-weight defaults; do not sweep
+The optional **Stronger quality weighting (experimental)** control is now
+integrated into local alignment, with GUI/CLI settings, unchanged cached
+screening/template/anchor selection and exact resume checks. Default regression:
+1,055 passed, 78 skipped; nine weighting controls pass with hardware enabled,
+and the 37 existing local/colour CPU/CUDA controls pass. Linear checkpoint
+identities remain compatible. Next compare global alignment, local linear
+weighting and local squared weighting on a fixed screened mono Saturn pilot
+using the provided conventional stack. Its stored 16-bit pixels have usable
+detail (the clipped preview is a display issue). Keep frame sets fixed and
+validate both metrics before any full-capture extension or broader adoption. Preserve linear-weight defaults; do not sweep
 powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean

@@ -227,6 +227,8 @@ def _stack_source(
 
     snapshot_provenance = capture_provenance(source, config, calibration)
     snapshot_provenance["preprocessing_cache"] = cache_status
+    snapshot_provenance["scalar_frame_weight"] = (
+        "squared cached quality" if config.squared_quality_weights else "linear quality")
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
     snapshot_provenance["registration"] = "Gaussian 1.5px amplitude correlation with subpixel peak fit"
@@ -364,6 +366,8 @@ def _stack_source(
                 n_rejected += 1
                 continue
             score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
+            if config.squared_quality_weights:
+                score *= score
             if not np.isfinite(score):
                 n_rejected += 1
                 continue

@@ -451,7 +451,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
         max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
         endian_convention='spec', recover_complete_frames=True, reject_saturated=False, frame_preselection=True,
-        stack_percent=25, frame_selection_mode='frame_count', local_alignment=False, reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
+        stack_percent=25, frame_selection_mode='frame_count', local_alignment=False, squared_quality_weights=False, reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
         gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',
         reference_epoch_s=1., field_angle0_rad=5., field_rate_rad_s=2., surface_rate_rad_s=3.,
@@ -676,3 +676,23 @@ def test_inspection_white_includes_bright_pixel_missing_from_preview(gui,tmp_pat
     win._inspect();pump(app,lambda:win.job is None)
     assert win.input_image.max() == 10
     assert win.white.value() == pytest.approx(21450)
+
+
+def test_new_runs_apply_stronger_quality_weight_toggle(gui, tmp_path, monkeypatch):
+    import planetrecon.gui.app as module
+    _, win = gui
+    configs = []
+    def start(path, cfg, **options):
+        configs.append(cfg)
+        return SimpleNamespace(snapshot_request=threading.Event(), close=lambda: None)
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    win.path = tmp_path/'input.ser'
+    win.controls.fields['frame_preselection'].setChecked(True)
+    win.controls.fields['local_alignment'].setChecked(True)
+    stronger = win.controls.fields['squared_quality_weights']
+    for enabled in (False, True, False):
+        stronger.setChecked(enabled)
+        win._run()
+        assert configs[-1].local_alignment
+        assert configs[-1].squared_quality_weights is enabled
+        win._finish_job()

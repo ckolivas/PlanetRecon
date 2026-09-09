@@ -25,8 +25,14 @@ def identity(source,config,calibration,should_cancel=None):
             block=stream.read(1024*1024)
             if not block:break
             digest.update(block)
-    return {'input_sha256':digest.hexdigest(),'config':config.to_dict(),
-            'capture':capture_provenance(source,config,calibration)}
+    settings = config.to_dict()
+    capture = capture_provenance(source,config,calibration)
+    # Preserve identities of unchanged linear-weight checkpoints made before
+    # this optional setting existed. Squared weights remain identity-bound.
+    if not config.squared_quality_weights:
+        settings.pop('squared_quality_weights')
+        capture['config'].pop('squared_quality_weights')
+    return {'input_sha256':digest.hexdigest(),'config':settings,'capture':capture}
 
 
 def validate_destination(path,source,config):

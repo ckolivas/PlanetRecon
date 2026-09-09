@@ -235,5 +235,23 @@
     }
   ],
   "decision": "Both full-capture image metrics improve. Integrate as an optional stronger quality weighting setting within experimental local alignment, retaining the linear and all-screened defaults. No exponent sweep, automatic sharpening or universal quality claim.",
-  "private_artifacts": "out/frame-weighting/full"
+  "private_artifacts": "out/frame-weighting/full",
+  "application_integration": {
+    "setting": "squared_quality_weights; Capture: Stronger quality weighting (experimental); CLI: --local-alignment --squared-quality-weights",
+    "default": false,
+    "scope": "Local alignment with cached preprocessing and geometry none. Original cached scores still determine screening, template candidates and anchor. No extra rejection or sharpening.",
+    "source_hash": "c16bfbf2404790bd475b78a5d751be88d9ca69085e6a0dcbf93843a380c6cd8d",
+    "default_regression": {
+      "passed": 1055,
+      "skipped": 78,
+      "wall_s": 91.25
+    },
+    "focused_validation": "9 weighting controls passed with hardware enabled, including independent native sums for mono/Bayer/RGB, unchanged registration/cache/anchor, CPU/CUDA image and normalized-coverage parity, GUI enablement and exact resume. Existing local/colour CPU/CUDA controls also passed (37). Full suite verifies fresh GUI runs use changed values.",
+    "checkpoint_compatibility": "Unchanged linear identities omit the new default-false field at both config locations; squared weights are identity-bound.",
+    "test_corrections": [
+      "GUI restart fixture needed cached preprocessing enabled to exercise this optional setting.",
+      "CPU/CUDA coverage comparison now uses fraction of total available weight: the synthetic 16-bit scores produced raw sums around 4.4e10, where insignificant roundoff at sparse CFA support violated an arbitrary absolute-units tolerance. Image tolerance unchanged. Normalized coverage uses rtol 1e-10 and atol 1e-12."
+    ],
+    "scope_limit": "Full real-capture evidence above used one production-registration run with paired linear/squared raw accumulators. Integration is checked by independent accumulation, CPU/CUDA and application workflow tests; no redundant full-capture rerun."
+  }
 }

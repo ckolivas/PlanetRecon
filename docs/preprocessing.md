@@ -126,6 +126,21 @@ with additional processing cost. The all-colour registration adds a further
 A conventional stack is a comparison image, not ground truth, and this does not
 establish a universal benefit or complete scientific qualification.
 
+With local alignment enabled, **Stronger quality weighting (experimental)**
+in Capture (CLI `--local-alignment --squared-quality-weights`) uses the square
+of each cached quality score for accumulation. It keeps all selected frames,
+the original scores for screening and template selection, and the best-frame
+anchor. It does not sharpen the result. Linear weighting remains the default;
+stronger weighting can trade higher noise for less seeing blur. The full Jupiter
+development comparison retains 3,341 frames and improves matched RMS by 1.42%
+and fine-detail correlation from 0.963964 to 0.964811 relative to linear local
+stacking. This single-capture result does not establish a general advantage.
+
+Changes take effect on the next fresh run and reuse cached preprocessing.
+Disabling local alignment or cached preprocessing, or selecting a motion model,
+disables stronger weighting. Resume requires the original weighting setting;
+existing linear-weight checkpoint identities remain compatible.
+
 ## Cache validity
 
 Input inspection and preprocessing report capture duration from the first and

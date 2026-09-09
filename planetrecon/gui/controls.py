@@ -38,6 +38,8 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
         self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
+        self._check(capture, 'squared_quality_weights', 'Stronger quality weighting (experimental)')
+        self.fields['local_alignment'].toggled.connect(self._mode_changed)
         self.fields['frame_preselection'].toggled.connect(self._mode_changed)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
                      ['quality_range', 'frame_count'])
@@ -174,6 +176,10 @@ class ConfigControls(QTabWidget):
         self.fields['local_alignment'].setEnabled(
             self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')
+        self.fields['squared_quality_weights'].setEnabled(
+            self.fields['local_alignment'].isChecked()
+            and self.fields['frame_preselection'].isChecked()
+            and self.fields['geometry_mode'].currentData() == 'none')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     @staticmethod
@@ -189,6 +195,12 @@ class ConfigControls(QTabWidget):
             sun_lon_rad=None, sun_lat_rad=None, moon_x=None, moon_y=None, moon_radius_px=None,
             ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         for key, edit in self.fields.items():
+            if key == 'squared_quality_weights' and (
+                    not self.fields['local_alignment'].isChecked()
+                    or not self.fields['frame_preselection'].isChecked()
+                    or self.fields['geometry_mode'].currentData() != 'none'):
+                values[key] = False
+                continue
             if key == 'local_alignment' and (
                     not self.fields['frame_preselection'].isChecked()
                     or self.fields['geometry_mode'].currentData() != 'none'):
