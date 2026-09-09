@@ -396,6 +396,27 @@ The full default regression passes: 1,339 passed, 79 skipped in 144.29 seconds.
 The failing original controls and numerical probes are retained in
 `out/local-observed-support/`.
 
+The [local grid boundary correction](../results/real-data/local-boundary-taper.json)
+now returns gradually to global alignment over one patch-grid interval. The old
+abrupt support cutoff created a coordinate jump, making the fold guard discard
+valid local corrections for the whole frame. Four independently evaluated smooth
+deformations in both axes and signs previously retained only global alignment;
+their corrected interior RMS now improves by about 78%. A genuinely folding
+interior field still falls back globally under the unchanged Jacobian threshold.
+The fixed 512-frame Jupiter comparison is effectively neutral: RMS improves
+0.000588% and detail correlation rises 0.00000335. The fixed mono Saturn comparison
+is unchanged to numerical precision. Both retain all frames, frozen templates,
+best selected anchors, cached quality weights and comparison interiors. Adoption
+addresses the demonstrated boundary defect; these references do not establish a
+broad image-quality gain, and no full-capture repeats are warranted. The default
+global matcher remains unchanged. Checkpoints bind the new boundary policy, and
+old-policy sums cannot resume into the changed local operator. Private probes,
+failed original controls and paired snapshots are in `out/local-boundary-taper/`.
+Validation passes all 53 focused CPU/CUDA checks and the full default suite:
+1,346 passed, 79 skipped in 129.63 seconds. The legacy artificial-boundary fixture
+now requires a useful nonfolding correction; an independent interior-fold control
+still requires whole-frame global fallback.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

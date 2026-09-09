@@ -40,7 +40,11 @@ def test_observed_interior_still_corrects_spatial_motion_after_large_drift():
 
 
 @pytest.mark.parametrize('color_id', [0, 8])
-def test_old_unmasked_local_checkpoint_is_refused(tmp_path, color_id):
+@pytest.mark.parametrize('policy,value', [
+    ('local_patch_support', 'complete observed search footprint'),
+    ('local_patch_boundary', 'one grid interval taper to global'),
+])
+def test_old_local_checkpoint_policy_is_refused(tmp_path, color_id, policy, value):
     from test_local_alignment import capture, config
     from planetrecon.io.ser import SERSource
     from planetrecon.pipeline.baseline import stack_source
@@ -57,7 +61,7 @@ def test_old_unmasked_local_checkpoint_is_refused(tmp_path, color_id):
         with np.load(checkpoint) as data:
             payload = {name: data[name].copy() for name in data.files}
         metadata = json.loads(str(payload['metadata']))
-        assert metadata['identity'].pop('local_patch_support') == 'complete observed search footprint'
+        assert metadata['identity'].pop(policy) == value
         payload['metadata'] = json.dumps(metadata)
         np.savez_compressed(tmp_path/'old.npz', **payload)
         with pytest.raises(ValueError, match='identity'):

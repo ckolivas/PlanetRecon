@@ -1,0 +1,170 @@
+{
+  "decision": "Adopt gradual return to global motion in the existing experimental local option to remove artificial boundary folds; retain the internal fold guard.",
+  "scope": "Independent continuous-scene deformation controls plus bounded developmental comparisons; conventional references are not ground truth. No broad real-capture improvement claim.",
+  "implementation": "Pad the smoothed residual and confidence grids with one zero ring before linear interpolation. Preserve the existing confidence multiplication and Jacobian threshold 0.25.",
+  "independent_controls": [
+    {
+      "axis": 0,
+      "sign": -1,
+      "global_rms": 8.085799656658576,
+      "old_local_rms": 8.085799656658576,
+      "taper_rms": 1.7658788743755034
+    },
+    {
+      "axis": 0,
+      "sign": 1,
+      "global_rms": 8.0780969665958,
+      "old_local_rms": 8.0780969665958,
+      "taper_rms": 1.782399939699008
+    },
+    {
+      "axis": 1,
+      "sign": -1,
+      "global_rms": 7.50161855537222,
+      "old_local_rms": 7.50161855537222,
+      "taper_rms": 1.662394034037368
+    },
+    {
+      "axis": 1,
+      "sign": 1,
+      "global_rms": 7.497779132978148,
+      "old_local_rms": 7.497779132978148,
+      "taper_rms": 1.65942490035303
+    }
+  ],
+  "prior_source_hash": "57c5278c6f043e720a1f1158e1cecbf1d53bc9b4052ef4a237803253d46489d9",
+  "candidate_sha256": "4f0f9964160620f65d98608fbea3efbd113e142c7b8a8b69c3ecf1536b642f55",
+  "jupiter": {
+    "frames": 512,
+    "anchor": 1638,
+    "template_frames": 64,
+    "template_sha256": "c45de6476dc8b531421630150547a09c6910a2cf3fc089425b5f89549829a710",
+    "frames_sha256": "c661d0f5d254a5201f61cc16dad4dc365264c8943fc5590cae4e5ac7f4ef6a2d",
+    "indices_sha256": "b37b21a6790c99346320b1fca370b9868a6a155110449a2425db01fde6a092e6",
+    "metrics": {
+      "current": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.293302084762608,
+          0.14872640322211617
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.26896892186875,
+            8.811430394474007
+          ],
+          [
+            233.31740188773,
+            7.114334055829657
+          ],
+          [
+            232.98172285957264,
+            45.424341792352685
+          ]
+        ],
+        "relative_rmse": 0.005583308948465089,
+        "highpass_correlation_sigma3": 0.8950184142726887,
+        "registration_method": "Fixed independent RGB luminance template, production local patch matcher"
+      },
+      "taper": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 94012,
+        "registration_xy_px": [
+          -24.29330233931323,
+          0.14875890592507193
+        ],
+        "per_channel_gain_offset": [
+          [
+            233.26896631004212,
+            8.81175038091017
+          ],
+          [
+            233.31740969980152,
+            7.113232436610344
+          ],
+          [
+            232.9817454176577,
+            45.421835127622806
+          ]
+        ],
+        "relative_rmse": 0.005583276124924779,
+        "highpass_correlation_sigma3": 0.8950217673814795,
+        "registration_method": "Fixed independent RGB luminance template, production local patch matcher"
+      }
+    }
+  },
+  "saturn": {
+    "frames": 512,
+    "anchor": 24683,
+    "template_frames": 64,
+    "source_sample_sha256": "8261172f19c85b5ce450234738ff4702a0f6ee1c0fbcf4d5b9af5d8f2a99eb2c",
+    "comparison_crop": "Remove two rows from top and bottom of 404x696 mono result to match 400x696 reference; no scaling. Identical mono channels replicated only for existing RGB metric implementation.",
+    "metrics": {
+      "current": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 24087,
+        "registration_xy_px": [
+          0.4614265258743564,
+          1.5224908877533643
+        ],
+        "per_channel_gain_offset": [
+          [
+            308.51587218013464,
+            -52.33987445314202
+          ],
+          [
+            308.51587218013464,
+            -52.33987445314202
+          ],
+          [
+            308.51587218013464,
+            -52.33987445314202
+          ]
+        ],
+        "relative_rmse": 0.008389074311720856,
+        "highpass_correlation_sigma3": 0.9827944328799129,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+      },
+      "taper": {
+        "role": "development comparison; reference is not ground truth",
+        "reference_precision": "16-bit RGB",
+        "n_used": 512,
+        "n_rejected": 0,
+        "interior_pixels": 24087,
+        "registration_xy_px": [
+          0.4614265258750102,
+          1.5224908877533643
+        ],
+        "per_channel_gain_offset": [
+          [
+            308.5158721801342,
+            -52.33987445310038
+          ],
+          [
+            308.5158721801342,
+            -52.33987445310038
+          ],
+          [
+            308.5158721801342,
+            -52.33987445310038
+          ]
+        ],
+        "relative_rmse": 0.008389074311720791,
+        "highpass_correlation_sigma3": 0.9827944328799151,
+        "registration_method": "Gaussian 1.5px amplitude correlation with subpixel peak fit"
+      }
+    }
+  },
+  "interpretation": "Jupiter improves RMS by about 0.000588% with detail correlation +0.00000335, effectively neutral. Saturn is unchanged to numerical precision. The demonstrated benefit is preserving valid spatial deformation rather than discarding it because of an artificial grid-boundary discontinuity.",
+  "raw_evidence_directory": "out/local-boundary-taper (private ignored scripts, logs and snapshots)"
+}

@@ -264,8 +264,13 @@ def test_patch_grid_boundary_cannot_collapse_or_fold_image_coordinates():
     yy, xx = np.indices((7, 7))
     peak = np.exp(-.02*((yy-3)**2+(xx-5)**2))
     # Force a confident two-pixel displacement right up to the grid boundary.
-    # The former abrupt support cutoff collapsed adjacent columns there.
+    # The former abrupt support cutoff collapsed adjacent columns there,
+    # discarding the useful interior correction for the entire frame.
     matcher._cuda_costs = lambda image: np.broadcast_to(peak, (len(matcher.templates), 7, 7))
     displacement = matcher.displacement(ref, (.375, -.625))
-    for value, expected in zip(displacement, (.375, -.625)):
-        np.testing.assert_array_equal(value, np.full(ref.shape, expected))
+    ux, uy = displacement[0]-.375, displacement[1]+.625
+    jacobian = ((1+np.gradient(ux, axis=1))*(1+np.gradient(uy, axis=0))
+                - np.gradient(ux, axis=0)*np.gradient(uy, axis=1))
+    assert jacobian.min() >= .25
+    assert ux.max() > 1.5
+    np.testing.assert_array_equal(uy, np.zeros_like(uy))

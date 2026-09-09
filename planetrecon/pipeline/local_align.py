@@ -109,15 +109,17 @@ class LocalRegistration:
         reliable = confidence.copy()
         confidence = gaussian_filter(confidence, 0.7)
         yy, xx = np.indices(self.shape)
-        coords = [(yy - self.ys[0]) / self.step, (xx - self.xs[0]) / self.step]
+        # Add a zero ring one grid interval outside the measured patch centres.
+        # Interpolating to that ring returns smoothly to global motion instead
+        # of creating an abrupt jump that trips the whole-frame fold guard.
+        coords = [1 + (yy - self.ys[0]) / self.step, 1 + (xx - self.xs[0]) / self.step]
+        support = map_coordinates(np.pad(confidence, 1), coords, order=1, mode='constant')
         result = []
         for axis in range(2):
             grid = gaussian_filter(values[axis] * reliable, 0.7)
-            displacement = map_coordinates(grid, coords, order=1, mode='nearest')
-            support = map_coordinates(confidence, coords, order=1, mode='constant')
+            displacement = map_coordinates(np.pad(grid, 1), coords, order=1, mode='constant')
             result.append(displacement * np.clip(support, 0, 1) + global_shift[axis])
-        # Patch support ends at the grid boundary. Reject a deformation that
-        # collapses or folds coordinates there; retain this frame globally.
+        # Still reject a deformation that collapses or folds coordinates.
         ux, uy = result[0]-global_shift[0], result[1]-global_shift[1]
         jacobian = ((1+np.gradient(ux, axis=1))*(1+np.gradient(uy, axis=0))
                     - np.gradient(ux, axis=0)*np.gradient(uy, axis=1))
