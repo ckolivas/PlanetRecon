@@ -96,9 +96,13 @@ correlation. Local arms share an independent 64-frame template and raw
 projections. The stored 16-bit reference has usable detail despite its clipped
 preview. Full preprocessing is complete: 25,476 of 27,689 frames are retained, with
 reference frame 22,877. The [full paired protocol](../results/real-data/saturn-full-protocol.json)
-is frozen; its shadow sums match separate application runs bitwise on a small
-control. Run that one full comparison before broader claims, preserving its
-source dependencies and recording any failure or incomplete outcome. Preserve linear-weight
+is complete; its shadow sums match separate application runs bitwise on a small
+control. The [full Saturn result](../results/real-data/saturn-local-weighting-full.json)
+retains all 25,476 selected frames: local alignment reduces RMS by 0.82%, and
+stronger weighting reduces it a further 20.23%, increasing detail correlation
+from 0.990972 to 0.994502. All arms share the 24,087-pixel comparison interior.
+Both optional improvements pass both metrics; keep current defaults and use
+concrete residual evidence to guide any further bounded output improvement. Preserve linear-weight
 defaults; do not sweep powers or introduce another rejection policy.
 Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
