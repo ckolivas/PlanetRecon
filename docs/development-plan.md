@@ -136,8 +136,8 @@ controls reproduce stationary rotating-scene images and both layer coverage maps
 in mono and all four Bayer layouts. Noisy fractional shifts are recovered within
 0.02 pixels; the five-frame noisy spin control reduces unsharpened RMS from
 0.16194 to 0.03375 with every frame retained. Large globe-brightness changes,
-repeating texture, shift limits and exact mono/Bayer resume are covered. Field
-rotation and explicit detector moon tracks still keep fixed centres. This does
+repeating texture, shift limits and exact mono/Bayer resume are covered. At that
+stage, field rotation and explicit detector moon tracks kept fixed centres. This does
 not supply missing physical ring geometry or establish real-capture accuracy.
 Default regression after the ring-only extension: 1,103 passed, 78 skipped.
 The next field-rotation investigation identified an upstream bias: automatic
@@ -154,8 +154,22 @@ one final combined warp. In the nine-frame drifting one-degree control, RMS
 falls from 0.03635 to 0.000279, retaining all frames. A static drifting control
 recovers the reference to rounding; mono/Bayer Saturn auto-field estimates match
 the explicitly zero-rate image and coverage exactly. This corrects rate
-estimation; it does not enable Saturn drift tracking with nonzero field rotation.
+estimation; it did not itself enable Saturn drift tracking with nonzero field rotation.
 Default regression after the joint sample fit: 1,109 passed, 78 skipped.
+The subsequent field-tracking extension rotates the exposed-ring reference into
+each frame's orientation. Drift must improve its correlation beyond the measured
+forward/back rotation interpolation mismatch. Asymmetric stationary controls
+previously suggested false shifts up to 0.052 pixels; the gate retains zero.
+Rotated unobserved pixels and the full smoothing footprint cannot contribute to
+the template. Both rotation directions and near-zero rates recover stationary
+stacks with all five frames in mono and every Bayer layout. The noisy asymmetric
+ring/field/spin control reduces RMS from 0.19429 to 0.04382, retaining every frame
+without sharpening. Existing exact layer-boundary controls, nonzero reference
+anchors, shift limits and mono/Bayer field-motion resume pass. Moon tracks still
+keep fixed centres; physical geometry and real-capture motion accuracy remain
+separate requirements. Unchanged zero-field checkpoint identities are preserved;
+older fixed-centre field-motion sums cannot be mixed with the new registration.
+Default regression after field tracking: 1,132 passed, 78 skipped.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

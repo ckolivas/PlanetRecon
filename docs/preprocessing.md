@@ -373,13 +373,17 @@ the registration reference at each frame's time with the selected motion model
 before estimating the remaining translation, then backproject raw observations
 once with the combined transform. The configured centre anchors the reference
 frame; `max_shift_px` rejects excessive tracking displacement. Saturn without
-moon tracks also follows camera drift when field rotation is zero. Static
+moon tracks also follows camera drift using resolved exposed rings. Static
 geometry uses the whole reference; globe-spin correction instead matches the
-stationary exposed rings, excluding the globe and its smoothing footprint.
+rings, excluding the globe and its smoothing footprint. With field rotation,
+the ring reference is first rotated to the frame's orientation. A proposed drift
+must improve correlation beyond the interpolation mismatch measured by rotating
+the reference forward and back. This conservatively leaves smaller, unresolved
+corrections at zero. Missing rotated-capture pixels and their full smoothing
+footprints are excluded from matching.
 Weak or ambiguous ring matches retain the configured centre with a warning.
 This requires the supplied globe/ring dimensions and does not detect physical
-ring geometry. Saturn with nonzero field rotation or explicit detector moon
-tracks retains fixed centres; a moving-layer registration method is still needed.
+ring geometry. Explicit detector moon tracks still require fixed centres.
 
 Zero surface rotation bypasses the spherical round trip; bilinear coordinates
 within 10⁻¹⁰ pixels of integer sites are snapped consistently in sampling and its

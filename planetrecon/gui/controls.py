@@ -99,7 +99,7 @@ class ConfigControls(QTabWidget):
             ('sub_obs_lon0_rad', 'Reference longitude (°)'),
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
-        geo.addRow(QLabel('Centre anchors translation tracking; rates are rigid.\nSaturn uses a fixed centre. Exposure uses its midpoint.'))
+        geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
         sat.addRow(QLabel('Saturn requires globe/ring radii and signed\nobserver latitude in the Geometry tab.'))
         for key, label in [

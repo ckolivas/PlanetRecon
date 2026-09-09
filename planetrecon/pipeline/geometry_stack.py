@@ -454,23 +454,27 @@ def stack_source_geometry(
     static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
         diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
     # Whole-frame Saturn predictions have visibility holes during rotation.
-    # Static layers can share generic translation tracking; globe spin uses
+    # Static layers can share generic translation tracking; rotating layers use
     # exposed rings below. Moon tracks retain absolute detector coordinates.
     track_translation = (not isinstance(model, SaturnSceneModel)
                          or (model.moon is None and static_attitude))
     ring_registration = None
     if (isinstance(model, SaturnSceneModel) and model.moon is None
-            and not model.edge_on and diagnostics['field_rate_rad_s'] == 0
+            and not model.edge_on
             and not static_attitude):
         from planetrecon.pipeline.ring_align import RingRegistration
         ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
             model.globe.equatorial_radius_px, model.rings.outer_radius_px)
-    diagnostics['registration'] = ('model-predicted reference plus Gaussian 1.5px subpixel translation'
-                                   if track_translation else
-                                   'exposed stationary rings; unconstrained matches keep fixed centre'
-                                   if ring_registration is not None else
-                                   'fixed centre (Saturn detector tracks)' if model.moon is not None else
-                                   'fixed centre (Saturn moving layers)')
+    if track_translation:
+        diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
+    elif ring_registration is not None:
+        diagnostics['registration'] = (
+            'exposed stationary rings; unconstrained matches keep fixed centre'
+            if diagnostics['field_rate_rad_s'] == 0 else
+            'exposed rings with interpolation-gated field tracking; unconstrained matches keep fixed centre')
+    else:
+        diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
+                                       else 'fixed centre (Saturn moving layers)')
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
@@ -579,7 +583,9 @@ def stack_source_geometry(
             pose = poses[int(index)]
             if ring_registration is not None:
                 displacement = ((0., 0.) if int(index) == anchor_index else
-                                ring_registration.displacement(plane))
+                                ring_registration.displacement(plane)
+                                if diagnostics['field_rate_rad_s'] == 0 else
+                                ring_registration.displacement_at_pose(plane, pose, anchor_pose))
                 if displacement is None:
                     warning = 'ring_registration_unconstrained: exposed rings cannot constrain camera drift; retaining configured centre'
                     if warning not in warnings:

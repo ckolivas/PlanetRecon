@@ -17,13 +17,13 @@ from planetrecon.pipeline.ring_align import RingRegistration
 from planetrecon.reconstruction import ReconstructionConfig
 
 
-def source(colour, offsets):
+def source(colour, offsets, field_rate=0., ring_texture=None):
     globe = GlobeParams(20, flattening=.1, sub_obs_lat_rad=.4, surface_rate_rad_s=.3)
     rings = RingParams(26, 42, transmission=.35)
     frames = []
     for i, (dx, dy) in enumerate(offsets):
-        image = render_saturn(112, 112, FramePose(i, 0, 56+dx, 56+dy), globe, rings,
-            lambda lon, lat: 1+.2*np.cos(5*lon)*np.cos(3*lat))
+        image = render_saturn(112, 112, FramePose(i, field_rate*i, 56+dx, 56+dy), globe, rings,
+            lambda lon, lat: 1+.2*np.cos(5*lon)*np.cos(3*lat), ring_tex=ring_texture)
         if colour != 'mono':
             labels = cfa_labels(112, 112, colour)
             image *= sum((labels == name)*value for name, value in zip('RGB', (.8, 1., .6)))
@@ -118,13 +118,14 @@ def test_noisy_drifting_spin_stack_improves_image(monkeypatch):
 
 
 @pytest.mark.parametrize('colour', ['mono', 'RGGB'])
-def test_ring_registration_resume_is_exact(tmp_path, colour):
+@pytest.mark.parametrize('field_rate', [0., .03])
+def test_ring_registration_resume_is_exact(tmp_path, colour, field_rate):
     from planetrecon.io.ser import SERSource, write_ser, NAME_TO_COLOR
-    capture = source(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)])
+    capture = source(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)], field_rate)
     path = write_ser(tmp_path/'spin.ser', np.array([
         capture.read_raw(i)*1000 for i in range(5)]).astype('u2'),
         color_id=NAME_TO_COLOR[colour])
-    cfg = replace(config(), cadence_s=1., batch_frames=1)
+    cfg = replace(config(), cadence_s=1., batch_frames=1, field_rate_rad_s=field_rate)
     state = tmp_path/'state.npz'
     cancelled = False
     def event(result, info):
