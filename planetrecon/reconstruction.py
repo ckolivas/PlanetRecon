@@ -73,6 +73,25 @@ class ReconstructionConfig:
     read_noise_e: float | None = None
     saturate_adu: float | None = None
 
+    def missing_saturn_geometry(self) -> dict[str, str]:
+        """Run requirements; inspection and preprocessing may leave these blank."""
+        if self.geometry_mode != 'saturn':
+            return {}
+        labels = {
+            'sub_obs_lat_rad': 'Signed observer latitude (Geometry tab; degrees in the GUI)',
+            'equatorial_radius_px': 'Globe equatorial radius (Geometry tab; pixels)',
+            'ring_inner_radius_px': 'Inner ring radius (Saturn tab; pixels)',
+            'ring_outer_radius_px': 'Outer ring radius (Saturn tab; pixels)',
+        }
+        return {key: label for key, label in labels.items() if getattr(self, key) is None}
+
+    def require_saturn_geometry(self) -> None:
+        missing = self.missing_saturn_geometry()
+        if missing:
+            raise ValueError('Saturn motion compensation requires: ' + '; '.join(missing.values())
+                + '. Ring detection does not determine the signed viewing orientation. '
+                  'For ordinary Saturn colour stacking, including its rings, choose Motion model None.')
+
     def __post_init__(self) -> None:
         if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:
             raise ValueError('stack_percent must be an integer from 1 to 100')

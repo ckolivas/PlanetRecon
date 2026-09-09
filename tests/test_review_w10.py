@@ -242,3 +242,14 @@ def test_field_angle_estimate_uses_static_rings_instead_of_spinning_globe(field_
     _, _, diag, _ = prepare_geometry(src, config(field_rate_rad_s=None, surface_rate_rad_s=1.2))
     assert diag['field_origin'] == 'inferred'
     assert diag['field_rate_rad_s'] == pytest.approx(field_rate, abs=.04)
+
+
+def test_saturn_setup_reports_all_missing_values_and_accepts_signed_zero():
+    cfg = ReconstructionConfig(geometry_mode='saturn')
+    assert set(cfg.missing_saturn_geometry()) == {
+        'sub_obs_lat_rad', 'equatorial_radius_px', 'ring_inner_radius_px', 'ring_outer_radius_px'}
+    with pytest.raises(ValueError, match='Signed observer latitude.*Globe equatorial radius.*Inner ring radius.*Outer ring radius'):
+        cfg.require_saturn_geometry()
+    config(sub_obs_lat_rad=0.).require_saturn_geometry()
+    config(sub_obs_lat_rad=-.4).require_saturn_geometry()
+    ReconstructionConfig().require_saturn_geometry()

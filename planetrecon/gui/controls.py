@@ -80,6 +80,10 @@ class ConfigControls(QTabWidget):
         self._number(cal, 'saturate_adu', 'Saturation threshold (ADU)')
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
+        guidance = QLabel('Motion model None stacks any planet, including Saturn and its rings. '
+                          'Saturn mode separates globe/ring motion and requires manual viewing geometry.')
+        guidance.setWordWrap(True)
+        geo.addRow(guidance)
         self.geometry_estimate_label = QLabel('Preprocessing can prefill geometry for the next run. User edits are preserved.')
         self.geometry_estimate_label.setWordWrap(True)
         geo.addRow(self.geometry_estimate_label)

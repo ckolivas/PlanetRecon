@@ -89,6 +89,7 @@ def prepare_geometry(
 ) -> tuple[list[FramePose], SceneModel, dict, list[str]]:
     from dataclasses import replace
     from planetrecon.geometry.pose import capture_exposure
+    config.require_saturn_geometry()
     config = replace(config, exposure_s=capture_exposure(source, config.exposure_s)['value_s'])
     reference_index = config.reference_index if reference_index is None else reference_index
     times, time_origin = source_times_s(source, cadence_s=config.cadence_s)
@@ -123,12 +124,6 @@ def prepare_geometry(
     anchor = sample_indices.index(reference_index) if reference_index in sample_indices else 0
     saturn_fit = None
     if config.geometry_mode == "saturn":
-        if config.sub_obs_lat_rad is None:
-            raise ValueError("Saturn requires a signed sub_obs_lat_rad; ring opening sign cannot be fitted from an ellipse")
-        if config.equatorial_radius_px is None:
-            raise ValueError("Saturn requires an explicit equatorial_radius_px; the disc/ring fit is diagnostic only")
-        if config.ring_inner_radius_px is None or config.ring_outer_radius_px is None:
-            raise ValueError("Saturn requires explicit ring inner/outer radii; annulus fitting is diagnostic only")
         saturn_fit = fit_saturn_geometry(planes[anchor])
         disc = saturn_fit
         degeneracy = list(saturn_fit.get("degeneracy") or ())

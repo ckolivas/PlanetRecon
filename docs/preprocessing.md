@@ -90,6 +90,20 @@ selected frames.
 
 ## Optional local seeing alignment
 
+The **Motion model** setting is not a planet selector. **None** performs ordinary
+colour or mono stacking of any planet, including Saturn and its rings. The
+optional local alignment below also works on Saturn with that setting.
+
+**Saturn** selects a separate globe/ring motion-compensation model. It currently
+requires manual **Signed observer latitude** and **Globe equatorial radius**
+in Geometry, plus **Inner ring radius** and **Outer ring radius** in Saturn.
+GUI angles are in degrees and radii in detector pixels. Ring detection is
+diagnostic; an ellipse alone does not determine the signed viewing orientation,
+and preprocessing does not supply a complete physical Saturn setup. Run now
+lists all missing values together and opens the first required field. Inspect
+and Preprocess remain available before those values are supplied. Do not enter
+zero simply to bypass the check: zero means an edge-on ring plane.
+
 After Preprocess, enable **Local patch alignment (experimental)** in Capture
 (or CLI `stack --local-alignment`). It applies only with cached preprocessing
 and Motion model **none**. It keeps the same selected frames and uses the

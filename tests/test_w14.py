@@ -696,3 +696,43 @@ def test_new_runs_apply_stronger_quality_weight_toggle(gui, tmp_path, monkeypatc
         assert configs[-1].local_alignment
         assert configs[-1].squared_quality_weights is enabled
         win._finish_job()
+
+
+def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_path, monkeypatch):
+    import planetrecon.gui.app as module
+    _, win = gui
+    calls = []
+    def start(path, cfg, **options):
+        calls.append((cfg, options))
+        return SimpleNamespace(snapshot_request=threading.Event(), close=lambda: None)
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    win.path = tmp_path/'saturn.ser'
+    fields = win.controls.fields
+    fields['geometry_mode'].setCurrentText('saturn')
+    win._run()
+    assert not calls and win.job is None
+    assert win.controls.currentIndex() == 2
+    assert 'Signed observer latitude' in win.error.text()
+    assert 'Inner ring radius' in win.error.text() and 'Outer ring radius' in win.error.text()
+    assert 'Motion model None' in win.error.text()
+    assert 'sub_obs_lat_rad' not in win.error.text()
+    # Discovery and inspection remain usable with incomplete physical geometry.
+    win._preprocess()
+    assert calls[-1][1] == {'preprocess_only': True}
+    win._finish_job()
+    win._inspect()
+    assert calls[-1][1] == {'inspect_only': True}
+    win._finish_job()
+    for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',
+                       'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60'}.items():
+        fields[key].setText(value)
+    win._run()
+    assert calls[-1][1] == {} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
+    win._finish_job()
+    # Ordinary Saturn stacking never needs these physical parameters.
+    fields['geometry_mode'].setCurrentText('none')
+    fields['sub_obs_lat_rad'].clear()
+    fields['equatorial_radius_px'].clear()
+    win._run()
+    assert calls[-1][0].geometry_mode == 'none'
+    win._finish_job()
