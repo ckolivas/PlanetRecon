@@ -97,6 +97,14 @@ highest-quality selected frame as the coordinate anchor. Up to 64 of the
 best selected frames form a cleaner alignment template; input colour samples
 are resampled only once at the combined global and local displacement.
 
+For Bayer captures, the experimental local path uses all colours for registration:
+0.25 R + 0.5 G + 0.25 B from bilinear RGB interpolation. Cached screening weights
+and original raw colour samples are unchanged. Global alignment still uses its
+existing green proxy. This improves both Jupiter comparison metrics slightly,
+with additional processing cost; weak red/blue controls show no consistent gain.
+Existing green-template Bayer local checkpoints require a fresh run because the
+registration algorithm version has changed. Monochrome processing is unchanged.
+
 The matcher compares normalized, band-limited texture in overlapping 65-pixel
 patches spaced 32 pixels apart, within a ±3-pixel search. Weak, poorly correlated,
 ambiguous and search-boundary matches fall back towards global alignment.
@@ -113,7 +121,8 @@ template and requires matching selection, calibration, settings and input.
 Cancellation during template construction produces no partial accumulator state.
 
 This remains optional: the full Jupiter comparison shows a modest improvement
-and roughly three times the processing time in this local development run.
+with additional processing cost. The all-colour registration adds a further
+0.086% matched-RMS improvement over the original local option on this capture.
 A conventional stack is a comparison image, not ground truth, and this does not
 establish a universal benefit or complete scientific qualification.
 

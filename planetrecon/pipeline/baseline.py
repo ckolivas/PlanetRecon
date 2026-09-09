@@ -37,6 +37,13 @@ def _alignment_plane(frame: np.ndarray, color_mode: str) -> np.ndarray:
     return np.asarray(frame, dtype=np.float64)
 
 
+def _colour_registration_plane(frame: np.ndarray, color_mode: str) -> np.ndarray:
+    """Use every colour for motion estimates; original samples form the output."""
+    if is_bayer(color_mode):
+        return bilinear_demosaic(frame, color_mode) @ np.array([.25, .5, .25])
+    return _alignment_plane(frame, color_mode)
+
+
 def _saturated(frame: np.ndarray, bit_depth: int) -> bool:
     if bit_depth > 16:  # floating observations have no integer ADC ceiling
         return False
@@ -178,6 +185,11 @@ def _stack_source(
     if meta.units == "e-" and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError("gain calibration cannot be applied to observations already in electrons")
     bayer = is_bayer(color)
+    # Only the eligible experimental local path changes its registration proxy.
+    # It requires cached screening, so scalar quality weights stay unchanged.
+    colour_registration = (config.local_alignment and bayer and min(h, w) >= 71
+                           and selection is not None and np.count_nonzero(selection.accepted) >= 4)
+    alignment_plane = _colour_registration_plane if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
     if rgb:
         accum = np.zeros((h, w, 3), dtype=np.float64)
@@ -200,7 +212,7 @@ def _stack_source(
         if (not np.all(np.isfinite(calibrated_ref)) or
                 (config.reject_saturated and (_saturated(raw_ref, meta.bit_depth) or ref_info["saturated"]))):
             raise ValueError("selected reference frame is invalid or saturated")
-        reference = _alignment_plane(calibrated_ref, color)
+        reference = alignment_plane(calibrated_ref, color)
         reference_index = chosen_reference
     n_used = 0
     n_rejected = 0
@@ -227,7 +239,7 @@ def _stack_source(
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         if config.local_alignment:
-            state_identity['local_registration_version'] = 1
+            state_identity['local_registration_version'] = 2 if colour_registration else 1
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -259,16 +271,18 @@ def _stack_source(
         candidates = accepted[order[:64]]
         enabled = min(h, w) >= 71 and len(candidates) >= 4
         snapshot_provenance['local_alignment'] = {
-            'version': 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
+            'version': 2 if colour_registration else 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
             'window_px': 65, 'step_px': 32, 'maximum_residual_px': 3,
             'anchor_index': reference_index,
             'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
         }
+        if colour_registration:
+            snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'
         if enabled:
             if resume_from is None:
                 def read_plane(index):
                     calibrated, _ = apply_calibration(source.read_raw(index), calibration)
-                    return _alignment_plane(calibrated, color)
+                    return alignment_plane(calibrated, color)
                 try:
                     reference = build_template(reference, candidates, read_plane,
                                                backend.phase_correlation, config.max_shift_px, should_cancel)
@@ -335,7 +349,7 @@ def _stack_source(
             if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
                 n_rejected += 1
                 continue
-            plane = _alignment_plane(calibrated, color)
+            plane = alignment_plane(calibrated, color)
             if reference is None:
                 reference = plane
                 reference_index = int(index)

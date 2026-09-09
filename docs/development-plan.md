@@ -63,8 +63,20 @@ Bayer layouts, so this is not a universal replacement. Constant colours and
 flat-template/noise controls pass. The [paired Jupiter luminance-proxy pilot](../results/real-data/jupiter-colour-registration-pilot.json)
 is now complete with unchanged green-based stack weights, all 512 frames,
 template candidates and best-frame origin. RMS improves 0.405% and fine-detail
-correlation rises by 0.004536. Next validate the full 3,341-frame application
-output before integrating the candidate into the experimental local option. Preserve global/all-screened
+correlation rises by 0.004536. The [full application validation](../results/real-data/jupiter-colour-registration-full.json)
+is complete and the change is integrated into the existing experimental Bayer
+local option. All 3,341 frames, cached weights, template candidates and anchor
+1947 are preserved. Matched RMS improves a further 0.086% to 0.00529268 and
+fine-detail correlation increases to 0.963964. The integrated output and coverage
+match the full candidate bitwise. Global alignment remains unchanged; added
+processing cost and the weak-red/blue limitation remain. Default regression:
+1,046 passed, 77 skipped; focused CPU/CUDA and new resume controls: 37 passed.
+Next compare cached-quality scalar weighting with equal weighting on the fixed
+all-screened pilot set. Reuse the adopted colour registration, template, anchor
+and raw samples; use the original cached qualities in the weighted arm, not the
+legacy unsmoothed green score. Test whether quality weighting itself helps at
+this noise level before adding further spatial or frequency-dependent weights.
+Keep the all-frame objective and do not add another rejection policy. Preserve global/all-screened
 defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
