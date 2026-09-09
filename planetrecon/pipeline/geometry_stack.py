@@ -149,25 +149,68 @@ def prepare_geometry(
     field_rate = config.field_rate_rad_s
     field_origin = "user"
     angles = None
+    field_sample_shifts = None
     if field_rate is None and config.geometry_mode in ("field", "combined", "saturn"):
         field_origin = "inferred"
         if len(planes) >= 2:
-            angle_planes = planes
+            from scipy.ndimage import shift
+            # Polar angles must be measured about the same planet centre.
+            # Camera drift otherwise appears as rotation (even with no spin).
+            # Resample these estimation proxies only; raw accumulation still
+            # combines the fitted motion and translation in a single warp.
+            angle_planes = []
+            field_sample_shifts = []
+            registered = []
             angle_radius = radius
-            if config.geometry_mode == "saturn":
-                # Globe texture rotates independently. Fit field attitude from
-                # the exposed ring ansae, never from the spinning inner disc.
-                xp, yp = detector_xy_grids(*planes[0].shape)
-                annulus = np.hypot(xp - cx, yp - cy) > radius + 1.0
-                angle_planes = [np.where(annulus, plane, 0.0) for plane in planes]
-                angle_radius = config.ring_outer_radius_px or radius
+            annulus = np.ones(planes[anchor].shape, dtype=bool)
+            if config.geometry_mode == 'saturn':
+                xp, yp = detector_xy_grids(*planes[anchor].shape)
+                annulus = np.hypot(xp-cx, yp-cy) > radius + 1.
+                angle_radius = config.ring_outer_radius_px
+            angular_reference = np.where(annulus, planes[anchor], 0.)
+            from planetrecon.geometry.model import FieldOnlyModel
+            reference_pose = FramePose(0., 0., cx, cy)
+            for sample, plane in enumerate(planes):
+                aligned = plane
+                dx = dy = 0.
+                good = True
+                if sample != anchor:
+                    from planetrecon.geometry.fit import estimate_field_angle as fit_angle
+                    angle = fit_angle(angular_reference, np.where(annulus, plane, 0.),
+                                      cx, cy, angle_radius)['angle_rad']
+                    # Alternate angle and displacement about the configured
+                    # centre, rather than letting translation absorb rotation.
+                    for _ in range(4):
+                        predicted = render_observed(planes[anchor], FieldOnlyModel(),
+                            FramePose(0., angle, cx, cy), reference_pose)
+                        if config.geometry_mode == 'saturn':
+                            from planetrecon.pipeline.ring_align import RingRegistration
+                            displacement = RingRegistration(predicted, cx, cy, radius,
+                                angle_radius).displacement(plane)
+                            if displacement is None:
+                                break
+                            dx, dy = displacement
+                        else:
+                            dx, dy = phase_correlation_shift(predicted, plane)
+                        good = (np.isfinite([dx, dy]).all() and abs(dx) <= config.max_shift_px
+                                and abs(dy) <= config.max_shift_px)
+                        if not good:
+                            break
+                        aligned = shift(plane, (-dy, -dx), order=1, mode='constant',
+                                        cval=float(np.median(plane)), prefilter=False)
+                        angle = fit_angle(angular_reference, np.where(annulus, aligned, 0.),
+                                          cx, cy, angle_radius)['angle_rad']
+                registered.append(good)
+                field_sample_shifts.append([float(dx), float(dy)] if good else None)
+                angle_planes.append(np.where(annulus, aligned, 0.))
             estimates = [estimate_field_angle(angle_planes[anchor], plane, cx, cy, angle_radius)
                          for plane in angle_planes]
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
             angles = unwrap_angles([estimate["angle_rad"] for estimate in estimates])
             dt = np.diff(times[indices])
-            usable = np.array([not estimate["degeneracy"] for estimate in estimates])
+            usable = np.array([good and not estimate["degeneracy"]
+                               for good, estimate in zip(registered, estimates)])
             pairs = usable[:-1] & usable[1:] & (dt > 0)
             if np.any(pairs):
                 field_rate = float(np.median(np.diff(angles)[pairs] / dt[pairs]))
@@ -252,6 +295,7 @@ def prepare_geometry(
         "sample_times_s": [float(t) for t in times[indices]],
         "reference_epoch_s": float(config.reference_epoch_s),
         "estimated_angles_rad": None if angles is None else [float(a) for a in angles],
+        "field_sample_shifts_px": field_sample_shifts,
         "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
         "geometry_mode": config.geometry_mode,
         "rings": None if rings is None else {

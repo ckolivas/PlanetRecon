@@ -356,8 +356,19 @@ retain their settings to preserve resume compatibility. Estimates remain in
 result metadata. The active reconstruction configuration is never changed.
 
 A blank surface rate applies **no surface rotation correction**: an unresolved
-estimate is not a measured zero or an inferred planetary rotation period. Field,
-surface and combined modes retain subpixel translation tracking. They predict
+estimate is not a measured zero or an inferred planetary rotation period.
+
+When the field rate is blank, Field, Combined and Saturn modes alternate rotation
+and translation estimates on their sampled estimation images for four bounded
+refinements. Otherwise camera drift can be mistaken for rotation, or translation
+can absorb genuine rotation. Saturn uses exposed rings to constrain translation,
+keeping a spinning bright globe feature out of that estimate; an unresolved ring
+match retains the configured centre. Samples whose translations exceed
+`max_shift_px` do not contribute to the rate fit; measured timestamps still
+determine its time intervals. The fitted sample translations are recorded in
+geometry diagnostics. This alignment resamples estimation images only.
+
+Field, surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model
 before estimating the remaining translation, then backproject raw observations
 once with the combined transform. The configured centre anchors the reference

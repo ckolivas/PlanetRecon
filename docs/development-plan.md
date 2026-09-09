@@ -140,6 +140,22 @@ repeating texture, shift limits and exact mono/Bayer resume are covered. Field
 rotation and explicit detector moon tracks still keep fixed centres. This does
 not supply missing physical ring geometry or establish real-capture accuracy.
 Default regression after the ring-only extension: 1,103 passed, 78 skipped.
+The next field-rotation investigation identified an upstream bias: automatic
+polar-angle fitting treated camera displacement as rotation. A seven-pixel
+translation produced nearly eight degrees of false rotation in an independent
+continuous-scene control. A simple translation-first trial failed the existing
+fast-rotation and bright-spinning-Saturn controls and is not adopted. Instead,
+four bounded angle/translation refinements align the sampled estimation images
+to the reference centre before polar correlation or Saturn's ring-annulus masking.
+Saturn translations use exposed rings; an unconstrained match retains the
+configured centre. The existing faster-rotation and bright-spot controls pass.
+Out-of-range translations cannot contribute to the rate; raw frames still use
+one final combined warp. In the nine-frame drifting one-degree control, RMS
+falls from 0.03635 to 0.000279, retaining all frames. A static drifting control
+recovers the reference to rounding; mono/Bayer Saturn auto-field estimates match
+the explicitly zero-rate image and coverage exactly. This corrects rate
+estimation; it does not enable Saturn drift tracking with nonzero field rotation.
+Default regression after the joint sample fit: 1,109 passed, 78 skipped.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

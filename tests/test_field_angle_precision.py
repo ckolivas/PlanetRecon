@@ -4,10 +4,12 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
+from scipy.ndimage import shift
 
 from planetrecon.geometry.fit import estimate_field_angle
 from planetrecon.io.source import ArraySource
 from planetrecon.pipeline.baseline import stack_source
+from planetrecon.pipeline.geometry_stack import prepare_geometry
 from planetrecon.reconstruction import ReconstructionConfig
 
 
@@ -61,3 +63,43 @@ def test_featureless_disc_still_leaves_roll_unconstrained():
     estimate = estimate_field_angle(disc, disc, 96, 96, 70)
     assert estimate['angle_rad'] == 0
     assert 'roll_unconstrained' in estimate['degeneracy']
+
+
+@pytest.mark.parametrize('degrees', [0., 1., -1.])
+def test_camera_drift_does_not_become_field_rotation(degrees):
+    offsets = [(0, 0), (4, -6), (-7, 2), (2, 3), (4, -6),
+               (-3, 2), (1, -4), (3, 1), (-7, 2)]
+    frames = np.array([shift(scene(np.deg2rad(degrees)*i/8)[0], (dy, dx),
+                             order=1, mode='constant')
+                       for i, (dx, dy) in enumerate(offsets)])
+    src = ArraySource(frames, bit_depth=32, timestamps=np.arange(9.))
+    cfg = ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+        geometry_mode='field', field_center_x=96, field_center_y=96,
+        equatorial_radius_px=70)
+    corrected = stack_source(src, cfg)
+    # Reproduce the former angle fit on its same three unregistered samples.
+    angles = [estimate_field_angle(frames[0], frames[i], 96, 96, 70)['angle_rad']
+              for i in (0, 4, 8)]
+    old_rate = float(np.median(np.diff(np.unwrap(angles))/4))
+    old = stack_source(src, replace(cfg, field_rate_rad_s=old_rate))
+    reference, radius = scene(0)
+    mask = (radius > 10) & (radius < 60)
+    def error(result):
+        assert result.n_used == 9 and result.n_rejected == 0
+        return np.sqrt(np.mean((result.image[mask]-reference[mask])**2))
+    assert error(corrected) < .02*error(old)
+    assert corrected.provenance['geometry']['field_rate_rad_s'] == pytest.approx(
+        np.deg2rad(degrees)/8, abs=3e-5)
+
+
+def test_out_of_range_estimation_samples_cannot_set_a_rotation_rate():
+    image, _ = scene(0)
+    src = ArraySource(np.array([image, np.roll(image, 5, axis=1),
+                                np.roll(image, 8, axis=1)]),
+                      bit_depth=32, timestamps=np.arange(3.))
+    cfg = ReconstructionConfig(geometry_mode='field', field_center_x=96,
+        field_center_y=96, equatorial_radius_px=70, max_shift_px=2)
+    _, _, diagnostic, warnings = prepare_geometry(src, cfg)
+    assert diagnostic['field_sample_shifts_px'] == [[0., 0.], None, None]
+    assert diagnostic['field_rate_rad_s'] == 0
+    assert any('roll_unconstrained:' in warning for warning in warnings)

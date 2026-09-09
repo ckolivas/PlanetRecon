@@ -66,3 +66,14 @@ def test_moving_layers_keep_fixed_centres_until_registration_handles_visibility(
 def test_static_saturn_uses_existing_camera_shift_limit():
     result = stack_source(capture('mono', [(0, 0), (4, 4)]), settings(max_shift_px=2))
     assert result.n_used == 1 and result.n_rejected == 1
+
+
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_saturn_auto_field_rate_recognizes_camera_drift(colour):
+    src = capture(colour, [(0, 0), (2, -4), (-4, 2), (4, 4), (-2, -2)])
+    inferred = stack_source(src, replace(settings(), field_rate_rad_s=None))
+    known = stack_source(src, settings())
+    assert inferred.provenance['geometry']['field_rate_rad_s'] == 0
+    assert inferred.n_used == known.n_used == 5
+    np.testing.assert_array_equal(inferred.image, known.image)
+    np.testing.assert_array_equal(inferred.coverage, known.coverage)
