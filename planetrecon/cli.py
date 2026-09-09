@@ -156,10 +156,10 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--preprocessing-cache', type=Path, help='read a specific preprocessing cache (default: beside capture)')
     st.add_argument('--no-frame-preselection', action='store_true',
                     help='ignore cached quality/shape decisions for this run')
-    st.add_argument('--stack-percent', type=int, default=100,
-                    help='optional upper quality-range or ranked frame-count percentage (1-100; default all); below 100 requires preprocessing; ignored with --no-frame-preselection')
-    st.add_argument('--local-alignment', action='store_true',
-                    help='experimental normalized local patch alignment; requires preprocessing and no geometry motion model')
+    st.add_argument('--stack-percent', type=int, default=50,
+                    help='upper quality-range or ranked frame-count percentage (1-100; default 50); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
+    st.add_argument('--local-alignment', action=argparse.BooleanOptionalAction, default=None,
+                    help='normalized local patch alignment (default with cached preprocessing and no geometry motion model); --no-local-alignment uses global alignment')
     st.add_argument('--squared-quality-weights', action='store_true',
                     help='experimental squared cached quality weights; requires --local-alignment; retains all selected frames')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
@@ -402,7 +402,8 @@ def main(argv: list[str] | None = None) -> int:
             frame_preselection=not args.no_frame_preselection,
             stack_percent=args.stack_percent,
             frame_selection_mode=args.selection_mode,
-            local_alignment=args.local_alignment,
+            local_alignment=(args.local_alignment if args.local_alignment is not None
+                             else not args.no_frame_preselection and args.geometry == 'none'),
             squared_quality_weights=args.squared_quality_weights,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,

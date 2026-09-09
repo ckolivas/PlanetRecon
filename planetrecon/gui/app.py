@@ -83,7 +83,11 @@ class ExportWorker(QThread):
 
 class MainWindow:
     def __init__(self, path: Path | None = None, config: ReconstructionConfig | None = None):
-        self.config = config or ReconstructionConfig(device='auto')
+        # New interactive jobs use the preferred stacking preset; supplied jobs
+        # and saved engine configurations retain their explicit settings.
+        self.config = config or ReconstructionConfig(
+            device='auto', local_alignment=True, stack_percent=50,
+            frame_selection_mode='quality_range')
         self.path = Path(path) if path else None
         self.job: JobHandle | None = None
         self.last_result = None

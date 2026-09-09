@@ -13,8 +13,9 @@ and cropped-FFT controls also pass with CUDA enabled (19 and 40 tests respective
 
 Application image goal: improve reconstruction using more frames. Optional
 **Quality range** selection at 50% uses the strict capture worst/best midpoint;
-**Frame count** retains the earlier ranked-count option. Both default to 100%,
-using all screened frames. The GUI displays actual counts and reuses the cache.
+**Frame count** retains the earlier ranked-count option. New GUI and CLI runs
+default to local patch alignment and **Quality range, 50%**, following user testing.
+Choose 100% to use all screened frames. The GUI displays actual counts and reuses the cache.
 
 The earlier [unsharpened Jupiter comparison](../results/real-data/jupiter-best-percent.json)
 used frame counts: 50% reduced matched RMS from 0.5310% to 0.5035%, while fine-detail
@@ -32,11 +33,12 @@ rises from 0.9618749 to 0.9636698. No sharpening or extra frame rejection is use
 **Local patch alignment (experimental)** is available in GUI/CLI for Motion model
 none. It uses a cleaner template anchored to the best selected frame, rejects
 ambiguous texture and falls back globally for coordinate folds. The improvement
-is modest and processing is slower; global alignment remains the default.
+is modest and processing is slower; local alignment is now the new-run default
+following the user comparison with the upper 50% quality range.
 
 The [matched local midpoint comparison](../results/real-data/jupiter-local-midpoint.json)
 retains 1,645 frames with the same source, template and anchor. It lowers RMS to
-0.00513695 but reduces fine-detail correlation to 0.961536. Defaults remain unchanged.
+0.00513695 but reduces fine-detail correlation to 0.961536. This historical comparison did not change defaults at the time.
 The [first local-energy weighting hypothesis](../results/real-data/jupiter-local-quality-pilot.json)
 passes stylized spatial-blur controls but fails to show a useful paired Jupiter
 gain: about 0.011% lower RMS and lower fine-detail correlation. It remains a private

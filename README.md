@@ -96,9 +96,8 @@ metadata use; manual seconds override it. Frame cadence remains separate.
 The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
 shows exclusion counts before processing. Runs never repeat the analysis automatically.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
-`stack --no-frame-preselection` ignores cached decisions. After preprocessing,
-**Optional frame selection** defaults to 100%, using all screened frames.
-For comparison, **Quality range** at 50% (`stack --stack-percent 50`) keeps
+`stack --no-frame-preselection` uses global alignment and ignores cached decisions. After preprocessing,
+**Quality range** defaults to 50% for new GUI and CLI runs and keeps
 scores strictly above `(capture best + capture worst) / 2`, then applies screening.
 **Frame count** (`--selection-mode frame_count`) instead selects a ranked
 percentage of screened frames. The GUI shows the actual retained count.
@@ -106,13 +105,14 @@ Neither repeats preprocessing nor adds sharpening. These optional controls help
 evaluate the aim of improving reconstruction using more frames; they do not
 replace that aim with conventional frame rejection.
 
-**Local patch alignment (experimental)** (`stack --local-alignment`) corrects
+**Local patch alignment (experimental)** is enabled by default and corrects
 small seeing distortions using normalized texture patches and an averaged
 registration template anchored to the best selected frame. It preserves the
 selected frame count and adds no sharpening. It requires cached preprocessing
-and Motion model **none**; ambiguous patches keep global alignment. The measured
-Jupiter improvement is small and processing is slower, so global alignment
-remains the default.
+and Motion model **none**; ambiguous patches keep global alignment. This
+combination with the upper 50% quality range gave the best result in user testing. Uncheck local alignment or use `--no-local-alignment` for global alignment;
+set `--stack-percent 100` to retain all screened frames. CLI geometry modes and
+`--no-frame-preselection` disable the implicit local-alignment default.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

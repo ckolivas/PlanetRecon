@@ -7,8 +7,10 @@ beside the capture as `<capture filename>.planetrecon-preprocess.npz`.
 
 The **Use cached preprocessing (quality and shape)** checkbox independently
 controls whether later runs use those decisions. Processing never launches a
-new analysis automatically. At the default 100%, runs without a cache apply only their existing
-validity, saturation and registration checks. A stale or corrupt selected cache
+new analysis automatically. New GUI and CLI runs default to local patch alignment and the upper 50% quality
+range, so run Preprocess before stacking. With local alignment disabled and
+100% selected, runs without a cache apply only their existing validity, saturation
+and registration checks. A stale or corrupt selected cache
 requires another Preprocess action or disabling cache use. Input files are not
 modified.
 
@@ -59,9 +61,9 @@ exposure settings remain explicit overrides.
 
 ## Optional frame selection
 
-The default **100%** uses all screened frames. Selection is an optional comparison
-control, not the reconstruction strategy: the development aim remains to gain
-useful detail from more frames through better alignment and reconstruction.
+New GUI and CLI runs default to **Quality range, 50%**, with local patch alignment.
+This combination gave the best result in user testing. Choose **100%** to use all
+screened frames, and disable local alignment to use global registration.
 
 After Preprocess, choose **Quality range** and **Upper quality range (%)** in
 Capture. At 50%, retain scores strictly above `(best + worst) / 2`.
