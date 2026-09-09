@@ -68,7 +68,19 @@ def estimate_field_angle(
         ref = 0.5 * ref[..., 1] + 0.25 * ref[..., 0] + 0.25 * ref[..., 2]
     if img.ndim == 3:
         img = 0.5 * img[..., 1] + 0.25 * img[..., 0] + 0.25 * img[..., 2]
-    r_max = max(float(radius), 4.0)
+    # Only complete circles have comparable angular support after rotation.
+    # Off-detector padding is not observed dark sky: correlating it would lock
+    # onto the fixed capture boundary instead of the planet's orientation.
+    h, w = ref.shape
+    r_max = min(max(float(radius), 4.0), float(cx)-.5, w-.5-float(cx),
+                float(cy)-.5, h-.5-float(cy))
+    if r_max < 4.0:
+        return {
+            "angle_rad": 0.0, "peak": 0.0,
+            "degeneracy": ("roll_unconstrained",),
+            "texture": laplacian_score(ref),
+            "polar_energy": 0.0, "polar_rel_energy": 0.0,
+        }
     n_theta = 128
     n_r = 24
     theta = np.linspace(0.0, 2.0 * np.pi, n_theta, endpoint=False)

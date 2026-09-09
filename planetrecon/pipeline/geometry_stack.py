@@ -147,6 +147,9 @@ def prepare_geometry(
         if config.field_center_x is None or config.field_center_y is None:
             degeneracy = list(dict.fromkeys([*degeneracy, *disc["degeneracy"]]))
     field_rate = config.field_rate_rad_s
+    h, w = planes[anchor].shape
+    cropped_field = (config.geometry_mode == 'field'
+                     and radius > min(cx-.5, w-.5-cx, cy-.5, h-.5-cy))
     field_origin = "user"
     field_resolved = field_rate is not None
     angles = None
@@ -182,12 +185,21 @@ def prepare_geometry(
                     # Alternate angle and displacement about the configured
                     # centre, rather than letting translation absorb rotation.
                     for _ in range(4):
-                        predicted = render_observed(planes[anchor], FieldOnlyModel(),
-                            FramePose(0., angle, cx, cy), reference_pose)
+                        predicted = (None if cropped_field else
+                            render_observed(planes[anchor], FieldOnlyModel(),
+                                FramePose(0., angle, cx, cy), reference_pose))
                         if config.geometry_mode == 'saturn':
                             from planetrecon.pipeline.ring_align import RingRegistration
                             displacement = RingRegistration(predicted, cx, cy, radius,
                                 angle_radius).displacement(plane)
+                            if displacement is None:
+                                good = False
+                                break
+                            dx, dy = displacement
+                        elif cropped_field:
+                            from planetrecon.pipeline.field_align import field_displacement
+                            displacement = field_displacement(planes[anchor], plane,
+                                FramePose(0., angle, cx, cy), reference_pose, radius)
                             if displacement is None:
                                 good = False
                                 break
@@ -487,7 +499,12 @@ def stack_source_geometry(
             model.globe.equatorial_radius_px, model.rings.outer_radius_px)
     track_surface = (isinstance(model, OblateGlobeModel)
                      and diagnostics['surface_rate_rad_s'] != 0)
-    if track_surface:
+    track_field = (config.geometry_mode == 'field' and not static_attitude
+                   and diagnostics['radius'] > min(anchor_pose.cx-.5, w-.5-anchor_pose.cx,
+                       anchor_pose.cy-.5, h-.5-anchor_pose.cy))
+    if track_field:
+        diagnostics['registration'] = 'shared observed field; unresolved tracking stops the run'
+    elif track_surface:
         diagnostics['registration'] = 'shared visible surface; unresolved tracking stops the run'
     elif track_translation:
         diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
@@ -508,6 +525,11 @@ def stack_source_geometry(
                             if diagnostics['field_rate_rad_s'] == 0 else
                             ring_registration.displacement_at_pose(plane, pose, anchor_pose))
             feature = 'exposed rings'
+        elif track_field:
+            from planetrecon.pipeline.field_align import field_displacement
+            displacement = field_displacement(anchor_plane, plane, pose, anchor_pose,
+                                              diagnostics['radius'])
+            feature = 'shared observed field'
         else:
             from planetrecon.pipeline.globe_align import surface_displacement
             displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
@@ -522,7 +544,7 @@ def stack_source_geometry(
     # preview or saving sums. Other frames are checked as they are read.
     sampled_displacements = ({index: required_displacement(index, plane)
                               for index, plane in zip(sample_idx, sample_planes)}
-                             if ring_registration is not None or track_surface else {})
+                             if ring_registration is not None or track_surface or track_field else {})
     xg, yg = detector_xy_grids(h, w)
     target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
                       if isinstance(model, SaturnSceneModel) else None)
@@ -629,7 +651,7 @@ def stack_source_geometry(
                 continue
             plane = _alignment_plane(calibrated, color)
             pose = poses[int(index)]
-            if ring_registration is not None or track_surface:
+            if ring_registration is not None or track_surface or track_field:
                 dx, dy = (sampled_displacements[int(index)] if int(index) in sampled_displacements
                           else required_displacement(int(index), plane))
             elif track_translation:

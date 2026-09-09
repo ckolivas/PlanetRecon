@@ -382,6 +382,13 @@ cancel through a radial average. Each ring's mean brightness is removed, so a
 radial brightness profile alone does not supply rotation information. This does
 not resolve ambiguity between globe spin and field rotation or supply missing
 physical geometry.
+Only complete circles inside the observed detector are used for polar fitting.
+Off-detector padding cannot provide angular texture or authorize a motion run;
+an insufficient observed interior leaves the angle unresolved. For cropped discs
+in Field mode, camera drift is also fitted on shared observed interior pixels,
+excluding the rotated detector boundary, the sampled limb and their complete
+smoothing footprints. Unresolved matching stops the run. Explicit zero field
+rates retain ordinary static translation tracking.
 
 Field, surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model

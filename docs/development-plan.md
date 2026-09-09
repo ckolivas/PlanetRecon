@@ -220,6 +220,27 @@ solution to spin/field ambiguity. Fitted diagnostics and poses continue to bind
 checkpoint identity. Validation: 78 focused tests and 1,170 default regression
 tests pass, with 78 skips; private logs are in `out/radial-field/`.
 
+The cropped-field follow-up removes artificial rotation information from detector
+padding. Previously even a uniform cropped frame supplied an apparently resolved
+angle, and a nine-frame four-degree scene yielded only 0.00026791 rad/s versus
+the known 0.00872665. Polar fitting now uses complete observed circles. In cropped
+Field-mode runs, translation also uses shared observed interior texture, excluding
+the rotated boundary and the sampled limb with their full smoothing footprints.
+Restricting only the polar fit still left a direction-dependent drift bias;
+retaining the interpolated limb left a 0.21-pixel fractional-shift error. Those
+intermediate attempts are retained in `out/field-support/`. The final maximum
+coordinate error is 0.0053 pixels in the six signed integer/fractional controls.
+Positive four-degree mono stack RMS falls from 0.01750330 to 0.00034361, close to
+the known-rate result 0.00034121. The negative-direction result is 0.00034714;
+both retain all nine frames. Mono/RGB/all Bayer layouts improve against zero
+correction and stay within 10% of their own known-rate error, retaining the
+separate CFA interpolation floor. Flat unsupported estimates refuse to run;
+explicit zero remains valid. Full footprint, nonzero-anchor and exact mono/Bayer
+resume controls pass. This remains synthetic qualification, not a real-capture
+motion accuracy claim. Updated registration diagnostics bind checkpoint identity.
+Validation: 107 focused tests pass, followed by 1,200 default regression tests
+with 78 skips (including the additional independent footprint control).
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs
