@@ -563,7 +563,7 @@ def stack_source_geometry(
             colour_anchor = None
             colour_rings = None
             if bayer and (track_surface or track_field or ring_registration is not None):
-                diagnostics['colour_tracking_retry'] = 'unresolved green drift retries RGB luminance'
+                diagnostics['colour_tracking_retry'] = 'sampled and later unresolved green drift retry RGB luminance'
             def required_displacement(index, plane, frame=None):
                 nonlocal colour_anchor, colour_rings
                 if index == anchor_index:
@@ -608,8 +608,8 @@ def stack_source_geometry(
 
             # Diagnose the already-read estimation frames before emitting a reconstruction
             # preview or saving sums. Other frames are checked as they are read.
-            sampled_displacements = ({index: required_displacement(index, plane)
-                                      for index, plane in zip(sample_idx, sample_planes)}
+            sampled_displacements = ({index: required_displacement(index, plane, frame)
+                                      for index, plane, frame in zip(sample_idx, sample_planes, sample_frames)}
                                      if ring_registration is not None or track_surface or track_field else {})
             break
         except _UnresolvedMotion:

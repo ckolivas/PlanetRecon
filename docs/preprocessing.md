@@ -427,9 +427,11 @@ the interpolated limb, including their full smoothing footprints, cannot set a
 camera displacement. The reference globe also needs a complete observed pixel
 neighbourhood before its support is warped: foreshortening can otherwise stretch
 an interpolated reference limb into apparently useful interior texture.
-For Bayer captures, an unresolved initial geometry or tracking preflight retries
-with RGB luminance. A later frame whose green tracking fails can likewise retry
-using observed colour detail against the same reference frame. This lets red or
+For Bayer captures, unresolved geometry estimation retries with RGB luminance.
+Each unresolved green tracking match retries observed colour detail against the
+same reference frame, both during preflight and in later processing. A failed
+sample match therefore does not change the tracking proxy for other frames.
+This lets red or
 blue structure constrain motion when green is flat. Both attempts use the same
 support, peak and ambiguity checks; failure in every colour still stops the run.
 The colour proxy is bilinear RGB luminance for estimation only; original CFA

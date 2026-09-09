@@ -84,20 +84,29 @@ def test_flat_globe_cannot_track_a_stretched_reference_limb(pattern, t):
         FramePose(t, 0., 64, 64), FramePose(0., 0., 64, 64)) is None
 
 
-def test_later_green_failure_can_track_observed_colour(monkeypatch):
-    frames = np.array([sphere(t, dx=dx, dy=dy) for t, (dx, dy) in enumerate(OFFSETS)])
-    labels = cfa_labels(128, 128, 'RGGB')
-    frames[1] = np.where(labels == 'G', np.where(frames[1] > 0, 100., 0.), frames[1])
-    src = ArraySource(frames, color_mode='RGGB', bit_depth=32, timestamps=np.arange(7.))
-    result = stack_source(src, config())
+@pytest.mark.parametrize('index', [1, 3])
+@pytest.mark.parametrize('pattern', ['RGGB', 'GRBG', 'GBRG', 'BGGR'])
+@pytest.mark.parametrize('field_rate', [0., .04])
+def test_sampled_and_later_green_failure_track_colour_per_frame(monkeypatch, index, pattern, field_rate):
+    frames = np.array([sphere(t, dx=dx, dy=dy, field_rate=field_rate)
+                       for t, (dx, dy) in enumerate(OFFSETS)])
+    labels = cfa_labels(128, 128, pattern)
+    frames[index] = np.where(labels == 'G', np.where(frames[index] > 0, 100., 0.), frames[index])
+    src = ArraySource(frames, color_mode=pattern, bit_depth=32, timestamps=np.arange(7.))
+    cfg = config(field_rate=field_rate)
+    result = stack_source(src, cfg)
     assert 'registration_proxy' not in result.provenance['geometry']
     monkeypatch.setattr('planetrecon.pipeline.globe_align.surface_displacement',
         lambda reference, frame, model, pose, anchor: OFFSETS[round(pose.t_s)])
-    oracle = stack_source(src, config())
+    oracle = stack_source(src, cfg)
     assert result.n_used == oracle.n_used == 7
     y, x = np.indices((128, 128))
     mask = (x-63.5)**2+(y-63.5)**2 < 25**2
-    assert np.sqrt(np.mean((result.image[mask]-oracle.image[mask])**2)) < .15
+    error = np.sqrt(np.mean((result.image[mask]-oracle.image[mask])**2))
+    assert error < .15
+    if index == 3 and pattern == 'RGGB':
+        # Previously switching every frame to RGB gave 0.02603 / 0.03158.
+        assert error < (.030 if field_rate else .024)
 
 
 def test_colour_retry_resume_and_reference_support_identity(tmp_path):
@@ -127,10 +136,17 @@ def test_colour_retry_resume_and_reference_support_identity(tmp_path):
         np.testing.assert_array_equal(getattr(continued, key), getattr(whole, key))
     with np.load(state, allow_pickle=False) as data:
         arrays = {name: data[name] for name in data.files}
-    metadata = json.loads(str(arrays['metadata']))
-    assert metadata['identity']['geometry'].pop('reference_support')
-    arrays['metadata'] = json.dumps(metadata)
-    np.savez(state, **arrays)
-    with SERSource(path) as src:
-        with pytest.raises(ValueError, match='identity/configuration mismatch'):
-            stack_source(src, cfg, resume_from=state)
+    metadata_text = str(arrays['metadata'])
+    for previous_policy in ('reference_support', 'colour_tracking_retry'):
+        metadata = json.loads(metadata_text)
+        geometry = metadata['identity']['geometry']
+        if previous_policy == 'reference_support':
+            assert geometry.pop(previous_policy)
+        else:
+            assert geometry[previous_policy] == 'sampled and later unresolved green drift retry RGB luminance'
+            geometry[previous_policy] = 'unresolved green drift retries RGB luminance'
+        arrays['metadata'] = json.dumps(metadata)
+        np.savez(state, **arrays)
+        with SERSource(path) as src:
+            with pytest.raises(ValueError, match='identity/configuration mismatch'):
+                stack_source(src, cfg, resume_from=state)

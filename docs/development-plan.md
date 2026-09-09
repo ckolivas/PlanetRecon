@@ -345,6 +345,23 @@ Validation: 24 of 30 selected new controls fail with the previous implementation
 all 33 final new controls and 51 focused operator/colour checks pass. The final
 default regression passes 1,316 tests with 78 skips.
 
+The colour-preflight follow-up makes sampled and later tracking use the same
+per-frame retry. Previously a green failure among the preflight samples switched
+every frame to RGB, while the same failure later changed only that frame's match.
+Preflight now receives each calibrated frame so it can retry colour locally;
+unresolved geometry estimation still has its separate RGB retry. Resolved green
+matches, quality weights, support/ambiguity checks and all selected frames are
+preserved. The changed preflight policy binds checkpoint identity.
+In two seven-frame independent drifting-globe controls, error versus supplied
+camera shifts improves from 0.0260311 to 0.0227109 (surface) and 0.0315781 to
+0.0281001 (combined motion), retaining all seven frames. These synthetic gains
+are not real-capture qualification. Controls cover both preflight and later green
+failures in all four Bayer layouts, exact resume and rejection of the old policy.
+Evidence is retained in `out/colour-preflight/`. Eight sampled-frame cases fail
+under the old policy; the new policy passes 91 focused checks and the complete
+1,331-test default regression with 78 skips, including both old-policy and
+reference-support checkpoint rejection.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs
