@@ -170,6 +170,29 @@ keep fixed centres; physical geometry and real-capture motion accuracy remain
 separate requirements. Unchanged zero-field checkpoint identities are preserved;
 older fixed-centre field-motion sums cannot be mixed with the new registration.
 Default regression after field tracking: 1,132 passed, 78 skipped.
+The globe-spin follow-up found the same kind of visibility bias outside Saturn:
+zero-filled newly visible longitudes pulled whole-image camera registration by
+up to 2.4 pixels in a stationary spinning-globe control. Surface/combined modes
+with nonzero spin now use normalized matching on shared visible interior texture.
+Both missing longitudes and the interpolated limb are excluded with their full
+15-by-15 smoothing footprints. A first mask retaining the limb still biased
+combined field/spin displacement by up to 0.18 pixels; it is not adopted.
+Independent analytically sampled sphere controls cover both spin signs, field
+rotation, integer/fractional drift, mono/RGB/all four Bayer layouts and noise.
+The final maximum coordinate error is 0.071 pixels across the signed drift controls.
+In the seven-frame noisy mono control, unsharpened RMS falls from 3.48881 to
+0.21657; with combined field rotation it falls from 3.62800 to 0.22973. Both retain
+all seven frames. Newly visible brightness changes cannot pull the shared surface;
+nonzero anchors, shift limits and exact geometry resume pass. Unconstrained
+surface matches retain the configured centre with a warning. Zero-spin and Saturn
+tracking preserve their existing behavior; the normalized correlation is shared
+without changing Saturn's masks or gates. Changed surface registration diagnostics
+bind checkpoint identities, preventing reuse of older whole-image surface sums.
+This demonstrates removal of a measured bias, not real-capture motion qualification
+or automatic recovery of missing physical geometry. Private bounded logs and the
+rejected nearby-sky candidate are retained in `out/globe-support/`.
+Default regression after shared-surface tracking: 1,153 passed, 78 skipped;
+85 focused globe/ring/tracking/resume controls pass.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts

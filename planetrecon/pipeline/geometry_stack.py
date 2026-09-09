@@ -13,7 +13,7 @@ from planetrecon.calibration import Calibration, apply_calibration
 from planetrecon.detector import bilinear_demosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
 from planetrecon.geometry.coords import detector_xy_grids
 from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
-from planetrecon.geometry.model import SceneModel, select_scene_model, render_observed
+from planetrecon.geometry.model import SceneModel, OblateGlobeModel, select_scene_model, render_observed
 from planetrecon.geometry.pose import FramePose, build_frame_poses, globe_for_config, source_times_s, unwrap_angles
 from planetrecon.geometry.rings import RingParams
 from planetrecon.geometry.saturn import LAYER_GLOBE, LAYER_FAR_RING, LAYER_NEAR_RING, MoonTrack, SaturnSceneModel, fit_saturn_geometry
@@ -465,7 +465,11 @@ def stack_source_geometry(
         from planetrecon.pipeline.ring_align import RingRegistration
         ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
             model.globe.equatorial_radius_px, model.rings.outer_radius_px)
-    if track_translation:
+    track_surface = (isinstance(model, OblateGlobeModel)
+                     and diagnostics['surface_rate_rad_s'] != 0)
+    if track_surface:
+        diagnostics['registration'] = 'shared visible surface; unconstrained matches keep fixed centre'
+    elif track_translation:
         diagnostics['registration'] = 'model-predicted reference plus Gaussian 1.5px subpixel translation'
     elif ring_registration is not None:
         diagnostics['registration'] = (
@@ -600,9 +604,20 @@ def stack_source_geometry(
             if track_translation:
                 # Predict the anchor at this frame's time before fitting camera
                 # translation, so registration does not absorb the chosen spin.
-                predicted = (anchor_plane if static_attitude or int(index) == anchor_index else
-                             render_observed(anchor_plane, model, pose, anchor_pose))
-                dx, dy = phase_correlation_shift(predicted, plane)
+                if track_surface and int(index) != anchor_index:
+                    from planetrecon.pipeline.globe_align import surface_displacement
+                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
+                    if displacement is None:
+                        warning = ('surface_registration_unconstrained: shared visible surface cannot '
+                                   'constrain camera drift; retaining configured centre')
+                        if warning not in warnings:
+                            warnings.append(warning)
+                        displacement = (0., 0.)
+                    dx, dy = displacement
+                else:
+                    predicted = (anchor_plane if static_attitude or int(index) == anchor_index else
+                                 render_observed(anchor_plane, model, pose, anchor_pose))
+                    dx, dy = phase_correlation_shift(predicted, plane)
                 if (not np.isfinite([dx, dy]).all() or abs(dx) > config.max_shift_px
                         or abs(dy) > config.max_shift_px):
                     n_rejected += 1

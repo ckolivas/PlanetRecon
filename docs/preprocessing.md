@@ -371,7 +371,13 @@ geometry diagnostics. This alignment resamples estimation images only.
 Field, surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model
 before estimating the remaining translation, then backproject raw observations
-once with the combined transform. The configured centre anchors the reference
+once with the combined transform. Surface and combined modes with nonzero globe
+spin match only shared visible interior texture. Newly exposed longitudes and
+the interpolated limb, including their full smoothing footprints, cannot set a
+camera displacement. Weak or ambiguous surface matches retain the configured
+centre with a warning. This requires resolvable shared texture and correct supplied
+geometry; it does not determine an unknown rotation rate. Zero-spin tracking
+keeps its existing whole-image matcher. The configured centre anchors the reference
 frame; `max_shift_px` rejects excessive tracking displacement. Saturn without
 moon tracks also follows camera drift using resolved exposed rings. Static
 geometry uses the whole reference; globe-spin correction instead matches the
