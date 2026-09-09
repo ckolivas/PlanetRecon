@@ -45,19 +45,30 @@ class MaskedRegistration:
         competitors[max(0, py-3):py+4, max(0, px-3):px+4] = -np.inf
         if competitors.max() >= peak - .02:
             return None
-        offsets = []
-        for axis, p in enumerate((py, px)):
-            if p == 0 or p == scores.shape[axis]-1:
-                return None
-            left, right = (scores[[py-1, py+1], px] if axis == 0 else
-                           scores[py, [px-1, px+1]])
-            curvature = left - 2*peak + right
-            if not np.isfinite(curvature) or curvature >= 0:
-                return None
-            # A perfect normalized match is already an exact solution.
-            delta = (0. if peak >= 1-1e-12 else
-                     float(np.clip(.5*(left-right)/curvature, -.5, .5)))
-            offsets.append(p - (self.shape[axis]-1) + delta)
+        if py == 0 or px == 0 or py == scores.shape[0]-1 or px == scores.shape[1]-1:
+            return None
+        neighbourhood = scores[py-1:py+2, px-1:px+2]
+        if not np.isfinite(neighbourhood).all():
+            return None
+        # Tilted features couple horizontal and vertical offsets. Independent
+        # axis fits find two different slices of the peak, not its joint centre.
+        gy = .5*(neighbourhood[2, 1]-neighbourhood[0, 1])
+        gx = .5*(neighbourhood[1, 2]-neighbourhood[1, 0])
+        hyy = neighbourhood[0, 1]-2*peak+neighbourhood[2, 1]
+        hxx = neighbourhood[1, 0]-2*peak+neighbourhood[1, 2]
+        hxy = .25*(neighbourhood[2, 2]-neighbourhood[2, 0]
+                    -neighbourhood[0, 2]+neighbourhood[0, 0])
+        hessian = np.array([[hyy, hxy], [hxy, hxx]])
+        if np.linalg.eigvalsh(hessian)[-1] >= 0:
+            return None
+        # A perfect normalized match is already an exact solution.
+        delta = (np.zeros(2) if peak >= 1-1e-12 else
+                 np.linalg.solve(-hessian, [gy, gx]))
+        # A tilted peak's centre can be beyond half a pixel from the best grid
+        # point, but must remain inside the observed three-by-three neighbourhood.
+        if not np.isfinite(delta).all() or np.any(np.abs(delta) > 1.):
+            return None
+        offsets = np.array([py, px]) - (np.array(self.shape)-1) + delta
         if min_improvement > 0:
             y, x = np.nonzero(self.mask)
             moved = map_coordinates(proxy, [y+offsets[0], x+offsets[1]],

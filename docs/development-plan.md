@@ -258,6 +258,24 @@ ambiguous motion. Private failures, the grid-only candidate and final metrics ar
 retained in `out/field-angular-sampling/`. Validation: 96 focused controls and
 1,220 default regression tests pass, with 78 skips.
 
+The shared-support drift follow-up fixes subpixel bias from tilted features.
+Independent axis peak fits ignored the cross-axis curvature, producing errors
+up to 0.43 pixels in analytically sampled tilted-Gaussian controls. Surface, ring
+and cropped-field matchers now solve a joint two-dimensional quadratic peak.
+It must have negative curvature in every direction and remain inside the fully
+observed three-by-three neighbourhood; ambiguity and correlation guards remain.
+Perfect integer matches retain exact coordinates. The maximum coordinate error
+in the 15 signed tilt/offset controls is 0.042 pixels. In a nine-frame rotating
+control, unsharpened RMS improves from 0.00499265 to 0.00419580 with all frames
+retained; signed image controls also match the independently supplied camera
+offsets. Fourteen of the original 19 new controls failed with the old axis fit.
+The peak method now binds checkpoint identity, with an explicit old-checkpoint
+refusal control; existing exact resume tests pass. These are synthetic motion
+improvements, not real-capture qualification. Private logs are in
+`out/coupled-drift/`. Validation: 94 existing motion/resume controls and 19 new
+drift/image controls passed, followed by 1,240 default regression tests with 78
+skips, including the additional checkpoint-identity control.
+
 ## Motion execution requirement
 
 Requested motion compensation must be performable. Surface/Combined/Saturn runs

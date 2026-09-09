@@ -516,6 +516,9 @@ def stack_source_geometry(
     else:
         diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
                                        else 'fixed centre (Saturn moving layers)')
+    if track_field or track_surface or ring_registration is not None:
+        # Part of resume identity: older sums used independent axis peak fits.
+        diagnostics['registration_peak'] = 'joint two-dimensional quadratic'
     def required_displacement(index, plane):
         if index == anchor_index:
             return 0., 0.

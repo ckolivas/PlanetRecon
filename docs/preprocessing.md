@@ -393,6 +393,13 @@ in Field mode, camera drift is also fitted on shared observed interior pixels,
 excluding the rotated detector boundary, the sampled limb and their complete
 smoothing footprints. Unresolved matching stops the run. Explicit zero field
 rates retain ordinary static translation tracking.
+Shared-surface, exposed-ring and cropped-field matchers refine translation with
+a joint two-dimensional quadratic peak fit. Tilted features couple the horizontal
+and vertical offsets, so fitting those axes separately can bias both coordinates.
+The fitted peak must be a supported local maximum inside the observed three-by-three
+neighbourhood; flat, ambiguous or unsupported matches still stop the run. Exact
+integer matches remain exact. The changed peak method is recorded in geometry
+checkpoint identity, preventing continuation of sums made with the previous fit.
 
 Field, surface and combined modes retain subpixel translation tracking. They predict
 the registration reference at each frame's time with the selected motion model
