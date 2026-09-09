@@ -1,0 +1,83 @@
+{
+  "scope": "One matched development comparison; reference is not ground truth.",
+  "cached_quality": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.293302084762608,
+      0.14872640322211617
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.26896892186875,
+        8.811430394474007
+      ],
+      [
+        233.31740188773,
+        7.114334055829657
+      ],
+      [
+        232.98172285957264,
+        45.424341792352685
+      ]
+    ],
+    "relative_rmse": 0.005583308948465089,
+    "highpass_correlation_sigma3": 0.8950184142726887,
+    "registration_method": "Fixed independent RGB luminance template, production local patch matcher",
+    "mode": "cached-quality",
+    "n_template": 64,
+    "reference_index": 1638,
+    "application_source_hash": "ef9a29dc3fd9a7e33e8f6009fc67dd672050510c4fb8138e2b2827870ae2f3ac",
+    "paired_wall_s": 70.14723732499988,
+    "script_sha256": "bad171ad1885d5d2b57fd14a185faf7bc8adadb6f3d5f31733e9a4ce68a4c04b"
+  },
+  "equal": {
+    "role": "development comparison; reference is not ground truth",
+    "reference_precision": "16-bit RGB",
+    "n_used": 512,
+    "n_rejected": 0,
+    "interior_pixels": 94012,
+    "registration_xy_px": [
+      -24.293222875894198,
+      0.14768753611302138
+    ],
+    "per_channel_gain_offset": [
+      [
+        233.26259457587997,
+        13.295520197628981
+      ],
+      [
+        233.32740252480951,
+        10.054949434992189
+      ],
+      [
+        233.0103150947022,
+        45.8312334438107
+      ]
+    ],
+    "relative_rmse": 0.005669462712528891,
+    "highpass_correlation_sigma3": 0.8924490327204343,
+    "registration_method": "Fixed independent RGB luminance template, production local patch matcher",
+    "mode": "equal",
+    "n_template": 64,
+    "reference_index": 1638,
+    "application_source_hash": "ef9a29dc3fd9a7e33e8f6009fc67dd672050510c4fb8138e2b2827870ae2f3ac",
+    "paired_wall_s": 70.79978165200009,
+    "script_sha256": "bad171ad1885d5d2b57fd14a185faf7bc8adadb6f3d5f31733e9a4ce68a4c04b"
+  },
+  "quality_over_equal_rmse_percent": -1.519610736188659,
+  "quality_minus_equal_detail_correlation": 0.0025693815522543906,
+  "protocol": "512 previously screened frames, same independent 64-frame RGB template and best-frame anchor 1638. Each raw CFA backprojection computed once and shared by both accumulators, guaranteeing identical motion and samples. The weighted arm uses original full-capture cached screening scores, not unsmoothed green scores. Constant-colour weighted and equal results match independently calculated means within 1e-12. Identical output validity. No sharpening or further rejection.",
+  "scalar_weights": {
+    "minimum": 0.9825446552363926,
+    "maximum": 1.4410171603087376,
+    "nominal_effective_frame_count": 508.90598800657546,
+    "actual_frames": 512
+  },
+  "decision": "Retain cached quality weighting: it improves both metrics relative to equal weighting. Next test one squared-quality candidate, retaining every screened frame and first checking known-blur/noise controls; no exponent sweep or default rejection change.",
+  "private_artifacts": "out/frame-weighting/",
+  "script_sha256": "bad171ad1885d5d2b57fd14a185faf7bc8adadb6f3d5f31733e9a4ce68a4c04b"
+}

@@ -71,13 +71,14 @@ fine-detail correlation increases to 0.963964. The integrated output and coverag
 match the full candidate bitwise. Global alignment remains unchanged; added
 processing cost and the weak-red/blue limitation remain. Default regression:
 1,046 passed, 77 skipped; focused CPU/CUDA and new resume controls: 37 passed.
-Next compare cached-quality scalar weighting with equal weighting on the fixed
-all-screened pilot set. Reuse the adopted colour registration, template, anchor
-and raw samples; use the original cached qualities in the weighted arm, not the
-legacy unsmoothed green score. Test whether quality weighting itself helps at
-this noise level before adding further spatial or frequency-dependent weights.
-Keep the all-frame objective and do not add another rejection policy. Preserve global/all-screened
-defaults, ambiguity/fold guards and no sharpening.
+The [matched scalar-weight comparison](../results/real-data/jupiter-scalar-weighting.json)
+is complete: cached quality weighting beats equal weighting by about 1.5% in RMS
+and improves fine-detail correlation. Both arms share every raw projection,
+template and frame. Retain cached quality weighting. Next test one squared-quality
+candidate after known-blur/noise controls, keeping all screened frames and the
+same registration/template/anchor. Do not sweep powers or introduce another
+rejection policy; require both paired image metrics to improve before a full run.
+Preserve global/all-screened defaults, ambiguity/fold guards and no sharpening.
 These native green-proxy experiments do not change the separate area-mean
 luminance quality score used in preprocessing. Do not assume noise caused the
 real-image regression without evidence. Retain common colour weights, frame counts
