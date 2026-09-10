@@ -4,6 +4,14 @@ Updated 2026-09-10 following the user's review of `interpolatedS.png`.
 This is the current direction and supersedes earlier interpolation promotion
 and next-step instructions in historical development logs and reports.
 
+## Product scope
+
+PlanetRecon is a stacking application. Further work must improve reconstruction,
+registration, frame selection or stacking execution. Do not add image-editing or
+post-processing workflows. Sharpening and other finishing belong in external tools.
+Any future RGB alignment must be qualified as part of the stacking process, using
+capture-derived information; reference-fitted post-stack shifts are not a solution.
+
 ## Working application
 
 Use local patch alignment, Motion None, original linear Emil quality weights,
@@ -83,7 +91,7 @@ for this candidate. Future output changes must beat the ordinary local stack in
 practical visual assessment, including user-selected sharpening that reveals
 structured artifacts, as well as numerical comparisons. Interior reference-error
 metrics alone are insufficient; inspect the limb, colour and fine texture too.
-Keep sharpening an explicitly user-selected post-processing step.
+Keep sharpening in external, user-selected post-processing tools.
 
 The periodic continuation automation remains paused. This document does not
 schedule background work.
@@ -98,29 +106,14 @@ remains unchanged; do not expand or tune this candidate. The evidence is
 `results/real-data/local-confidence.json`, with private files in
 `out/local-confidence`.
 
-## Completed: explicit RGB alignment and saved-result inspection
+## Removed: post-stack RGB alignment
 
-The GUI now opens saved scientific NPZ results and offers manual red/blue offsets
-relative to green. Apply previews always start from the original result; Reset,
-Cancel and fresh-run behavior are covered by controls. Export includes the offsets
-and transported coverage. Missing edge support remains invalid, and no adjustment
-or sharpening is automatic. The CLI `align-rgb` command provides the same operation
-on a saved original NPZ, writing to a new directory. This is an explicit colour
-adjustment tool, not another reconstruction interpolator or an automatic dispersion
-measurement. Fractional bilinear translation can slightly soften the moved channels.
-
-Same-colour translation fits to the conventional Jupiter reference suggest trial
-content offsets R=(-0.15,+0.66) and B=(+0.33,-0.66) pixels with green fixed. These are
-reference-guided development settings, not general defaults or independent accuracy
-evidence. The trial was produced from the existing full result without restacking
-or sharpening: `out/rgb-alignment/reference-guided-trial.tif`. The diagnostic and
-its source/output hashes are committed in `results/real-data/rgb-alignment.json`.
-Assess that existing trial before claiming a useful improvement or adding automatic
-colour registration. No further capture run is needed for this assessment.
-
-Validation: 116 focused tests passed (five opt-in tests skipped), covering channel
-isolation, constant intensities, fractional support holes, reset/cancel, repeated
-previews, new runs, snapshots and exports. GUI rendering also verifies Fit viewing
-after loading a result or changing the alignment label; canvas resizing now queues
-a redraw so the image is not clipped by stale layout dimensions. Screenshots are
-retained privately in `out/rgb-alignment`.
+The manual RGB dialog, saved-result editing entry point, CLI command and processing
+utility were removed after the user clarified the stacking-only product scope.
+The independent Fit-view resize correction remains for the stacking preview.
+Private trial images under `out/rgb-alignment` remain available as historical
+evidence; their reference-guided offsets are not accepted stacking parameters.
+Do not extend this post-processing workflow or infer automatic stacking offsets
+from the conventional reference.
+Removal validation passed 124 stacking, GUI, preview and export tests, with 16
+opt-in tests skipped. Existing captures and private comparison outputs are retained.

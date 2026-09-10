@@ -34,7 +34,7 @@
   },
   "trial_path": "out/rgb-alignment/reference-guided-trial.tif",
   "trial_sha256": "c847d10d03e289ca85b8d44867c7296d7b3f1d49a06c5be07f09e11619890fe4",
-  "acceptance": "User assessment pending; application applies no offsets unless explicitly chosen.",
+  "acceptance": "Rejected as outside product scope: PlanetRecon remains a stacking application. Post-stack RGB tool removed; any future RGB alignment must be part of stacking and independently qualified.",
   "validation": {
     "focused_tests_passed": 116,
     "opt_in_tests_skipped": 5,

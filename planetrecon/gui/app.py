@@ -91,8 +91,6 @@ class MainWindow:
         self.path = Path(path) if path else None
         self.job: JobHandle | None = None
         self.last_result = None
-        self.unaligned_result = None
-        self.rgb_offsets = ((0., 0.), (0., 0.))
         self.preview = None
         self.input_image = None
         self.input_metadata = {}
@@ -132,14 +130,12 @@ class MainWindow:
         layout = QVBoxLayout(root)
         buttons = QHBoxLayout()
         self.open_btn = QPushButton('Open capture…')
-        self.open_result_btn = QPushButton('Open result…')
-        self.open_result_btn.setToolTip('Load a saved scientific result NPZ for inspection, manual RGB alignment or export without processing its capture again. Capture settings stay unchanged; use the original unadjusted result to align RGB.')
         self.inspect_btn = QPushButton('Inspect input')
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
         self.cancel_btn = QPushButton('Cancel processing')
-        for b, slot in ((self.open_btn, self._choose), (self.open_result_btn, self._choose_result), (self.inspect_btn, self._inspect),
+        for b, slot in ((self.open_btn, self._choose), (self.inspect_btn, self._inspect),
                         (self.preprocess_btn, self._preprocess),
                         (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
@@ -189,16 +185,12 @@ class MainWindow:
         for widget in (self.view, self.channel, self.zoom):
             toolbar.addWidget(widget)
             widget.currentIndexChanged.connect(self._draw)
-        self.align_rgb_btn = QPushButton('Align RGB…')
-        self.align_rgb_btn.setToolTip('Manually move red and blue relative to green after stacking. Preview, reset or cancel without restacking; the original result is preserved. No automatic alignment or sharpening.')
-        self.align_rgb_btn.clicked.connect(self._align_rgb)
-        toolbar.addWidget(self.align_rgb_btn)
         body.addLayout(toolbar)
         class ResultCanvas(QScrollArea):
             def resizeEvent(self, event):
                 super().resizeEvent(event)
-                # Layout changes (loaded metadata or an alignment label) can
-                # resize the canvas without resizing the main window.
+                # Result metadata can resize the canvas without resizing the
+                # main window. Fit against the settled layout dimensions.
                 owner.redraw_timer.start()
         self.canvas = ResultCanvas()
         self.canvas.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -306,7 +298,6 @@ class MainWindow:
     def _buttons(self):
         busy = self.job is not None
         self.open_btn.setEnabled(not busy and not self.closing)
-        self.open_result_btn.setEnabled(not busy and not self.closing and self.export_worker is None)
         self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
@@ -316,46 +307,6 @@ class MainWindow:
         self.cancel_btn.setEnabled(busy and self.cancel_started is None)
         self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing)
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
-        self.align_rgb_btn.setEnabled(not busy and not self.closing and self.export_worker is None
-            and self.last_result is not None and not self.last_result.incomplete
-            and self.unaligned_result is not None and not self.unaligned_result.provenance.get('rgb_alignment')
-            and self.last_result.channel_order == 'RGB')
-
-    def _choose_result(self):
-        name, _ = QFileDialog.getOpenFileName(self.window, 'Open scientific result', '', 'Scientific results (*.npz)')
-        if name:
-            try:
-                self._load_result(Path(name))
-                self.error.clear()
-            except (ValueError, OSError, KeyError) as exc:
-                self.error.setText(str(exc))
-
-    def _load_result(self, path):
-        from planetrecon.result import load_snapshot
-        result = load_snapshot(path)
-        if result.spatial_stride != 1 or result.n_used < 1 or not np.any(result.validity):
-            raise ValueError('Open a full-resolution result containing valid reconstructed samples')
-        self.unaligned_result = result
-        self.rgb_offsets = ((0., 0.), (0., 0.))
-        self.auto_levels = True
-        self._display_result(result)
-        self.status.setText(f'Loaded scientific result: {path}')
-
-    def _apply_rgb_offsets(self, offsets):
-        from planetrecon.postprocess import align_rgb
-        result = align_rgb(self.unaligned_result, red=offsets[0], blue=offsets[1])
-        self.rgb_offsets = offsets
-        self._display_result(result)
-        self.view.setCurrentText('Result')
-
-    def _align_rgb(self):
-        if not self.align_rgb_btn.isEnabled():
-            return
-        from planetrecon.gui.rgb_alignment import edit_rgb_alignment
-        previous, offsets = self.last_result, self.rgb_offsets
-        if not edit_rgb_alignment(self.window, offsets, self._apply_rgb_offsets):
-            self.rgb_offsets = offsets
-            self._display_result(previous)
 
     def _choose(self):
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
@@ -548,11 +499,6 @@ class MainWindow:
                                  'device_report': result.provenance.get('device_report')})
         if result.n_used < 1 or result.spatial_stride != 1 or not np.any(result.validity):
             return
-        self.unaligned_result = result
-        self.rgb_offsets = ((0., 0.), (0., 0.))
-        self._display_result(result)
-
-    def _display_result(self, result):
         # Received arrays are independent of the process accumulator. Export retains
         # this particular object even as a later snapshot replaces the displayed one.
         for arr in (result.image, result.coverage, result.validity, *result.layer_coverage.values()):
@@ -568,11 +514,6 @@ class MainWindow:
         self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {result.stage} · "
             f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
             f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}\nResult source: {source}")
-        if 'rgb_alignment' in result.provenance:
-            note = ('RGB alignment recorded in this file; open the original NPZ to adjust.'
-                    if self.unaligned_result.provenance.get('rgb_alignment') else
-                    'Manual RGB alignment applied; Reset restores the original stack.')
-            self.result_label.setText(self.result_label.text() + '\n' + note)
         self.details.setPlainText(json.dumps(result.metadata(), indent=2))
         self.warnings.setText('; '.join(result.warnings[:2]) +
                               (' (more in metadata)' if len(result.warnings) > 2 else ''))

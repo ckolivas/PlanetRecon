@@ -33,14 +33,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    rgb = sub.add_parser('align-rgb', help='manually align colour channels in a saved RGB result without restacking')
-    rgb.add_argument('--input', type=Path, required=True, help='original scientific result NPZ')
-    rgb.add_argument('--out', type=Path, required=True, help='new output directory for adjusted NPZ and float TIFF')
-    rgb.add_argument('--red', type=float, nargs=2, default=(0., 0.), metavar=('X', 'Y'),
-                     help='red content translation in pixels: right/down positive; green stays fixed')
-    rgb.add_argument('--blue', type=float, nargs=2, default=(0., 0.), metavar=('X', 'Y'),
-                     help='blue content translation in pixels: right/down positive')
-
     g = sub.add_parser("generate", help="generate one seed/regime HDF5 truth file")
     g.add_argument("--seed", type=int, required=True)
     g.add_argument("--dr0", type=float, required=True, help="D/r0 (8 or 4)")
@@ -242,19 +234,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.threads is not None and args.threads < 1:
         parser.error("--threads must be positive")
     applied_threads = apply_thread_limits(args.threads)
-    if args.cmd == 'align-rgb':
-        from planetrecon.result import load_snapshot, save_snapshot
-        from planetrecon.postprocess import align_rgb
-        from planetrecon.export import ExportConfig, export_result
-        try:
-            result = align_rgb(load_snapshot(args.input), red=args.red, blue=args.blue)
-            args.out.mkdir(parents=True, exist_ok=False)
-            save_snapshot(args.out/'aligned.npz', result)
-            export_result(result, args.out/'aligned.tif', ExportConfig())
-        except (ValueError, OSError) as exc:
-            parser.error(str(exc))
-        print(f"wrote {args.out/'aligned.tif'} and {args.out/'aligned.npz'}")
-        return 0
     export_config = None
     if args.cmd in ("stack", "export"):
         from planetrecon.export import ExportConfig

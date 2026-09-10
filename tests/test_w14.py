@@ -59,6 +59,20 @@ def pump(app, condition, timeout=10):
     assert condition(), 'Qt condition timed out'
 
 
+def test_fit_preview_tracks_canvas_resize_from_result_metadata(gui):
+    app, win = gui
+    win._accept_result(result_payload(result(incomplete=False)))
+    pump(app, lambda: win.image_label.pixmap() is not None)
+    # A taller metadata area changes the preview height without changing the
+    # top-level window size, as happens with longer result/source descriptions.
+    win.result_label.setMinimumHeight(150)
+    for _ in range(8):
+        app.processEvents()
+    pixmap = win.image_label.pixmap()
+    assert pixmap.height() <= win.canvas.viewport().height()
+    assert pixmap.width() <= win.canvas.viewport().width()
+
+
 def test_cuda_budget_control_preserves_mib_units(gui):
     _, win = gui
     fields = win.controls.fields
