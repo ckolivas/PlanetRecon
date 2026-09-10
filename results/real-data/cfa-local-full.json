@@ -5279,7 +5279,7 @@
     }
   },
   "visual_review": "Full shared-level previews inspected: no gross missing-channel or limb artifacts; the visible change is subtle. Numerical assessment excludes the limb and is agreement with this conventional reference, not independent truth.",
-  "next_step": "User assessment of these full unsharpened outputs before considering default promotion; local colour interpolation remains opt-in.",
+  "next_step": "Candidate rejected and removed; do not promote, repeat or tune this interpolation approach.",
   "artifact_sha256": {
     "comparison-arrays.npz": "b35689fe72a598a059f7f0b990e9279f6bbdd5160d4dff8512078f9ab41e947c",
     "comparison.json": "8d30f493ed84f56918d0e1b8ca6ebbd48bbcc5d16b72e87b4ef6f7ff33998a97",
@@ -5304,5 +5304,12 @@
     "centre": 3.40013757050025,
     "right": 3.2673747292087163,
     "aggregate": 3.2759675937024335
+  },
+  "acceptance": {
+    "status": "rejected",
+    "reason": "User sharpening assessment found artifacts absent from regular stacking; the result is poorer and the extra processing time is not justified. Numerical reference agreement is not acceptance.",
+    "review_image": "interpolatedS.png",
+    "review_image_sha256": "a2644863db119b7ebbc1bd3a027d2dac9b41722348961efb871c7f85d87f47f7",
+    "action": "Remove interpolation from the application and development tools; retain ordinary local patch alignment with upper 50 percent quality range."
   }
 }

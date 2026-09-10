@@ -164,11 +164,6 @@ def _worker_run(
                               "device_report": {"reason": "Geometry processing uses CPU float64"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
-            if info.get('progress_only'):
-                emit('progress', {'stage': result.stage, 'fraction': (None if result.stage == 'local CFA final fit' else
-                    info.get('n_processed', 0)/max(info.get('n_total', 1), 1)),
-                                  'n_used': result.n_used, 'backend': result.backend})
-                return
             if result.stage == 'cache_ready':
                 emit('preprocessing_cache', result.provenance.get('preprocessing_cache', {}))
                 return

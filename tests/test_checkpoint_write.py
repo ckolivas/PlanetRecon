@@ -42,27 +42,18 @@ def test_cancellation_interrupts_a_large_compressed_member():
     assert not stream.closed  # The atomic-file owner retains cleanup responsibility.
 
 
-@pytest.mark.parametrize('kind', ['application', 'fixed'])
-def test_cancelled_write_preserves_published_state_and_cleans_temporary(tmp_path, monkeypatch, kind):
+@pytest.mark.parametrize('geometry', [False, True])
+def test_cancelled_write_preserves_published_state_and_cleans_temporary(tmp_path, monkeypatch, geometry):
     from planetrecon.io import checkpoint_write
-    from test_cfa_local_resume import inputs, advance
-    from planetrecon.pipeline.cfa_checkpoint import FixedLocalRun, ARRAYS
-    manifest, raw, maps = inputs(tmp_path)
-    run = FixedLocalRun(manifest)
-    advance(run, raw, maps, 1)
+    from planetrecon import resume
+    names = resume.GEOMETRY_ARRAYS if geometry else resume.ARRAYS
+    state = {name: np.ones((12, 16), dtype=np.float64) for name in names}
+    state.update(reference_index=0, n_used=1, n_rejected=0, next_index=1)
     path = tmp_path/'state.npz'
     stop = False
-    if kind == 'fixed':
-        run.model.should_cancel = lambda: stop
-        save = lambda: run.save(path)
-    else:
-        from planetrecon import resume
-        state = {'accum': run.model.sums, 'weight': run.model.weights,
-                 'reference': raw[0], 'reference_index': 0,
-                 'demosaic_accum': run.model.sums, 'demosaic_weight': run.model.weights,
-                 'n_used': 1, 'n_rejected': 0, 'next_index': 1, 'local_cfa': {}}
-        state.update({'local_'+name: getattr(run.model, name) for name in ('gram', 'noise', 'rhs', 'variance_sum')})
-        save = lambda: resume.save(path, {'test': 'same input'}, state, should_cancel=lambda: stop)
+    identity = {'test': 'same input'}
+    def save():
+        resume.save(path, identity, state, geometry=geometry, should_cancel=lambda: stop)
     save()
     previous = path.read_bytes()
     original = checkpoint_write._CheckedWriter.write
@@ -78,7 +69,6 @@ def test_cancelled_write_preserves_published_state_and_cleans_temporary(tmp_path
         save()
     assert calls >= 4 and path.read_bytes() == previous
     assert not list(tmp_path.glob('.state.npz-*.tmp'))
-    if kind == 'fixed':
-        restored = FixedLocalRun.load(path, manifest)
-        for name in ARRAYS:
-            np.testing.assert_array_equal(getattr(restored.model, name), getattr(run.model, name))
+    restored = resume.load(path, identity, (12, 16), 2, False, geometry=geometry)
+    for name in names:
+        np.testing.assert_array_equal(restored[name], state[name])

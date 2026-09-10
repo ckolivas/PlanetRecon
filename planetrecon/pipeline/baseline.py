@@ -111,8 +111,6 @@ def _stack_source(
         raise ValueError(f'unsupported reconstruction color mode {source.color_mode()!r}')
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
-    if config.local_cfa_interpolation and not is_bayer(source.color_mode()):
-        raise ValueError('Local CFA interpolation requires a Bayer colour capture')
     selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
@@ -204,12 +202,6 @@ def _stack_source(
     demosaic_accum = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
 
-    local_cfa = None
-    if config.local_cfa_interpolation:
-        from planetrecon.pipeline.cfa_application import LocalCFA
-        local_cfa = LocalCFA((h, w), color, config, backend, report, should_cancel)
-        accum, weight = local_cfa.model.sums, local_cfa.model.weights
-
     reference = None
     reference_index = None
     chosen_reference = (config.reference_index if config.reference_index else
@@ -252,24 +244,14 @@ def _stack_source(
             state_identity['local_registration_version'] = 2 if colour_registration else 1
             state_identity['local_patch_support'] = 'complete observed search footprint'
             state_identity['local_patch_boundary'] = 'one grid interval taper to global'
-    if local_cfa is not None and state_identity is not None:
-        from planetrecon.pipeline.cfa_application import execution_identity
-        state_identity['local_cfa_execution'] = execution_identity(config)
     if resume_from is not None:
-        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer,
-                               local_model=local_cfa.model if local_cfa else None)
+        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
         reference, reference_index = restored["reference"], restored["reference_index"]
         n_used, n_rejected = restored["n_used"], restored["n_rejected"]
         demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
         next_index = restored["next_index"]
         history = restored["execution_history"]
-        if local_cfa is not None:
-            if history[-1] == 'cpu':
-                from planetrecon.backends.cpu import CPUBackend
-                backend = CPUBackend(threads=config.threads)
-                report.selected = 'cpu'
-            local_cfa.restore(restored, accum, weight, n_used, next_index, selection, backend)
         report.execution_history = history + ([] if history[-1] == backend.name else [backend.name])
         warnings = list(dict.fromkeys(restored["warnings"] + warnings))
         snapshot_provenance["resumed_from_frame"] = next_index
@@ -283,8 +265,6 @@ def _stack_source(
         backend = CPUBackend(threads=config.threads)
         report.selected, report.fallback, report.reason = "cpu", True, message
         report.execution_history.append("cpu")
-        if local_cfa is not None:
-            local_cfa.registration_device = {'backend': 'cpu'}
         warnings.append(message)
 
     local_matcher = None
@@ -321,16 +301,12 @@ def _stack_source(
         else:
             warnings.append('local_alignment_unavailable: global alignment retained for a small frame or fewer than four screened frames')
 
-    def emit(stage: str, incomplete: bool, *, progress_only=False, ready=None) -> None:
+    def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
         if on_event is None:
             return
-        if ready is not None:
-            seq += 1
-            on_event(ready, {"seq": seq, "n_used": n_used, "n_processed": n_used+n_rejected, "n_total": n, "backend": backend.name})
-            return
-        cov = np.zeros((1, 1, 3)) if progress_only else weight.copy()
-        image = np.zeros_like(cov) if progress_only else _normalise_stack(accum, weight)
+        cov = weight.copy()
+        image = _normalise_stack(accum, weight)
         result = ReconstructionResult(
             image=image,
             coverage=cov,
@@ -354,29 +330,10 @@ def _stack_source(
             },
             warnings=list(warnings),
         )
-        if not progress_only:
-            complete_bayer_rgb(result)
-            if local_cfa is not None:
-                local_cfa.describe(result)
+        complete_bayer_rgb(result)
         seq += 1
-        on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name, "progress_only": progress_only})
+        on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
-    def save_state():
-        state = {
-            "accum": accum, "weight": weight, "reference": reference,
-            "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
-            "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
-            "next_index": n_used+n_rejected,
-            "execution_history": report.execution_history, "warnings": warnings}
-        if local_cfa is not None:
-            from planetrecon.pipeline.cfa_application import MOMENTS
-            state.update(local_cfa=local_cfa.state(),
-                         **{"local_"+name: getattr(local_cfa.model, name) for name in MOMENTS})
-        resume.save(state_checkpoint, state_identity, state,
-                    should_cancel=should_cancel if local_cfa else None)
-
-    if local_cfa is not None and state_checkpoint is not None and resume_from is None:
-        save_state()
     if config.frame_preselection:
         emit("cache_ready", incomplete=True)
     for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
@@ -426,15 +383,6 @@ def _stack_source(
                     cpu_fallback(exc)
                     local_matcher.use_cuda = False
                     shift = local_matcher.displacement(plane, shift)
-            if local_cfa is not None:
-                emit('local CFA accumulation', incomplete=True, progress_only=True)
-                try:
-                    local_cfa.add(index, calibrated, shift, score)
-                except InterruptedError:
-                    cancelled = True
-                    break
-                n_used += 1
-                continue
             projected = None
             if backend.name == "cuda":
                 try:
@@ -484,10 +432,12 @@ def _stack_source(
                 weight += score * support
             n_used += 1
         if state_checkpoint is not None:
-            try:
-                save_state()
-            except InterruptedError:
-                cancelled = True
+            resume.save(state_checkpoint, state_identity, {
+                "accum": accum, "weight": weight, "reference": reference,
+                "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
+                "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
+                "next_index": n_used + n_rejected,
+                "execution_history": report.execution_history, "warnings": warnings})
         emit("baseline", incomplete=True)
         if cancelled:
             break
@@ -506,7 +456,7 @@ def _stack_source(
         "config": config.to_dict(),
         "calibration_mode": (calibration.mode if calibration else "approximate-noise"),
     }
-    if bayer and demosaic_accum is not None and local_cfa is None:
+    if bayer and demosaic_accum is not None:
         provenance["demosaic_first"] = {
             "label": "comparison",
             "mean": float(np.mean(_normalise_stack(demosaic_accum, demosaic_weight))),
@@ -529,16 +479,7 @@ def _stack_source(
         warnings=warnings,
     )
     complete_bayer_rgb(result)
-    if local_cfa is not None:
-        if not result.incomplete:
-            emit('local CFA final fit', incomplete=True, progress_only=True)
-        try:
-            local_cfa.describe(result, final=not result.incomplete)
-        except InterruptedError:
-            result.incomplete = True
-            result.stage = 'baseline'
-            local_cfa.describe(result)
-    emit(result.stage, incomplete=result.incomplete, ready=result)
+    emit(result.stage, incomplete=result.incomplete)
     return result
 
 
