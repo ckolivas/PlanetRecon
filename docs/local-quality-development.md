@@ -298,3 +298,23 @@ minimum support, output/resume behavior and rejection of pre-correction checkpoi
 grids. Only captures whose singleton grid changes receive a new checkpoint-policy
 tag; their old accumulators must not be mixed with the corrected alignment. The
 evidence is `results/real-data/local-singleton-grid.json`.
+
+## Rejected: automatic retry of local search-boundary peaks
+
+A candidate retried correlated peaks at the three-pixel search boundary with a
+five-pixel search, using the same patch centres and existing texture, peak and
+fold guards. Expanded candidates required complete support inside both the aligned
+proxy and the original detector. Known signed 3.8-pixel shifts improve from
+3.821-pixel displacement error to 0.037 pixels; ordinary small shifts, exact,
+brightness, blur and unrelated-noise controls are unchanged. Shifts beyond the
+expanded boundary remain rejected. Four signed detector-edge checks match between
+CPU and CUDA within 3.7e-15 pixels.
+
+The fixed 128-frame Jupiter trial nevertheless worsens relative RMS from
+0.007375950 to 0.007446203 (0.95%), while highpass correlation rises slightly from
+0.693732 to 0.696181. This fails the declared requirement for at least 1% lower RMS
+and higher detail correlation. Keep the existing search radius; no full run,
+automatic expansion option or threshold sweep is warranted. Original colour
+sampling was unchanged throughout. Evidence is in
+`results/real-data/local-search-retry.json`, with private code and outputs under
+`out/local-search-retry`.
