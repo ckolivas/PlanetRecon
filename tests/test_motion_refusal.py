@@ -120,6 +120,8 @@ def test_gui_run_shows_saturn_preprocessing_reason_without_starting_worker(monke
     app = create_app(['motion-preprocess-reason'])
     win = MainWindow(config=ReconstructionConfig(device='cpu', geometry_mode='saturn'))
     win.path = Path('saturn-l3.ser')
+    # Explicit opt-out keeps this test on the unresolved measured-rate path.
+    win.controls.fields['rotation_planet'].activated.emit(0)
     note = 'Rings or strong phase: supply the globe radius to estimate surface rotation.'
     win.preprocessing_info = {'status': 'ready', 'geometry_estimate': {
         'status': 'unresolved', 'suggestions': {}, 'notes': [note]}}

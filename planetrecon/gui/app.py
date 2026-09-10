@@ -260,6 +260,9 @@ class MainWindow:
         self.status = QLabel('idle')
         self.error = QLabel('')
         self.error.setWordWrap(True)
+        self.error.setTextFormat(Qt.PlainText)
+        self.error.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+        self.error.setToolTip('Select error text with the mouse or keyboard and copy it with Ctrl+C.')
         self.error.setStyleSheet('color: #bb3333; font-weight: bold')
         layout.addWidget(self.status)
         layout.addWidget(self.error)
@@ -291,6 +294,8 @@ class MainWindow:
         self.timer.timeout.connect(self._poll)
         self._export_options()
         self._buttons()
+        if self.path is not None:
+            self.controls.suggest_capture_planet(self.path)
 
     def show(self):
         self.window.show()
@@ -339,6 +344,8 @@ class MainWindow:
         if self.job is not None or self.path is None or self.closing:
             return
         try:
+            if not self.resume_check.isChecked():
+                self.controls.suggest_capture_planet(self.path)
             cfg = self.controls.configuration()
             checkpoint_options = {}
             if not inspect_only and not preprocess_only:

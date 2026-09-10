@@ -1,7 +1,11 @@
 # Planetary rotation presets
 
-Select **Geometry → Planet rotation preset** to use a published bulk rotation
-period when texture tracking cannot measure spin. Leave **Surface rate override**
+The GUI selects **Geometry → Planet rotation preset** from a clear planet name
+in the capture filename, including the common `Jup` and `Sat` tokens. Ambiguous
+names leave it unselected. This supplies a published bulk rotation period when
+texture tracking cannot measure spin. The detected choice is displayed and can
+be changed; manual choices, including **Measured / manual rate**, are preserved.
+This does not change the selected motion model or ordinary stacking defaults. Leave **Surface rate override**
 blank; an explicit value, including zero, takes precedence. The CLI equivalents
 are `--rotation-planet saturn` and `--reverse-rotation`.
 
@@ -74,3 +78,8 @@ no geocentric viewing direction and requires manual viewing geometry.
 This removes the manual latitude requirement for dated planetary captures; it
 does not infer a globe radius from Saturn's full ring-system diameter. Globe and
 ring radii remain required for Saturn motion compensation.
+
+Preprocessing resolves the selected planet's viewing latitude even when Motion
+model is still None, so geometry discovery is ready before choosing Surface.
+Unresolved image spin does not disable a selected planet preset. Error messages
+are selectable with mouse/keyboard and can be copied with Ctrl+C.

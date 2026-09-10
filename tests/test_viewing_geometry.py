@@ -222,3 +222,16 @@ def test_preprocessing_view_is_invalidated_by_changed_planet_or_utc(tmp_path):
         changed = cache_report(selection, config=cfg, source=source)
         assert changed['geometry_estimate']['applicable'] is False
         assert changed['accepted'] == int(selection.accepted.sum())
+
+
+def test_preprocess_resolves_view_before_a_motion_model_is_chosen(tmp_path, monkeypatch):
+    from planetrecon.geometry.discovery import discover_geometry
+    from planetrecon.pipeline.preprocess import screen_source
+    monkeypatch.setattr(viewing, 'fetch_response', lambda *a: payload())
+    cfg = ReconstructionConfig(geometry_mode='none', rotation_planet='saturn')
+    with ser(tmp_path) as source:
+        report = discover_geometry(source, cfg, screen_source(source, cfg))
+    assert cfg.geometry_mode == 'none' and cfg.sub_obs_lat_rad is None
+    assert report['viewing_geometry']['planet'] == 'saturn'
+    assert report['viewing_geometry']['sub_obs_lat_rad'] > 0.
+    assert 'sub_obs_lat_rad' not in report['suggestions']

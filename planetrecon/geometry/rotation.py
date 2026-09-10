@@ -1,5 +1,7 @@
 """Offline sidereal rotation presets; camera orientation remains observational."""
 import math
+from pathlib import Path
+import re
 
 # JPL Solar System Dynamics, Planetary Physical Parameters, retrieved 2026-09-10.
 # Signed sidereal days; Venus and Uranus rotate retrograde relative to the
@@ -29,3 +31,15 @@ def rotation_preset(planet, *, reverse=False, radius_px=None):
                 'are separate inputs. Positive rate at pole PA 0 moves central texture left; '
                 'reverse for the opposite apparent direction. Radius scales pixel motion, not the period.',
     }
+
+
+def planet_from_capture_name(path):
+    """Identify explicit planet tokens in the basename; never guess from pixels.
+
+    FireCapture commonly uses Jup/Sat. Limit abbreviations to those unambiguous
+    capture conventions; e.g. 'Mar' could instead name a calendar month.
+    """
+    tokens = set(re.findall(r'[a-z]+', Path(path).stem.lower()))
+    aliases = {**{planet: planet for planet in PERIOD_DAYS}, 'jup': 'jupiter', 'sat': 'saturn'}
+    matches = {aliases[token] for token in tokens if token in aliases}
+    return next(iter(matches)) if len(matches) == 1 else None

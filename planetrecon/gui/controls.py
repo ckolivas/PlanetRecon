@@ -19,6 +19,9 @@ class ConfigControls(QTabWidget):
         self.angular = set()
         self.geometry_manual = set()
         self.geometry_auto = {}
+        self.capture_planet_path = None
+        self.planet_choice_manual = config.rotation_planet is not None
+        self.setting_capture_planet = False
         capture = self._tab('Capture')
         self._choice(capture, 'device', 'Device', ['auto', 'cpu', 'gpu'])
         self._integer(capture, 'threads', 'CPU threads', 1, 32)
@@ -83,7 +86,7 @@ class ConfigControls(QTabWidget):
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
         guidance = QLabel('Motion model None stacks any planet, including Saturn and its rings. '
-                          'Saturn mode separates globe/ring motion and requires manual viewing geometry.')
+                          'Saturn mode separates globe/ring motion; viewing latitude can come from SER UTC, while globe/ring radii are required.')
         guidance.setWordWrap(True)
         geo.addRow(guidance)
         self.geometry_estimate_label = QLabel('Preprocessing can prefill geometry for the next run. User edits are preserved.')
@@ -95,6 +98,9 @@ class ConfigControls(QTabWidget):
         self.fields['rotation_planet'].setItemText(0, 'Measured / manual rate')
         for index, planet in enumerate(PERIOD_DAYS, 1):
             self.fields['rotation_planet'].setItemText(index, planet.title())
+        self.planet_identification_label = QLabel('A clear planet name in the capture filename selects its rotation preset. Manual choices are preserved.')
+        self.planet_identification_label.setWordWrap(True)
+        geo.addRow(self.planet_identification_label)
         self._check(geo, 'reverse_rotation', 'Reverse preset rotation direction')
         self.rotation_label = QLabel()
         self.rotation_label.setWordWrap(True)
@@ -112,7 +118,7 @@ class ConfigControls(QTabWidget):
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
         geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
-        sat.addRow(QLabel('Saturn requires globe/ring radii and signed\nobserver latitude in the Geometry tab.'))
+        sat.addRow(QLabel('Saturn requires globe/ring radii. Viewing latitude\ncomes from SER UTC or a Geometry override.'))
         for key, label in [
             ('ring_inner_radius_px', 'Inner ring radius (px)'), ('ring_outer_radius_px', 'Outer ring radius (px)'),
             ('ring_transmission', 'Ring transmission (0–1)'), ('sun_lon_rad', 'Sun longitude (°)'),
@@ -129,6 +135,8 @@ class ConfigControls(QTabWidget):
             if isinstance(edit, QLineEdit):
                 edit.textEdited.connect(lambda text, key=key: self.geometry_manual.add(key))
         self.fields['rotation_planet'].currentIndexChanged.connect(self._rotation_changed)
+        self.fields['rotation_planet'].currentIndexChanged.connect(self._planet_choice_changed)
+        self.fields['rotation_planet'].activated.connect(self._planet_choice_changed)
         self.fields['reverse_rotation'].toggled.connect(self._rotation_changed)
         for key in ('surface_rate_rad_s', 'equatorial_radius_px'):
             self.fields[key].textChanged.connect(self._rotation_changed)
@@ -144,6 +152,30 @@ class ConfigControls(QTabWidget):
                 button.setToolTip('Scroll the settings tabs to the left.')
             elif button.objectName() == 'ScrollRightButton':
                 button.setToolTip('Scroll the settings tabs to the right.')
+
+    def _planet_choice_changed(self, value=None):
+        if not self.setting_capture_planet:
+            self.planet_choice_manual = True
+            self.planet_identification_label.setText('Manual planet selection; capture names will not replace it.')
+
+    def suggest_capture_planet(self, path):
+        """Apply a filename hint once per capture, preserving explicit choices."""
+        from planetrecon.geometry.rotation import planet_from_capture_name
+        path = str(path)
+        if self.capture_planet_path == path or self.planet_choice_manual:
+            return
+        self.capture_planet_path = path
+        planet = planet_from_capture_name(path)
+        self.setting_capture_planet = True
+        try:
+            chooser = self.fields['rotation_planet']
+            chooser.setCurrentIndex(chooser.findData(planet))
+        finally:
+            self.setting_capture_planet = False
+        self.planet_identification_label.setText(
+            f'{planet.title()} preset selected from the capture filename; review the planet and apparent rotation direction.'
+            if planet is not None else
+            'Capture filename does not identify one planet. Select a planet preset or supply a measured/manual rate for surface motion.')
 
     def _rotation_changed(self, value=None):
         from planetrecon.geometry.rotation import rotation_preset
