@@ -100,11 +100,41 @@ that an aggregate improvement cannot hide a regional regression. No application
 processing changed. This is a selected-frame strip confirmation, not a full
 1,645-frame or whole-globe result; the reference remains non-independent.
 
+## Completed: exact fixed-input CPU resume
+
+The [checkpoint wrapper](../tools/cfa_local_resume.py) now binds the original
+source identity, ordered selected indices/qualities, every calibrated raw-frame
+and dense-map digest, output region, interpolation/package source and execution
+policy. It also records NumPy/SciPy versions, byte order and the resume source
+version. Inputs are verified before a frame enters the existing staged accumulator.
+Final output is refused until every selected frame is complete.
+
+Checkpoints preserve all six accumulator arrays and a completed-frame count, with
+array and metadata checksums. Atomic replacement occurs only after the temporary
+file is complete and cancellation is checked. Failed or cancelled saves preserve
+the previous checkpoint; loads verify headers before loading arrays, then validate
+identity, shape, dtype, finiteness, checksums and execution history before returning
+a resumed run. Capture paths/symlinks and unrelated NPZ files cannot be replaced.
+
+All [37 checkpoint controls](../results/real-data/cfa-local-resume.json) pass,
+including exact results for all four CFA layouts at empty/intermediate/completed
+checkpoints, cancellation without double counting, changed inputs/maps/policies,
+failed writes/replacements and malformed state. The combined local controls total
+77 passes. This is CPU accumulation of externally frozen raw frames/maps, not
+GPU fitting or automatic registration recovery. The implementation remains a
+separate prototype, and no application defaults or processing path changed.
+
 ## Next steps
 
-1. Implement exact resume bound to source, selection/weights, dense local maps
-   and execution policy. Failed GPU work must retry a complete frame without
-   double counting. Then prepare optional GUI integration for user testing.
+1. Qualify GPU moment accumulation and whole-frame CPU retry against the fixed
+   local interpolation and CPU resume contract. Bind execution transitions and
+   map ownership explicitly; GPU failure must not partly count a frame. Profile
+   a full output geometry before making performance claims or repeating captures.
+2. Prepare optional GUI integration with clear progress/cancellation, effective
+   sample-count versus direct-CFA coverage metadata, and exact state identity.
+   Preserve the user's local/50% defaults and keep this candidate opt-in until
+   the user has tested a full result. The three-region confirmation is not a
+   full 1,645-frame or whole-globe validation.
 
 ### Declared larger confirmation
 

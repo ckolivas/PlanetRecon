@@ -1,0 +1,36 @@
+{
+  "scope": "Exact CPU accumulation of frozen calibrated CFA frames and dense local pull maps; no alignment estimation or GPU fitting",
+  "tests_passed": 37,
+  "combined_local_controls_passed": 77,
+  "schema": "planetrecon-local-quadratic-state-1",
+  "identity_fields": [
+    "source path and content digest",
+    "ordered selected indices and linear qualities",
+    "per-frame raw and dense-map digests",
+    "detector shape and CFA layout",
+    "output region",
+    "chunk, neighbour and array planning limits",
+    "interpolation source and package source digests",
+    "NumPy/SciPy versions and byte order",
+    "resume implementation digest"
+  ],
+  "validation": [
+    "bitwise uninterrupted/resumed results across all four CFA layouts at empty, intermediate and completed checkpoints",
+    "changed source, selection, weight, raw input, map, region or execution policy refused",
+    "wrong next frame, changed raw/map and cancellation preserve all prior sums",
+    "failed or cancelled checkpoint publication preserves the previous checkpoint and removes temporary files",
+    "payload/metadata corruption, invalid count/history and oversized array headers refused",
+    "source paths, source symlinks and unrelated NPZ files protected from replacement"
+  ],
+  "limits": [
+    "CPU accumulation only; GPU-generated maps must be frozen and fingerprinted by the caller",
+    "No automatic re-estimation, GPU fitting/fallback or GUI integration",
+    "Checksums detect corruption, not malicious rewriting of both data and checksums",
+    "Memory guard plans arrays rather than enforcing a process RSS cap; the load path verifies headers before loading payloads"
+  ],
+  "implementation_sha256": "77706a643599c5dc0bc52f440a2347bd5d5fa187db4f56dbc9e3f9d6772e5929",
+  "evidence_logs": [
+    "out/cfa-local-resume-tests-final.log",
+    "out/cfa-local-combined-tests.log"
+  ]
+}
