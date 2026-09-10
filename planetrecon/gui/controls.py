@@ -115,6 +115,16 @@ class ConfigControls(QTabWidget):
             ('sub_obs_lon0_rad', 'Reference longitude (°)'),
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
+            if key == 'pole_pa_rad':
+                self.flip_pole_button = QPushButton('Flip pole 180° (north / south)')
+                self.flip_pole_button.setToolTip(
+                    'Add 180° to the pole position angle, wrapped to 0–360°, when '
+                    'preprocessing identifies the opposite pole. Uses the existing '
+                    'surface rate, including manual overrides. Applies to the next run '
+                    'and is preserved as a manual geometry edit during preprocessing. '
+                    'Click again to restore the original orientation.')
+                self.flip_pole_button.clicked.connect(self._flip_pole)
+                geo.addRow('', self.flip_pole_button)
         geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
         sat.addRow(QLabel('Saturn requires globe/ring radii. Viewing latitude\ncomes from SER UTC or a Geometry override.'))
@@ -335,6 +345,22 @@ class ConfigControls(QTabWidget):
                 values[key] = None
             values.update(ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         return replace(self.base, **values)
+
+    def _flip_pole(self):
+        edit = self.fields['pole_pa_rad']
+        try:
+            angle = float(edit.text())
+            if not math.isfinite(angle):
+                raise ValueError
+        except ValueError:
+            self.geometry_estimate_label.setText('Enter a finite pole position angle before flipping it.')
+            return
+        self.geometry_manual.add('pole_pa_rad')
+        self.geometry_auto.pop('pole_pa_rad', None)
+        edit.setText(format((angle + 180.) % 360., '.12g'))
+        self.geometry_estimate_label.setText(
+            'Pole direction flipped by 180°. This manual orientation applies to the next run '
+            'and is preserved when preprocessing is repeated.')
 
     def clear_geometry_estimate(self):
         from planetrecon.reconstruction import ReconstructionConfig

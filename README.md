@@ -176,6 +176,12 @@ estimates can alias large rotations between sampled frames; use a declared rate
 for those captures. Moment-based radius estimates are approximate for textured or
 limb-darkened discs, so use a measured radius for surface reconstruction.
 
+If preprocessing identifies the opposite pole, use **Flip pole 180° (north / south)**
+beside the pole position angle in Geometry. This changes the pole orientation for
+the next run while retaining the selected rotation rate. The correction is a manual
+override, so repeated preprocessing preserves it; clicking again restores the
+original orientation. It works with measured rates and planet presets.
+
 Saturn reconstruction requires explicit globe and ring radii and a signed
 `--sub-obs-lat-deg` opening. The automatic Saturn fit is diagnostic and can supply
 an approximate centre; `--center-x` and `--center-y` override it. Ring inclination
