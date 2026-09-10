@@ -1,0 +1,42 @@
+{
+  "scope": "Known continuous scene, one central patch; same ordinary image projection. No real-capture improvement claim.",
+  "metrics": {
+    "prior": {
+      "centres_y": [
+        35
+      ],
+      "centres_x": [
+        35
+      ],
+      "centre_displacement": [
+        0.09349170507281133,
+        0.06243414799136209
+      ],
+      "image_rms": 5.860188313854979
+    },
+    "centred": {
+      "centres_y": [
+        48
+      ],
+      "centres_x": [
+        48
+      ],
+      "centre_displacement": [
+        0.7512905070915754,
+        0.4993704939424503
+      ],
+      "image_rms": 1.9811532660840971
+    }
+  },
+  "jupiter_geometry_identical": true,
+  "prior_sha256": "401a396bff404db7d968f5099c320b10cd0b6edc23540623d1bf1b6b68ae8412",
+  "script_sha256": "068ef24bcfcb208566c9b05e90d055a5462fc6ed84eba098fa0f1f551b5169f5",
+  "decision": "Retain singleton-axis centering: fixes asymmetric local correction on small detectors without changing grids with multiple patches on both axes.",
+  "validation": {
+    "focused_tests_passed": 104,
+    "cuda_tests_passed": 17,
+    "cpu_cuda_tolerance_px": 1e-10
+  },
+  "checkpoint_policy": "Add singleton-grid identity only when centering changes the grid; reject previous accumulators for those captures. Existing unaffected grids preserve identities.",
+  "private_artifacts": "out/local-singleton-grid"
+}

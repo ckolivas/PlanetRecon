@@ -202,6 +202,11 @@ def _stack_source(
     # It requires cached screening, so scalar quality weights stay unchanged.
     local_window = config.local_patch_size
     local_step = local_window // 2
+    centred_local_axis = False
+    if config.local_alignment:
+        from planetrecon.pipeline.local_align import patch_centres
+        axes = [patch_centres(length, local_window, local_step) for length in (h, w)]
+        centred_local_axis = any(len(axis) == 1 and axis[0] != local_window//2+3 for axis in axes)
     colour_registration = config.local_alignment and bayer
     alignment_plane = _colour_registration_plane if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
@@ -259,6 +264,8 @@ def _stack_source(
             state_identity['local_patch_support'] = 'complete observed search footprint'
             state_identity['local_patch_boundary'] = 'one grid interval taper to global'
             state_identity['local_patch_peak'] = 'joint two-dimensional quadratic'
+            if centred_local_axis:
+                state_identity['local_patch_grid'] = 'singleton axes centred'
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -299,6 +306,8 @@ def _stack_source(
         }
         if colour_registration:
             snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'
+        if centred_local_axis:
+            snapshot_provenance['local_alignment']['patch_grid'] = 'singleton axes centred'
         if resume_from is None:
             def read_plane(index):
                 calibrated, _ = apply_calibration(source.read_raw(index), calibration)

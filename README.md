@@ -125,6 +125,9 @@ plus six pixels cannot support that local matcher: the run stops and offers a
 fitting size or explicit global alignment. Local alignment also requires at least
 four selected frames. These checks prevent running a different alignment method
 from the one selected.
+When only one row or column of patches fits, that axis is centred on the detector.
+Checkpoints made before this placement correction must be restarted for affected
+small captures; grids with multiple patches on both axes are unchanged.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

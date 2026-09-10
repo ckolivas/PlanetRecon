@@ -237,7 +237,8 @@ The Capture tab now exposes **Alignment patch size (odd pixels)**, with CLI
 default and set grid spacing to half the selected width rounded down. New runs
 read the current control value and reuse the existing preprocessing cache.
 Saved jobs retain the choice; old jobs default to 65. Custom sizes are bound to
-checkpoint identity, while unchanged 65-pixel checkpoint identities remain valid.
+checkpoint identity. Unchanged grids preserve previous checkpoint identities;
+the corrected single-row/column grids described below require a fresh stack.
 An undersized frame now stops with the selected size, required detector dimensions
 and a fitting-size suggestion. Fewer than four selected frames also stops the run.
 The user can explicitly choose global alignment in either case.
@@ -274,3 +275,26 @@ and four fractional global shifts, displacement RMS improved only 0.12%, below
 the declared 10% development gate. Exact, brightness, flat and unrelated-noise
 controls passed, but the negligible gain does not justify a capture trial or
 production change. Evidence is `results/real-data/local-proxy-resampling.json`.
+
+## Completed: centre single-row and single-column patch grids
+
+When only one row or column of patches fits, it previously stayed at the first
+valid top/left position instead of the detector centre. Its confidence taper then
+suppressed correction around the planet centre asymmetrically. Such axes now use
+the nearest lower integer centre; axes with multiple patches are unchanged. CUDA
+tiles use the same offset origin as CPU patches and retain complete observed
+search footprints.
+
+In a 97-by-97 continuous-scene control, the sole patch moves from (35,35) to
+(48,48). At the image centre the recovered displacement changes from (0.093,0.062)
+to (0.751,0.499) pixels for known motion (0.75,0.50). Central image RMS falls from
+5.860 to 1.981 with the same ordinary bilinear image projection. This establishes
+a small-detector placement correction, not a real-Jupiter quality gain. The
+424-by-656 Jupiter-shaped control retains identical grids and CPU displacements;
+no full capture rerun is needed.
+
+All 104 focused checks pass, including 17 CUDA checks, reflection symmetry,
+minimum support, output/resume behavior and rejection of pre-correction checkpoint
+grids. Only captures whose singleton grid changes receive a new checkpoint-policy
+tag; their old accumulators must not be mixed with the corrected alignment. The
+evidence is `results/real-data/local-singleton-grid.json`.

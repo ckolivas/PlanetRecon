@@ -2,6 +2,16 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter, map_coordinates
 
+
+def patch_centres(length, window, step, max_shift=3):
+    """Regular supported grid; centre an axis when only one patch fits."""
+    margin = window // 2 + max_shift
+    centres = np.arange(margin, length-margin, step)
+    if len(centres) == 1:
+        centres[0] = (length-1) // 2
+    return centres
+
+
 def pull(image, shift_xy):
     image = np.asarray(image, dtype=np.float64)
     yy, xx = np.indices(image.shape[:2], dtype=np.float64)
@@ -28,8 +38,8 @@ class LocalRegistration:
         self.step = step
         self.max_shift = max_shift
         self.ref = self.proxy(reference)
-        self.ys = np.arange(window // 2 + max_shift, reference.shape[0] - window // 2 - max_shift, step)
-        self.xs = np.arange(window // 2 + max_shift, reference.shape[1] - window // 2 - max_shift, step)
+        self.ys = patch_centres(reference.shape[0], window, step, max_shift)
+        self.xs = patch_centres(reference.shape[1], window, step, max_shift)
         self.weight = np.outer(np.hanning(window), np.hanning(window))
         self.weight /= self.weight.sum()
         gy, gx = np.gradient(self.ref)
@@ -143,6 +153,9 @@ class LocalRegistration:
         import torch
         img = torch.as_tensor(image, device='cuda:0', dtype=torch.float64)
         w, m = (self.window, self.max_shift)
+        margin = w//2+m
+        img = img[int(self.ys[0])-margin:int(self.ys[-1])+margin+1,
+                  int(self.xs[0])-margin:int(self.xs[-1])+margin+1]
         tile = img.unfold(0, w + 2 * m, self.step).unfold(1, w + 2 * m, self.step)
         tile = tile.contiguous().reshape(-1, w + 2 * m, w + 2 * m)
         weight = torch.as_tensor(self.weight, device='cuda:0', dtype=torch.float64)
