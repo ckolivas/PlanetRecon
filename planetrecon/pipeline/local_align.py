@@ -97,15 +97,27 @@ class LocalRegistration:
                 py, px = np.unravel_index(costs.argmax(), costs.shape)
                 if py in (0, 2 * m) or px in (0, 2 * m) or costs[py, px] < 0.8:
                     continue
-                curvatures = []
-                for axis, p in enumerate((px, py)):
-                    a, b, c = costs[py, px - 1:px + 2] if axis == 0 else costs[py - 1:py + 2, px]
-                    curve = a - 2 * b + c
-                    curvatures.append(-curve)
-                    delta = np.clip(0.5 * (a - c) / curve, -0.5, 0.5) if curve < 0 and b < 1 - 1e-10 else 0.0
-                    values[axis, j, i] = p - m + delta
-                if min(curvatures) > 0.001:
-                    confidence[j, i] = 1.0
+                patch = costs[py-1:py+2, px-1:px+2]
+                if not np.isfinite(patch).all():
+                    continue
+                peak = patch[1, 1]
+                gx = .5*(patch[1, 2]-patch[1, 0])
+                gy = .5*(patch[2, 1]-patch[0, 1])
+                hxx = patch[1, 0]-2*peak+patch[1, 2]
+                hyy = patch[0, 1]-2*peak+patch[2, 1]
+                hxy = .25*(patch[2, 2]-patch[2, 0]-patch[0, 2]+patch[0, 0])
+                curvature = -np.array([[hxx, hxy], [hxy, hyy]])
+                # Diagonal features couple the axes. Slice-wise parabolas give
+                # biased offsets and can mistake a ridge for a constrained peak.
+                if np.linalg.eigvalsh(curvature)[0] <= .001:
+                    continue
+                delta = np.zeros(2) if peak >= 1-1e-10 else np.linalg.solve(curvature, [gx, gy])
+                # The joint centre can lie beyond half a pixel from the best
+                # integer sample, but must stay within its observed neighbours.
+                if not np.isfinite(delta).all() or np.any(np.abs(delta) > 1):
+                    continue
+                values[:, j, i] = np.array([px-m, py-m])+delta
+                confidence[j, i] = 1.0
         reliable = confidence.copy()
         confidence = gaussian_filter(confidence, 0.7)
         yy, xx = np.indices(self.shape)

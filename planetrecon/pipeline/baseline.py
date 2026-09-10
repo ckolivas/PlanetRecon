@@ -244,6 +244,7 @@ def _stack_source(
             state_identity['local_registration_version'] = 2 if colour_registration else 1
             state_identity['local_patch_support'] = 'complete observed search footprint'
             state_identity['local_patch_boundary'] = 'one grid interval taper to global'
+            state_identity['local_patch_peak'] = 'joint two-dimensional quadratic'
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -280,6 +281,7 @@ def _stack_source(
             'anchor_index': reference_index,
             'patch_support': 'complete observed search footprint',
             'patch_boundary': 'one grid interval taper to global',
+            'patch_peak': 'joint two-dimensional quadratic',
             'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
         }
         if colour_registration:

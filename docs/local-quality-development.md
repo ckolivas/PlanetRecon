@@ -13,6 +13,41 @@ best selected frame as the reference origin, normal template selection, original
 CFA measurements, direct colour support and existing local ambiguity/fold guards.
 No automatic sharpening. Stronger quality weighting remains optional.
 
+## Completed: coupled local registration peak correction
+
+Local patches previously fitted separate horizontal and vertical parabolas to
+their correlation peak. For diagonal features those slices do not locate the
+joint centre. The matcher now includes cross-axis curvature, requires a maximum
+constrained in both directions, and refuses offsets outside the observed 3x3
+neighbourhood. Exact matches, texture/support checks and the fold guard remain.
+This changes alignment only; ordinary CFA sampling and frame weights are retained.
+The peak method is included in result provenance and checkpoint identity, so old
+local-stack sums cannot be resumed under the changed alignment.
+
+Four independently specified tilted quadratic peaks now recover their known
+centres. In two continuous diagonal-pattern controls, displacement RMS falls from
+0.630/0.406 pixels to 0.045/0.032 pixels, and aligned image RMS also improves.
+Weak diagonal ridges retain global motion. All 66 focused CPU and 14 CUDA checks
+pass, including old-checkpoint refusal, exact resume, colour and boundary controls.
+
+A fixed 128-frame Jupiter pilot improved both declared reference metrics, followed
+by one full application run using all 1,645 upper-half selected frames. It reused
+the existing ordinary output for comparison; the reference template is bitwise
+identical and anchor 1947 is retained. Full planet-interior relative RMS difference
+falls from 0.005293906 to 0.005275487 (0.35%); sigma-three highpass correlation rises
+from 0.950682 to 0.950818. All channels are finite and valid, and the raw float32
+TIFF matches the scientific snapshot. The full CUDA run with checkpoints/export
+took 245 seconds. The paired pilot took about eight seconds per arm for alignment
+and projection; these timings are illustrative, not isolated benchmarks.
+
+The numerical gain is small and is **not visual acceptance**. Full previews show
+no gross new colour or limb defect, but user sharpening review is still needed.
+The next step is assessment of the existing `out/local-joint-peak/full-joint.tif`
+against `out/cfa-local-full/ordinary.tif`; no further run is needed for that review.
+Matched display previews are `out/local-joint-peak/full-joint.png` and
+`full-prior.png`. The committed evidence is `results/real-data/local-joint-peak.json`;
+private scripts, prior source, outputs and logs are under `out/local-joint-peak`.
+
 ## Rejected: local colour interpolation
 
 The full Jupiter comparison processed all 1,645 selected frames from 3,749 captured
