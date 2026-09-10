@@ -117,3 +117,24 @@ Do not extend this post-processing workflow or infer automatic stacking offsets
 from the conventional reference.
 Removal validation passed 124 stacking, GUI, preview and export tests, with 16
 opt-in tests skipped. Existing captures and private comparison outputs are retained.
+
+## Rejected: smaller fixed local patches
+
+A bounded comparison tested 33-pixel patches on a 16-pixel grid against the
+current 65-pixel patches on a 32-pixel grid. Frame selection, the full-selection
+template, reference origin, original linear weights and raw CFA projection were
+identical. The declared gate required at least 1% lower reference RMS and higher
+fine-detail correlation before considering a full run.
+
+An analytic spatially varying deformation control reduced displacement RMS from
+0.471 to 0.234 pixels, but a stationary noisy control increased spurious motion
+from 0.0065 to 0.0135 pixels. On the fixed 128-frame Jupiter pilot, relative RMS
+fell only 0.56% (0.007375950 to 0.007334826), while sigma-three highpass correlation
+fell from 0.693732 to 0.692914. This fails the gate. Matched unsharpened previews
+show no obvious gross new limb or colour defect, but that does not override the
+failed detail comparison or establish acceptance after external sharpening.
+
+Keep the existing patch sizes. No production change, full-capture run or size
+sweep is warranted by this candidate. The report is
+`results/real-data/local-small-patches.json`; private scripts, controls and paired
+TIFF/PNG/snapshot outputs are retained under `out/local-small-patches`.
