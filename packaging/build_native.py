@@ -109,7 +109,7 @@ def build(tag,flavor,out,skip_smoke=False):
             'Bayer input previews use nearest-neighbour RGB; reconstruction consumes raw CFA.\n'
             'Select calibration/geometry only from known capture information, then Run.\n'
             'Optional accumulator checkpoint and Resume controls preserve completed batches.\n'
-            'Float TIFF preserves scale. Integer PNG/TIFF needs explicit black/white levels.\n'
+            'TIFF32 uses linear 0/1 levels for editors; TIFF32_raw preserves original units.\n'
             'Python, Qt and numerical/image components are bundled. The native OS graphics\n'
             'stack and a compatible NVIDIA driver for CUDA remain host requirements.\n'
             'Advanced atmospheric inference remains experimental; Q3 is not qualified.\n'

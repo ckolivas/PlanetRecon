@@ -92,16 +92,18 @@ def collapse_replicated_rgb(array):
 
 
 @pytest.mark.parametrize('rgb', [False, True])
-@pytest.mark.parametrize('encoding', ['png16', 'tiff16', 'tiff32'])
+@pytest.mark.parametrize('encoding', ['png16', 'tiff16', 'tiff32', 'tiff32_raw'])
 def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
     a = np.array([[-4., 0., 1., 254., 255., 256., 257., 65534., 65535., 70000.]])
     if rgb:
         a = np.stack([a, a[:, ::-1], a / 2], axis=-1)
     r = result(a)
     p = tmp_path / ('科学.png' if encoding == 'png16' else '科学.tiff')
-    cfg = ExportConfig(encoding, *([] if encoding == 'tiff32' else [0., 65535.]))
+    cfg = ExportConfig(encoding, *([] if encoding in ('tiff32', 'tiff32_raw') else [0., 65535.]))
     report = export_result(r, p, cfg)
-    expected = a.astype(np.float32) if encoding == 'tiff32' else np.floor(np.clip(a, 0, 65535)+.5).astype(np.uint16)
+    expected = ((a / 100100).astype(np.float32) if encoding == 'tiff32' else
+                a.astype(np.float32) if encoding == 'tiff32_raw' else
+                np.floor(np.clip(a, 0, 65535)+.5).astype(np.uint16))
     meta = json.loads(report.sidecar.read_text())
     assert meta['image_sha256'] == hashlib.sha256(p.read_bytes()).hexdigest()
     assert meta['result']['reference_epoch'] == '1.25'
@@ -122,8 +124,8 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
     else:
         actual, tags = independent_tiff(p)
         assert tiff_ifd_count(p) == 1
-        assert tags[258] == ((32 if encoding == 'tiff32' else 16),) * (3 if rgb else 1)
-        assert tags.get(339, (1,)) == ((3,) * (3 if rgb else 1) if encoding == 'tiff32' else (1,))
+        assert tags[258] == ((32 if encoding in ('tiff32', 'tiff32_raw') else 16),) * (3 if rgb else 1)
+        assert tags.get(339, (1,)) == ((3,) * (3 if rgb else 1) if encoding in ('tiff32', 'tiff32_raw') else (1,))
         np.testing.assert_array_equal(actual, expected)
         with tifffile.TiffFile(p) as tf:
             embedded = parse_tiff_description(tf.pages[0].description)
@@ -150,22 +152,23 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
     np.testing.assert_array_equal(r.image, a)
 
 
-@pytest.mark.parametrize('encoding', ['png16', 'tiff16', 'tiff32'])
+@pytest.mark.parametrize('encoding', ['png16', 'tiff16', 'tiff32', 'tiff32_raw'])
 def test_invalid_and_nonfinite_samples_have_explicit_masks(tmp_path, encoding):
     r = result([[[np.nan, np.inf, -np.inf], [1, 2, 3]], [[4, 5, 6], [-1, 20, 10]]])
     r.validity[1, 0, 0] = False
     r.coverage[1, 0, 1] = 0
-    cfg = ExportConfig(encoding, *([] if encoding == 'tiff32' else [0, 10]))
+    cfg = ExportConfig(encoding, *([] if encoding in ('tiff32', 'tiff32_raw') else [0, 10]))
     report = export_result(r, tmp_path / ('a.png' if encoding == 'png16' else 'a.tif'), cfg)
     counts = report.metadata['counts']
     assert counts['invalid_samples'] == 5 and counts['invalid_pixels'] == 2
     assert counts['nonfinite_samples'] == 3
-    if encoding != 'tiff32':
+    if encoding not in ('tiff32', 'tiff32_raw'):
         assert counts['clipped_low_samples'] == counts['clipped_high_samples'] == counts['clipped_pixels'] == 1
     else:
         pixels, _ = independent_tiff(report.path)
         assert np.isnan(pixels[0, 0]).all() and np.isnan(pixels[1, 0, :2]).all()
-        assert pixels[1, 1, 0] == -1 and pixels[1, 1, 1] == 20
+        scale = 28.6 if encoding == 'tiff32' else 1.
+        np.testing.assert_allclose(pixels[1, 1, :2]*scale, [-1., 20.], rtol=1e-7)
 
 
 def test_tiff_files_are_single_page_and_not_tifffile_shaped(tmp_path, caplog):
@@ -212,7 +215,7 @@ def test_mapping_rounding_display_gamma_and_spatial_mask(tmp_path):
 
 @pytest.mark.parametrize('kwargs', [dict(encoding='bad'), dict(encoding='png16'),
     dict(encoding='tiff16', black=1, white=1), dict(encoding='png16', black=0, white=np.inf),
-    dict(encoding='tiff32', black=0, white=1), dict(display_gamma=2),
+    dict(encoding='tiff32_raw', black=0, white=1), dict(encoding='tiff32', black=0), dict(display_gamma=2),
     dict(encoding='png16', black=0, white=1, display_gamma=np.nan)])
 def test_bad_export_options(kwargs):
     with pytest.raises(ValueError):
@@ -224,7 +227,7 @@ def test_bad_shapes_and_float_overflow_never_publish(tmp_path):
     for r in (result([[1e39]]), result([[1.]], channel_order='BGR'),
               result([[1.]], validity=np.ones((1,1))), result([[1.]], coverage=np.array([[-1.]]))):
         with pytest.raises(ValueError):
-            export_result(r, p)
+            export_result(r, p, ExportConfig('tiff32_raw'))
         assert list(tmp_path.iterdir()) == []
 
 
@@ -294,7 +297,8 @@ ex.export_result(r, p, overwrite=True)
     proc = subprocess.run([sys.executable, '-c', script, str(p)], timeout=15)
     assert proc.returncode == 17 and p.read_bytes() == before and old.sidecar.exists()
     new = export_result(result([[3.]]), p, overwrite=True)
-    assert new.sidecar != old.sidecar and independent_tiff(p)[0][0,0] == 3
+    assert new.sidecar != old.sidecar
+    assert independent_tiff(p)[0][0,0] * new.metadata['mapping']['white'] == pytest.approx(3.)
 
 
 def test_full_resolution_intermediate_export_preserves_processing(tmp_path):
@@ -340,7 +344,9 @@ def test_cli_stack_export_and_checkpoint(tmp_path):
     assert loaded.provenance['input_identity']['full_file_checksum'] is False
     assert not load_snapshot(tmp_path/'live.npz').incomplete
     assert main(['export', '--path', str(tmp_path/'live.npz'), '--out', str(tmp_path/'float.tif')]) == 0
-    np.testing.assert_array_equal(independent_tiff(tmp_path/'float.tif')[0], loaded.image.astype(np.float32))
+    np.testing.assert_allclose(independent_tiff(tmp_path/'float.tif')[0], loaded.image / (1.43*loaded.image.max()), rtol=1e-7)
+    assert main(['export', '--path', str(tmp_path/'live.npz'), '--out', str(tmp_path/'raw.tif'), '--encoding', 'tiff32_raw']) == 0
+    np.testing.assert_array_equal(independent_tiff(tmp_path/'raw.tif')[0], loaded.image.astype(np.float32))
     with pytest.raises(SystemExit):
         main(args)
     assert main(args + ['--overwrite']) == 0

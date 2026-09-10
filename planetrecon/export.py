@@ -45,16 +45,18 @@ class ExportConfig:
     display_gamma: float | None = None
 
     def __post_init__(self):
-        if self.encoding not in ("png16", "tiff16", "tiff32"):
-            raise ValueError("encoding must be png16, tiff16 or tiff32")
-        if self.encoding == "tiff32":
+        if self.encoding not in ("png16", "tiff16", "tiff32", "tiff32_raw"):
+            raise ValueError("encoding must be png16, tiff16, tiff32 or tiff32_raw")
+        if self.encoding == "tiff32_raw":
             if any(v is not None for v in (self.black, self.white, self.display_gamma)):
-                raise ValueError("float TIFF preserves linear scale; mapping/gamma must be omitted")
-        else:
+                raise ValueError("raw float TIFF preserves original units; mapping/gamma must be omitted")
+        elif self.encoding != "tiff32" or self.black is not None or self.white is not None:
             if (self.black is None or self.white is None
                     or not math.isfinite(self.black) or not math.isfinite(self.white)
                     or not 0 < self.white - self.black < float("inf")):
-                raise ValueError("integer export requires finite black < white with finite range")
+                raise ValueError("mapped export requires finite black < white with finite range")
+        if self.encoding == "tiff32" and self.display_gamma is not None:
+            raise ValueError("float TIFF uses linear scaling; gamma must be omitted")
         if self.display_gamma is not None:
             if not math.isfinite(self.display_gamma) or not 0.1 <= self.display_gamma <= 10:
                 raise ValueError("display gamma must be finite and in [0.1, 10]")
@@ -76,6 +78,18 @@ def _collapse_replicated_rgb(array):
         if np.array_equal(first, array[..., 1]) and np.array_equal(first, array[..., 2]):
             return np.ascontiguousarray(first)
     return array
+
+
+def _float_white(result, image, valid):
+    """Shared linear white with the same 43% headroom as automatic viewing."""
+    maximum = float(np.max(image, where=valid, initial=0.))
+    white = min(maximum, np.finfo(np.float64).max / 1.43) * 1.43 if maximum > 0 else 1.
+    source = result.provenance.get('source', {})
+    bits = source.get('bit_depth')
+    if source.get('units') == 'adu' and isinstance(bits, int) and 0 < bits <= 32:
+        gain = (result.provenance.get('config', {}).get('gain_e_per_adu') or 1.) if result.units == 'e-' else 1.
+        white = min(white, ((1 << bits)-1) * gain)
+    return white
 
 
 def _prepare(result, config):
@@ -118,8 +132,19 @@ def _prepare(result, config):
              "clipped_low_samples": 0, "clipped_high_samples": 0,
              "clipped_pixels": 0}
     mapping = None
-    if config.encoding == "tiff32":
-        if np.any(np.abs(image[valid]) > np.finfo(np.float32).max):
+    if config.encoding in ("tiff32", "tiff32_raw"):
+        if config.encoding == "tiff32":
+            black = 0. if config.black is None else config.black
+            white = _float_white(result, image, valid) if config.white is None else config.white
+            mapping = {"black": float(black), "white": float(white), "gamma": 1.0,
+                       "shared_across_channels": True, "clipping": "none",
+                       "formula": "(linear - black) / (white - black)",
+                       "inverse_formula": "stored * (white - black) + black",
+                       "input_units": result.units, "output_units": "relative intensity",
+                       "levels_origin": "automatic 43% headroom" if config.white is None else "user"}
+            with np.errstate(over='ignore', invalid='ignore'):
+                image = (image - black) / (white - black)
+        if np.any(~np.isfinite(image[valid])) or np.any(np.abs(image[valid]) > np.finfo(np.float32).max):
             raise ValueError("valid intensity exceeds float32 range")
         image[~valid] = np.nan
         pixels = image.astype(np.float32)
@@ -140,16 +165,20 @@ def _prepare(result, config):
                    "gamma": config.display_gamma or 1.0}
     # Do not embed a JSON "shape" key: tifffile treats ImageDescription containing
     # '"shape":' as its own series metadata and reports the file as corrupted.
-    metadata = {"schema": "planetrecon-export", "schema_version": "1.1",
+    metadata = {"schema": "planetrecon-export", "schema_version": "1.2",
                 "encoding": config.encoding, "image_shape": list(image.shape),
                 "rendering": "display-rendered" if config.display_gamma is not None else "scientific-linear",
                 "transfer": {"function": "power" if config.display_gamma is not None else "linear",
                              "gamma": config.display_gamma or 1.0,
                              "colour_primaries": "unspecified; no colour-space conversion"},
                 "mapping": mapping, "counts": stats, "resampling": "none",
-                "invalid_policy": "NaN" if config.encoding == "tiff32" else "zero with separate validity mask",
+                "invalid_policy": "NaN" if config.encoding in ("tiff32", "tiff32_raw") else "zero with separate validity mask",
                 "coverage_description": "per-sample accumulation weights; not a calibrated uncertainty",
                 "result": result.metadata()}
+    if config.encoding == 'tiff32':
+        metadata['transfer']['colour_primaries'] = ('sRGB assumed for editing; no camera colour calibration'
+                                                  if image.ndim == 3 else 'not applicable (monochrome)')
+        metadata['transfer']['icc_profile'] = 'linear sRGB' if image.ndim == 3 else 'linear gray D65'
     return pixels, _collapse_replicated_rgb(valid), _collapse_replicated_rgb(coverage), layers, metadata
 
 
@@ -190,10 +219,14 @@ def _write_tiff(stream, pixels, valid, coverage, layers, metadata, check_cancel=
             text = _json(description).decode("ascii")
             if image:
                 text = TIFF_JSON_HEADER + text
+            profile = None
+            if image and metadata['encoding'] == 'tiff32':
+                from planetrecon.colour_profiles import LINEAR_SRGB, LINEAR_GRAY
+                profile = LINEAR_SRGB if array.ndim == 3 else LINEAR_GRAY
             writer.write(np.ascontiguousarray(array),
                          photometric="rgb" if array.ndim == 3 else "minisblack",
                          planarconfig="contig" if array.ndim == 3 else None,
-                         compression=None, metadata=None,
+                         compression=None, metadata=None, iccprofile=profile,
                          description=text,
                          software="PlanetRecon W13", extratags=[(274, "H", 1, 1, False)])
         if pixels is not None:

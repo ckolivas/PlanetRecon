@@ -86,7 +86,9 @@ def run_smoke(directory: Path, device: str = "cpu") -> int:
                     valid = tf.pages[0].asarray().astype(bool)
                 if valid.ndim == 2 and actual.ndim == 3:
                     valid = np.broadcast_to(valid[..., None], actual.shape)
-                np.testing.assert_array_equal(actual[valid], win.last_result.image[valid].astype(np.float32))
+                mapping = meta['mapping']
+                expected = (win.last_result.image - mapping['black']) / (mapping['white'] - mapping['black'])
+                np.testing.assert_array_equal(actual[valid], expected[valid].astype(np.float32))
                 assert np.isnan(actual[~valid]).all()
                 outcome.update(n_used=4, shape=[16,24,3], encoding='tiff32', backend=win.last_result.backend,
                                invalid_samples=int((~valid).sum()))

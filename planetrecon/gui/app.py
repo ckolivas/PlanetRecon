@@ -211,7 +211,7 @@ class MainWindow:
         levels.addWidget(QLabel('white'))
         levels.addWidget(self.white)
         fit = QPushButton('Fit levels')
-        fit.setToolTip('Set display black to the first percentile and white to 1.43 times the brightest valid pixel, capped at the capture range. Changes viewing levels; float TIFF keeps the original intensity scale.')
+        fit.setToolTip('Set display black to the first percentile and white to 1.43 times the brightest valid pixel, capped at the capture range. Changes viewing levels; TIFF32 can use these levels for reversible linear scaling.')
         fit.clicked.connect(self._fit_levels)
         levels.addWidget(fit)
         body.addLayout(levels)
@@ -231,11 +231,11 @@ class MainWindow:
         body.addWidget(self.details)
         save_row = QHBoxLayout()
         self.encoding = QComboBox()
-        self.encoding.addItems(['tiff32', 'tiff16', 'png16'])
+        self.encoding.addItems(['tiff32', 'tiff16', 'png16', 'tiff32_raw'])
         self.save_black = QLineEdit()
-        self.save_black.setPlaceholderText('Integer black (display black if empty)')
+        self.save_black.setPlaceholderText('Black (display black if empty)')
         self.save_white = QLineEdit()
-        self.save_white.setPlaceholderText('Integer white (display white if empty)')
+        self.save_white.setPlaceholderText('White (display white if empty)')
         self.save_gamma = QLineEdit()
         self.save_gamma.setPlaceholderText('Display gamma (optional)')
         self.save_btn = QPushButton('Save result…')
@@ -245,7 +245,7 @@ class MainWindow:
         for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_btn, self.cancel_save_btn):
             save_row.addWidget(widget)
         body.addLayout(save_row)
-        self.save_status = QLabel('Float TIFF preserves scale. Integer PNG/TIFF uses the black/white boxes, or the display levels if those boxes are empty.')
+        self.save_status = QLabel('TIFF32 uses reversible linear levels for image editors; tiff32_raw keeps original units. Blank black/white boxes use display levels.')
         self.save_status.setWordWrap(True)
         body.addWidget(self.save_status)
         self.encoding.currentIndexChanged.connect(self._export_options)
@@ -280,9 +280,9 @@ class MainWindow:
             self.zoom: 'Fit the preview to the window or choose a display zoom. This does not resize the saved full-resolution result.',
             self.black: 'Intensity mapped to black in the display. Also used for integer export when its black box is empty.',
             self.white: 'Intensity mapped to white in the display. Also used for integer export when its white box is empty.',
-            self.encoding: 'Float TIFF preserves linear intensity values. Integer TIFF and PNG map black and white levels into 16-bit values.',
-            self.save_black: 'Intensity mapped to zero in integer PNG/TIFF. Leave blank to use display black. Ignored for float TIFF.',
-            self.save_white: 'Intensity mapped to 65535 in integer PNG/TIFF. Leave blank to use display white. Ignored for float TIFF.',
+            self.encoding: 'TIFF32 scales black/white to 0/1 without clipping, for GIMP and other editors. TIFF32_raw preserves original camera units and may display overexposed. Integer TIFF/PNG maps levels into 16-bit values.',
+            self.save_black: 'Intensity mapped to zero in TIFF32 or integer PNG/TIFF. Leave blank to use display black. Ignored for TIFF32_raw.',
+            self.save_white: 'Intensity mapped to 1 in TIFF32 or 65535 in integer PNG/TIFF. Leave blank to use display white. Ignored for TIFF32_raw.',
             self.save_gamma: 'Optional display gamma for integer export. Leave blank for linear output. Ignored for float TIFF.',
             self.save_btn: 'Save the latest full-resolution result in the selected format, with provenance and coverage companions. Partial results are labelled incomplete.',
             self.cancel_save_btn: 'Request cancellation of the active export. Cancellation can wait for the current encoding operation to finish.',
@@ -697,9 +697,10 @@ class MainWindow:
             'Coverage shows accumulation weights, not calibrated uncertainty. Zoom refers to preview pixels.')
 
     def _export_options(self):
-        integer = self.encoding.currentText() != 'tiff32'
-        for edit in (self.save_black, self.save_white, self.save_gamma):
-            edit.setEnabled(integer)
+        encoding = self.encoding.currentText()
+        for edit in (self.save_black, self.save_white):
+            edit.setEnabled(encoding != 'tiff32_raw')
+        self.save_gamma.setEnabled(encoding in ('png16', 'tiff16'))
 
     def _parse_save_number(self, text, name, fallback=None):
         text = text.strip().replace('\u2212', '-')
@@ -715,12 +716,12 @@ class MainWindow:
 
     def _export_config(self):
         encoding = self.encoding.currentText()
-        if encoding == 'tiff32':
-            return ExportConfig('tiff32')
+        if encoding == 'tiff32_raw':
+            return ExportConfig('tiff32_raw')
         return ExportConfig(encoding,
-            self._parse_save_number(self.save_black.text(), 'Integer black', self.black.value()),
-            self._parse_save_number(self.save_white.text(), 'Integer white', self.white.value()),
-            self._parse_save_number(self.save_gamma.text(), 'Display gamma'))
+            self._parse_save_number(self.save_black.text(), 'Export black', self.black.value()),
+            self._parse_save_number(self.save_white.text(), 'Export white', self.white.value()),
+            self._parse_save_number(self.save_gamma.text(), 'Display gamma') if encoding != 'tiff32' else None)
 
     def _choose_save(self):
         if self.last_result is None or self.export_worker is not None:

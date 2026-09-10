@@ -281,8 +281,9 @@ The display stretch is fitted once at the first result and stays fixed until
 **Fit levels** or manual changes. Display operations never modify result arrays.
 
 **Save result** exports the last received full-resolution snapshot through W13,
-including while processing continues. Float TIFF is the default. Integer output
-requires fixed black/white levels; optional gamma explicitly selects a display
+including while processing continues. Linear, normalized TIFF32 is the default,
+using export black/white boxes or current display levels. TIFF32_raw preserves
+original camera units. Integer output requires fixed black/white levels; optional gamma explicitly selects a display
 rendering. Existing images require confirmation. Saving runs on a separate encoder
 thread, retains its chosen result as newer snapshots arrive, and reports actual
 clipped/invalid pixel counts. An error or cancellation preserves the last usable
@@ -307,21 +308,36 @@ QT_QPA_PLATFORM=offscreen dist/planetrecon/planetrecon gui-smoke --out /tmp/plan
 
 Each invocation uses a fresh directory containing a tiny Bayer SER, float TIFF,
 metadata, a window screenshot and `smoke.json`. The test verifies raw-CFA validity
-and preserved float values. This local Linux smoke does not certify clean target
+and reversibly scaled float values. This local Linux smoke does not certify clean target
 systems or Windows/macOS builds. W15 large-input/AVI work is the next independent
 application step; W02/W03 scientific qualification remains outstanding.
 
 ## Scientific export (W13)
 
 Export uses the floating linear result at full resolution. Choose `png16`,
-`tiff16` or `tiff32`; all support mono and RGB. TIFF32 is IEEE float32 and
-preserves negative values and values above one without normalizing. Finite
-values outside float32 range are rejected. No resampling or sharpening is applied.
+`tiff16`, `tiff32` or `tiff32_raw`; all support mono and RGB. TIFF32 uses IEEE
+float32 values scaled linearly so editors such as GIMP interpret black as 0 and
+white as 1. The GUI uses export levels, falling back to current display levels.
+The CLI/API defaults to black 0 and white 1.43 times the maximum valid sample,
+capped at the capture's nominal range (including gain when in electrons).
+One scale is shared across RGB. Float values are not clipped: negatives and HDR
+values above one are retained, with an inverse mapping in TIFF/JSON metadata:
+`original = stored * (white - black) + black` (within float32 rounding).
+
+Normalized float TIFF embeds a linear ICC profile so GIMP imports linear data:
+sRGB primaries are assumed for RGB editing; mono uses linear D65 gray. This
+marks transfer and viewing conventions, not a camera colour calibration, and
+does not apply a gamma curve to the stored samples. Use `tiff32_raw` to preserve
+original camera units without normalization or an editing profile. Raw files can
+appear overexposed in editors expecting a 0–1 display range. Original result
+snapshots keep their original units in either case. Finite stored values outside
+float32 range are rejected. No resampling or sharpening is applied.
 
 ```bash
 python3 -m planetrecon stack --path capture.ser --device cpu --out out/stack \
   --export png16 --black 0 --white 65535 --checkpoint out/live.npz
 python3 -m planetrecon export --path out/stack/stack.npz --out out/linear.tif
+python3 -m planetrecon export --path out/stack/stack.npz --out out/raw-units.tif --encoding tiff32_raw
 python3 -m planetrecon export --path out/live.npz --out out/intermediate.tif \
   --encoding tiff16 --black 0 --white 4095
 ```

@@ -145,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
     st = sub.add_parser("stack", help="W07 baseline stack of a SER, AVI or observed HDF5 crop")
     st.add_argument("--path", type=Path, required=True)
     st.add_argument("--out", type=Path, default=Path("out/stack"))
-    st.add_argument("--export", choices=("png16", "tiff16", "tiff32"), default=None,
+    st.add_argument("--export", choices=("png16", "tiff16", "tiff32", "tiff32_raw"), default=None,
                     help="also save a scientific image in the output directory")
     st.add_argument("--checkpoint", type=Path, default=None,
                     help="atomically update a full-resolution NPZ snapshot after each batch")
@@ -220,10 +220,10 @@ def main(argv: list[str] | None = None) -> int:
     ex = sub.add_parser("export", help="export a saved result or full-resolution checkpoint")
     ex.add_argument("--path", type=Path, required=True)
     ex.add_argument("--out", type=Path, required=True)
-    ex.add_argument("--encoding", choices=("png16", "tiff16", "tiff32"), default="tiff32")
+    ex.add_argument("--encoding", choices=("png16", "tiff16", "tiff32", "tiff32_raw"), default="tiff32")
     for command in (st, ex):
-        command.add_argument("--black", type=float, default=None, help="fixed integer black level in result units")
-        command.add_argument("--white", type=float, default=None, help="fixed integer white level in result units")
+        command.add_argument("--black", type=float, default=None, help="fixed mapped-export black level in result units")
+        command.add_argument("--white", type=float, default=None, help="fixed mapped-export white level in result units")
         command.add_argument("--display-gamma", type=float, default=None,
                              help="label as display-rendered and apply power 1/gamma (integer only)")
         command.add_argument("--overwrite", action="store_true", help="allow replacement of an existing exported image")
