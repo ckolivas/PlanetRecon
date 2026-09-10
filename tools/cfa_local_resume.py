@@ -1,7 +1,7 @@
-"""Exact CPU accumulation checkpoints for fixed raw frames and dense local maps.
+"""Exact accumulation checkpoints for fixed raw frames and dense local maps.
 
 This wraps the separate interpolation probe. It does not estimate alignment or
-claim CUDA execution/fallback support. Every supplied frame/map must match the
+re-estimate maps on CUDA failure. Every supplied frame/map must match the
 manifest before any of its contributions are published.
 """
 from copy import deepcopy
@@ -41,7 +41,8 @@ def map_digest(shift, shape):
 
 def make_manifest(source_path, source_sha256, shape, color, indices, qualities,
                   raw_digests, map_digests, *, region=None, chunk_rows=64,
-                  max_array_bytes=2*1024**3, max_neighbour_entries=65536):
+                  max_array_bytes=2*1024**3, max_neighbour_entries=65536,
+                  device='cpu', gpu_chunk_rows=512, max_gpu_array_bytes=128*1024**2):
     """Bind externally frozen calibrated raw inputs and maps to an execution policy."""
     shape = tuple(shape)
     if len(shape) != 2 or any(type(v) is not int or v < 2 for v in shape):
@@ -77,6 +78,12 @@ def make_manifest(source_path, source_sha256, shape, color, indices, qualities,
              'execution': {'accumulation': 'cpu-float64', 'frame_order': 'manifest order',
                            'numpy': np.__version__, 'scipy': scipy.__version__, 'byteorder': sys.byteorder,
                            'resume_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}}
+    if device not in ('cpu', 'gpu'):
+        raise ValueError('local moment device must be cpu or gpu')
+    if device == 'gpu':
+        value['options'].update(device=device, gpu_chunk_rows=gpu_chunk_rows, max_gpu_array_bytes=max_gpu_array_bytes)
+        value['execution'].update(accumulation='cuda-float64-with-whole-frame-cpu-retry',
+                                  gpu_sha256=hashlib.sha256(Path(__file__).with_name('cfa_local_gpu.py').read_bytes()).hexdigest())
     return json.loads(canonical(value))
 
 
@@ -91,7 +98,12 @@ class FixedLocalRun:
                                 self._manifest['map_digests'], **{k: v for k, v in options.items() if k not in ('shape', 'color')})
         if rebuilt != self._manifest:
             raise ValueError('interpolation operator or execution manifest changed')
-        self.model = LocalQuadraticAccumulator(**options, should_cancel=should_cancel)
+        device = options.pop('device', 'cpu')
+        if device == 'gpu':
+            from tools.cfa_local_gpu import CudaLocalAccumulator
+            self.model = CudaLocalAccumulator(**options, should_cancel=should_cancel)
+        else:
+            self.model = LocalQuadraticAccumulator(**options, should_cancel=should_cancel)
 
     @property
     def manifest(self):
@@ -137,7 +149,10 @@ class FixedLocalRun:
             self.model._check_cancel()
             hashes[name] = array_digest(getattr(self.model, name))
         metadata = {'schema': SCHEMA, 'manifest': self._manifest, 'n_used': self.model.n_used,
-                    'execution_history': ['cpu'] if self.model.n_used else [], 'array_sha256': hashes}
+                    'execution_history': getattr(self.model, 'execution_history', ['cpu'] if self.model.n_used else []), 'array_sha256': hashes}
+        if self._manifest['options'].get('device') == 'gpu':
+            metadata['gpu_state'] = {key: getattr(self.model, key) for key in (
+                'gpu_enabled', 'fallback_reason', 'fallback_frame', 'device_identity')}
         metadata['metadata_sha256'] = hashlib.sha256(canonical(metadata).encode()).hexdigest()
         fd, temporary = tempfile.mkstemp(prefix=f'.{path.name}-', suffix='.tmp', dir=path.parent)
         try:
@@ -181,7 +196,37 @@ class FixedLocalRun:
             count = metadata.get('n_used')
             if type(count) is not int or not 0 <= count <= len(run._manifest['indices']):
                 raise ValueError('invalid completed-frame count')
-            if metadata.get('execution_history') != (['cpu'] if count else []):
+            gpu_state = None
+            history = metadata.get('execution_history')
+            if run._manifest['options'].get('device') == 'gpu':
+                gpu_state = metadata.get('gpu_state')
+                keys = {'gpu_enabled', 'fallback_reason', 'fallback_frame', 'device_identity'}
+                if not isinstance(gpu_state, dict) or set(gpu_state) != keys:
+                    raise ValueError('missing or invalid GPU state')
+                if (not isinstance(history, list) or len(history) != count
+                        or any(v not in ('cpu', 'cuda') for v in history)
+                        or type(gpu_state['gpu_enabled']) is not bool):
+                    raise ValueError('checkpoint execution history mismatch')
+                fallback = gpu_state['fallback_frame']
+                if gpu_state['gpu_enabled']:
+                    if history != ['cuda']*count or fallback is not None or gpu_state['fallback_reason'] is not None:
+                        raise ValueError('invalid active GPU history')
+                elif (type(fallback) is not int or not 0 <= fallback <= count
+                        or history != ['cuda']*fallback+['cpu']*(count-fallback)
+                        or not isinstance(gpu_state['fallback_reason'], str) or not gpu_state['fallback_reason']):
+                    raise ValueError('invalid CPU retry history')
+                identity = gpu_state['device_identity']
+                if identity is not None:
+                    if (not isinstance(identity, dict) or set(identity) != {'name', 'capability', 'multiprocessors', 'torch', 'cuda'}
+                            or not isinstance(identity['name'], str) or not isinstance(identity['torch'], str)
+                            or not isinstance(identity['cuda'], str)
+                            or type(identity['multiprocessors']) is not int or identity['multiprocessors'] < 1
+                            or not isinstance(identity['capability'], list) or len(identity['capability']) != 2
+                            or any(type(v) is not int or v < 0 for v in identity['capability'])):
+                        raise ValueError('invalid CUDA device identity')
+                if 'cuda' in history and identity is None:
+                    raise ValueError('CUDA history lacks a device identity')
+            elif history != (['cpu'] if count else []):
                 raise ValueError('checkpoint execution history mismatch')
             for name in ARRAYS:
                 run.model._check_cancel()
@@ -202,4 +247,9 @@ class FixedLocalRun:
         for name, array in staged.items():
             setattr(run.model, name, array)
         run.model.n_used = count
+        if gpu_state is not None:
+            for key, value in gpu_state.items():
+                setattr(run.model, key, value)
+            run.model.execution_history = history.copy()
+            run.model.expected_device_identity = gpu_state['device_identity']
         return run

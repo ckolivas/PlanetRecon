@@ -110,14 +110,52 @@ class LocalQuadraticAccumulator:
         if self.should_cancel is not None and self.should_cancel():
             raise InterruptedError('local interpolation cancelled before publishing frame')
 
-    def add(self, raw, shift, quality):
-        """Stage every contribution before publishing any part of a raw frame."""
+    def stage(self, raw, shift, quality):
+        """Return a complete frame contribution without changing authoritative sums."""
         self._check_cancel()
         raw = np.asarray(raw, dtype=float)
         if raw.shape != self.shape or not np.isfinite(raw).all():
             raise ValueError('finite raw frame matching detector required')
         if not np.isfinite(quality) or quality <= 0:
             raise ValueError('positive finite quality required')
+        gram, noise, rhs = self.stage_moments(raw, shift, quality)
+        add, weight, *_ = cpu_backproject(raw, shift, self.color)
+        # Independent bilinear-coefficient variance for the ordinary fallback.
+        h, w = self.shape
+        yy, xx = np.indices(self.shape)
+        sx, sy = xx+shift[0], yy+shift[1]
+        ix, iy = np.floor(sx).astype(int), np.floor(sy).astype(int)
+        fx, fy = sx-ix, sy-iy
+        variance = np.zeros_like(self.variance_sum)
+        for ox, wx in ((0, 1-fx), (1, fx)):
+            for oy, wy in ((0, 1-fy), (1, fy)):
+                x, y = ix+ox, iy+oy
+                valid = (x >= 0) & (x < w) & (y >= 0) & (y < h)
+                label = self.labels[y.clip(0, h-1), x.clip(0, w-1)]
+                variance += ((quality*wx*wy)**2*valid)[..., None]*(label[..., None] == np.array(list('RGB')))
+        self._check_cancel()
+        return {'gram': gram, 'noise': noise, 'rhs': rhs, 'sums': quality*add,
+                'weights': quality*weight, 'variance_sum': variance}
+
+    def publish(self, staged):
+        """Validate the whole contribution before modifying any accumulated array."""
+        names = ('gram', 'noise', 'rhs', 'sums', 'weights', 'variance_sum')
+        if set(staged) != set(names):
+            raise ValueError('incomplete frame contribution')
+        for name in names:
+            array = staged[name]
+            if (array.shape != getattr(self, name).shape or array.dtype != np.float64
+                    or not np.isfinite(array).all()):
+                raise ValueError(f'invalid frame contribution {name}')
+        self._check_cancel()
+        for name in names:
+            getattr(self, name)[:] += staged[name]
+        self.n_used += 1
+
+    def add(self, raw, shift, quality):
+        self.publish(self.stage(raw, shift, quality))
+
+    def stage_moments(self, raw, shift, quality):
         positions, observed = inverse_pull_map(shift, self.shape, check_cancel=self._check_cancel)
         self._check_cancel()
         points = positions[observed]
@@ -157,28 +195,7 @@ class LocalQuadraticAccumulator:
                     noise[start+rows, c] = (transposed*weight[:, None]**2)@phi
                     rhs[start+rows, c] = ((transposed*weight[:, None])@values[ids][..., None])[..., 0]
             start = stop
-        add, weight, *_ = cpu_backproject(raw, shift, self.color)
-        # Independent bilinear-coefficient variance for the ordinary fallback.
-        h, w = self.shape
-        yy, xx = np.indices(self.shape)
-        sx, sy = xx+shift[0], yy+shift[1]
-        ix, iy = np.floor(sx).astype(int), np.floor(sy).astype(int)
-        fx, fy = sx-ix, sy-iy
-        variance = np.zeros_like(self.variance_sum)
-        for ox, wx in ((0, 1-fx), (1, fx)):
-            for oy, wy in ((0, 1-fy), (1, fy)):
-                x, y = ix+ox, iy+oy
-                valid = (x >= 0) & (x < w) & (y >= 0) & (y < h)
-                label = self.labels[y.clip(0, h-1), x.clip(0, w-1)]
-                variance += ((quality*wx*wy)**2*valid)[..., None]*(label[..., None] == np.array(list('RGB')))
-        self._check_cancel()
-        self.gram += gram
-        self.noise += noise
-        self.rhs += rhs
-        self.sums += quality*add
-        self.weights += quality*weight
-        self.variance_sum += variance
-        self.n_used += 1
+        return gram, noise, rhs
 
     def finish(self):
         if self.n_used == 0:

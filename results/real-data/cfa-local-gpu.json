@@ -1,0 +1,234 @@
+{
+  "scope": "Execution qualification of optional local CFA interpolation; full-output synthetic frames, no new capture comparison or application integration",
+  "baseline": "Local patch alignment, scores strictly above capture quality midpoint, original linear weights; unchanged",
+  "controls": {
+    "unique_passed": 124,
+    "cpu_passed": 86,
+    "cuda_passed": 38,
+    "hardware_suite_total": 47,
+    "hardware_suite_cpu_overlap": 9
+  },
+  "validation": [
+    "Original CPU accumulated arrays and outputs preserved bitwise by complete-frame staging",
+    "All four CFA layouts and narrow images agree with CPU within image 1e-10 and variance 1e-12, with identical fit choices and direct support",
+    "Detector window recovers the same contributing samples for translation, shear, compression, expansion and crossed shear controls",
+    "Failure after partial CUDA work retries the complete frame once on CPU; cancellation preserves earlier complete frames",
+    "Same-device repeated execution and checkpoint continuation are bitwise exact on hardware controls",
+    "Checkpoint preserves CUDA-to-CPU transition including cancellation before CPU retry; disabled CUDA resumes without probing the device",
+    "A changed available CUDA device/runtime refuses active GPU continuation before publishing a frame; unavailable CUDA retries the frame on CPU"
+  ],
+  "implementation": {
+    "cuda": "float64 batched Gram, noise Gram and right-hand-side products",
+    "cpu": "inverse geometry, neighbourhood preparation, ordinary CFA projection and final fitting",
+    "gpu_chunk_rows": 512,
+    "max_neighbour_entries": 65536,
+    "gpu_array_plan_bytes": 134217728,
+    "whole_frame_publication": true,
+    "automatic_core_count_tuning": false
+  },
+  "profile_protocol": {
+    "frames": 3,
+    "shape": [
+      424,
+      656
+    ],
+    "output": "full detector",
+    "inputs": "fixed synthetic noisy raw frames and smooth known dense maps",
+    "seed": 1047,
+    "qualities": [
+      0.8,
+      0.9,
+      1.0
+    ],
+    "cpu_threads": 2,
+    "execution": "sequential separate processes; unrelated background applications present",
+    "frozen_tolerances": {
+      "image_absolute": 1e-10,
+      "variance_absolute": 1e-12,
+      "same_fit_and_support": true
+    }
+  },
+  "profiles": {
+    "original_cpu": {
+      "mode": "original",
+      "shape": [
+        424,
+        656
+      ],
+      "frames": 3,
+      "region": "full detector",
+      "frame_seconds": [
+        7.622684483998455,
+        7.547342416000902,
+        7.456756291001511
+      ],
+      "finish_seconds": 1.79797621799662,
+      "peak_rss_mib": 1190.33984375,
+      "array_sha256": {
+        "gram": "7df2ccd86dbf3290fb43f30b8730f7849aa52d429204b1e1f4c667944ac31a4f",
+        "noise": "455bde03c51117943fc7ab586725970228c97f2b7390ae0797c8141d0d510143",
+        "rhs": "b586e3f27523beb7eb4182a243f0a53fa056daf14a0e9e931efefadabde8ab7c",
+        "sums": "6f7e8db9584f4893a3f03ed3093842e7ad2f377a999af4634cb5434a310dcc4d",
+        "weights": "c72b2f40d3f80d8cb00bc4a3023dab7fd49d39164c1971bba8ff9a531eea2bb8",
+        "variance_sum": "2a3f85b057e871c891e0a3dc6df21844bd2048b31c60e065e1cd9bfb7c28c2ef"
+      }
+    },
+    "staged_cpu": {
+      "mode": "cpu",
+      "shape": [
+        424,
+        656
+      ],
+      "frames": 3,
+      "region": "full detector",
+      "frame_seconds": [
+        8.952609330997802,
+        9.443379922005988,
+        7.977634556002158
+      ],
+      "finish_seconds": 2.1037682100068196,
+      "peak_rss_mib": 1181.70703125,
+      "array_sha256": {
+        "gram": "7df2ccd86dbf3290fb43f30b8730f7849aa52d429204b1e1f4c667944ac31a4f",
+        "noise": "455bde03c51117943fc7ab586725970228c97f2b7390ae0797c8141d0d510143",
+        "rhs": "b586e3f27523beb7eb4182a243f0a53fa056daf14a0e9e931efefadabde8ab7c",
+        "sums": "6f7e8db9584f4893a3f03ed3093842e7ad2f377a999af4634cb5434a310dcc4d",
+        "weights": "c72b2f40d3f80d8cb00bc4a3023dab7fd49d39164c1971bba8ff9a531eea2bb8",
+        "variance_sum": "2a3f85b057e871c891e0a3dc6df21844bd2048b31c60e065e1cd9bfb7c28c2ef"
+      }
+    },
+    "initial_tree_cuda": {
+      "mode": "cuda",
+      "shape": [
+        424,
+        656
+      ],
+      "frames": 3,
+      "region": "full detector",
+      "frame_seconds": [
+        8.591405145001772,
+        8.2482241300022,
+        8.172212650999427
+      ],
+      "finish_seconds": 2.1601552229985828,
+      "peak_rss_mib": 2099.93359375,
+      "array_sha256": {
+        "gram": "7df2ccd86dbf3290fb43f30b8730f7849aa52d429204b1e1f4c667944ac31a4f",
+        "noise": "455bde03c51117943fc7ab586725970228c97f2b7390ae0797c8141d0d510143",
+        "rhs": "599712e81643afca448006658f075223002ef5a65e72734df7f50020a2e7f85b",
+        "sums": "6f7e8db9584f4893a3f03ed3093842e7ad2f377a999af4634cb5434a310dcc4d",
+        "weights": "c72b2f40d3f80d8cb00bc4a3023dab7fd49d39164c1971bba8ff9a531eea2bb8",
+        "variance_sum": "2a3f85b057e871c891e0a3dc6df21844bd2048b31c60e065e1cd9bfb7c28c2ef"
+      },
+      "device": {
+        "name": "NVIDIA GeForce RTX 5070",
+        "capability": [
+          12,
+          0
+        ],
+        "multiprocessors": 48,
+        "torch": "2.13.0+cu132",
+        "cuda": "13.2"
+      },
+      "gpu_enabled": true,
+      "history": [
+        "cuda",
+        "cuda",
+        "cuda"
+      ],
+      "peak_cuda_allocated_mib": 49.09375,
+      "retained_cuda_allocated_mib": 32.0,
+      "maximum_batch_entries": 33280
+    },
+    "detector_window_cuda": {
+      "mode": "cuda",
+      "shape": [
+        424,
+        656
+      ],
+      "frames": 3,
+      "region": "full detector",
+      "frame_seconds": [
+        6.1329695690001245,
+        5.014993532000517,
+        4.868759018005221
+      ],
+      "finish_seconds": 1.8443051740032388,
+      "peak_rss_mib": 2095.41015625,
+      "array_sha256": {
+        "gram": "7df2ccd86dbf3290fb43f30b8730f7849aa52d429204b1e1f4c667944ac31a4f",
+        "noise": "455bde03c51117943fc7ab586725970228c97f2b7390ae0797c8141d0d510143",
+        "rhs": "350b9824e816547f429f9a7d384c272c466a101e7316b94d618accddf862bed4",
+        "sums": "6f7e8db9584f4893a3f03ed3093842e7ad2f377a999af4634cb5434a310dcc4d",
+        "weights": "c72b2f40d3f80d8cb00bc4a3023dab7fd49d39164c1971bba8ff9a531eea2bb8",
+        "variance_sum": "2a3f85b057e871c891e0a3dc6df21844bd2048b31c60e065e1cd9bfb7c28c2ef"
+      },
+      "device": {
+        "name": "NVIDIA GeForce RTX 5070",
+        "capability": [
+          12,
+          0
+        ],
+        "multiprocessors": 48,
+        "torch": "2.13.0+cu132",
+        "cuda": "13.2"
+      },
+      "gpu_enabled": true,
+      "history": [
+        "cuda",
+        "cuda",
+        "cuda"
+      ],
+      "peak_cuda_allocated_mib": 57.84375,
+      "retained_cuda_allocated_mib": 32.0,
+      "maximum_batch_entries": 51200
+    }
+  },
+  "original_cpu_to_final_cuda_warm_speed_ratio": 1.518056894999228,
+  "original_cpu_to_final_cuda_all_frames_speed_ratio": 1.4126974934622443,
+  "full_output_parity": {
+    "image": {
+      "bitwise_equal": false,
+      "max_absolute_difference": 1.4210854715202004e-13
+    },
+    "variance": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "degree": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "ordinary": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "coverage": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "validity": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    }
+  },
+  "interpretation": "Initial tree-based CUDA offered no useful gain. A conservative detector-space enclosure removes tree lookup overhead while preserving the radius-four reference-space kernel. Final warm frames average about 4.94 seconds versus 7.50 seconds for original CPU. Staged CPU was slower in this profile.",
+  "limits": [
+    "Synthetic frame accumulation timing is not total application throughput or real-image quality evidence",
+    "CUDA covers moments only; final fitting remains on CPU",
+    "GPU process peak RSS is about 2095 MiB versus about 1190 MiB for original CPU, including runtime overhead",
+    "Array planning limits do not cap RSS; PyTorch allocation measurements exclude memory allocated outside PyTorch",
+    "Caller must own and freeze calibrated frames and local maps; registration recovery and GUI integration remain pending",
+    "Previous real-data confirmation covers 512 selected frames and three regions, not the entire selected stack or globe"
+  ],
+  "source_sha256": {
+    "tools/cfa_local_gpu.py": "f84eb043948d42fe413ec96b1b3be302f30335091bb38d6073632dc44bd3807b",
+    "tools/cfa_local_resume.py": "7f00c8a912c2badcb60cd0a6551d9b034b7fb610c83d7be13865dbaa51761a8e",
+    "tools/cfa_local_transport_probe.py": "ef80a45b8d340d9b1ba453e15da9ab169264921042743c2b0c5c4affe73fab36"
+  },
+  "private_evidence_directory": "out/cfa-local-gpu",
+  "test_logs": [
+    "out/cfa-local-gpu/final-cpu.log",
+    "out/cfa-local-gpu/final-hardware.log"
+  ]
+}

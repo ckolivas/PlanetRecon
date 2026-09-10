@@ -124,17 +124,52 @@ failed writes/replacements and malformed state. The combined local controls tota
 GPU fitting or automatic registration recovery. The implementation remains a
 separate prototype, and no application defaults or processing path changed.
 
+## Completed: CUDA moments and complete-frame CPU retry
+
+The [GPU execution qualification](../results/real-data/cfa-local-gpu.json) adds
+bounded float64 CUDA moment products. A conservative detector-space window encloses
+the same radius-four reference-space neighbourhood; inverse-map coordinates and
+kernel weights determine the contributing samples. Inverse geometry, ordinary CFA
+projection and final fitting remain on CPU. All six frame contributions are
+validated before publication. GPU failure discards partial work and retries the
+whole frame on CPU, then retains CPU execution for the rest of the run.
+
+The checkpoint wrapper binds CUDA source and execution settings, records each
+completed frame's backend and the fallback boundary, and preserves the device and
+runtime identity. Same-device continuation and continuation after a CPU transition
+are exact. A different available GPU/runtime refuses active GPU continuation;
+unavailable CUDA triggers complete-frame CPU retry. Cancelled retry can be saved
+without counting the incomplete frame. Caller-owned raw frames and maps remain
+frozen and digest-checked; registration is not repeated by this wrapper.
+
+All 124 distinct controls pass: 86 CPU and 38 CUDA checks. Full-output synthetic
+424x656 profiles preserve the original CPU arrays and image bitwise after staging.
+The CUDA image differs by at most 1.42e-13; variance, fit choices, ordinary image,
+coverage and validity are bitwise identical. A first CUDA implementation retained
+tree lookup and gave no useful gain. The detector window reduces warm frame time
+to 4.94 seconds versus 7.50 seconds for the original CPU implementation (1.52x).
+Final fitting takes 1.84 seconds versus 1.80 seconds. Staged CPU alone was slower
+in this profile. This is three-frame synthetic accumulation, not total application
+throughput or a new image-quality comparison.
+
+The RTX 5070 profile used Torch 2.13.0+cu132, two CPU threads and at most 51,200
+neighbour entries per batch. Peak PyTorch CUDA allocation was 57.84 MiB, including
+32 MiB retained allocation. Process peak RSS was 2,095 MiB versus 1,190 MiB for
+original CPU, including runtime overhead. Array budgets are not RSS caps, and
+PyTorch metrics exclude allocations outside its allocator. Chunk sizes remain
+explicitly bounded rather than tuned to GPU core count. Private scripts, source
+snapshots, paired arrays and logs are under `out/cfa-local-gpu`.
+
 ## Next steps
 
-1. Qualify GPU moment accumulation and whole-frame CPU retry against the fixed
-   local interpolation and CPU resume contract. Bind execution transitions and
-   map ownership explicitly; GPU failure must not partly count a frame. Profile
-   a full output geometry before making performance claims or repeating captures.
-2. Prepare optional GUI integration with clear progress/cancellation, effective
+1. Prepare optional GUI integration with clear progress/cancellation, effective
    sample-count versus direct-CFA coverage metadata, and exact state identity.
-   Preserve the user's local/50% defaults and keep this candidate opt-in until
+   The production caller must own and freeze calibrated inputs and local maps,
+   with checkpoint recovery preserving that same geometry and execution history.
+2. Preserve the user's local/50% defaults and keep this candidate opt-in until
    the user has tested a full result. The three-region confirmation is not a
-   full 1,645-frame or whole-globe validation.
+   full 1,645-frame or whole-globe validation. No new capture study is needed
+   before making the optional candidate available for that test.
 
 ### Declared larger confirmation
 
