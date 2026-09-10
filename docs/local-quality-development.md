@@ -80,13 +80,31 @@ ordinary coverage/validity match the original implementation bitwise. The profil
 ran with two CPU threads while a GUI worker was active; these illustrative timings
 are not a total application speed claim. No real capture comparison was repeated.
 
+## Completed: larger selected-frame confirmation
+
+The [512-frame confirmation](../results/real-data/cfa-local-confirmation.json)
+passes the frozen gate below. All 512 selected frames contribute with the same
+local maps, original quality weights, template and anchor for both arms. Each
+region contains 6,400 common comparison pixels. RMS reductions are 9.63% on the
+left, 10.67% in the centre and 10.42% on the right. Detail correlations improve
+from 0.887706 to 0.957857, 0.907276 to 0.964155, and 0.893505 to 0.960559,
+respectively. Aggregate RMS falls from 0.00466010 to 0.00418363 (10.22%), and
+aggregate detail correlation rises from 0.897687 to 0.961324.
+
+There were no unexpected frame/map rejections. Both raw float TIFF strips and
+matched PNG previews are saved in `out/cfa-local-confirmation`; the exact script,
+source, declaration, selection/weight manifest and hashes are archived there.
+The reproduction script is `tools/cfa_local_confirmation.py`; it refuses to
+repeat a started study. Two gate controls ensure all regions must pass and
+that an aggregate improvement cannot hide a regional regression. No application
+processing changed. This is a selected-frame strip confirmation, not a full
+1,645-frame or whole-globe result; the reference remains non-independent.
+
 ## Next steps
 
-1. Run the larger confirmation below once the active GUI processing worker has
-   finished. Preserve the local/50% baseline and interpolation parameters.
-2. If confirmed, implement exact resume bound to source, selection/weights, dense
-   local maps and execution policy. Failed GPU work must retry a complete frame
-   without double counting. Then offer an optional GUI integration for user testing.
+1. Implement exact resume bound to source, selection/weights, dense local maps
+   and execution policy. Failed GPU work must retry a complete frame without
+   double counting. Then prepare optional GUI integration for user testing.
 
 ### Declared larger confirmation
 
