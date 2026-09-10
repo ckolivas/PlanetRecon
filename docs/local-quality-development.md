@@ -339,3 +339,20 @@ The real Jupiter template retains anchor 1947 and the same 1,645 selected frames
 Its 102,530 planet pixels (above 15% of reference peak) are bitwise unchanged;
 only 1,078 detector-border pixels change, by at most 0.000199 ADU. This is a border
 correctness fix, not a demonstrated Jupiter quality gain; no full stack rerun.
+
+## Rejected: skip ineligible CUDA patch correlations
+
+A candidate applied the existing texture and detector-support checks before
+CUDA correlation, gathering only usable tiles. The Jupiter reference contains
+228 patches, of which 103 pass the texture checks. No matching thresholds,
+frame choices, template values or final image sampling changed.
+
+The candidate passed 115 focused CPU/CUDA tests. In three alternating-order
+paired trials on the same 32 selected Jupiter frames, median local-alignment plus
+raw-CFA projection time fell from 1.7444 to 1.5952 seconds (8.5%). Displacements
+agreed within 1.3e-13 pixels and normalized RGB stacks within 3.6e-13 ADU. This
+missed the declared 10% execution-time reduction gate, and those timings exclude
+capture loading, global registration and export. Remove the candidate from the
+application; do not repeat or expand the benchmark. Evidence is in
+`results/real-data/local-sparse-patches.json`; private code and measurements remain
+under `out/local-sparse-patches`.

@@ -1,0 +1,69 @@
+{
+  "scope": "Execution-only change; shared established template and global shifts; original linear quality weights and raw-CFA projection.",
+  "gpu": "NVIDIA GeForce RTX 5070",
+  "frame_indices": [
+    35,
+    146,
+    265,
+    363,
+    516,
+    571,
+    632,
+    712,
+    839,
+    898,
+    1094,
+    1210,
+    1290,
+    1406,
+    1464,
+    1539,
+    1617,
+    1685,
+    1769,
+    1871,
+    1927,
+    1986,
+    2082,
+    2157,
+    2251,
+    2338,
+    2402,
+    2521,
+    2709,
+    2806,
+    2939,
+    3642
+  ],
+  "selected_frames": 1645,
+  "template_sha256": "9c5e7d995731e246696f533b3484d2fda99e6b3630be326ab9f61816612b3b3a",
+  "prior_sha256": "a92a5f3ab58d1a972eac5243fe30fdf96aa844a6da8a39c0ec3c8c676128ea5b",
+  "candidate_sha256": "e0863d83608d4484dde9165ed9886de03dec6bc2937bc13484f81245d44ab70f",
+  "gate": "At least 10% lower median paired local-alignment-plus-projection time; displacements agree within 1e-10 px and normalized stacks within 1e-8 ADU. Three rounds, reversed execution order, two warmup frames per model. No full capture rerun.",
+  "patches_total": 228,
+  "texture_eligible": 103,
+  "alignment_projection_seconds": {
+    "prior": [
+      1.7443701390147908,
+      1.7465862210665364,
+      1.625825295035611
+    ],
+    "sparse": [
+      1.6595576649851864,
+      1.5952279359626118,
+      1.514116145990556
+    ]
+  },
+  "median_seconds": {
+    "prior": 1.7443701390147908,
+    "sparse": 1.5952279359626118
+  },
+  "median_time_reduction_fraction": 0.08549917228943937,
+  "maximum_flow_difference_px": 1.2612133559741778e-13,
+  "maximum_stack_difference_adu": 3.552713678800501e-13,
+  "maximum_coverage_difference": 3.410605131648481e-13,
+  "passes_gate": false,
+  "decision": "Rejected: below the declared 10 percent execution-time improvement gate. Application and matching policy unchanged.",
+  "validation": "115 focused CPU/CUDA tests passed before removing the candidate.",
+  "limitations": "32 selected Jupiter frames; fixed shared template/global shifts; local alignment plus raw-CFA projection timing only, not full application runtime. Three paired rounds on RTX 5070. No full capture run or quality improvement claim."
+}
