@@ -40,10 +40,10 @@ TIFF matches the scientific snapshot. The full CUDA run with checkpoints/export
 took 245 seconds. The paired pilot took about eight seconds per arm for alignment
 and projection; these timings are illustrative, not isolated benchmarks.
 
-The numerical gain is small and is **not visual acceptance**. Full previews show
-no gross new colour or limb defect, but user sharpening review is still needed.
-The next step is assessment of the existing `out/local-joint-peak/full-joint.tif`
-against `out/cfa-local-full/ordinary.tif`; no further run is needed for that review.
+The user found the difference almost indistinguishable after sharpening. Retain
+this as a small alignment correction, not a meaningful quality gain. Full previews show
+no gross new colour or limb defect. The retained comparison uses `out/local-joint-peak/full-joint.tif`
+against `out/cfa-local-full/ordinary.tif`; no further run is warranted.
 Matched display previews are `out/local-joint-peak/full-joint.png` and
 `full-prior.png`. The committed evidence is `results/real-data/local-joint-peak.json`;
 private scripts, prior source, outputs and logs are under `out/local-joint-peak`.
@@ -87,3 +87,13 @@ Keep sharpening an explicitly user-selected post-processing step.
 
 The periodic continuation automation remains paused. This document does not
 schedule background work.
+
+## Rejected: reduced local confidence suppression
+
+A sparse-patch continuous-scene control improved when the second confidence
+attenuation was removed, but the fixed 128-frame Jupiter comparison worsened
+relative RMS from 0.007375950 to 0.007435980 (0.81%). Detail correlation rose
+slightly, so this fails the declared material two-metric gate. Production code
+remains unchanged; do not expand or tune this candidate. The evidence is
+`results/real-data/local-confidence.json`, with private files in
+`out/local-confidence`.
