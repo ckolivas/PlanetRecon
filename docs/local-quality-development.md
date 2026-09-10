@@ -134,7 +134,45 @@ fell from 0.693732 to 0.692914. This fails the gate. Matched unsharpened preview
 show no obvious gross new limb or colour defect, but that does not override the
 failed detail comparison or establish acceptance after external sharpening.
 
-Keep the existing patch sizes. No production change, full-capture run or size
-sweep is warranted by this candidate. The report is
+Keep the existing patch sizes for now. This rejects a blanket switch to 33 pixels,
+not capture-dependent or spatially adaptive sizing: appropriate alignment support
+depends on sampling, resolved texture and noise. No production change, full-capture
+run or fixed-size sweep is warranted by this candidate. The report is
 `results/real-data/local-small-patches.json`; private scripts, controls and paired
 TIFF/PNG/snapshot outputs are retained under `out/local-small-patches`.
+
+## Adaptive sizing: prototype evaluated, production selection still open
+
+Following the user's sampling correction, two automatic sizing rules were tested.
+A reference-only rule based on the weakest gradient direction selected larger
+patches as sampling increased, but worsened the twice-sampled deformation control
+from 0.218 to 0.405 pixels in original-sampling units. Feature scale alone does not
+balance measurement reliability against averaging over spatially varying motion.
+
+A second prototype tries 33, 65 and 97 pixels at common centres, choosing the
+smallest patch with supported two-directional texture and an accepted correlation
+peak in each frame. It retains the joint peak, observed-support and fold guards,
+and projects original CFA measurements once. It uses a 16-pixel grid, so the trial
+compares the complete adaptive strategy, not only the size-selection rule.
+
+The second rule improves the analytic deformation control at half, native and
+double sampling (errors 0.548/0.471/0.218 to 0.473/0.234/0.068 pixels in original
+sampling units). Exact/brightness/unrelated-noise controls produce no motion;
+stationary noisy data show 0.0152-pixel RMS spurious motion. Five CPU/CUDA checks,
+including nonzero deformation, agree within 1.4e-15 pixels.
+
+The same 128-frame Jupiter pilot uses all three sizes (17,026 / 14,530 / 10,691
+accepted patch matches). Fine-detail correlation rises from 0.693732 to 0.696663,
+but relative RMS worsens 2.73%, from 0.007375950 to 0.007577257. It fails the
+declared two-metric gate. No production change or full run is justified. The
+prototype is also unoptimized: it evaluates every size even after finding a
+reliable smaller match. Evidence and limitations are recorded in
+`results/real-data/local-adaptive-patches.json`, with private code and outputs in
+`out/local-adaptive-patches`.
+
+Automatic sizing remains an open direction. Before another capture trial, improve
+the actual criterion for trusting a displacement across sizes; texture extent and
+the current binary peak guards alone are insufficient. Qualification must include
+sampling changes and noise, not a single globally optimal pixel size inferred from
+Jupiter. Keep the existing working default until a candidate improves practical
+stack quality; do not expose this failed prototype as an automatic mode.
