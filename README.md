@@ -324,10 +324,13 @@ One scale is shared across RGB. Float values are not clipped: negatives and HDR
 values above one are retained, with an inverse mapping in TIFF/JSON metadata:
 `original = stored * (white - black) + black` (within float32 rounding).
 
-Normalized float TIFF embeds a linear ICC profile so GIMP imports linear data:
-sRGB primaries are assumed for RGB editing; mono uses linear D65 gray. This
-marks transfer and viewing conventions, not a camera colour calibration, and
-does not apply a gamma curve to the stored samples. Use `tiff32_raw` to preserve
+Normalized float TIFF embeds an sRGB display profile (D65 gray with the same
+transfer curve for mono), matching the preview's interpretation of scaled
+samples as display levels. This prevents GIMP from brightening midtones as it
+would with a linear-light profile. It assigns a viewing convention without
+baking a gamma curve into the samples; it is not camera colour calibration or
+a claim that the file is scene-linear sRGB. Metadata distinguishes this display
+interpretation from the reversible numerical mapping. Use `tiff32_raw` to preserve
 original camera units without normalization or an editing profile. Raw files can
 appear overexposed in editors expecting a 0–1 display range. Original result
 snapshots keep their original units in either case. Finite stored values outside

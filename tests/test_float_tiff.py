@@ -15,7 +15,7 @@ def test_adu_float_is_displayable_and_inverts_to_original_values(tmp_path, rgb):
     if rgb:
         data = data[..., None] * [1., .7, .3]
     r = result(data)
-    saved = export_result(r, tmp_path/'linear.tif')
+    saved = export_result(r, tmp_path/'preview.tif')
     with tifffile.TiffFile(saved.path) as file:
         pixels = file.asarray()
         profile = file.pages[0].tags['InterColorProfile'].value
@@ -25,24 +25,28 @@ def test_adu_float_is_displayable_and_inverts_to_original_values(tmp_path, rgb):
     np.testing.assert_allclose(pixels*1716, data, rtol=1e-7, atol=2e-5)
     assert saved.metadata['counts']['clipped_pixels'] == 0
     assert saved.metadata['mapping']['input_units'] == 'adu'
-    assert saved.metadata['transfer']['gamma'] == 1.
+    assert saved.metadata['rendering'] == 'preview-mapped'
+    assert saved.metadata['mapping']['gamma'] == 1.
+    assert saved.metadata['transfer']['function'] == 'sRGB'
+    assert saved.metadata['transfer']['gamma'] is None
     assert profile[16:20] == (b'RGB ' if rgb else b'GRAY')
-    # Independently inspect the embedded ICC tone curves: identity curves for
-    # RGB and a gamma-one parametric curve for monochrome.
+    # Independently evaluate the ICC decode curve, then encode to a display.
+    # The old linear profile turned 0.25 into 0.537, bleaching the midtones.
     tags = {name: profile[offset:offset+size] for name,offset,size in
             (struct.unpack_from('>4sII',profile,132+12*i)
              for i in range(struct.unpack_from('>I',profile,128)[0]))}
     for name in ((b'rTRC',b'gTRC',b'bTRC') if rgb else (b'kTRC',)):
         curve = tags[name]
-        if curve[:4] == b'curv':
-            assert struct.unpack_from('>I',curve,8)[0] == 0
-        else:
-            assert curve[:4] == b'para' and struct.unpack_from('>H',curve,8)[0] == 0
-            assert struct.unpack_from('>i',curve,12)[0] == 65536
+        assert curve[:4] == b'para' and struct.unpack_from('>H',curve,8)[0] == 3
+        g, a, b, c, d = np.array(struct.unpack_from('>5i',curve,12)) / 65536
+        codes = np.array([0., .02, .04, .25, .5, .75, 1.])
+        light = np.where(codes >= d, (a*codes+b)**g, c*codes)
+        display = np.where(light <= .0031308, 12.92*light, 1.055*light**(1/2.4)-.055)
+        np.testing.assert_allclose(display, codes, atol=3e-5, rtol=0)
     if rgb:
         from PySide6.QtGui import QColorSpace
         colour = QColorSpace.fromIccProfile(profile)
-        assert colour.isValid() and colour.transferFunction() == QColorSpace.TransferFunction.Linear
+        assert colour.isValid() and colour.transferFunction() == QColorSpace.TransferFunction.SRgb
     np.testing.assert_array_equal(r.image, data)
 
 

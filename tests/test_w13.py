@@ -108,7 +108,7 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
     assert meta['image_sha256'] == hashlib.sha256(p.read_bytes()).hexdigest()
     assert meta['result']['reference_epoch'] == '1.25'
     assert meta['result']['provenance'] == r.provenance
-    assert meta['rendering'] == 'scientific-linear'
+    assert meta['rendering'] == ('preview-mapped' if encoding == 'tiff32' else 'scientific-linear')
     assert meta['resampling'] == 'none'
     if encoding == 'png16':
         chunks = png_chunks(p)

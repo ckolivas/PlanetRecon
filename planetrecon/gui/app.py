@@ -245,7 +245,7 @@ class MainWindow:
         for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_btn, self.cancel_save_btn):
             save_row.addWidget(widget)
         body.addLayout(save_row)
-        self.save_status = QLabel('TIFF32 uses reversible linear levels for image editors; tiff32_raw keeps original units. Blank black/white boxes use display levels.')
+        self.save_status = QLabel('TIFF32 uses reversible levels and a colour profile matching the preview; tiff32_raw keeps original units. Blank black/white boxes use display levels.')
         self.save_status.setWordWrap(True)
         body.addWidget(self.save_status)
         self.encoding.currentIndexChanged.connect(self._export_options)
@@ -280,7 +280,7 @@ class MainWindow:
             self.zoom: 'Fit the preview to the window or choose a display zoom. This does not resize the saved full-resolution result.',
             self.black: 'Intensity mapped to black in the display. Also used for integer export when its black box is empty.',
             self.white: 'Intensity mapped to white in the display. Also used for integer export when its white box is empty.',
-            self.encoding: 'TIFF32 scales black/white to 0/1 without clipping, for GIMP and other editors. TIFF32_raw preserves original camera units and may display overexposed. Integer TIFF/PNG maps levels into 16-bit values.',
+            self.encoding: 'TIFF32 scales black/white to 0/1 without clipping and embeds an sRGB display profile to match the preview in GIMP and other editors. TIFF32_raw preserves original camera units and may display overexposed. Integer TIFF/PNG maps levels into 16-bit values.',
             self.save_black: 'Intensity mapped to zero in TIFF32 or integer PNG/TIFF. Leave blank to use display black. Ignored for TIFF32_raw.',
             self.save_white: 'Intensity mapped to 1 in TIFF32 or 65535 in integer PNG/TIFF. Leave blank to use display white. Ignored for TIFF32_raw.',
             self.save_gamma: 'Optional display gamma for integer export. Leave blank for linear output. Ignored for float TIFF.',

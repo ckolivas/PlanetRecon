@@ -176,9 +176,16 @@ def _prepare(result, config):
                 "coverage_description": "per-sample accumulation weights; not a calibrated uncertainty",
                 "result": result.metadata()}
     if config.encoding == 'tiff32':
+        # The GUI puts scaled samples straight into RGB888 display codes. A
+        # linear ICC tag would make colour-managed editors brighten them again.
+        # Assign the same display interpretation without changing the samples;
+        # mapping still describes an affine, reversible numerical conversion.
+        metadata['rendering'] = 'preview-mapped'
+        metadata['transfer']['function'] = 'sRGB'
+        metadata['transfer']['gamma'] = None  # Piecewise sRGB, not a power curve.
         metadata['transfer']['colour_primaries'] = ('sRGB assumed for editing; no camera colour calibration'
                                                   if image.ndim == 3 else 'not applicable (monochrome)')
-        metadata['transfer']['icc_profile'] = 'linear sRGB' if image.ndim == 3 else 'linear gray D65'
+        metadata['transfer']['icc_profile'] = 'sRGB' if image.ndim == 3 else 'gray D65 with sRGB transfer'
     return pixels, _collapse_replicated_rgb(valid), _collapse_replicated_rgb(coverage), layers, metadata
 
 
@@ -221,8 +228,8 @@ def _write_tiff(stream, pixels, valid, coverage, layers, metadata, check_cancel=
                 text = TIFF_JSON_HEADER + text
             profile = None
             if image and metadata['encoding'] == 'tiff32':
-                from planetrecon.colour_profiles import LINEAR_SRGB, LINEAR_GRAY
-                profile = LINEAR_SRGB if array.ndim == 3 else LINEAR_GRAY
+                from planetrecon.colour_profiles import SRGB, SRGB_GRAY
+                profile = SRGB if array.ndim == 3 else SRGB_GRAY
             writer.write(np.ascontiguousarray(array),
                          photometric="rgb" if array.ndim == 3 else "minisblack",
                          planarconfig="contig" if array.ndim == 3 else None,
