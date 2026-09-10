@@ -216,7 +216,7 @@ def test_cli_exposes_local_alignment(tmp_path):
     with SERSource(path) as source:
         preprocess_source(source, config())
     assert main(['--threads', '2', 'stack', '--path', str(path), '--device', 'cpu',
-                 '--local-alignment', '--out', str(tmp_path/'result')]) == 0
+                 '--local-alignment', '--stack-percent', '100', '--out', str(tmp_path/'result')]) == 0
     result = load_snapshot(tmp_path/'result/stack.npz')
     assert result.provenance['local_alignment']['enabled']
 

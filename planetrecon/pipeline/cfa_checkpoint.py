@@ -87,6 +87,38 @@ def make_manifest(source_path, source_sha256, shape, color, indices, qualities,
     return json.loads(canonical(value))
 
 
+def validate_gpu_state(state, history, count):
+    """Validate the complete-frame CUDA-to-CPU execution contract."""
+    gpu_state = state
+    keys = {'gpu_enabled', 'fallback_reason', 'fallback_frame', 'device_identity'}
+    if not isinstance(gpu_state, dict) or set(gpu_state) != keys:
+        raise ValueError('missing or invalid GPU state')
+    if (not isinstance(history, list) or len(history) != count
+            or any(v not in ('cpu', 'cuda') for v in history)
+            or type(gpu_state['gpu_enabled']) is not bool):
+        raise ValueError('checkpoint execution history mismatch')
+    fallback = gpu_state['fallback_frame']
+    if gpu_state['gpu_enabled']:
+        if history != ['cuda']*count or fallback is not None or gpu_state['fallback_reason'] is not None:
+            raise ValueError('invalid active GPU history')
+    elif (type(fallback) is not int or not 0 <= fallback <= count
+            or history != ['cuda']*fallback+['cpu']*(count-fallback)
+            or not isinstance(gpu_state['fallback_reason'], str) or not gpu_state['fallback_reason']):
+        raise ValueError('invalid CPU retry history')
+    identity = gpu_state['device_identity']
+    if identity is not None:
+        if (not isinstance(identity, dict) or set(identity) != {'name', 'capability', 'multiprocessors', 'torch', 'cuda'}
+                or not isinstance(identity['name'], str) or not isinstance(identity['torch'], str)
+                or not isinstance(identity['cuda'], str)
+                or type(identity['multiprocessors']) is not int or identity['multiprocessors'] < 1
+                or not isinstance(identity['capability'], list) or len(identity['capability']) != 2
+                or any(type(v) is not int or v < 0 for v in identity['capability'])):
+            raise ValueError('invalid CUDA device identity')
+    if 'cuda' in history and identity is None:
+        raise ValueError('CUDA history lacks a device identity')
+    return deepcopy(gpu_state)
+
+
 class FixedLocalRun:
     def __init__(self, manifest, *, should_cancel=None):
         self._manifest = json.loads(canonical(manifest))
@@ -199,33 +231,7 @@ class FixedLocalRun:
             gpu_state = None
             history = metadata.get('execution_history')
             if run._manifest['options'].get('device') == 'gpu':
-                gpu_state = metadata.get('gpu_state')
-                keys = {'gpu_enabled', 'fallback_reason', 'fallback_frame', 'device_identity'}
-                if not isinstance(gpu_state, dict) or set(gpu_state) != keys:
-                    raise ValueError('missing or invalid GPU state')
-                if (not isinstance(history, list) or len(history) != count
-                        or any(v not in ('cpu', 'cuda') for v in history)
-                        or type(gpu_state['gpu_enabled']) is not bool):
-                    raise ValueError('checkpoint execution history mismatch')
-                fallback = gpu_state['fallback_frame']
-                if gpu_state['gpu_enabled']:
-                    if history != ['cuda']*count or fallback is not None or gpu_state['fallback_reason'] is not None:
-                        raise ValueError('invalid active GPU history')
-                elif (type(fallback) is not int or not 0 <= fallback <= count
-                        or history != ['cuda']*fallback+['cpu']*(count-fallback)
-                        or not isinstance(gpu_state['fallback_reason'], str) or not gpu_state['fallback_reason']):
-                    raise ValueError('invalid CPU retry history')
-                identity = gpu_state['device_identity']
-                if identity is not None:
-                    if (not isinstance(identity, dict) or set(identity) != {'name', 'capability', 'multiprocessors', 'torch', 'cuda'}
-                            or not isinstance(identity['name'], str) or not isinstance(identity['torch'], str)
-                            or not isinstance(identity['cuda'], str)
-                            or type(identity['multiprocessors']) is not int or identity['multiprocessors'] < 1
-                            or not isinstance(identity['capability'], list) or len(identity['capability']) != 2
-                            or any(type(v) is not int or v < 0 for v in identity['capability'])):
-                        raise ValueError('invalid CUDA device identity')
-                if 'cuda' in history and identity is None:
-                    raise ValueError('CUDA history lacks a device identity')
+                gpu_state = validate_gpu_state(metadata.get('gpu_state'), history, count)
             elif history != (['cpu'] if count else []):
                 raise ValueError('checkpoint execution history mismatch')
             for name in ARRAYS:
