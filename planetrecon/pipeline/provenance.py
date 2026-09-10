@@ -28,6 +28,10 @@ def capture_provenance(source, config, calibration):
                 arr = np.ascontiguousarray(value)
                 cal[field.name] = {"shape": list(arr.shape), "dtype": arr.dtype.str,
                                    "sha256": hashlib.sha256(arr.tobytes()).hexdigest()}
+                if field.name == 'flat':
+                    # Both preprocessing and accumulator identities consume
+                    # this policy; old clamped-flat results must not be reused.
+                    cal[field.name]['normalisation'] = 'median-relative sensitivity without absolute floor v2'
             else:
                 cal[field.name] = value
     from planetrecon.geometry.pose import capture_exposure

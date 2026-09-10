@@ -53,8 +53,14 @@ def apply_calibration(frame: np.ndarray, cal: Calibration | None) -> tuple[np.nd
     if cal.dark is not None:
         work = work - cal.dark
     if cal.flat is not None:
-        work = work / np.clip(cal.flat, 1e-6, None)
-        work *= float(np.median(cal.flat))
+        flat = np.asarray(cal.flat, dtype=np.float64)
+        if flat.shape != work.shape or not np.isfinite(flat).all() or np.any(flat <= 0):
+            raise ValueError('flat must be finite, positive and match the raw detector frame shape')
+        # Flat illumination has arbitrary units. Form relative sensitivity
+        # before correcting observations; an absolute floor changes the image
+        # when the same flat is saved on a smaller numeric scale.
+        relative = flat / flat.max()
+        work = work * (float(np.median(relative)) / relative)
     sat = False
     if cal.saturate_adu is not None:
         sat = bool(np.any(np.asarray(frame) >= cal.saturate_adu))

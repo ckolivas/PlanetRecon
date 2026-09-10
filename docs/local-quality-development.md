@@ -356,3 +356,30 @@ capture loading, global registration and export. Remove the candidate from the
 application; do not repeat or expand the benchmark. Evidence is in
 `results/real-data/local-sparse-patches.json`; private code and measurements remain
 under `out/local-sparse-patches`.
+
+## Completed: flat-field correction independent of illumination units
+
+Calibration previously clamped flat values below `1e-6` before dividing the
+observations, then multiplied by the original flat median. Saving the same flat
+on a smaller numeric scale could therefore darken the stack and leave spatial
+sensitivity variations uncorrected. Form the flat's relative sensitivity first
+and multiply observations by its median-to-pixel ratio. This removes the absolute
+floor and avoids large intermediate values caused solely by the flat's units.
+Explicit calibration objects now reject nonfinite, nonpositive or mismatched
+flats just as file-loaded calibration tables do.
+
+For a known 100-ADU field with sensitivity varying from 0.5 to 1.5, the previous
+correction produced 0.5 to 1.5 ADU when the flat was scaled by `1e-8`; the corrected
+field stays at 100 ADU within 3e-14. Checks cover scale factors from `1e-200` to
+`1e200`, bias/dark/gain order, negative calibrated signals and input preservation.
+Local mono/Bayer/RGB stacks using the upper 50% quality range give identical
+screening measurements, frame choices, images and coverage for flats differing
+by a power-of-two scale, on both CPU and CUDA.
+
+All 115 focused calibration, GUI, local-stack and resume checks pass; one opt-in
+test remains skipped. The flat-normalisation policy is included in calibration
+provenance, preprocessing identities and checkpoint identities. Existing jobs
+using flats require fresh preprocessing and a new stack; current checkpoints
+resume exactly. Jobs without flats retain their existing calibration path and
+identities. No Jupiter quality claim or full capture rerun: its normal workflow
+does not use a flat.
