@@ -265,3 +265,12 @@ exactly four frames and exactly fitting detector dimensions remain supported.
 Validation passed 133 focused CPU/GUI/CUDA tests, including 14 hardware checks;
 two unrelated opt-in GUI checks remained skipped. Valid local stacks and their
 checkpoint identities are unchanged.
+
+## Rejected: higher-order registration-proxy resampling
+
+A bounded test changed only the globally shifted registration proxy from bilinear
+to cubic sampling; final image/CFA sampling was unchanged. Across three scales
+and four fractional global shifts, displacement RMS improved only 0.12%, below
+the declared 10% development gate. Exact, brightness, flat and unrelated-noise
+controls passed, but the negligible gain does not justify a capture trial or
+production change. Evidence is `results/real-data/local-proxy-resampling.json`.

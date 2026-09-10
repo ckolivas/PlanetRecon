@@ -1,0 +1,168 @@
+{
+  "protocol": {
+    "scope": "Only the globally shifted registration proxy changes to cubic. Final mono/RGB/CFA samples retain bilinear projection. No interpolation changes to the stacked image.",
+    "scales": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "global_shifts": [
+      [
+        0.1,
+        0.2
+      ],
+      [
+        0.5,
+        0.5
+      ],
+      [
+        0.8,
+        -0.35
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "gate": "At least 10% lower aggregate displacement RMS, with no sampling scale worse by over 5%; exact and unrelated-noise controls must retain the same global displacement. Then one fixed 128-frame Jupiter pilot; no tuning.",
+    "candidate_sha256": "809aa92f1eaf91c2e4c283f06429522feae38085dc8d46aa567642a353421792"
+  },
+  "records": [
+    {
+      "scale": 0.5,
+      "global_shift": [
+        0.1,
+        0.2
+      ],
+      "prior": 0.007418564790678602,
+      "candidate": 0.0031385293637257875
+    },
+    {
+      "scale": 0.5,
+      "global_shift": [
+        0.5,
+        0.5
+      ],
+      "prior": 0.0030801786987657074,
+      "candidate": 0.0030938325960621514
+    },
+    {
+      "scale": 0.5,
+      "global_shift": [
+        0.8,
+        -0.35
+      ],
+      "prior": 0.09039991302280488,
+      "candidate": 0.09027930589656216
+    },
+    {
+      "scale": 0.5,
+      "global_shift": [
+        0.0,
+        0.0
+      ],
+      "prior": 0.003092389057030795,
+      "candidate": 0.0030923890570306667
+    },
+    {
+      "scale": 1.0,
+      "global_shift": [
+        0.1,
+        0.2
+      ],
+      "prior": 0.003382607958452831,
+      "candidate": 0.0026551521392154083
+    },
+    {
+      "scale": 1.0,
+      "global_shift": [
+        0.5,
+        0.5
+      ],
+      "prior": 0.0026443040867779803,
+      "candidate": 0.0026843187263132
+    },
+    {
+      "scale": 1.0,
+      "global_shift": [
+        0.8,
+        -0.35
+      ],
+      "prior": 0.09047859133509606,
+      "candidate": 0.0904681606357692
+    },
+    {
+      "scale": 1.0,
+      "global_shift": [
+        0.0,
+        0.0
+      ],
+      "prior": 0.0026370942395184567,
+      "candidate": 0.0026370942395197894
+    },
+    {
+      "scale": 2.0,
+      "global_shift": [
+        0.1,
+        0.2
+      ],
+      "prior": 0.00641991200962562,
+      "candidate": 0.006056333005226135
+    },
+    {
+      "scale": 2.0,
+      "global_shift": [
+        0.5,
+        0.5
+      ],
+      "prior": 0.007154357384020838,
+      "candidate": 0.006901727290773705
+    },
+    {
+      "scale": 2.0,
+      "global_shift": [
+        0.8,
+        -0.35
+      ],
+      "prior": 0.08942293511200274,
+      "candidate": 0.0895428161228483
+    },
+    {
+      "scale": 2.0,
+      "global_shift": [
+        0.0,
+        0.0
+      ],
+      "prior": 0.005927325806924401,
+      "candidate": 0.00592732580693383
+    }
+  ],
+  "summary": {
+    "None": {
+      "prior": 0.04526034734432966,
+      "candidate": 0.04520545503973769
+    },
+    "0.5": {
+      "prior": 0.045404376851192876,
+      "candidate": 0.04521984661059929
+    },
+    "1.0": {
+      "prior": 0.04530939233954523,
+      "candidate": 0.045292653252912506
+    },
+    "2.0": {
+      "prior": 0.045066602420907306,
+      "candidate": 0.04510366426216989
+    }
+  },
+  "checks": {
+    "exact": 0.0,
+    "brightness": 0.0,
+    "unrelated": 0.0,
+    "flat": 0.0
+  },
+  "passes_gate": false,
+  "decision": "Reject cubic resampling of the registration proxy: aggregate displacement error improves only 0.12%, below the 10% development gate. No capture trial or production change.",
+  "private_artifacts": "out/local-proxy-resampling",
+  "script_sha256": "76c0f2fd3e353021bbdbd61d8dc8559778e92869a64085582f5e35dc99e43ad8"
+}
