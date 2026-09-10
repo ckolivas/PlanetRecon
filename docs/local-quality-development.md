@@ -205,6 +205,22 @@ spawned worker delivery and full-resolution snapshot/TIFF export. An installed-w
 check confirms fitting and GUI controls work without development-tool imports.
 Private logs and the rendered Capture controls are under `out/cfa-application`.
 
+## Completed: cancellable checkpoint compression
+
+Large local-interpolation checkpoints now check cancellation throughout compressed
+NPZ output, including within archive members, rather than only before and after
+the entire archive. Compressed disk writes are limited to 1 MiB; NumPy retains
+its normal array encoding and compression buffers. Unfinished temporary files are
+removed and the last atomically published checkpoint is preserved. This also
+applies to the fixed-input checkpoint wrapper.
+
+In a local 96 MiB incompressible synthetic write, response after Cancel fell from
+1.56 seconds to 0.20 seconds; the checked writer stopped before publishing an array
+payload. This is an illustrative write profile, not a whole-application cancellation
+latency guarantee. All 66 targeted writer, checkpoint and application-resume
+controls pass, including exact continuation and preservation of a previous file.
+The private profile is `out/checkpoint-cancellation/profile.json`.
+
 ## Next steps
 
 1. User test of the full Jupiter capture: restart the venv-launched GUI, keep local

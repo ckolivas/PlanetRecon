@@ -189,8 +189,9 @@ class FixedLocalRun:
         fd, temporary = tempfile.mkstemp(prefix=f'.{path.name}-', suffix='.tmp', dir=path.parent)
         try:
             with os.fdopen(fd, 'wb') as stream:
-                np.savez_compressed(stream, metadata=canonical(metadata),
-                                    **{name: getattr(self.model, name) for name in ARRAYS})
+                from planetrecon.io.checkpoint_write import save_compressed
+                save_compressed(stream, should_cancel=self.model.should_cancel, metadata=canonical(metadata),
+                                **{name: getattr(self.model, name) for name in ARRAYS})
             self.model._check_cancel()
             os.replace(temporary, path)
         finally:

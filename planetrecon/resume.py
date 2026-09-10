@@ -80,7 +80,9 @@ def save(path,identity,state,*,geometry=False,should_cancel=None):
     fd,tmp=tempfile.mkstemp(prefix=f'.{path.name}-',suffix='.tmp',dir=path.parent)
     try:
         with os.fdopen(fd,'wb') as stream:
-            np.savez_compressed(stream,metadata=json.dumps(metadata,sort_keys=True),
+            from planetrecon.io.checkpoint_write import save_compressed
+            save_compressed(stream, should_cancel=should_cancel,
+                metadata=json.dumps(metadata,sort_keys=True),
                 **{name:state[name] for name in metadata['arrays']})
         if should_cancel is not None and should_cancel():
             raise InterruptedError('checkpoint cancelled before publication')
