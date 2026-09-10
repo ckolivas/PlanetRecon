@@ -221,17 +221,55 @@ latency guarantee. All 66 targeted writer, checkpoint and application-resume
 controls pass, including exact continuation and preservation of a previous file.
 The private profile is `out/checkpoint-cancellation/profile.json`.
 
+## Completed: full selected Jupiter comparison
+
+The actual application processed all 1,645 frames selected from the 3,749-frame
+Jupiter capture by the upper 50% quality range. The paired ordinary and interpolated
+outputs share each calibrated frame, local map, original linear quality weight,
+top-64 template and best-frame anchor 1947. Motion None and all other settings were
+fixed before the run; no sharpening was applied. All selected frames were retained,
+with only the expected 2,104 exclusions. CUDA accumulated all 1,645 frames without
+fallback or warnings. Processing, checkpoints, fitting and export took 148.8 minutes
+on the local RTX 5070 setup; this is not an isolated compute benchmark.
+
+The declared gate passed: relative RMS difference from the unsharpened conventional
+stack fell and sigma-three highpass correlation rose in the planet interior and
+each of the three previously tested regions. The planet-interior mask contains
+94,032 common pixels, excludes the limb, and uses one shared reference translation.
+Each arm has only per-colour gain/offset fitted for comparison.
+
+| Region | Ordinary relative RMS | Interpolated relative RMS | RMS reduction | Ordinary detail correlation | Interpolated detail correlation |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Planet interior | 0.005294 | 0.005176 | 2.22% | 0.950682 | 0.975142 |
+| Left | 0.004305 | 0.004169 | 3.16% | 0.951295 | 0.975403 |
+| Centre | 0.003894 | 0.003762 | 3.40% | 0.960188 | 0.977431 |
+| Right | 0.004388 | 0.004244 | 3.27% | 0.956356 | 0.977414 |
+
+Both full 424x656 RGB images have finite samples and complete channel validity.
+The float32 TIFFs exactly match their scientific snapshots after float32 conversion.
+Of the 834,432 output channel samples, 827,964 used quadratic fitting, 6,451 used
+affine fitting, and 17 used ordinary completion; none were unsupported. Full-image
+preview inspection found no gross missing-channel or limb artifacts. The visible
+change is subtle, and the smaller numerical improvement than the earlier 512-frame
+study should not be presented as a dramatic resolution gain or independent truth.
+
+The committed report is `results/real-data/cfa-local-full.json`; the reproducible
+driver is `tools/cfa_local_full_comparison.py` (four driver/regional controls pass).
+Private outputs are under `out/cfa-local-full`: `ordinary.tif` and `interpolated.tif`
+preserve linear detector units; the corresponding PNGs use reference-matched
+photometry and shared display levels. `reference.png`, snapshots, comparison
+arrays, the declared manifest and resumable checkpoint are retained there too.
+
 ## Next steps
 
-1. User test of the full Jupiter capture: restart the venv-launched GUI, keep local
-   alignment and the upper 50% quality range, enable **Local colour interpolation
-   (experimental)**, then run using the existing preprocessing cache. Use a new
-   checkpoint/output filename for this candidate. Compare the final unsharpened
-   output against the ordinary local stack using matching display levels.
-2. Use that full-result assessment to decide whether the candidate merits further
-   work or default promotion. It remains opt-in: the previous three-region,
-   512-frame confirmation is not a full 1,645-frame or whole-globe validation.
-   No capture study was repeated for this application integration.
+1. User assessment of the existing full Jupiter outputs under `out/cfa-local-full`.
+   Compare the ordinary and interpolated unsharpened images at matching display
+   levels; no new capture run is needed for this assessment.
+2. Use that assessment to decide whether the candidate merits further work or
+   default promotion. **Local colour interpolation (experimental)** remains opt-in.
+   This full selected-capture result improves agreement with one conventional
+   reference, with numerical checks limited to the planet interior and three
+   regions; independent captures and physical motion modes remain unqualified.
 
 ### Declared larger confirmation
 
