@@ -351,7 +351,7 @@ class MainWindow:
                             break
                     edit.setFocus()
                     edit.selectAll()
-                    cfg.require_motion_parameters()
+                    cfg.require_motion_parameters(self.preprocessing_info)
                 path = self.checkpoint_path.text().strip()
                 if self.resume_check.isChecked() and not path:
                     raise ValueError('Select an accumulator checkpoint to resume')

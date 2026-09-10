@@ -403,7 +403,7 @@ def stack_source_geometry(
         return stack_source(source, config, calibration=calibration, on_event=on_event,
                             should_cancel=should_cancel, resume_from=resume_from,
                             state_checkpoint=state_checkpoint)
-    config.require_motion_parameters()
+    config.require_motion_parameters(cache_status)
     # All geometry operators currently execute in NumPy float64.
     if state_checkpoint is not None:
         from planetrecon import resume

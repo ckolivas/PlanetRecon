@@ -99,11 +99,26 @@ class ReconstructionConfig:
             missing['surface_rate_rad_s'] = 'Surface rotation rate (Geometry tab; degrees/second in the GUI)'
         return missing
 
-    def require_motion_parameters(self) -> None:
+    def require_motion_parameters(self, preprocessing=None) -> None:
         missing = self.missing_motion_parameters()
         if missing:
+            guidance = ('Preprocess may estimate motion when the viewing geometry and surface detail '
+                        'constrain it; otherwise supply known geometry and rates.')
+            if (preprocessing and preprocessing.get('status') == 'ready'
+                    and 'surface_rate_rad_s' in missing):
+                estimate = preprocessing.get('geometry_estimate', {})
+                if estimate and estimate.get('applicable', True):
+                    if 'surface_rate_rad_s' in estimate.get('suggestions', {}):
+                        guidance = ('The latest preprocessing estimated a surface rate, but it is not '
+                                    'set in this run. Review the Geometry values; manual edits and '
+                                    'checkpoint settings can prevent automatic prefilling.')
+                    else:
+                        notes = ' '.join(estimate.get('notes', []))
+                        guidance = ('The latest preprocessing did not supply a usable surface rate. '
+                                    + notes + ' Supply the missing geometry before preprocessing again, '
+                                    'or supply a known rate if rotation remains unresolved.')
             raise ValueError('Motion compensation cannot run. Required: ' + '; '.join(missing.values())
-                + '. Run Preprocess to estimate motion or supply known geometry and rates. '
+                + '. ' + guidance + ' '
                   'Use an explicit rate of 0 only to disable that component, or choose Motion model None '
                   'for ordinary stacking.'
                 + (' Saturn ring detection cannot determine signed viewing orientation.'

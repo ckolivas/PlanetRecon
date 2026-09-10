@@ -76,3 +76,63 @@ def test_unresolved_saturn_ring_translation_cannot_supply_a_field_rate(monkeypat
     assert diagnostics['unavailable_motion']
     with pytest.raises(ValueError, match='field rotation could not be estimated'):
         stack_source(src, cfg)
+
+
+@pytest.mark.parametrize('note', [
+    'Rings or strong phase: supply the globe radius to estimate surface rotation.',
+    'Surface rotation is unresolved; no surface-rate prefill.',
+    'Saturn needs a supplied signed viewing latitude.',
+])
+def test_missing_rate_explains_the_preprocessing_blocker(note):
+    cfg = ReconstructionConfig(geometry_mode='surface')
+    info = {'status': 'ready', 'geometry_estimate': {
+        'status': 'unresolved', 'suggestions': {}, 'notes': [note]}}
+    with pytest.raises(ValueError) as caught:
+        cfg.require_motion_parameters(info)
+    assert note in str(caught.value)
+    assert 'latest preprocessing did not supply a usable surface rate' in str(caught.value)
+
+
+@pytest.mark.parametrize('info', [
+    {'status': 'stale', 'geometry_estimate': {'notes': ['old reason']}},
+    {'status': 'ready', 'geometry_estimate': {'applicable': False, 'notes': ['old reason']}},
+])
+def test_unverified_preprocessing_is_not_presented_as_a_current_failure(info):
+    with pytest.raises(ValueError) as caught:
+        ReconstructionConfig(geometry_mode='surface').require_motion_parameters(info)
+    assert 'old reason' not in str(caught.value)
+    assert 'Preprocess may estimate' in str(caught.value)
+
+
+def test_estimated_but_unapplied_rate_gets_distinct_guidance():
+    info = {'status': 'ready', 'geometry_estimate': {
+        'suggestions': {'surface_rate_rad_s': .001}, 'notes': []}}
+    with pytest.raises(ValueError, match='estimated a surface rate, but it is not set'):
+        ReconstructionConfig(geometry_mode='surface').require_motion_parameters(info)
+    # Diagnostics never silently change the selected rate or weaken refusal.
+    ReconstructionConfig(geometry_mode='surface', surface_rate_rad_s=.001).require_motion_parameters(info)
+
+
+def test_gui_run_shows_saturn_preprocessing_reason_without_starting_worker(monkeypatch):
+    from pathlib import Path
+    from planetrecon.gui.app import MainWindow, create_app
+    import planetrecon.gui.app as gui
+    app = create_app(['motion-preprocess-reason'])
+    win = MainWindow(config=ReconstructionConfig(device='cpu', geometry_mode='saturn'))
+    win.path = Path('saturn-l3.ser')
+    note = 'Rings or strong phase: supply the globe radius to estimate surface rotation.'
+    win.preprocessing_info = {'status': 'ready', 'geometry_estimate': {
+        'status': 'unresolved', 'suggestions': {}, 'notes': [note]}}
+
+    def unexpected(*args, **kwargs):
+        pytest.fail('an unavailable motion model must not start a worker')
+
+    monkeypatch.setattr(gui, 'start_stack_job', unexpected)
+    try:
+        win._run()
+        assert win.job is None and note in win.error.text()
+        assert 'Signed observer latitude' in win.error.text()
+    finally:
+        win._shutdown()
+        win.window.close()
+        app.processEvents()
