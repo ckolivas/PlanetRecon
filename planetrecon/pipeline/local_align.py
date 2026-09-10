@@ -195,7 +195,14 @@ def build_template(reference, indices, read_plane, correlate, max_shift, should_
     origin = correlate(reference, template)
     if not np.isfinite(origin).all() or max(abs(v) for v in origin) > max_shift:
         raise ValueError('Local template origin is unreliable; use global alignment.')
-    return pull(template, origin)
+    # Re-centring also resamples the detector footprint. Normalise partial
+    # coverage, and use the best observation in its original coordinates where
+    # the aligned mean has no data. Padding must not become a dark registration
+    # feature, nor may the pre-fill reference be shifted as if it were the mean.
+    observed = weight > 0
+    anchored = pull(np.where(observed, template, 0.), origin)
+    support = pull(observed, origin)
+    return np.divide(anchored, support, out=reference.copy(), where=support > 0)
 
 
 def cpu_backproject(raw, shift, color):

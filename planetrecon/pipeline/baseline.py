@@ -264,6 +264,7 @@ def _stack_source(
             state_identity['local_patch_support'] = 'complete observed search footprint'
             state_identity['local_patch_boundary'] = 'one grid interval taper to global'
             state_identity['local_patch_peak'] = 'joint two-dimensional quadratic'
+            state_identity['local_template_boundary'] = 'normalised support; best-frame fill'
             if centred_local_axis:
                 state_identity['local_patch_grid'] = 'singleton axes centred'
     if resume_from is not None:
@@ -303,6 +304,7 @@ def _stack_source(
             'patch_boundary': 'one grid interval taper to global',
             'patch_peak': 'joint two-dimensional quadratic',
             'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
+            'template_boundary': 'normalised support; best-frame fill',
         }
         if colour_registration:
             snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'

@@ -318,3 +318,24 @@ automatic expansion option or threshold sweep is warranted. Original colour
 sampling was unchanged throughout. Evidence is in
 `results/real-data/local-search-retry.json`, with private code and outputs under
 `out/local-search-retry`.
+
+## Completed: preserve observed brightness at local-template borders
+
+Re-centring the averaged registration template previously attenuated partially
+covered border pixels and filled uncovered pixels with black. It also shifted
+the best-frame fallback from its original coordinates. The template now divides
+by its resampled observed support and fills unobserved locations from the best
+frame in its original coordinates. This prevents detector padding becoming a
+registration feature. Final image sampling, quality selection and weights are
+unchanged. Local checkpoint identities include this template policy; restart
+older local checkpoints rather than mixing their accumulated sums with new runs.
+
+All 109 focused CPU/CUDA checks pass, including signed fractional/integer border
+coverage, best-frame fallback, exact resume and old-policy refusal. Controlled
+four-pixel template origins previously produced false local displacement peaks
+of 0.0010 to 0.1719 pixels on identical observed texture; the corrected template
+produces zero. These controls isolate re-anchoring from correlation estimation.
+The real Jupiter template retains anchor 1947 and the same 1,645 selected frames.
+Its 102,530 planet pixels (above 15% of reference peak) are bitwise unchanged;
+only 1,078 detector-border pixels change, by at most 0.000199 ADU. This is a border
+correctness fix, not a demonstrated Jupiter quality gain; no full stack rerun.

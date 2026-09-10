@@ -44,6 +44,7 @@ def test_observed_interior_still_corrects_spatial_motion_after_large_drift():
     ('local_patch_support', 'complete observed search footprint'),
     ('local_patch_boundary', 'one grid interval taper to global'),
     ('local_patch_peak', 'joint two-dimensional quadratic'),
+    ('local_template_boundary', 'normalised support; best-frame fill'),
 ])
 def test_old_local_checkpoint_policy_is_refused(tmp_path, color_id, policy, value):
     from test_local_alignment import capture, config
