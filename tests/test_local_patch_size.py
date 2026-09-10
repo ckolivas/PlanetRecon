@@ -61,16 +61,60 @@ def test_size_changes_output_reuses_cache_and_resumes_exactly(tmp_path):
         assert cache.read_bytes() == cache_bytes
 
 
-def test_oversized_patch_reports_global_fallback(tmp_path):
-    with SERSource(capture(tmp_path)) as source:
+@pytest.mark.parametrize('color_id', [0, 8])
+def test_oversized_patch_is_refused_before_processing(tmp_path, monkeypatch, color_id):
+    with SERSource(capture(tmp_path, color_id)) as source:
         cfg = config(local_patch_size=129)
         preprocess_source(source, cfg)
-        result = stack_source(source, cfg)
-        assert not result.provenance['local_alignment']['enabled']
-        assert result.provenance['local_alignment']['window_px'] == 129
-        assert any('size 129 needs frames at least 135 by 135' in w for w in result.warnings)
+        checkpoint = tmp_path/'existing.npz'
+        checkpoint.write_bytes(b'keep existing result')
+        events = []
+        with monkeypatch.context() as patch:
+            def read(index):
+                pytest.fail('unavailable local alignment must fail before reading processing frames')
+            patch.setattr(source, 'read_raw', read)
+            with pytest.raises(ValueError, match='size 129 needs frames at least 135 by 135.*15 to 89'):
+                stack_source(source, cfg, state_checkpoint=checkpoint,
+                             on_event=lambda *args: events.append(args))
+        assert not events and checkpoint.read_bytes() == b'keep existing result'
         global_result = stack_source(source, replace(cfg, local_alignment=False))
-        np.testing.assert_array_equal(result.image, global_result.image)
+        assert global_result.n_used > 0 and not global_result.incomplete
+
+
+@pytest.mark.parametrize('shape,remedy', [((20, 24), 'Disable Local'), ((38, 45), '15 to 31')])
+def test_small_capture_gives_fitting_size_or_global_guidance(tmp_path, shape, remedy):
+    from planetrecon.io.ser import write_ser
+    path = write_ser(tmp_path/'small.ser', np.ones((4, *shape), dtype='u2'))
+    with SERSource(path) as source:
+        with pytest.raises(ValueError, match=remedy):
+            stack_source(source, config())
+
+
+def test_too_few_selected_frames_are_refused(tmp_path, monkeypatch):
+    with SERSource(capture(tmp_path)) as source:
+        cfg = config(stack_percent=1, frame_selection_mode='frame_count')
+        preprocess_source(source, cfg)
+        with monkeypatch.context() as patch:
+            def backend(*args, **kwargs):
+                pytest.fail('not enough selected frames must fail before starting the stacking backend')
+            patch.setattr('planetrecon.pipeline.baseline.select_backend', backend)
+            with pytest.raises(ValueError, match='at least four selected frames'):
+                stack_source(source, cfg)
+        result = stack_source(source, replace(cfg, local_alignment=False))
+        assert result.n_used == 1
+
+
+def test_exact_minimum_size_and_four_frames_still_run(tmp_path):
+    from planetrecon.io.ser import write_ser
+    with SERSource(capture(tmp_path)) as original:
+        frames = np.stack([original.read_raw(i)[:95, :111] for i in range(4)])
+    path = write_ser(tmp_path/'minimum.ser', frames.astype('u2'))
+    with SERSource(path) as source:
+        cfg = config(local_patch_size=89)  # 89 + 6 = 95, exactly the detector height.
+        selection = preprocess_source(source, cfg)
+        assert selection.accepted.sum() == 4
+        result = stack_source(source, cfg)
+        assert result.n_used == 4 and result.provenance['local_alignment']['enabled']
 
 
 def test_gui_commits_typed_size_and_preserves_disabled_choice():

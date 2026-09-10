@@ -238,8 +238,9 @@ default and set grid spacing to half the selected width rounded down. New runs
 read the current control value and reuse the existing preprocessing cache.
 Saved jobs retain the choice; old jobs default to 65. Custom sizes are bound to
 checkpoint identity, while unchanged 65-pixel checkpoint identities remain valid.
-An undersized frame retains the established global fallback and reports the
-selected size and required detector dimensions in its warning.
+An undersized frame now stops with the selected size, required detector dimensions
+and a fitting-size suggestion. Fewer than four selected frames also stops the run.
+The user can explicitly choose global alignment in either case.
 
 This is an explicit user choice, not an automatic recommendation or a claim that
 a particular size improves every capture. The rejected selectors remain outside
@@ -247,3 +248,20 @@ the application. Validation passed 135 focused CPU/GUI/CUDA checks, including 14
 hardware checks: changed-size output, cache reuse, exact resume, mismatch refusal,
 all-control fresh-run snapshots and custom-size CPU/CUDA parity. Two unrelated
 opt-in checks in the additional regression group remained skipped.
+
+## Completed: honour the requested alignment method
+
+The initial manual-size implementation inherited a global-alignment fallback when
+the detector could not contain a complete patch search, or fewer than four frames
+remained for the template. Those runs now refuse to start local stacking and give
+actionable guidance instead of producing a stack with a different method. Patch
+failures caused by ambiguous texture still use the existing per-patch global
+estimate; the change concerns whether the requested local method can run at all.
+
+Checks confirm no processing frames are read and existing checkpoints remain
+untouched for an oversized patch. Selected-frame counts are checked after cache
+validation but before selecting the stacking backend. Explicit global alignment,
+exactly four frames and exactly fitting detector dimensions remain supported.
+Validation passed 133 focused CPU/GUI/CUDA tests, including 14 hardware checks;
+two unrelated opt-in GUI checks remained skipped. Valid local stacks and their
+checkpoint identities are unchanged.

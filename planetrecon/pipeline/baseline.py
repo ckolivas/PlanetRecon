@@ -111,6 +111,16 @@ def _stack_source(
         raise ValueError(f'unsupported reconstruction color mode {source.color_mode()!r}')
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
+    if config.local_alignment:
+        h, w = source.frame_shape()[:2]
+        required = config.local_patch_size + 6  # Complete +/-3 pixel search footprint.
+        if min(h, w) < required:
+            largest = min(255, min(h, w) - 6)
+            largest -= (largest + 1) % 2
+            remedy = (f'Choose an odd alignment patch size from 15 to {largest} pixels, or disable Local patch alignment.'
+                      if largest >= 15 else 'Disable Local patch alignment for this capture.')
+            raise ValueError(f'Local patch size {config.local_patch_size} needs frames at least '
+                             f'{required} by {required} pixels; this capture is {w} by {h}. {remedy}')
     selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
@@ -148,6 +158,9 @@ def _stack_source(
         if selection is not None:
             if not selection.accepted.any():
                 raise ValueError('no usable frames remain after preprocessing')
+            if config.local_alignment and np.count_nonzero(selection.accepted) < 4:
+                raise ValueError('Local alignment needs at least four selected frames to build its reference. '
+                                 'Select more frames or disable Local patch alignment.')
             if config.reference_index >= len(selection.accepted):
                 raise ValueError('reference_index is outside the capture')
             if config.reference_index and not selection.accepted[config.reference_index]:
@@ -189,8 +202,7 @@ def _stack_source(
     # It requires cached screening, so scalar quality weights stay unchanged.
     local_window = config.local_patch_size
     local_step = local_window // 2
-    colour_registration = (config.local_alignment and bayer and min(h, w) >= local_window + 6
-                           and selection is not None and np.count_nonzero(selection.accepted) >= 4)
+    colour_registration = config.local_alignment and bayer
     alignment_plane = _colour_registration_plane if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
     if rgb:
@@ -276,9 +288,8 @@ def _stack_source(
         accepted = np.flatnonzero(selection.accepted)
         order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
         candidates = accepted[order[:64]]
-        enabled = min(h, w) >= local_window + 6 and len(candidates) >= 4
         snapshot_provenance['local_alignment'] = {
-            'version': 2 if colour_registration else 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
+            'version': 2 if colour_registration else 1, 'enabled': True, 'template_candidates': candidates.tolist(),
             'window_px': local_window, 'step_px': local_step, 'maximum_residual_px': 3,
             'anchor_index': reference_index,
             'patch_support': 'complete observed search footprint',
@@ -288,24 +299,19 @@ def _stack_source(
         }
         if colour_registration:
             snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'
-        if enabled:
-            if resume_from is None:
-                def read_plane(index):
-                    calibrated, _ = apply_calibration(source.read_raw(index), calibration)
-                    return alignment_plane(calibrated, color)
-                try:
-                    reference = build_template(reference, candidates, read_plane,
-                                               backend.phase_correlation, config.max_shift_px, should_cancel)
-                except RuntimeError as exc:
-                    cpu_fallback(exc)
-                    reference = build_template(reference, candidates, read_plane,
-                                               backend.phase_correlation, config.max_shift_px, should_cancel)
-            local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
-            snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
-        else:
-            warnings.append(f'local_alignment_unavailable: global alignment retained; size {local_window} '
-                            f'needs frames at least {local_window+6} by {local_window+6} pixels '
-                            'and four screened frames')
+        if resume_from is None:
+            def read_plane(index):
+                calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+                return alignment_plane(calibrated, color)
+            try:
+                reference = build_template(reference, candidates, read_plane,
+                                           backend.phase_correlation, config.max_shift_px, should_cancel)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+                reference = build_template(reference, candidates, read_plane,
+                                           backend.phase_correlation, config.max_shift_px, should_cancel)
+        local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
+        snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq

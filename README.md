@@ -121,8 +121,10 @@ finer distortions but require sufficient texture; larger patches combine more
 detail and can average over local motion. Size is chosen manually, not estimated
 automatically. A new run uses the edited size with the same preprocessing cache;
 resuming a checkpoint requires its original size. Frames smaller than the size
-plus six pixels cannot support that local matcher and retain global alignment
-with a warning in the result.
+plus six pixels cannot support that local matcher: the run stops and offers a
+fitting size or explicit global alignment. Local alignment also requires at least
+four selected frames. These checks prevent running a different alignment method
+from the one selected.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER
