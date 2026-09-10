@@ -24,6 +24,13 @@ class RingRegistration(MaskedRegistration):
             self.mask &= valid_mask
         super().__init__(reference, self.mask)
 
+    def displacement(self, frame, *, min_improvement=0.):
+        # Resolved wide rings produce broad correlation shoulders. Only
+        # separate maxima compete with the fitted peak; periodic/flat ring
+        # patterns must still fail the existing uniqueness/contrast guards.
+        return super().displacement(frame, min_improvement=min_improvement,
+                                     distinct_peaks=True)
+
     def displacement_at_pose(self, frame, pose, reference_pose):
         """Follow field rotation, gating drift against measured interpolation loss."""
         from planetrecon.geometry.model import FieldOnlyModel, render_observed

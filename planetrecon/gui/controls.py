@@ -127,7 +127,7 @@ class ConfigControls(QTabWidget):
                 geo.addRow('', self.flip_pole_button)
         geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
-        sat.addRow(QLabel('Saturn requires globe/ring radii. Viewing latitude\ncomes from SER UTC or a Geometry override.'))
+        sat.addRow(QLabel('Preprocess measures globe/ring radii when resolved.\nViewing latitude comes from SER UTC or a Geometry override.'))
         for key, label in [
             ('ring_inner_radius_px', 'Inner ring radius (px)'), ('ring_outer_radius_px', 'Outer ring radius (px)'),
             ('ring_transmission', 'Ring transmission (0–1)'), ('sun_lon_rad', 'Sun longitude (°)'),
@@ -404,8 +404,11 @@ class ConfigControls(QTabWidget):
         allow_prefill = allow_prefill and applicable
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
                    'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'}
+        if self.fields['geometry_mode'].currentData() == 'saturn':
+            allowed.update(('ring_inner_radius_px', 'ring_outer_radius_px'))
         if allow_prefill:
-            for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'):
+            for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening',
+                        'ring_inner_radius_px', 'ring_outer_radius_px'):
                 old = self.geometry_auto.get(key)
                 if (old is not None and key not in estimate.get('suggestions', {})
                         and key not in self.geometry_manual and self.fields[key].text() == old):

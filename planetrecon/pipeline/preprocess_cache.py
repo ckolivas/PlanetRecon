@@ -96,7 +96,8 @@ def cache_report(selection, path=None, config=None, source=None):
             if not same(current, value) and not same(current, suggested):
                 estimate = {'suggestions': {}, 'applicable': False, 'notes': ['Geometry settings changed; run Preprocess to refresh geometry estimates. Quality/shape exclusions remain valid.']}
                 break
-        if config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {}):
+        if (config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {})
+                and estimate.get('saturn_geometry', {}).get('status') != 'estimated'):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
                         'notes': [*estimate.get('notes', []), 'Cached whole-silhouette flattening is not used for Saturn globe geometry.']}
     if source is not None and config is not None:

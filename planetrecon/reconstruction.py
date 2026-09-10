@@ -133,7 +133,8 @@ class ReconstructionConfig:
                 + '. ' + guidance + ' '
                   'Use an explicit rate of 0 only to disable that component, or choose Motion model None '
                   'for ordinary stacking.'
-                + (' Saturn ring detection cannot determine signed viewing orientation.'
+                + (' Run Preprocess in Saturn mode to measure resolved globe/ring radii. '
+                   'Signed viewing latitude comes from SER UTC or a Geometry override.'
                    if self.geometry_mode == 'saturn' else ''))
 
     def __post_init__(self) -> None:

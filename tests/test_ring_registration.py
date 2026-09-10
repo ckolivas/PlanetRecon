@@ -96,6 +96,20 @@ def test_repeating_texture_does_not_invent_a_translation():
     assert matcher.displacement(stripes) is None
 
 
+def test_broad_resolved_ring_peak_is_not_a_competing_translation():
+    from scipy.ndimage import zoom, gaussian_filter
+    from planetrecon.pipeline.masked_align import MaskedRegistration
+    reference = zoom(source('mono', [(0, 0)]).read_raw(0), 3., order=1)
+    reference = gaussian_filter(reference, 4.)
+    offset = (1.3, -2.4)
+    moved = shift(reference, offset[::-1], order=3, mode='constant')
+    moved += np.random.default_rng(11).normal(0, .001, moved.shape)
+    matcher = RingRegistration(reference, 168, 168, 60, 126)
+    # The old test treats the same peak's shoulders as alternative matches.
+    assert MaskedRegistration.displacement(matcher, moved) is None
+    np.testing.assert_allclose(matcher.displacement(moved), offset, atol=.03)
+
+
 def test_noisy_drifting_spin_stack_improves_image(monkeypatch):
     offsets = [(0, 0), (1.3, -2.4), (-3.7, 2.2), (.3, .4), (2.5, -1.2)]
     clean = source('mono', [(0, 0)]*5)

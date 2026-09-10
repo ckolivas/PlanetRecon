@@ -185,10 +185,18 @@ the next run while retaining the selected rotation rate. The correction is a man
 override, so repeated preprocessing preserves it; clicking again restores the
 original orientation. It works with measured rates and planet presets.
 
-Saturn reconstruction requires explicit globe and ring radii and a signed
-`--sub-obs-lat-deg` opening. The automatic Saturn fit is diagnostic and can supply
-an approximate centre; `--center-x` and `--center-y` override it. Ring inclination
-sign cannot be recovered from an ellipse alone. Near-edge-on projected ring bands
+In **Saturn** mode, **Preprocess** measures globe and visible ring radii from
+separate boundary gradients in three aligned averages, and prefills the GUI.
+It also estimates field rotation from the timed ring-axis change and globe
+flattening from the exposed limb, conditional on viewing latitude. Manual edits
+and checkpoint settings are preserved. Re-run preprocessing to obtain these
+estimates from an older cache. Clipped, unresolved or inconsistent boundaries
+still require manual radii; faint ring material below the noise floor is not
+measured. CLI runs accept the measured values through their geometry options.
+Signed viewing latitude comes from SER UTC via the cached geocentric lookup,
+or `--sub-obs-lat-deg`. Select the Saturn rotation preset for globe spin when
+cloud motion is unresolved. Ring inclination sign cannot be recovered from
+an ellipse alone. Near-edge-on projected ring bands
 are masked, including their overlap with the globe. Transparent foreground-ring
 and globe mixtures are excluded because the baseline does not solve their separate
 radiances. Samples stay within matching globe, ring, background and shadow regions
@@ -283,8 +291,8 @@ The four settings tabs expose:
 - **Geometry:** motion model, field/surface rates, fixed centre, globe radius and
   flattening, orientation and reference epoch. Angles/rates are shown in degrees;
   radii and positions stay in pixels. Blank optional values retain engine defaults.
-- **Saturn:** ring radii/transmission, illumination and moon masks. Physical globe
-  and ring radii plus signed observer latitude remain mandatory for Saturn.
+- **Saturn:** ring radii/transmission, illumination and moon masks. Preprocessing
+  can supply resolved globe/ring radii; viewing latitude uses SER UTC or an override.
 
 Run uses an owned process. Controls lock while processing; progress distinguishes
 unknown pose-estimation work from accumulation and reaches 100% only on completion.

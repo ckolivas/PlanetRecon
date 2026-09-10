@@ -188,6 +188,72 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
         report['notes'].append('Initial pole assumes the stable silhouette major axis is equatorial; phase can bias or interchange the axes.')
     suggestions.update(field_center_x=float(np.mean(centres, axis=0)[0])*scale+.5*bin_scale,
                        field_center_y=float(np.mean(centres, axis=0)[1])*scale+.5*bin_scale)
+    if config.geometry_mode == 'saturn':
+        from planetrecon.geometry.saturn_fit import fit_saturn_geometry
+        ring_fits = [fit_saturn_geometry(average, opening_rad=config.sub_obs_lat_rad) for average in averages]
+        report['saturn_geometry'] = {'fits': ring_fits, 'status': 'unresolved',
+                                    'detector_pixels_per_sample': float(scale)}
+        good = [fit for fit in ring_fits if fit['ok']]
+        keys = {'equatorial_radius_px': 'radius', 'ring_inner_radius_px': 'ring_inner',
+                'ring_outer_radius_px': 'ring_outer'}
+        if len(good) >= 2:
+            values = np.array([[fit[key] for key in keys.values()] for fit in good])
+            typical = np.median(values, axis=0)
+            stable = np.all(np.ptp(values, axis=0) < np.maximum(2., .06*typical))
+            if stable:
+                report['saturn_geometry']['status'] = 'estimated'
+                for key, value in zip(keys, typical):
+                    suggestions[key] = float(value*scale)
+                suggestions['field_center_x'] = float(np.median([fit['cx']-.5 for fit in good])*scale+.5*bin_scale)
+                suggestions['field_center_y'] = float(np.median([fit['cy']-.5 for fit in good])*scale+.5*bin_scale)
+                # Recover the axis at the output epoch, retaining the chosen
+                # pole branch. An ellipse alone does not identify north.
+                angles = np.array([fit['pa_rad'] for fit in good])
+                fit_times = np.array([t for t, fit in zip(sample_times, ring_fits) if fit['ok']])
+                field_rate = config.field_rate_rad_s
+                if len(good) == 3 and time_origin != 'inferred' and np.ptp(fit_times) > 0:
+                    unwrapped = np.unwrap(2*angles)/2
+                    elapsed = fit_times-np.mean(fit_times)
+                    slope, intercept = np.polyfit(elapsed, unwrapped, 1)
+                    residual = float(np.max(abs(unwrapped-(intercept+slope*elapsed))))
+                    # Ring axes are measurable even with no azimuthal texture.
+                    # Reject inconsistent or large inter-window rotations; the
+                    # ellipse alone cannot resolve a half-turn alias.
+                    if (residual < max(.003, 1/typical[-1])
+                            and np.max(abs(np.diff(unwrapped))) < .15):
+                        report['saturn_geometry']['field_axis_residual_rad'] = residual
+                        suggestions['field_rate_rad_s'] = -float(slope)  # detector y is downward
+                        report['roll_resolved'] = True
+                        report['roll_direction'] = ('counter-clockwise' if slope < 0 else 'clockwise')
+                        if field_rate is None:
+                            field_rate = suggestions['field_rate_rad_s']
+                        report['notes'].append('Field rotation measured from the ring-axis change between timed averages; '
+                                               'a near-zero rate means the ring orientation stayed stable.')
+                if field_rate is not None and time_origin != 'inferred':
+                    angles += field_rate*(fit_times-config.reference_epoch_s)
+                pa = float(np.angle(np.mean(np.exp(2j*angles)))/2 + config.field_angle0_rad)
+                if np.cos(pa-config.pole_pa_rad) < 0:
+                    pa += np.pi
+                suggestions['pole_pa_rad'] = pa
+                report['orientation_origin'] = 'measured ring major axis (pole branch preserved)'
+                latitude = config.sub_obs_lat_rad
+                ratio = float(np.median([fit['semi_minor']/fit['semi_major'] for fit in good]))
+                if latitude is not None and abs(np.cos(latitude)) > .2:
+                    polar2 = (min(ratio, 1.)**2-np.sin(latitude)**2)/np.cos(latitude)**2
+                    if .75**2 < polar2 <= 1:
+                        suggestions['flattening'] = float(1-np.sqrt(polar2))
+                        report['flattening_estimate'] = {
+                            'status': 'estimated', 'method': 'separate exposed Saturn globe limb',
+                            'apparent_axis_ratio': ratio, 'latitude_rad': float(latitude),
+                            'flattening': suggestions['flattening']}
+                report['status'] = 'estimated'
+                report['notes'].append('Globe and visible ring radii measured separately from limb edges in aligned averages. '
+                    'Faint rings below the capture noise floor are not measured. Ring opening is unsigned; '
+                    'the viewing latitude uses capture UTC or your override. Surface spin uses the selected '
+                    'planet preset or an explicit rate; ring structure is not used to infer globe spin.')
+                return report
+        reasons = list(dict.fromkeys(fit.get('reason', '') for fit in ring_fits if not fit['ok']))
+        report['notes'].append('Saturn globe/ring boundaries could not be measured consistently. ' + ' '.join(reasons))
     # Rings/crescents do not identify a globe radius from the whole silhouette.
     if width/height > 1.35 and config.equatorial_radius_px is None:
         report['notes'].append('Rings or strong phase: supply the globe radius to estimate surface rotation.')
