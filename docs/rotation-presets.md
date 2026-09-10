@@ -39,3 +39,38 @@ Earth; the application does not require an Earth observing-site position.
 Result metadata identifies preset use, source, signed period, reversal and the
 radius used for pixel scaling. Checkpoints bind those choices. Existing default
 jobs without a preset keep their previous checkpoint identities.
+
+## Optional planetary viewing latitude
+
+Leave **Planet-facing latitude override** blank for automatic geometry in Saturn
+mode, or in Surface/Combined mode with a planet preset selected. Preprocess and
+Run use the SER UTC capture midpoint and an Earth-centred
+[JPL Horizons observer ephemeris](https://ssd-api.jpl.nasa.gov/doc/horizons.html).
+No telescope latitude or longitude is needed. Only the target planet and UTC
+are sent to JPL; images and file names remain local.
+
+Horizons quantity 14 gives planetodetic latitude (the surface normal angle).
+PlanetRecon converts it to the planetocentric viewing direction using Horizons'
+reference equatorial and polar radii: `atan2((c/a)^2 sin(B), cos(B))`.
+The signed result controls globe projection and Saturn ring opening. The camera's
+pole position angle still comes from the image or user; an ephemeris cannot
+identify north in an arbitrarily rotated or mirrored capture.
+
+The first lookup needs internet access. A validated response is cached beside
+the SER as `*.planetrecon-viewing.json`, keyed by planet and capture midpoint,
+for subsequent offline use. Preprocessing displays the resolved latitude and
+retains it in its report. The input stays blank so changing captures recalculates
+the view. Result/checkpoint geometry records the source, epoch, radii and actual
+latitude; an explicit override, including zero, always takes precedence.
+
+Absolute trailer UTC takes precedence over the SER header UTC. A valid header
+can supply the date when the trailer is absent; available duration/cadence places
+the lookup at the midpoint. Automatic dates are supported from 1900 through 2100.
+If no usable date or ephemeris is available, Saturn motion refuses to guess an
+edge-on view and explains how to supply an override. Surface runs without a
+known target/date retain their existing equator-on assumption. Earth itself has
+no geocentric viewing direction and requires manual viewing geometry.
+
+This removes the manual latitude requirement for dated planetary captures; it
+does not infer a globe radius from Saturn's full ring-system diameter. Globe and
+ring radii remain required for Saturn motion compensation.

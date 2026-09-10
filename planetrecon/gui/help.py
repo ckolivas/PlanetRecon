@@ -40,7 +40,7 @@ CONTROL_HELP = {
     'equatorial_radius_px': 'Globe equatorial radius in pixels for the geometry model.',
     'flattening': 'Globe flattening: 1 minus polar radius divided by equatorial radius. Zero is spherical. Preprocessing estimates it from retained silhouettes, conditional on viewing latitude and a full globe outline.',
     'pole_pa_rad': 'Projected orientation of the globe rotation pole, in degrees.',
-    'sub_obs_lat_rad': 'Signed viewing latitude, in degrees. Its magnitude sets the ring opening and its sign selects which pole tilts towards the observer. Required for Saturn globe/ring motion compensation; the ellipse alone cannot determine the sign. Ordinary Saturn stacking uses Motion model None and does not need this value.',
+    'sub_obs_lat_rad': 'Optional signed planet-facing latitude in degrees, not your latitude on Earth. Blank uses JPL Horizons at the SER capture UTC for Saturn mode or the selected planet preset, cached beside the capture for offline reuse. Its magnitude sets ring opening; its sign selects the pole facing the observer. A manual value overrides automatic geometry. If the date or ephemeris is unavailable, Saturn motion requires an override. No Earth-site coordinates are needed.',
     'sub_obs_lon0_rad': 'Globe longitude facing the observer at the output epoch, in degrees.',
     'ring_inner_radius_px': 'Inner radius of the Saturn ring annulus in pixels, measured in the ring plane.',
     'ring_outer_radius_px': 'Outer radius of the Saturn ring annulus in pixels, measured in the ring plane.',

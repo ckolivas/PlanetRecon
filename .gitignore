@@ -42,3 +42,6 @@ env/
 # Simulator output
 out/
 planetrecon/_build_version.py
+
+# Cached geocentric ephemerides beside local captures
+*.planetrecon-viewing.json

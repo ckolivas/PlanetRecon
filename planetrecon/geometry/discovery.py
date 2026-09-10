@@ -92,6 +92,24 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
 
 
 def discover_geometry(source, config, selection, calibration=None, should_cancel=None):
+    from planetrecon.geometry.viewing import resolve_viewing
+    effective, viewing = resolve_viewing(source, config, strict=False)
+    report = _discover_geometry(source, effective, selection, calibration, should_cancel)
+    if viewing is not None:
+        report['viewing_geometry'] = viewing
+        if 'sub_obs_lat_rad' in viewing:
+            report['notes'].append(
+                f"Automatic {viewing['planet'].title()} viewing latitude: "
+                f"{np.degrees(viewing['sub_obs_lat_rad']):+.4f}° from JPL Horizons at capture UTC; no Earth-site coordinates needed.")
+        else:
+            report['notes'].extend(viewing['notes'])
+            report['suggestions'] = {key: value for key, value in report['suggestions'].items()
+                                     if key not in (*SATURN_VIEW_DEPENDENT_KEYS, 'flattening')}
+            report['status'] = 'unresolved'
+    return report
+
+
+def _discover_geometry(source, config, selection, calibration=None, should_cancel=None):
     """Three short averages aligned to the best retained frame; at most 97 reads."""
     from dataclasses import replace
     from planetrecon.geometry.pose import capture_exposure

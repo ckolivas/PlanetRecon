@@ -106,7 +106,7 @@ class ConfigControls(QTabWidget):
             ('surface_rate_rad_s', 'Surface rate override (°/s; blank = preset/estimate)'),
             ('field_center_x', 'Centre x (px)'), ('field_center_y', 'Centre y (px)'),
             ('equatorial_radius_px', 'Globe equatorial radius (px)'), ('flattening', 'Globe flattening'),
-            ('pole_pa_rad', 'Pole position angle (°)'), ('sub_obs_lat_rad', 'Signed observer latitude (°)'),
+            ('pole_pa_rad', 'Pole position angle (°)'), ('sub_obs_lat_rad', 'Planet-facing latitude override (°; blank = auto)'),
             ('sub_obs_lon0_rad', 'Reference longitude (°)'),
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
@@ -148,6 +148,18 @@ class ConfigControls(QTabWidget):
     def _rotation_changed(self, value=None):
         from planetrecon.geometry.rotation import rotation_preset
         planet = self.fields['rotation_planet'].currentData()
+        if planet is not None and 'sub_obs_lat_rad' in self.geometry_auto:
+            from planetrecon.reconstruction import ReconstructionConfig
+            defaults = ReconstructionConfig()
+            # Previous image-only discovery assumed an equator-on view. Its
+            # latitude and dependent prefills must not mask automatic geometry.
+            for key in ('sub_obs_lat_rad', 'field_rate_rad_s', 'pole_pa_rad', 'flattening'):
+                old = self.geometry_auto.get(key)
+                if old is not None and key not in self.geometry_manual and self.fields[key].text() == old:
+                    self.geometry_auto.pop(key)
+                    default = getattr(defaults, key)
+                    self.fields[key].setText('' if default is None else str(math.degrees(default) if key in self.angular else default))
+            self.geometry_auto.pop('sub_obs_lat_rad', None)
         edit = self.fields['surface_rate_rad_s']
         old = self.geometry_auto.get('surface_rate_rad_s')
         if (planet is not None and old is not None and edit.text() == old
@@ -232,7 +244,7 @@ class ConfigControls(QTabWidget):
             # A user-supplied replacement latitude is retained, but it must not
             # leave dependent auto rates from the old assumption attached.
             self.geometry_auto.pop('sub_obs_lat_rad', None)
-            self.geometry_estimate_label.setText('Saturn needs a supplied signed viewing latitude; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
+            self.geometry_estimate_label.setText('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
         self.fields['local_alignment'].setEnabled(
             self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')

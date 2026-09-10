@@ -131,7 +131,8 @@ def test_gui_run_shows_saturn_preprocessing_reason_without_starting_worker(monke
     try:
         win._run()
         assert win.job is None and note in win.error.text()
-        assert 'Signed observer latitude' in win.error.text()
+        assert 'Globe equatorial radius' in win.error.text()
+        assert 'Signed observer latitude' not in win.error.text()
     finally:
         win._shutdown()
         win.window.close()

@@ -15,7 +15,7 @@ from planetrecon.pipeline.provenance import capture_provenance
 
 SCHEMA = 'planetrecon-preprocessing-1'
 GEOMETRY_KEYS = ('cadence_s', 'exposure_s', 'field_angle0_rad', 'field_rate_rad_s',
-                 'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad')
+                 'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad', 'rotation_planet')
 
 
 def default_cache_path(source):
@@ -100,6 +100,17 @@ def cache_report(selection, path=None, config=None, source=None):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
                         'notes': [*estimate.get('notes', []), 'Cached whole-silhouette flattening is not used for Saturn globe geometry.']}
     if source is not None and config is not None:
+        view = estimate.get('viewing_geometry', {})
+        if view.get('origin') == 'jpl_horizons_geocentric':
+            from planetrecon.geometry.viewing import capture_epoch_jd
+            planet = 'saturn' if config.geometry_mode == 'saturn' else config.rotation_planet
+            try:
+                epoch = capture_epoch_jd(source, config.cadence_s)
+            except ValueError:
+                epoch = None
+            if planet != view['planet'] or epoch != view['epoch_jd_utc']:
+                estimate = {'suggestions': {}, 'applicable': False,
+                            'notes': ['Planet or capture UTC changed; run Preprocess to refresh viewing geometry.']}
         from planetrecon.geometry.pose import capture_exposure
         recorded = selection.summary.get('geometry_estimate', {}).get('exposure')
         if recorded is not None and recorded != capture_exposure(source, config.exposure_s):

@@ -90,7 +90,7 @@ class ReconstructionConfig:
         if self.geometry_mode != 'saturn':
             return {}
         labels = {
-            'sub_obs_lat_rad': 'Signed observer latitude (Geometry tab; degrees in the GUI)',
+            'sub_obs_lat_rad': 'Signed observer latitude on the planet (automatic from SER UTC, or Geometry override in degrees)',
             'equatorial_radius_px': 'Globe equatorial radius (Geometry tab; pixels)',
             'ring_inner_radius_px': 'Inner ring radius (Saturn tab; pixels)',
             'ring_outer_radius_px': 'Outer ring radius (Saturn tab; pixels)',
@@ -110,8 +110,10 @@ class ReconstructionConfig:
             missing['surface_rate_rad_s'] = 'Surface rotation rate or planet rotation preset (Geometry tab; degrees/second in the GUI)'
         return missing
 
-    def require_motion_parameters(self, preprocessing=None) -> None:
+    def require_motion_parameters(self, preprocessing=None, *, allow_auto_latitude=False) -> None:
         missing = self.missing_motion_parameters()
+        if allow_auto_latitude:
+            missing.pop('sub_obs_lat_rad', None)
         if missing:
             guidance = ('Preprocess may estimate motion when the viewing geometry and surface detail '
                         'constrain it; otherwise supply known geometry and rates.')

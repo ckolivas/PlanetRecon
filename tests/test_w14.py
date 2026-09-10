@@ -727,7 +727,8 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
     win._run()
     assert not calls and win.job is None
     assert win.controls.currentIndex() == 2
-    assert 'Signed observer latitude' in win.error.text()
+    assert 'Signed observer latitude' not in win.error.text()
+    assert 'Globe equatorial radius' in win.error.text()
     assert 'Inner ring radius' in win.error.text() and 'Outer ring radius' in win.error.text()
     assert 'Motion model None' in win.error.text()
     assert 'sub_obs_lat_rad' not in win.error.text()

@@ -193,7 +193,8 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--center-x", type=float, default=None, help="disc centre x in detector pixel-centre coordinates")
     st.add_argument("--center-y", type=float, default=None, help="disc centre y in detector pixel-centre coordinates")
     st.add_argument("--pole-pa-deg", type=float, default=0.0)
-    st.add_argument("--sub-obs-lat-deg", type=float, default=None)
+    st.add_argument("--sub-obs-lat-deg", type=float, default=None,
+                    help="planet-facing latitude override; blank uses geocentric ephemeris at SER UTC for Saturn or selected planet")
     st.add_argument("--sub-obs-lon-deg", type=float, default=0.0)
     st.add_argument("--exposure", type=float, default=None, help="integration time in seconds (default: recorded metadata; 0 disables midpoint offset)")
     st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")

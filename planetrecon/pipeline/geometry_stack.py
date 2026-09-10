@@ -90,9 +90,13 @@ def prepare_geometry(
     *,
     sample_indices: list[int] | None = None,
     reference_index: int | None = None,
+    viewing_record: dict | None = None,
 ) -> tuple[list[FramePose], SceneModel, dict, list[str]]:
     from dataclasses import replace
     from planetrecon.geometry.pose import capture_exposure
+    from planetrecon.geometry.viewing import resolve_viewing
+    config, resolved_view = resolve_viewing(source, config)
+    viewing_record = viewing_record or resolved_view
     config.require_saturn_geometry()
     config = replace(config, exposure_s=capture_exposure(source, config.exposure_s)['value_s'])
     reference_index = config.reference_index if reference_index is None else reference_index
@@ -350,6 +354,8 @@ def prepare_geometry(
         "edge_on_rings": bool(getattr(model, "edge_on", False)),
         "low_opening": bool(getattr(model, "low_opening", False)),
     }
+    if viewing_record is not None:
+        diagnostics['viewing_geometry'] = viewing_record
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if surface_origin == 'planet_preset':
@@ -409,6 +415,10 @@ def stack_source_geometry(
         return stack_source(source, config, calibration=calibration, on_event=on_event,
                             should_cancel=should_cancel, resume_from=resume_from,
                             state_checkpoint=state_checkpoint)
+    from planetrecon.geometry.viewing import resolve_viewing
+    config.require_motion_parameters(cache_status, allow_auto_latitude=True)
+    requested_config = config
+    config, viewing_record = resolve_viewing(source, config)
     config.require_motion_parameters(cache_status)
     # All geometry operators currently execute in NumPy float64.
     if state_checkpoint is not None:
@@ -521,6 +531,7 @@ def stack_source_geometry(
         try:
             poses, model, diagnostics, geo_warnings = prepare_geometry(
                 source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
+                viewing_record=viewing_record,
             )
             if diagnostics.get('unavailable_motion'):
                 raise _UnresolvedMotion('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
@@ -637,7 +648,7 @@ def stack_source_geometry(
     seq = 0
     cancelled = False
 
-    snapshot_provenance = capture_provenance(source, config, calibration)
+    snapshot_provenance = capture_provenance(source, requested_config, calibration)
     snapshot_provenance["preprocessing_cache"] = cache_status or {"status": "disabled"}
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
@@ -648,7 +659,7 @@ def stack_source_geometry(
         import hashlib
         import json
         from dataclasses import asdict
-        state_identity = resume.identity(source, config, calibration, should_cancel)
+        state_identity = resume.identity(source, requested_config, calibration, should_cancel)
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         # Re-estimation is bounded in image count. Refuse continuation if any
