@@ -1,5 +1,9 @@
 # Development plan
 
+**Current direction (2026-09-10):** use local patch alignment and the upper 50%
+quality range. [The updated working plan](local-quality-development.md) supersedes
+the historical default and next-step instructions below.
+
 Updated 2026-09-09 with certified full-count reference stability and the full-family protocol.
 This tracks completed implementation and the remaining qualification sequence.
 It supersedes the ordering of unfinished work in the historical roadmap;
