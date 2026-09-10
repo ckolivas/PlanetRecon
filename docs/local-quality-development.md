@@ -205,3 +205,27 @@ that model bias independently before another capture trial. Keep the working
 application unchanged. The summary is `results/real-data/local-patch-reliability.json`;
 complete controls, code and individual measurements remain in
 `out/local-patch-reliability` with their digests in the summary.
+
+## Withheld-pixel validation: pause automatic selectors
+
+Splitting raw detector pixels before smoothing lets a candidate's fitted shift
+be evaluated on detail it did not fit. A 72-case trial improves aggregate
+deformation error by 32.8%, but doubles translation error at half sampling
+(0.0252 to 0.0513 pixels), failing the per-scale regression gate. A guarded
+version on 72 fresh cases requires significant improvement in both splits and
+fits photometric terms on training pixels only. It preserves translation results
+but changes size in only one deformation case, giving 1.4% aggregate improvement.
+
+A separately declared capture-calibration trial pools 16 frames per condition
+and assesses the frozen selection rule on eight separate frames. Across 36
+conditions it preserves translation results, but chooses a different size in
+only two deformation conditions and improves aggregate deformation error by
+1.2%, below the declared 10% gate. No Jupiter runs follow these failed gates.
+These are analytic mono controls; they do not qualify Bayer or final-stack output.
+Reports and complete private-result digests are in
+`results/real-data/local-patch-validation.json`.
+
+Pause this automatic-sizing family rather than adding more confidence thresholds
+or larger calibration budgets. The useful application step is explicit manual
+patch sizing, preserving the existing 65-pixel default. This supports the user's
+capture-dependent workflow without claiming an automatic optimum.

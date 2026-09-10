@@ -1,0 +1,331 @@
+{
+  "scope": "Withheld-detector validation for adaptive alignment size; no real-capture runs.",
+  "studies": [
+    {
+      "path": "out/local-patch-validation/controls.json",
+      "sha256": "fb4cb03571caba24fc97423af661462b81db3492b04b26e03e4650554b4cc491",
+      "protocol": {
+        "scales": [
+          0.5,
+          1.0,
+          2.0
+        ],
+        "noise_sigma": [
+          2.0,
+          8.0,
+          16.0
+        ],
+        "seeds": [
+          41,
+          42,
+          43,
+          44
+        ],
+        "sizes": [
+          33,
+          65,
+          97
+        ],
+        "rule": "Fit each size on each disjoint checkerboard half of detector samples; split before any filtering. Score the withheld raw samples in a common central 33-pixel Hann window against the translated reference, fitting gain and offset. Average the two fold scores, choose the least-error valid size, and refit using all samples. Keep 65 if no candidate qualifies.",
+        "gate": "Require lower displacement RMS than the fixed 65-pixel full-data fit separately for translation and deformation, with no sampling subgroup worse by more than 5%. No real capture test on failure.",
+        "source_sha256": "773ad2ddfbc01ec07c4f5b534fb0898269626adf90a12064bcfbf59c5515ed55"
+      },
+      "summary": {
+        "('translation', None)": {
+          "fixed_rms": 0.1984601253067734,
+          "adaptive_rms": 0.19761100254798153,
+          "counts": {
+            "33": 4,
+            "65": 11,
+            "97": 21
+          }
+        },
+        "('translation', 0.5)": {
+          "fixed_rms": 0.025232168316224993,
+          "adaptive_rms": 0.05128196683392973,
+          "counts": {
+            "33": 1,
+            "65": 2,
+            "97": 9
+          }
+        },
+        "('translation', 1.0)": {
+          "fixed_rms": 0.07900872643404158,
+          "adaptive_rms": 0.07357360703707853,
+          "counts": {
+            "33": 3,
+            "65": 0,
+            "97": 9
+          }
+        },
+        "('translation', 2.0)": {
+          "fixed_rms": 0.33358690447868766,
+          "adaptive_rms": 0.3303141068880534,
+          "counts": {
+            "33": 0,
+            "65": 9,
+            "97": 3
+          }
+        },
+        "('deformation', None)": {
+          "fixed_rms": 0.3489819787813493,
+          "adaptive_rms": 0.23446379332835665,
+          "counts": {
+            "33": 17,
+            "65": 15,
+            "97": 4
+          }
+        },
+        "('deformation', 0.5)": {
+          "fixed_rms": 0.20593853613173163,
+          "adaptive_rms": 0.14469349165422934,
+          "counts": {
+            "33": 9,
+            "65": 2,
+            "97": 1
+          }
+        },
+        "('deformation', 1.0)": {
+          "fixed_rms": 0.25628352477384025,
+          "adaptive_rms": 0.22205670959343624,
+          "counts": {
+            "33": 7,
+            "65": 4,
+            "97": 1
+          }
+        },
+        "('deformation', 2.0)": {
+          "fixed_rms": 0.5072211931769554,
+          "adaptive_rms": 0.3076920901537945,
+          "counts": {
+            "33": 1,
+            "65": 9,
+            "97": 2
+          }
+        }
+      },
+      "passes_gate": false,
+      "conditions": 72
+    },
+    {
+      "path": "out/local-patch-validation/guarded/controls.json",
+      "sha256": "df98edb7a68bd9871b3e2f54ea82d50e15f75a41bf101584fee07a2a87d745eb",
+      "protocol": {
+        "scales": [
+          0.5,
+          1.0,
+          2.0
+        ],
+        "noise_sigma": [
+          2.0,
+          8.0,
+          16.0
+        ],
+        "seeds": [
+          61,
+          62,
+          63,
+          64
+        ],
+        "sizes": [
+          33,
+          65,
+          97
+        ],
+        "rule": "Fit each size on each disjoint checkerboard half of detector samples; split before any filtering. Score the withheld raw samples in a common central 33-pixel Hann window against the translated reference, fitting gain and offset. Fit photometric gain/offset on training samples only. Require paired withheld-pixel loss improvement over 65 larger than three estimated standard errors in EACH fold before choosing the least-error qualifying size and refitting with all samples. Keep 65 if no candidate qualifies.",
+        "gate": "Require lower displacement RMS than the fixed 65-pixel full-data fit separately for translation and deformation, with no sampling subgroup worse by more than 5%. No real capture test on failure.",
+        "source_sha256": "01bf68f507591bd012a90ea562f6aa50959053fe10894303c7fd7023df28edd3"
+      },
+      "summary": {
+        "('translation', None)": {
+          "fixed_rms": 0.08832877791813057,
+          "adaptive_rms": 0.08832877791813057,
+          "counts": {
+            "33": 0,
+            "65": 36,
+            "97": 0
+          }
+        },
+        "('translation', 0.5)": {
+          "fixed_rms": 0.038939657698403164,
+          "adaptive_rms": 0.038939657698403164,
+          "counts": {
+            "33": 0,
+            "65": 12,
+            "97": 0
+          }
+        },
+        "('translation', 1.0)": {
+          "fixed_rms": 0.06517314464512672,
+          "adaptive_rms": 0.06517314464512672,
+          "counts": {
+            "33": 0,
+            "65": 12,
+            "97": 0
+          }
+        },
+        "('translation', 2.0)": {
+          "fixed_rms": 0.13282350432407614,
+          "adaptive_rms": 0.13282350432407614,
+          "counts": {
+            "33": 0,
+            "65": 12,
+            "97": 0
+          }
+        },
+        "('deformation', None)": {
+          "fixed_rms": 0.22332597703162668,
+          "adaptive_rms": 0.22014939518475016,
+          "counts": {
+            "33": 1,
+            "65": 35,
+            "97": 0
+          }
+        },
+        "('deformation', 0.5)": {
+          "fixed_rms": 0.22022908296265395,
+          "adaptive_rms": 0.21041540231602207,
+          "counts": {
+            "33": 1,
+            "65": 11,
+            "97": 0
+          }
+        },
+        "('deformation', 1.0)": {
+          "fixed_rms": 0.2532220137949744,
+          "adaptive_rms": 0.2532220137949744,
+          "counts": {
+            "33": 0,
+            "65": 12,
+            "97": 0
+          }
+        },
+        "('deformation', 2.0)": {
+          "fixed_rms": 0.19235706069296818,
+          "adaptive_rms": 0.19235706069296818,
+          "counts": {
+            "33": 0,
+            "65": 12,
+            "97": 0
+          }
+        }
+      },
+      "passes_gate": false,
+      "conditions": 72
+    },
+    {
+      "path": "out/local-patch-calibration/controls.json",
+      "sha256": "7c6ec00f636ab222882ff3a594e14a3813629a76b0a522fb1b23545e54e0a03b",
+      "protocol": {
+        "scales": [
+          0.5,
+          1.0,
+          2.0
+        ],
+        "noise_sigma": [
+          2.0,
+          8.0,
+          16.0
+        ],
+        "seeds": [
+          101,
+          102
+        ],
+        "sizes": [
+          33,
+          65,
+          97
+        ],
+        "calibration_frames": 16,
+        "assessment_frames": 8,
+        "rule": "Pool paired raw withheld-pixel loss improvements over 16 calibration frames. A candidate must improve on size 65 by more than three across-frame standard errors in both checkerboard folds. Choose the lowest-score qualifying size, otherwise 65. Freeze size for eight separately generated assessment frames, which use the ordinary full-sample matcher.",
+        "gate": "At least 10% lower aggregate deformation displacement RMS; neither translation nor deformation may worsen by over 5% at any sampling scale. No capture experiment on failure.",
+        "independence": "Masks split detector noise before filtering; photometric nuisance terms fit training samples only. Calibration and assessment frame noise and motion draws are separate. Reference is noise-free. Known shifts are used only for assessment.",
+        "source_sha256": "c723958f602a185a9dd0cf9dc76098fe3b2f9e94ccaf52d50d39aae22e053a4f"
+      },
+      "summary": {
+        "('translation', None)": {
+          "fixed_rms": 0.20091669400140477,
+          "adaptive_rms": 0.20091669400140477,
+          "counts": {
+            "33": 0,
+            "65": 18,
+            "97": 0
+          }
+        },
+        "('translation', 0.5)": {
+          "fixed_rms": 0.03711713557760735,
+          "adaptive_rms": 0.03711713557760735,
+          "counts": {
+            "33": 0,
+            "65": 6,
+            "97": 0
+          }
+        },
+        "('translation', 1.0)": {
+          "fixed_rms": 0.05597551985421944,
+          "adaptive_rms": 0.05597551985421944,
+          "counts": {
+            "33": 0,
+            "65": 6,
+            "97": 0
+          }
+        },
+        "('translation', 2.0)": {
+          "fixed_rms": 0.3414551408441902,
+          "adaptive_rms": 0.3414551408441902,
+          "counts": {
+            "33": 0,
+            "65": 6,
+            "97": 0
+          }
+        },
+        "('deformation', None)": {
+          "fixed_rms": 0.227927081771776,
+          "adaptive_rms": 0.2251579959193525,
+          "counts": {
+            "33": 2,
+            "65": 16,
+            "97": 0
+          }
+        },
+        "('deformation', 0.5)": {
+          "fixed_rms": 0.09973097843365684,
+          "adaptive_rms": 0.09150609212561539,
+          "counts": {
+            "33": 1,
+            "65": 5,
+            "97": 0
+          }
+        },
+        "('deformation', 1.0)": {
+          "fixed_rms": 0.14556609060924589,
+          "adaptive_rms": 0.13783502988266808,
+          "counts": {
+            "33": 1,
+            "65": 5,
+            "97": 0
+          }
+        },
+        "('deformation', 2.0)": {
+          "fixed_rms": 0.3531522462343966,
+          "adaptive_rms": 0.3531522462343966,
+          "counts": {
+            "33": 0,
+            "65": 6,
+            "97": 0
+          }
+        }
+      },
+      "passes_gate": false,
+      "conditions": 36
+    }
+  ],
+  "decision": "Pause these automatic selectors. Raw validation finds deformation bias, but per-frame choices are noisy and guarded or pooled choices provide too little benefit. Keep 65 as the default and provide explicit manual size selection for capture-dependent testing.",
+  "limitations": [
+    "Analytic mono scenes with noise-free references and independent Gaussian noise; two or four shared phase seeds per study, not independent captures for every condition.",
+    "Frame splits occur before smoothing. The first study fits two photometric nuisance terms on withheld samples; later studies fit those terms on training samples only.",
+    "Guard score standard errors are approximate. Paired calibration evidence comes only from calibration frames; assessment measurements are excluded from the size-selection function.",
+    "No Bayer, limb or full-stack qualification is claimed."
+  ]
+}
