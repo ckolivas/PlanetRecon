@@ -420,15 +420,15 @@ def stack_source_geometry(
     requested_config = config
     config, viewing_record = resolve_viewing(source, config)
     config.require_motion_parameters(cache_status)
-    # All geometry operators currently execute in NumPy float64.
     if state_checkpoint is not None:
         from planetrecon import resume
         resume.validate_destination(state_checkpoint, source, config)
-    backend, report = select_backend("cpu", threads=config.threads)
+    cuda_globe = config.geometry_mode in ('surface', 'combined')
+    backend, report = select_backend(config.device if cuda_globe else 'cpu', threads=config.threads)
     report.requested = config.device
-    if config.device != "cpu":
+    if not cuda_globe and config.device != "cpu":
         report.fallback = True
-        report.reason = "geometry_cpu_only: geometry operators currently run on CPU float64"
+        report.reason = "geometry_cpu_only: field-only and Saturn layer operators run on CPU float64"
     meta = source.metadata()
     color = source.color_mode()
     n = source.n_frames()
@@ -539,6 +539,10 @@ def stack_source_geometry(
             if colour_retry:
                 diagnostics['registration_proxy'] = 'RGB luminance after unresolved green preflight'
             ref_pose = _reference_pose(poses, config)
+            renderer = None
+            if backend.name == 'cuda':
+                from planetrecon.backends.torch_globe import TorchGlobeWarp
+                renderer = TorchGlobeWarp((h,w),model).render
             anchor_index = diagnostics['reference_index']
             anchor_plane = sample_planes[sample_idx.index(anchor_index)]
             anchor_pose = poses[anchor_index]
@@ -602,7 +606,8 @@ def stack_source_geometry(
                     feature = 'shared observed field'
                 else:
                     from planetrecon.pipeline.globe_align import surface_displacement
-                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose)
+                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose,
+                                                        **({'renderer':renderer} if renderer is not None else {}))
                     feature = 'shared visible surface'
                 if displacement is None and bayer and not colour_retry and frame is not None:
                     if colour_anchor is None:
@@ -620,7 +625,8 @@ def stack_source_geometry(
                         displacement = field_displacement(colour_anchor, colour_plane, pose, anchor_pose,
                                                           diagnostics['radius'])
                     else:
-                        displacement = surface_displacement(colour_anchor, colour_plane, model, pose, anchor_pose)
+                        displacement = surface_displacement(colour_anchor, colour_plane, model, pose, anchor_pose,
+                                                            **({'renderer':renderer} if renderer is not None else {}))
                 if displacement is None:
                     raise _UnresolvedMotion(f'Motion compensation cannot run: {feature} cannot constrain camera drift '
                         f'at frame {index+1}. Check the geometry and reference frame, or choose '
@@ -655,6 +661,7 @@ def stack_source_geometry(
         snapshot_provenance['preprocessing'] = selection.summary
     next_index = 0
     state_identity = None
+    execution_history = []
     if resume_from is not None or state_checkpoint is not None:
         from planetrecon import resume
         import hashlib
@@ -680,12 +687,32 @@ def stack_source_geometry(
         n_used, n_rejected = restored['n_used'], restored['n_rejected']
         next_index = restored['next_index']
         warnings = list(dict.fromkeys(restored['warnings'] + warnings))
+        execution_history = restored['execution_history']
         snapshot_provenance['resumed_from_frame'] = next_index
+
+    execution_history = list(dict.fromkeys([*execution_history, backend.name]))
+    snapshot_provenance['execution_history'] = execution_history
+    snapshot_provenance['geometry_execution'] = {
+        'projection_and_accumulation': backend.name,
+        'geometry_estimation_and_drift_matching': 'cpu',
+        'accumulator_precision': 'float64',
+    }
+    gpu_accumulator = None
+    if backend.name == 'cuda':
+        from planetrecon.backends.torch_globe import TorchGlobeAccumulator
+        gpu_accumulator = TorchGlobeAccumulator((h,w),model,color,accum,weight,
+                                               demosaic_accum,demosaic_weight)
+
+    def sync_sums():
+        nonlocal accum, weight, demosaic_accum, demosaic_weight
+        if gpu_accumulator is not None:
+            accum, weight, demosaic_accum, demosaic_weight = gpu_accumulator.download()
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
         if on_event is None:
             return
+        sync_sums()
         cov = weight.copy()
         image = _normalise_stack(accum, weight)
         result = ReconstructionResult(
@@ -780,6 +807,13 @@ def stack_source_geometry(
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
+            if gpu_accumulator is not None:
+                demo = bilinear_demosaic(calibrated,color) if bayer else None
+                if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo):
+                    n_used += 1
+                else:
+                    n_rejected += 1
+                continue
             xd, yd, valid = model.src_to_ref(xg, yg, pose, ref_pose)
             y_idx = yd - 0.5
             x_idx = xd - 0.5
@@ -850,18 +884,20 @@ def stack_source_geometry(
                 ring_weight += score * rw
             n_used += 1
         if state_checkpoint is not None:
+            sync_sums()
             resume.save(state_checkpoint, state_identity, {
                 'accum': accum, 'weight': weight, 'reference': None,
                 'demosaic_accum': demosaic_accum, 'demosaic_weight': demosaic_weight,
                 'globe_weight': globe_weight, 'ring_weight': ring_weight,
                 'reference_index': diagnostics['reference_index'],
                 'n_used': n_used, 'n_rejected': n_rejected, 'next_index': n_used+n_rejected,
-                'execution_history': ['cpu'], 'warnings': warnings}, geometry=True)
+                'execution_history': execution_history, 'warnings': warnings}, geometry=True)
         emit("baseline", incomplete=True)
         if cancelled:
             break
 
     cancelled = cancelled or bool(should_cancel is not None and should_cancel())
+    sync_sums()
     image = _normalise_stack(accum, weight)
     provenance = {
         **snapshot_provenance,

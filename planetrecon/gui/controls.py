@@ -32,7 +32,7 @@ class ConfigControls(QTabWidget):
         self._number(capture, 'max_vram_bytes', 'CUDA tensor budget (MiB; blank = default)')
         if config.max_vram_bytes is not None:
             self.fields['max_vram_bytes'].setText(str(config.max_vram_bytes / 1024**2))
-        capture.addRow(QLabel('CPU cap includes mapped libraries; excludes this UI.\nCUDA cap excludes driver/library memory.\nGeometry uses CPU float64.'))
+        capture.addRow(QLabel('CPU cap includes mapped libraries; excludes this UI.\nCUDA cap excludes driver/library memory.\nSurface/combined motion supports CUDA float64.'))
         self._choice(capture, 'crop', 'HDF5 crop', ['feature', 'bland'])
         self._choice(capture, 'bayer_override', 'Raw colour override', [None, 'mono', 'RGGB', 'GRBG', 'GBRG', 'BGGR'])
         self._choice(capture, 'endian_override', 'Byte order override', [None, 'little', 'big'])

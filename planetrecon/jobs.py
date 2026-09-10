@@ -161,7 +161,7 @@ def _worker_run(
             return
         if config.geometry_mode != "none":
             emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",
-                              "device_report": {"reason": "Geometry processing uses CPU float64"}})
+                              "device_report": {"reason": "Pose estimation uses CPU; stacking uses the selected supported backend"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
             if result.stage == 'cache_ready':

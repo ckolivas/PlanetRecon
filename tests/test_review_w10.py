@@ -147,7 +147,8 @@ def test_moving_moon_requires_known_cadence():
                                         dict(ring_inner_radius_px=None), dict(ring_outer_radius_px=None)])
 def test_saturn_requires_declared_physical_geometry(overrides):
     src = ArraySource(np.ones((1, 48, 64)), timestamps=np.array([0.]))
-    with pytest.raises(ValueError, match="requires|geometry requires"):
+    reason = 'viewing latitude unavailable' if 'sub_obs_lat_rad' in overrides else 'requires'
+    with pytest.raises(ValueError, match=reason):
         prepare_geometry(src, config(**overrides))
 
 
@@ -200,7 +201,7 @@ def test_layers_survive_worker_preview_checkpoint_and_cli(tmp_path):
     assert main(['--threads', '2', 'stack', '--path', str(path), '--out', str(out), '--device', 'cpu',
         '--geometry', 'saturn', '--radius', '12', '--flattening', '.1', '--sub-obs-lat-deg', str(np.degrees(.4)),
         '--ring-inner', '16', '--ring-outer', '26', '--cadence', '.1', '--field-rate-deg-s', '0',
-        '--surface-rate-deg-s', '0']) == 0
+        '--surface-rate-deg-s', '0', '--no-frame-preselection']) == 0
     with np.load(out / 'stack.npz', allow_pickle=False) as data:
         for name in ('globe', 'ring'):
             assert data[f'layer_coverage__{name}'].shape == (48, 64)

@@ -147,7 +147,7 @@ rather than filled. Saturn rings are a static equatorial annulus with near/far
 occlusion and do not inherit globe spin. CFA parity stays in detector
 coordinates under rotation. Freeze-mid-exposure is the default and warns when
 limb motion during \(T_{\rm exp}\) is large. The iterative physical raw-CFA inverse solve and production MFBD remain
-unqualified. CPU/auto/CUDA translation and CPU geometry support compatible
+unqualified. CPU/auto/CUDA translation, CPU geometry and CUDA surface/combined motion support compatible
 accumulator resume. Linux process RAM and Torch allocator limits have scoped
 checks; neither is a total GUI/process-tree or all-driver-memory guarantee.
 Native version-tag build automation covers Linux CPU/CUDA, Windows x64 CPU and
@@ -155,7 +155,14 @@ macOS Intel/Apple Silicon CPU. Windows/macOS runtime testing is excluded by the
 owner. Independent capture acceptance and refreshed release artifacts remain.
 Advanced atmospheric claims stay gated by scientific requalification.
 
-Geometry currently runs on CPU float64, including when Auto/GPU is selected.
+Surface and combined motion use CUDA float64 when Auto/GPU selects a supported
+device. Globe projection, reference warping and accumulation of mono/RGB/raw
+Bayer samples run on the GPU; image and coverage sums stay resident between
+frames. Geometry estimation, drift matching, calibration and final RGB completion
+remain on CPU. Field-only and Saturn's ring-layer model still use CPU float64.
+Unavailable CUDA falls back to CPU with a reason in the device report. A failure
+during CUDA geometry processing stops the run; it does not silently restart or
+mix partial sums. CUDA allocation budgets remain limited to translation mode.
 Rates in seconds require measured timestamps or an explicit `--cadence`; duplicate
 or reversed timestamps are rejected. Without timing, inferred field motion uses
 frame indices and is labelled accordingly. `--reference-epoch` is the exact output
@@ -589,7 +596,7 @@ parity tests on this machine with NVIDIA driver 595.91.07.
 The CUDA baseline accelerates registration, mono/RGB/CFA backprojection and the
 matched demosaic comparison. CPU float64 sums remain authoritative. A CUDA
 operation failure, including actual allocator exhaustion, continues on CPU with
-prior sums retained and a visible warning. Geometry stays on CPU; advanced MFBD
+prior sums retained and a visible warning. Surface/combined CUDA geometry is described above; advanced MFBD
 and Q3 remain unqualified. Run GPU tests explicitly with
 `PLANETRECON_TEST_GPU=1 .venv/bin/python -m pytest tests/test_gpu.py --run-hardware`.
 The restricted agent sandbox hides GPU device access; real-device checks were
@@ -639,18 +646,20 @@ and allocator OOM retains prior sums and continues on CPU. The prior process
 allocator setting is restored after success, cancellation or failure; an existing
 stricter setting is never relaxed. Provenance records requested/effective bytes,
 enforcement and peak reserved bytes. Use a dedicated process for library calls
-that coexist with other Torch workloads. Geometry remains CPU-only.
+that coexist with other Torch workloads. This allocator cap applies to translation processing only.
 
 Geometry also supports `--state-checkpoint` and `--resume`, including Saturn's
 separate globe/ring coverage. Resume rechecks fitted geometry and timing along
 with the capture/calibration/configuration identities, then continues after the
 last committed batch. Field, surface, combined and Saturn mono/RGB/Bayer tests
-match uninterrupted arrays bit for bit. Cancellation before geometry preparation
+match uninterrupted CPU arrays bit for bit. CUDA surface/combined continuation
+matches within float64 rounding: parallel scatter addition can change the order
+of additions. Cancellation before geometry preparation
 leaves the prior checkpoint intact.
 
 The GUI's optional **Checkpoint file** writes accumulator state after each batch.
 Select **Resume this checkpoint** to continue it with the same capture/settings;
-this works for CPU/CUDA translation and CPU geometry. An incompatible state is
+this works for CPU/CUDA translation, CPU geometry and CUDA surface/combined motion. An incompatible state is
 reported without replacing the last received image. Input inspection ignores
 checkpoint settings. Input hashing and pose verification are cancellable.
 

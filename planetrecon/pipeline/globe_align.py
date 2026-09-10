@@ -8,13 +8,17 @@ from planetrecon.geometry.globe import sky_to_body, field_rotate_sky
 from planetrecon.pipeline.masked_align import MaskedRegistration
 
 
-def surface_displacement(reference, frame, model, pose, reference_pose):
+def surface_displacement(reference, frame, model, pose, reference_pose, *, renderer=None):
     """Match only where the prediction and its filter footprint are observed.
 
     A newly visible hemisphere has no reference data. Its zero-filled prediction
     must not pull the translation toward an artificial dark limb.
     """
-    predicted = render_observed(reference, model, pose, reference_pose)
+    def render(image):
+        if renderer is not None:
+            return renderer(image, pose, reference_pose)
+        return render_observed(image, model, pose, reference_pose)
+    predicted = render(reference)
     y, x = np.indices(reference.shape)
     rx, ry = x+.5-reference_pose.cx, reference_pose.cy-y-.5
     if model.apply_field:
@@ -24,7 +28,7 @@ def surface_displacement(reference, frame, model, pose, reference_pose):
     # proxy). Foreshortening can stretch that artificial edge deep into the new
     # disc. Require a complete reference neighbourhood before warping support.
     reference_support = binary_erosion(reference_globe, structure=np.ones((3, 3), bool))
-    support = render_observed(reference_support.astype(float), model, pose, reference_pose)
+    support = render(reference_support.astype(float))
     sx, sy = x+.5-pose.cx, pose.cy-y-.5
     if model.apply_field:
         sx, sy = field_rotate_sky(sx, sy, -pose.field_angle_rad)

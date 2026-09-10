@@ -37,9 +37,11 @@ def test_bayer_stack_publishes_and_exports_complete_rgb(pattern, geometry, tmp_p
         assert r.provenance['rgb_completion']['filled_channel_samples'] == 9*11*2
     save_snapshot(tmp_path/'result.npz', result)
     restored = load_snapshot(tmp_path/'result.npz')
-    export_result(restored, tmp_path/'result.tif')
+    exported = export_result(restored, tmp_path/'result.tif')
     pixels = tifffile.imread(tmp_path/'result.tif')
     assert np.isfinite(pixels).all()
+    mapping = exported.metadata['mapping']
+    pixels = pixels*(mapping['white']-mapping['black'])+mapping['black']
     np.testing.assert_allclose(pixels, np.broadcast_to(expected, pixels.shape))
 
 
