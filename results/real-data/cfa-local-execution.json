@@ -1,0 +1,83 @@
+{
+  "scope": "Execution-only comparison on four synthetic raw frames and smooth known local maps; no capture restacked",
+  "source_commit_before": "0746d79",
+  "tests_passed": 38,
+  "detector_shape": [
+    424,
+    656
+  ],
+  "output_region_yx": [
+    164,
+    260,
+    280,
+    376
+  ],
+  "threads": 2,
+  "reference": {
+    "mode": "original",
+    "frame_seconds": [
+      0.9498439040035009,
+      0.7632846210035495,
+      0.7164577419971465,
+      0.7041446469957009
+    ],
+    "finish_seconds": 0.09216502999333898,
+    "peak_rss_mib": 218.16015625,
+    "planned_array_bytes": null
+  },
+  "batched": {
+    "mode": "batched",
+    "frame_seconds": [
+      0.5300103759946069,
+      0.5252673020004295,
+      0.5043767559982371,
+      0.5109265870050876
+    ],
+    "finish_seconds": 0.1010855900021852,
+    "peak_rss_mib": 222.7109375,
+    "planned_array_bytes": 219119616
+  },
+  "per_frame_speed_ratio": 1.5134548622921906,
+  "array_comparison": {
+    "image": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "variance": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "degree": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "ordinary": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "coverage": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "validity": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0
+    },
+    "gram": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "noise": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    },
+    "rhs": {
+      "bitwise_equal": true,
+      "max_absolute_difference": 0.0
+    }
+  },
+  "implementation": "Batch equal-length neighbour lists without sharing geometry; retain sample order. Count neighbours before allocating lists. Bound array plans and final-fit blocks; check cancellation in inverse iterations and fits.",
+  "limits": "Array planning limit is not a process RSS cap: interpreter, library, caller input and KD-tree overhead are extra. No new image-quality or total application speed claim. A GUI processing worker was active; sequential timings are illustrative.",
+  "evidence_directory": "out/cfa-local-execution",
+  "decision": "Use batched execution for the next declared larger local/upper-half confirmation; preserve interpolation and selection parameters."
+}

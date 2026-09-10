@@ -60,20 +60,55 @@ PNG previews share display scaling after the declared gain/offset comparison.
 The [reproduction script](../tools/cfa_local_transport_pilot.py) requires the private
 capture and its existing cache and refuses to overwrite a completed pilot.
 
+## Completed: bounded batched local execution
+
+The [execution-only follow-up](../results/real-data/cfa-local-execution.json)
+batches outputs with equal neighbour-list lengths while retaining each output's
+own sample positions, colours and weights. It does not share local geometry.
+Neighbour counts are checked before list construction and dense allocations;
+the default entry budget is 65,536. A conservative array-plan check defaults to
+2 GiB and refuses larger requests before allocating accumulator arrays. This is
+not an RSS cap: caller inputs, interpreter/library and KD-tree overhead are extra.
+Cancellation is now checked during inverse-map iterations, neighbour work and
+bounded final-fit blocks, preserving previously completed frame sums.
+
+All 38 controls pass. A sequential four-frame synthetic profile at 424x656 pixels,
+with the same 96x96 output crop, reduces mean frame time from 0.7834 to 0.5176
+seconds (1.51x faster). Final fitting is 0.092 versus 0.101 seconds. Peak RSS is
+218.2 versus 222.7 MiB. All checked moments, image, variance, fit choices and
+ordinary coverage/validity match the original implementation bitwise. The profile
+ran with two CPU threads while a GUI worker was active; these illustrative timings
+are not a total application speed claim. No real capture comparison was repeated.
+
 ## Next steps
 
-1. Bound the local fitting cost and memory while preserving the qualified sample
-   positions, weights, fit choices, variance and output. Do not use global parity
-   grouping where local geometry differs. Include cancellation during inversion
-   and final fitting, not just between staged frame contributions.
-2. Declare a larger selected-frame confirmation before running it. Keep the same
-   local/50% baseline, anchor, normal template rules and interpolation parameters.
-   Check both the fixed crop and broader planetary regions; require both metrics
-   to improve on common support. Do not infer a full-stack gain from the 64-frame
-   result or tune window/weights against inspected references.
-3. If confirmed, implement exact resume bound to source, selection/weights, dense
+1. Run the larger confirmation below once the active GUI processing worker has
+   finished. Preserve the local/50% baseline and interpolation parameters.
+2. If confirmed, implement exact resume bound to source, selection/weights, dense
    local maps and execution policy. Failed GPU work must retry a complete frame
    without double counting. Then offer an optional GUI integration for user testing.
+
+### Declared larger confirmation
+
+Use 512 uniformly spaced entries from the same full capture midpoint selection,
+including the best selected frame by replacing the nearest sampled entry if
+necessary, then sorting. Preserve the application's top-64 selected template,
+anchor 1947, cached linear qualities and local patch rules. Both arms share each
+raw frame and exact local map. Stop and report an unexpected rejection or unsupported
+map rather than changing selection to make the comparison run.
+
+Fit the fixed strip y=164:260, x=184:472, containing three adjacent 96x96 regions:
+left x=184:280, original centre x=280:376, right x=376:472. Compute ordinary support
+on the full detector. Use one registration from the full ordinary image for both
+arms. Exclude eight pixels around each region for comparisons and use identical
+validity masks. Fit per-colour gain/offset separately for each arm and region,
+using the same unsharpened conventional reference and sigma-three highpass metric.
+Require lower RMS and higher detail correlation in each region; also report the
+aggregate. This gate is frozen before inspecting the new outputs. If it fails,
+stop this candidate without window/weight tuning or a full-capture rerun. Record
+indices, weights, template and map hashes, comparison masks and paired float outputs
+under a new `out/cfa-local-confirmation` directory. This remains a development
+comparison, not independent truth or proof of a full selected-stack improvement.
 
 Physical motion modes and transformed detector footprints require separate
 qualification. The earlier rejected global stronger-weighting/first-moment

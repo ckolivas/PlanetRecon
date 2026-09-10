@@ -25,13 +25,14 @@ def completed(image, weights, color):
         'final', False, provenance={'color_mode': color}))
 
 
-def inverse_pull_map(shift, shape):
+def inverse_pull_map(shift, shape, *, check_cancel=lambda: None):
     """Locate raw detector centres in the reference plane, with checked residuals.
 
     Solve r + displacement(r) = detector. Only the reference domain is defined;
     detector samples outside its image are excluded. A conservative contraction
     bound makes this inverse unique; unsupported maps are refused explicitly.
     """
+    check_cancel()
     h, w = shape
     if min(shape) < 2:
         raise ValueError('local transport requires at least two rows and columns')
@@ -46,6 +47,7 @@ def inverse_pull_map(shift, shape):
     yy, xx = np.indices(shape, dtype=float)
     rx, ry = xx-dx, yy-dy
     for _ in range(256):
+        check_cancel()
         mx = map_coordinates(dx, [ry, rx], order=1, mode='nearest', prefilter=False)
         my = map_coordinates(dy, [ry, rx], order=1, mode='nearest', prefilter=False)
         nx, ny = xx-mx, yy-my
@@ -59,11 +61,13 @@ def inverse_pull_map(shift, shape):
     my = map_coordinates(dy, [ry, rx], order=1, mode='nearest', prefilter=False)
     valid = ((rx >= 0) & (rx <= w-1) & (ry >= 0) & (ry <= h-1)
              & (np.abs(rx+mx-xx) < 1e-9) & (np.abs(ry+my-yy) < 1e-9))
+    check_cancel()
     return np.stack([rx, ry], axis=-1), valid
 
 
 class LocalQuadraticAccumulator:
-    def __init__(self, shape, color, *, chunk_rows=64, should_cancel=None, region=None):
+    def __init__(self, shape, color, *, chunk_rows=64, should_cancel=None, region=None,
+                 max_array_bytes=2*1024**3, max_neighbour_entries=65536):
         if len(shape) != 2 or min(shape) < 2:
             raise ValueError('two-dimensional detector of at least 2 by 2 required')
         if type(chunk_rows) is not int or chunk_rows < 1:
@@ -72,12 +76,25 @@ class LocalQuadraticAccumulator:
         self.color = color
         self.chunk_rows = chunk_rows
         self.should_cancel = should_cancel
-        self.labels = cfa_labels(*shape, color)
         self.region = (slice(0, shape[0]), slice(0, shape[1])) if region is None else region
         if (len(self.region) != 2 or any(not isinstance(v, slice) or v.step not in (None, 1)
                 or v.start is None or v.stop is None or not 0 <= v.start < v.stop <= size
                 for v, size in zip(self.region, shape))):
             raise ValueError('region must be two explicit in-bounds unit-step slices')
+        for name, value in [('max_array_bytes', max_array_bytes), ('max_neighbour_entries', max_neighbour_entries)]:
+            if type(value) is not int or value < 1:
+                raise ValueError(f'{name} must be a positive integer')
+        self.max_neighbour_entries = max_neighbour_entries
+        output_pixels = int(np.prod([v.stop-v.start for v in self.region]))
+        # Reserve persistent and staged moments, detector arrays, bounded neighbour
+        # designs and final-fit blocks. This is an array planning limit, not RSS:
+        # the interpreter, libraries, caller inputs and KD-tree overhead are extra.
+        self.planned_array_bytes = (2*output_pixels*3*(36+36+6)*8
+                                    + int(np.prod(shape))*512
+                                    + max_neighbour_entries*512 + chunk_rows*4096 + 8*1024**2)
+        if self.planned_array_bytes > max_array_bytes:
+            raise MemoryError(f'local interpolation plans {self.planned_array_bytes} array bytes; limit is {max_array_bytes}')
+        self.labels = cfa_labels(*shape, color)
         y, x = (v[self.region] for v in np.indices(shape))
         self.output_shape = y.shape
         self.targets = np.stack([x.ravel(), y.ravel()], axis=-1)
@@ -101,27 +118,45 @@ class LocalQuadraticAccumulator:
             raise ValueError('finite raw frame matching detector required')
         if not np.isfinite(quality) or quality <= 0:
             raise ValueError('positive finite quality required')
-        positions, observed = inverse_pull_map(shift, self.shape)
+        positions, observed = inverse_pull_map(shift, self.shape, check_cancel=self._check_cancel)
         self._check_cancel()
         points = positions[observed]
         values = raw[observed]
         labels = self.labels[observed]
         tree = cKDTree(points)
         gram, noise, rhs = (np.zeros_like(v) for v in (self.gram, self.noise, self.rhs))
-        for start in range(0, len(self.targets), self.chunk_rows):
+        start = 0
+        while start < len(self.targets):
             self._check_cancel()
-            targets = self.targets[start:start+self.chunk_rows]
+            stop = min(start+self.chunk_rows, len(self.targets))
+            # Count before constructing Python neighbour lists or dense designs.
+            counts = tree.query_ball_point(self.targets[start:stop], 4., p=np.inf, return_length=True)
+            if counts[0] > self.max_neighbour_entries:
+                raise MemoryError('one local fit exceeds the neighbour entry budget')
+            allowed = np.searchsorted(np.cumsum(counts), self.max_neighbour_entries, side='right')
+            stop = start+max(1, int(allowed))
+            targets = self.targets[start:stop]
             neighbours = tree.query_ball_point(targets, 4., p=np.inf)
-            for offset, (target, neighbours_at_target) in enumerate(zip(targets, neighbours)):
-                ids = np.asarray(neighbours_at_target, dtype=int)
-                u, v = ((points[ids]-target)/4).T
+            lengths = np.array([len(ids) for ids in neighbours])
+            # Group only equal list lengths for batched matrix products. Each
+            # output keeps its own positions, labels and weights in original order.
+            for length in np.unique(lengths):
+                self._check_cancel()
+                if length == 0:
+                    continue
+                rows = np.flatnonzero(lengths == length)
+                ids = np.array([neighbours[int(i)] for i in rows], dtype=int)
+                uv = (points[ids]-targets[rows, None])/4
+                u, v = uv[..., 0], uv[..., 1]
                 phi = np.stack([np.ones_like(u), u, v, u*u, u*v, v*v], axis=-1)
                 kernel = quality*np.maximum(1-u*u, 0)**3*np.maximum(1-v*v, 0)**3
                 for c, name in enumerate('RGB'):
                     weight = kernel*(labels[ids] == name)
-                    gram[start+offset, c] = (phi.T*weight)@phi
-                    noise[start+offset, c] = (phi.T*weight**2)@phi
-                    rhs[start+offset, c] = (phi.T*weight)@values[ids]
+                    transposed = phi.transpose(0, 2, 1)
+                    gram[start+rows, c] = (transposed*weight[:, None])@phi
+                    noise[start+rows, c] = (transposed*weight[:, None]**2)@phi
+                    rhs[start+rows, c] = ((transposed*weight[:, None])@values[ids][..., None])[..., 0]
+            start = stop
         add, weight, *_ = cpu_backproject(raw, shift, self.color)
         # Independent bilinear-coefficient variance for the ordinary fallback.
         h, w = self.shape
@@ -161,19 +196,21 @@ class LocalQuadraticAccumulator:
         image = before.image.reshape(-1, 3).copy()
         degree = np.where(before.validity.reshape(-1, 3), 0, -1)
         for order, size in ((2, 6), (1, 3)):
-            self._check_cancel()
-            g = self.gram[..., :size, :size]
-            eigen = np.linalg.eigvalsh(g)
-            eligible = (degree == 0) & (eigen[..., 0] > eigen[..., -1]*1e-10)
-            dual = np.zeros((*g.shape[:-1], 1))
-            target = np.zeros((int(eligible.sum()), size, 1)); target[:, 0, 0] = 1
-            dual[eligible] = np.linalg.solve(g[eligible], target)
-            dual = dual[..., 0]
-            predicted = np.einsum('nci,ncij,ncj->nc', dual, self.noise[..., :size, :size], dual)
-            safe = eligible & (predicted >= 0) & (predicted <= variance*(1+1e-12))
-            image[safe] = np.einsum('nci,nci->nc', dual, self.rhs[..., :size])[safe]
-            variance[safe] = predicted[safe]
-            degree[safe] = order
+            for start in range(0, len(self.targets), self.chunk_rows):
+                self._check_cancel()
+                section = slice(start, start+self.chunk_rows)
+                g = self.gram[section, :, :size, :size]
+                eigen = np.linalg.eigvalsh(g)
+                eligible = (degree[section] == 0) & (eigen[..., 0] > eigen[..., -1]*1e-10)
+                dual = np.zeros((*g.shape[:-1], 1))
+                target = np.zeros((int(eligible.sum()), size, 1)); target[:, 0, 0] = 1
+                dual[eligible] = np.linalg.solve(g[eligible], target)
+                dual = dual[..., 0]
+                predicted = np.einsum('nci,ncij,ncj->nc', dual, self.noise[section, :, :size, :size], dual)
+                safe = eligible & (predicted >= 0) & (predicted <= variance[section]*(1+1e-12))
+                image[section][safe] = np.einsum('nci,nci->nc', dual, self.rhs[section, :, :size])[safe]
+                variance[section][safe] = predicted[safe]
+                degree[section][safe] = order
         self._check_cancel()
         # The caller retains ordinary direct layers; variance is not detector coverage.
         return image.reshape((*self.output_shape, 3)), variance.reshape((*self.output_shape, 3)), degree.reshape((*self.output_shape, 3)), before
