@@ -692,3 +692,29 @@ To repeat a comparison without reducing the reference PNG to 8 bits:
 
 The output directory must be new. It contains metrics and full-precision arrays
 for plotting; supplied capture/reference pixels remain outside Git.
+
+### Manual RGB alignment after stacking
+
+Use **Open result…** to load an original scientific result NPZ without restacking,
+or finish an RGB run. **Align RGB…** moves red and blue relative to fixed green
+in full-resolution pixels; positive X moves content right and positive Y down.
+**Apply** previews the offsets, **Reset** restores the original stack, and
+**Cancel** restores the image shown before opening the dialog. **Save result…**
+exports the currently displayed result with the selected offsets in its provenance.
+New runs reset the adjustments. No offsets or sharpening are applied automatically.
+
+Each preview samples the original result once using bilinear translation; fractional
+shifts can slightly soften a channel. Unsupported edge samples stay masked. Coverage
+is transported reconstruction weight, not extra observations or calibrated uncertainty.
+Previously adjusted files can be inspected/exported, but further adjustments require
+their original snapshot to avoid accumulating resampling blur.
+
+The CLI also accepts explicit offsets (these numbers are examples, not defaults):
+
+```sh
+.venv/bin/python planetrecon align-rgb --input out/stack.npz --out out/rgb-adjusted \
+  --red 0.2 -0.1 --blue -0.2 0.1
+```
+
+The output directory must be new. It receives `aligned.npz` and linear float32
+`aligned.tif` with metadata/coverage companions. The input is preserved.

@@ -1,0 +1,44 @@
+{
+  "scope": "Reference-guided colour-position diagnostic, not an atmospheric-dispersion measurement or independent image-quality test. No sharpening or new stacking run.",
+  "source": "out/local-joint-peak/full-joint.npz",
+  "source_sha256": "2e3463f7e0604419f43b662d753f956166b3aadd34f612d9ca9d26208bb086c2",
+  "reference": "2022-09-10-0649_2-GB-L-Jup_ZWO ASI224MC_lapl6_ap59.png",
+  "reference_sha256": "da004f156d423babeb30f2b5df0ff98fcc4b186b5387199f7d669fe7cac77eca",
+  "per_colour_reference_to_output_displacement_xy": {
+    "R": [
+      -18.07644637902901,
+      -5.156544945414072
+    ],
+    "G": [
+      -18.225344440696723,
+      -4.496284610010121
+    ],
+    "B": [
+      -18.55305487617381,
+      -3.833085311832744
+    ]
+  },
+  "trial_content_offsets_xy": {
+    "R": [
+      -0.15,
+      0.66
+    ],
+    "G": [
+      0.0,
+      0.0
+    ],
+    "B": [
+      0.33,
+      -0.66
+    ]
+  },
+  "trial_path": "out/rgb-alignment/reference-guided-trial.tif",
+  "trial_sha256": "c847d10d03e289ca85b8d44867c7296d7b3f1d49a06c5be07f09e11619890fe4",
+  "acceptance": "User assessment pending; application applies no offsets unless explicitly chosen.",
+  "validation": {
+    "focused_tests_passed": 116,
+    "opt_in_tests_skipped": 5,
+    "gui_render_checked": true,
+    "source_preserved": true
+  }
+}
