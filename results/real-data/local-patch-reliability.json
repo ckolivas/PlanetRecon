@@ -1,0 +1,200 @@
+{
+  "scope": "Known-displacement development controls for adaptive patch reliability. No real-capture trial or application modification.",
+  "baseline": "Existing 65-pixel local translation matcher at the same patch centre.",
+  "method": "Fit translation-gradient and brightness/offset terms to the aligned image residual, aggregate residual scores into 8-pixel spatial blocks, and form a cluster covariance for the fitted gradient coefficients. This is approximate, not a calibrated displacement confidence interval.",
+  "first_rule": {
+    "protocol": {
+      "scales": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "noise_sigma": [
+        2.0,
+        8.0,
+        16.0
+      ],
+      "seeds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "sizes": [
+        33,
+        65,
+        97
+      ],
+      "rule": "Smallest accepted size with cluster standard error <=0.10 px and linear correction <=0.15 px. Keep fixed 65 if none qualify.",
+      "gate": "Selected displacement RMS must improve over fixed 65 overall and must not worsen by more than 5 percent at any tested sampling. No real-capture test if this fails.",
+      "warning": "Approximate error diagnostic; not a calibrated confidence interval."
+    },
+    "cases": 36,
+    "summary": {
+      "None": {
+        "fixed_rms": 0.10958790153703286,
+        "adaptive_rms": 0.12114154979513966,
+        "counts": {
+          "33": 23,
+          "65": 10,
+          "97": 3
+        }
+      },
+      "0.5": {
+        "fixed_rms": 0.026087719741696727,
+        "adaptive_rms": 0.05804713226032738,
+        "counts": {
+          "33": 12,
+          "65": 0,
+          "97": 0
+        }
+      },
+      "1.0": {
+        "fixed_rms": 0.07508830512537923,
+        "adaptive_rms": 0.09458258349493784,
+        "counts": {
+          "33": 9,
+          "65": 2,
+          "97": 1
+        }
+      },
+      "2.0": {
+        "fixed_rms": 0.1723650248801881,
+        "adaptive_rms": 0.17807439623954952,
+        "counts": {
+          "33": 2,
+          "65": 8,
+          "97": 2
+        }
+      }
+    },
+    "passes_gate": false,
+    "decision": "Reject smallest sufficiently precise: noise-only translation controls worsen overall and at every sampling scale."
+  },
+  "second_rule": {
+    "protocol": {
+      "scales": [
+        0.5,
+        1.0,
+        2.0
+      ],
+      "noise_sigma": [
+        2.0,
+        8.0,
+        16.0
+      ],
+      "seeds": [
+        21,
+        22,
+        23,
+        24
+      ],
+      "sizes": [
+        33,
+        65,
+        97
+      ],
+      "rule": "Largest accepted size agreeing with every smaller valid estimate within three combined cluster standard errors plus their linear-fit corrections. Reject corrections above 0.15 px; keep 65 if no valid size. Test translation and spatially varying motion at fresh seeds.",
+      "gate": "Selected displacement RMS must improve over fixed 65 overall and must not worsen by more than 5 percent at any tested sampling. No real-capture test if this fails.",
+      "warning": "Approximate error diagnostic; not a calibrated confidence interval."
+    },
+    "cases": 72,
+    "summary": {
+      "('translation', None)": {
+        "fixed_rms": 0.19401750135178375,
+        "adaptive_rms": 0.08016563109732729,
+        "counts": {
+          "33": 0,
+          "65": 1,
+          "97": 35
+        }
+      },
+      "('translation', 0.5)": {
+        "fixed_rms": 0.027058123517119153,
+        "adaptive_rms": 0.016265154811636956,
+        "counts": {
+          "33": 0,
+          "65": 0,
+          "97": 12
+        }
+      },
+      "('translation', 1.0)": {
+        "fixed_rms": 0.08133226246803828,
+        "adaptive_rms": 0.062435200231313465,
+        "counts": {
+          "33": 0,
+          "65": 1,
+          "97": 11
+        }
+      },
+      "('translation', 2.0)": {
+        "fixed_rms": 0.32493275231335284,
+        "adaptive_rms": 0.12295070450683714,
+        "counts": {
+          "33": 0,
+          "65": 0,
+          "97": 12
+        }
+      },
+      "('deformation', None)": {
+        "fixed_rms": 0.2754975848547608,
+        "adaptive_rms": 0.23507383793600028,
+        "counts": {
+          "33": 0,
+          "65": 14,
+          "97": 22
+        }
+      },
+      "('deformation', 0.5)": {
+        "fixed_rms": 0.20857762262783122,
+        "adaptive_rms": 0.23358590212332966,
+        "counts": {
+          "33": 0,
+          "65": 5,
+          "97": 7
+        }
+      },
+      "('deformation', 1.0)": {
+        "fixed_rms": 0.2245163982636076,
+        "adaptive_rms": 0.2613288515203589,
+        "counts": {
+          "33": 0,
+          "65": 9,
+          "97": 3
+        }
+      },
+      "('deformation', 2.0)": {
+        "fixed_rms": 0.36576566272967376,
+        "adaptive_rms": 0.20718104531583786,
+        "counts": {
+          "33": 0,
+          "65": 0,
+          "97": 12
+        }
+      }
+    },
+    "passes_gate": false,
+    "gate_application": "Require improved aggregate RMS separately for translation and deformation; no individual sampling group may worsen by more than 5 percent.",
+    "decision": "Reject coarsest statistically compatible: aggregate improvements hide 12.0% and 16.4% deformation regressions at half and native sampling."
+  },
+  "decision": "Retain production matcher. Do not run a Jupiter pilot or tune confidence thresholds from these inspected controls. Adaptive sizing needs evidence of motion-model bias as well as random uncertainty.",
+  "limitations": [
+    "Analytic continuous scenes and independent Gaussian detector noise, with a noise-free reference; not a complete atmosphere/detector model.",
+    "The covariance measures fitted gradient coefficients and does not include all subpixel-interpolation bias or nonlinear/model-mismatch error.",
+    "Residuals caused by real varying motion can increase the apparent uncertainty and conceal disagreement between patch sizes.",
+    "Small-sample spatial block covariance has not been calibrated as a confidence interval.",
+    "These are isolated patch-centre controls; no final-image improvement is claimed."
+  ],
+  "private_artifacts": "out/local-patch-reliability",
+  "source_files": {
+    "out/local-patch-reliability/uncertainty.py": "4c31f7c8329fb244fe25f383563425a7ace3e35d24fbde16472891ee9c036c24",
+    "out/local-patch-reliability/controls.py": "9f0b0e65a848072c0943e6b4df3c24e7afe6ce25c0b4b8b794bb941d9b5a7dac",
+    "out/local-patch-reliability/consistency.py": "820d8406f5ff6ef89164fad182b230fc876c1aca514ad871555f060ab80f9a48",
+    "out/local-patch-reliability/consistency_controls.py": "9bd1067389454a415f35bcc636d56e16d4b015c54db92c8ab3da5d422cd1f7c1",
+    "out/local-adaptive-patches/prototype.py": "270bfc899a084070d39d6032f3956a3f8884da60182b5392ba18492cbb8fcb55"
+  },
+  "full_results": {
+    "out/local-patch-reliability/controls.json": "82d571fe8b57fedbc169e8760f09b959ad31ff81954dc8213d43bd769ed88eaa",
+    "out/local-patch-reliability/consistency/controls.json": "4e13973f41908f30784f5347c2a9b5640b992f73815ab21301000d3e3cd2b659"
+  }
+}

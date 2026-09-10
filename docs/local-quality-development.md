@@ -176,3 +176,32 @@ the current binary peak guards alone are insufficient. Qualification must includ
 sampling changes and noise, not a single globally optimal pixel size inferred from
 Jupiter. Keep the existing working default until a candidate improves practical
 stack quality; do not expose this failed prototype as an automatic mode.
+
+## Patch reliability: uncertainty alone does not choose the right size
+
+A residual-based uncertainty diagnostic was tested before any further capture
+run. It fits brightness/offset and translation-gradient terms, groups nearby
+residuals into 8-pixel blocks, and estimates uncertainty from those block scores.
+The estimate is approximate and is not a calibrated displacement confidence
+interval; model mismatch and interpolation bias remain limitations.
+
+Choosing the smallest patch with estimated error below 0.10 pixels fails 36
+known-translation controls spanning three sampling scales and three noise levels:
+displacement RMS rises from 0.110 to 0.121 pixels. Passing a precision threshold
+does not establish that a smaller patch is needed.
+
+A distinct rule was then frozen and tested on 72 fresh-seed translation and
+spatial-deformation controls. It chooses the largest patch consistent with the
+smaller estimates within three combined standard errors plus fitted corrections.
+Aggregate translation RMS improves from 0.194 to 0.080 pixels and deformation RMS
+from 0.275 to 0.235 pixels, but deformation errors at half/native sampling worsen
+12.0%/16.4%. This fails the per-scale 5% regression limit despite aggregate gains.
+Neither rule is adopted, and no Jupiter pilot or confidence-threshold sweep follows.
+
+The unresolved distinction is random measurement noise versus real variation of
+motion within a patch: the latter can inflate the residual-based uncertainty and
+make an oversized patch appear compatible. Future adaptive selection must measure
+that model bias independently before another capture trial. Keep the working
+application unchanged. The summary is `results/real-data/local-patch-reliability.json`;
+complete controls, code and individual measurements remain in
+`out/local-patch-reliability` with their digests in the summary.
