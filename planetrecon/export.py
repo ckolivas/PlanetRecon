@@ -204,7 +204,9 @@ def _write_tiff(stream, pixels, valid, coverage, layers, metadata, check_cancel=
             page(np.ascontiguousarray(coverage, dtype=np.float64),
                  {"role": "coverage", "units": "accumulation weight", "export_id": metadata["export_id"]})
             for name, array in sorted(layers.items()):
-                page(array, {"role": "layer_coverage", "layer": name, "units": "accumulation weight",
+                page(array, {"role": "layer_coverage", "layer": name,
+                             "units": ("independent equal-variance sample equivalents"
+                                       if name.startswith("iid_effective_samples_") else "accumulation weight"),
                              "export_id": metadata["export_id"]})
 
 

@@ -160,6 +160,8 @@ def main(argv: list[str] | None = None) -> int:
                     help='upper quality-range or ranked frame-count percentage (1-100; default 50); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
     st.add_argument('--local-alignment', action=argparse.BooleanOptionalAction, default=None,
                     help='normalized local patch alignment (default with cached preprocessing and no geometry motion model); --no-local-alignment uses global alignment')
+    st.add_argument('--local-cfa-interpolation', action='store_true',
+                    help='optional experimental RGB fitting from local Bayer samples; requires local alignment, cached preprocessing and linear quality weights; previews show ordinary stacking until the final fit')
     st.add_argument('--squared-quality-weights', action='store_true',
                     help='experimental squared cached quality weights; requires --local-alignment; retains all selected frames')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
@@ -404,6 +406,7 @@ def main(argv: list[str] | None = None) -> int:
             frame_selection_mode=args.selection_mode,
             local_alignment=(args.local_alignment if args.local_alignment is not None
                              else not args.no_frame_preselection and args.geometry == 'none'),
+            local_cfa_interpolation=args.local_cfa_interpolation,
             squared_quality_weights=args.squared_quality_weights,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
@@ -443,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
         ) as source:
             result = stack_source(source, cfg, on_event=(
                 (lambda snapshot, info: save_snapshot(args.checkpoint, snapshot)
-                 if snapshot.stage not in ('preprocessing', 'cache_ready') else None) if args.checkpoint else None),
+                 if snapshot.stage not in ('preprocessing', 'cache_ready') and not info.get('progress_only') else None) if args.checkpoint else None),
                 resume_from=args.resume, state_checkpoint=args.state_checkpoint,
                 preprocessing_cache=args.preprocessing_cache)
         npz = args.out / "stack.npz"

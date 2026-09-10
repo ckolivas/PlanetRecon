@@ -1,0 +1,69 @@
+{
+  "scope": "Optional local CFA interpolation integrated into the application, GUI, CLI, checkpoints and scientific export",
+  "default_change": false,
+  "gui_control": "Capture / Local colour interpolation (experimental)",
+  "cli_flag": "--local-cfa-interpolation",
+  "requirements": [
+    "Bayer colour capture",
+    "cached preprocessing",
+    "local alignment",
+    "Motion None",
+    "linear quality weights"
+  ],
+  "preserved": [
+    "upper 50 percent quality-range default",
+    "selected input frames and original weights",
+    "best selected anchor and normal template",
+    "local registration maps",
+    "direct CFA support",
+    "no automatic sharpening"
+  ],
+  "execution": [
+    "packaged qualified CPU and CUDA operators; tool imports remain compatibility aliases",
+    "caller-owned calibrated raw frame and local map reused unchanged on GPU moment retry",
+    "ordinary stack previews during accumulation; fitted RGB only at final fit",
+    "moment variance-derived effective sample layers kept separate from direct CFA weights",
+    "checkpoint restores accumulated moments, original template, input/map ledger and backend transitions"
+  ],
+  "checkpoint_limits": [
+    "Resume begins at the last atomically published batch; an incomplete batch can be replayed",
+    "Already completed maps are not re-estimated; future maps are estimated once from the saved template on the same registration backend/runtime",
+    "Changed source, preprocessing, calibration, options, implementation or numerical runtime is refused",
+    "An ordinary-stack checkpoint cannot seed this interpolator"
+  ],
+  "validation": {
+    "final_cpu_suite": {
+      "passed": 157,
+      "hardware_skipped": 38,
+      "log": "out/cfa-application/final-cpu.log"
+    },
+    "final_cuda_suite": {
+      "passed": 40,
+      "other_controls_deselected": 20,
+      "log": "out/cfa-application/final-gpu.log"
+    },
+    "earlier_application_and_resume_suite": {
+      "passed": 89,
+      "skipped": 30,
+      "log": "/tmp/cfa-application-tests2.log"
+    },
+    "new_tests": [
+      "all four Bayer layouts against qualified interpolator with actual application maps",
+      "midpoint selection unchanged",
+      "exact CPU continuation after cancellation during moments or final fit",
+      "same-policy CUDA continuation and injected moment failure",
+      "checkpoint data and metadata corruption refused",
+      "GUI fresh-run controls, compatibility and busy-state preservation",
+      "spawned worker result and pending snapshot delivery",
+      "CLI full-resolution snapshot and TIFF export; distinct effective-sample layer units"
+    ],
+    "packaging": "built wheel with existing dependencies, extracted into /tmp, imported installed package and verified CPU RGB fitting and rendered GUI controls without tools imports",
+    "gui_render": "out/cfa-application/controls.png"
+  },
+  "remaining": "User assessment of final full-capture Jupiter output against ordinary local/upper-half-quality stacking, using matching display levels",
+  "limits": [
+    "No new real-capture quality claim or full capture processing in this step",
+    "Prior qualification remains a 512-frame three-region comparison against a non-independent reference",
+    "Candidate stays opt-in; no sharpening; periodic automation remains paused"
+  ]
+}

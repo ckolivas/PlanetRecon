@@ -692,3 +692,22 @@ To repeat a comparison without reducing the reference PNG to 8 bits:
 
 The output directory must be new. It contains metrics and full-precision arrays
 for plotting; supplied capture/reference pixels remain outside Git.
+
+### Optional local colour interpolation
+
+For Bayer captures, the Capture tab now offers **Local colour interpolation
+(experimental)**. Restart the source-launched GUI to load the new control. Keep
+Local patch alignment, cached preprocessing and Motion None enabled, with Stronger
+quality weighting off. The upper 50% quality range remains the default; this new
+interpolator is opt-in. It reconstructs RGB from nearby original colour samples
+using the measured local maps, without sharpening.
+
+Previews show the ordinary stack while moments accumulate. The final fit produces
+the candidate RGB image; save that final result for comparison. It uses more memory
+and time than ordinary stacking. GPU moment failure retries the complete frame on
+CPU. A new optional checkpoint file supports continuation with the same capture,
+settings and registration runtime; it cannot reuse an ordinary-stack checkpoint.
+
+The corresponding CLI flag is `stack --local-cfa-interpolation` alongside the
+usual input, device and output arguments. Details and the remaining user comparison
+are in [the current development plan](docs/local-quality-development.md).

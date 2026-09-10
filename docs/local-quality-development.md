@@ -160,16 +160,62 @@ PyTorch metrics exclude allocations outside its allocator. Chunk sizes remain
 explicitly bounded rather than tuned to GPU core count. Private scripts, source
 snapshots, paired arrays and logs are under `out/cfa-local-gpu`.
 
+## Completed: optional application and GUI integration
+
+The qualified CPU/CUDA implementation now lives inside the installable
+`planetrecon.pipeline` package. Historical probe imports forward to that same
+implementation; installed applications do not import the development tools.
+The new **Local colour interpolation (experimental)** checkbox in the Capture
+tab is off by default. CLI users can add `--local-cfa-interpolation`. It requires
+a Bayer capture, cached preprocessing, local alignment, Motion None and original
+linear weights. Local alignment and the upper 50% quality range remain the defaults.
+No sharpening is applied.
+
+Each calibrated frame and its actual application local map enter the interpolator
+once. A moment failure retries that same frame/map on CPU without repeating
+registration. Each completed frame records its source index, original weight,
+raw digest and map digest. The existing global fallback for small captures or
+insufficient local template candidates remains explicit in result warnings.
+An unqualified inverse map stops the run instead of silently changing algorithms.
+
+Batch previews and intermediate snapshots show the ordinary local CFA stack;
+per-frame progress reports moment accumulation and the final fit. The final event,
+scientific snapshot and image export contain the fitted RGB result. Effective
+sample layers (`iid_effective_samples_R/G/B`) describe reciprocal relative variance
+under independent equal-variance detector noise. They are separate from direct
+CFA weights and are not actual frame counts or calibrated photon/read noise.
+Exported layers carry their distinct units.
+
+Optional application checkpoints save the reference template, all accumulated
+moments and ordinary sums, completed-frame manifest, registration backend and
+moment execution transitions atomically. Identity binds capture content,
+preprocessing, calibration, settings, package code and numerical runtime; frozen
+builds also bind the executable content. Loads check array headers, checksums and
+state before continuing. Already completed maps are not recomputed; future maps
+are estimated once from the saved template on the same registration backend/runtime.
+Registration CPU fallback is retained across continuation. Cancellation keeps the
+last published checkpoint; an incomplete batch may be replayed from that point.
+The earlier fixed-input wrapper still supports externally pre-frozen future maps.
+
+End-to-end synthetic controls cover all four Bayer layouts, actual local alignment,
+parity with the qualified operator, unchanged selection/template/coverage,
+midpoint selection, cancellation during moments and final fitting, exact CPU and
+CUDA continuation, injected GPU failure, corrupt state, GUI control changes,
+spawned worker delivery and full-resolution snapshot/TIFF export. An installed-wheel
+check confirms fitting and GUI controls work without development-tool imports.
+Private logs and the rendered Capture controls are under `out/cfa-application`.
+
 ## Next steps
 
-1. Prepare optional GUI integration with clear progress/cancellation, effective
-   sample-count versus direct-CFA coverage metadata, and exact state identity.
-   The production caller must own and freeze calibrated inputs and local maps,
-   with checkpoint recovery preserving that same geometry and execution history.
-2. Preserve the user's local/50% defaults and keep this candidate opt-in until
-   the user has tested a full result. The three-region confirmation is not a
-   full 1,645-frame or whole-globe validation. No new capture study is needed
-   before making the optional candidate available for that test.
+1. User test of the full Jupiter capture: restart the venv-launched GUI, keep local
+   alignment and the upper 50% quality range, enable **Local colour interpolation
+   (experimental)**, then run using the existing preprocessing cache. Use a new
+   checkpoint/output filename for this candidate. Compare the final unsharpened
+   output against the ordinary local stack using matching display levels.
+2. Use that full-result assessment to decide whether the candidate merits further
+   work or default promotion. It remains opt-in: the previous three-region,
+   512-frame confirmation is not a full 1,645-frame or whole-globe validation.
+   No capture study was repeated for this application integration.
 
 ### Declared larger confirmation
 

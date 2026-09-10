@@ -501,7 +501,10 @@ class MainWindow:
             self._fit_levels()
         source = result.provenance.get('source', {}).get('path', 'unknown source')
         epoch = result.reference_epoch if result.reference_epoch is not None else 'not specified'
-        self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {result.stage} · "
+        stage_label = result.stage
+        if 'local_cfa_interpolation' in result.provenance:
+            stage_label = 'ordinary preview (colour fit pending)' if result.incomplete else 'local colour fit'
+        self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {stage_label} · "
             f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
             f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}\nResult source: {source}")
         self.details.setPlainText(json.dumps(result.metadata(), indent=2))
