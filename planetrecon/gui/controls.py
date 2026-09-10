@@ -90,11 +90,20 @@ class ConfigControls(QTabWidget):
         self.geometry_estimate_label.setWordWrap(True)
         geo.addRow(self.geometry_estimate_label)
         self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
+        from planetrecon.geometry.rotation import PERIOD_DAYS
+        self._choice(geo, 'rotation_planet', 'Planet rotation preset', [None, *PERIOD_DAYS])
+        self.fields['rotation_planet'].setItemText(0, 'Measured / manual rate')
+        for index, planet in enumerate(PERIOD_DAYS, 1):
+            self.fields['rotation_planet'].setItemText(index, planet.title())
+        self._check(geo, 'reverse_rotation', 'Reverse preset rotation direction')
+        self.rotation_label = QLabel()
+        self.rotation_label.setWordWrap(True)
+        geo.addRow(self.rotation_label)
         for key, label in [
             ('reference_epoch_s', 'Output epoch (s from start)'),
             ('field_angle0_rad', 'Reference field angle (°)'),
             ('field_rate_rad_s', 'Field rate (°/s; blank = fit)'),
-            ('surface_rate_rad_s', 'Surface rate (°/s; required for spin)'),
+            ('surface_rate_rad_s', 'Surface rate override (°/s; blank = preset/estimate)'),
             ('field_center_x', 'Centre x (px)'), ('field_center_y', 'Centre y (px)'),
             ('equatorial_radius_px', 'Globe equatorial radius (px)'), ('flattening', 'Globe flattening'),
             ('pole_pa_rad', 'Pole position angle (°)'), ('sub_obs_lat_rad', 'Signed observer latitude (°)'),
@@ -119,6 +128,11 @@ class ConfigControls(QTabWidget):
             edit.setToolTip(CONTROL_HELP[key])
             if isinstance(edit, QLineEdit):
                 edit.textEdited.connect(lambda text, key=key: self.geometry_manual.add(key))
+        self.fields['rotation_planet'].currentIndexChanged.connect(self._rotation_changed)
+        self.fields['reverse_rotation'].toggled.connect(self._rotation_changed)
+        for key in ('surface_rate_rad_s', 'equatorial_radius_px'):
+            self.fields[key].textChanged.connect(self._rotation_changed)
+        self._rotation_changed()
         for index, text in enumerate((
                 'Input interpretation, processing device, memory and frame handling.',
                 'Optional detector calibration tables and intensity units.',
@@ -130,6 +144,31 @@ class ConfigControls(QTabWidget):
                 button.setToolTip('Scroll the settings tabs to the left.')
             elif button.objectName() == 'ScrollRightButton':
                 button.setToolTip('Scroll the settings tabs to the right.')
+
+    def _rotation_changed(self, value=None):
+        from planetrecon.geometry.rotation import rotation_preset
+        planet = self.fields['rotation_planet'].currentData()
+        edit = self.fields['surface_rate_rad_s']
+        old = self.geometry_auto.get('surface_rate_rad_s')
+        if (planet is not None and old is not None and edit.text() == old
+                and 'surface_rate_rad_s' not in self.geometry_manual):
+            self.geometry_auto.pop('surface_rate_rad_s')
+            edit.clear()
+        self.fields['reverse_rotation'].setEnabled(planet is not None)
+        if planet is None:
+            self.rotation_label.setText('Use a measured or manually entered rate. A preset can supply rotation when bands do not reveal motion.')
+            return
+        try:
+            radius = float(self.fields['equatorial_radius_px'].text()) if self.fields['equatorial_radius_px'].text().strip() else None
+            detail = rotation_preset(planet, reverse=self.fields['reverse_rotation'].isChecked(), radius_px=radius)
+            rate = math.degrees(detail['surface_rate_rad_s'])
+            scale = (f' Equator-on motion scale: {detail["equator_on_speed_px_s"]:.5g} px/s.'
+                     if radius is not None else ' Set or measure the globe radius for the pixel-motion scale.')
+            override = ' The explicit rate below overrides this preset.' if edit.text().strip() else ''
+            self.rotation_label.setText(f'{planet.title()}: {abs(detail["sidereal_period_days"])*24:.7g} h sidereal period; {rate:.7g} °/s.'
+                + scale + override + ' Bulk rotation, not a texture measurement. Check pole orientation and apparent direction; cloud winds may differ.')
+        except ValueError:
+            self.rotation_label.setText('Enter a numeric globe radius to show the preset pixel-motion scale.')
 
     def _selection_mode_changed(self):
         self.stack_percent_label.setText(
@@ -294,6 +333,8 @@ class ConfigControls(QTabWidget):
                     del self.geometry_auto[key]
         applied = []
         for key, value in estimate.get('suggestions', {}).items():
+            if key == 'surface_rate_rad_s' and self.fields['rotation_planet'].currentData() is not None:
+                continue
             if not allow_prefill or key not in allowed or key in self.geometry_manual or not math.isfinite(value):
                 continue
             edit = self.fields[key]
@@ -315,6 +356,9 @@ class ConfigControls(QTabWidget):
         usage = ('Geometry estimates need refreshing.' if not applicable else
                  'Prefills apply to the next run.' if allow_prefill else
                  'Checkpoint settings retained; estimates are available in result metadata.')
+        if allow_prefill and self.fields['rotation_planet'].currentData() is not None:
+            usage = ('The selected planet preset supplies rotation even if texture motion is unresolved; '
+                     'an explicit surface rate overrides it. Geometry prefills apply to the next run.')
         self.geometry_estimate_label.setText(
             f'Surface drift: {direction}; image roll: {roll}. {usage}\n'
             + 'Orientation: ' + estimate.get('orientation_origin', 'unresolved') + '. '

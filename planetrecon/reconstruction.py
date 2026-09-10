@@ -53,6 +53,8 @@ class ReconstructionConfig:
     sub_obs_lat_rad: float | None = None
     sub_obs_lon0_rad: float = 0.0
     surface_rate_rad_s: float | None = None
+    rotation_planet: str | None = None
+    reverse_rotation: bool = False
     exposure_s: float | None = None
     cadence_s: float | None = None
     geometry_duration_warn_s: float = C.GEOMETRY_DURATION_WARN_S
@@ -73,6 +75,15 @@ class ReconstructionConfig:
     gain_e_per_adu: float | None = None
     read_noise_e: float | None = None
     saturate_adu: float | None = None
+
+    def effective_surface_rate(self) -> float | None:
+        """An explicit rate (including zero) overrides the optional planet preset."""
+        if self.surface_rate_rad_s is not None:
+            return self.surface_rate_rad_s
+        if self.rotation_planet is not None:
+            from planetrecon.geometry.rotation import rotation_preset
+            return rotation_preset(self.rotation_planet, reverse=self.reverse_rotation)['surface_rate_rad_s']
+        return None
 
     def missing_saturn_geometry(self) -> dict[str, str]:
         """Run requirements; inspection and preprocessing may leave these blank."""
@@ -95,8 +106,8 @@ class ReconstructionConfig:
 
     def missing_motion_parameters(self) -> dict[str, str]:
         missing = self.missing_saturn_geometry()
-        if self.geometry_mode in ('surface', 'combined', 'saturn') and self.surface_rate_rad_s is None:
-            missing['surface_rate_rad_s'] = 'Surface rotation rate (Geometry tab; degrees/second in the GUI)'
+        if self.geometry_mode in ('surface', 'combined', 'saturn') and self.effective_surface_rate() is None:
+            missing['surface_rate_rad_s'] = 'Surface rotation rate or planet rotation preset (Geometry tab; degrees/second in the GUI)'
         return missing
 
     def require_motion_parameters(self, preprocessing=None) -> None:
@@ -175,6 +186,11 @@ class ReconstructionConfig:
             raise ValueError("unknown crop")
         if self.geometry_mode not in ("none", "field", "surface", "combined", "saturn"):
             raise ValueError("unknown geometry_mode")
+        from planetrecon.geometry.rotation import PERIOD_DAYS
+        if self.rotation_planet is not None and self.rotation_planet not in PERIOD_DAYS:
+            raise ValueError('unknown rotation_planet')
+        if type(self.reverse_rotation) is not bool:
+            raise ValueError('reverse_rotation must be a bool')
         if type(self.freeze_mid_exposure) is not bool:
             raise ValueError("freeze_mid_exposure must be a bool")
         for name in (

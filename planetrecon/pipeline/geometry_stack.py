@@ -103,7 +103,7 @@ def prepare_geometry(
     if config.geometry_mode in ("field", "combined", "saturn"):
         active_rates.append(config.field_rate_rad_s)
     if config.geometry_mode in ("surface", "combined", "saturn"):
-        active_rates.append(config.surface_rate_rad_s)
+        active_rates.append(config.effective_surface_rate())
     if config.geometry_mode == "saturn" and config.moon_x is not None:
         active_rates.extend([config.moon_vx_px_s, config.moon_vy_px_s])
     if time_origin == "inferred" and (
@@ -264,9 +264,11 @@ def prepare_geometry(
             degeneracy.append("roll_unconstrained")
     if field_rate is None:
         field_rate = 0.0
-    surface_rate = 0.0 if config.surface_rate_rad_s is None else float(config.surface_rate_rad_s)
-    surface_origin = "user" if config.surface_rate_rad_s is not None else "inferred"
-    if config.geometry_mode in ("surface", "combined", "saturn") and config.surface_rate_rad_s is None:
+    requested_surface_rate = config.effective_surface_rate()
+    surface_rate = 0.0 if requested_surface_rate is None else float(requested_surface_rate)
+    surface_origin = ('user' if config.surface_rate_rad_s is not None else
+                      'planet_preset' if config.rotation_planet is not None else 'inferred')
+    if config.geometry_mode in ("surface", "combined", "saturn") and requested_surface_rate is None:
         degeneracy.append("spin_unconstrained")
         surface_origin = "inferred"
     degeneracy_t = tuple(dict.fromkeys(degeneracy))
@@ -350,6 +352,10 @@ def prepare_geometry(
     }
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
+    if surface_origin == 'planet_preset':
+        from planetrecon.geometry.rotation import rotation_preset
+        diagnostics['surface_rotation_preset'] = rotation_preset(config.rotation_planet,
+            reverse=config.reverse_rotation, radius_px=radius)
     if field_origin == 'inferred':
         diagnostics['field_polar_sampling'] = 'sparse radii; unresolved fits retry dense cubic'
         diagnostics['field_peak_uniqueness'] = 'distinct angular peaks separated by 0.001 normalized correlation'
@@ -379,7 +385,7 @@ def prepare_geometry(
     if getattr(model, "low_opening", False):
         warnings.append("low_opening: globe/ring overlap is conservatively masked")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
-        if config.surface_rate_rad_s is None:
+        if requested_surface_rate is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")
         else:
             warnings.append("spin_unconstrained: image texture cannot constrain spin; using supplied surface rate")

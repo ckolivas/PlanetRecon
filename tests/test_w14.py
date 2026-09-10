@@ -469,6 +469,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
         gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',
         reference_epoch_s=1., field_angle0_rad=5., field_rate_rad_s=2., surface_rate_rad_s=3.,
+        rotation_planet='saturn', reverse_rotation=True,
         field_center_x=32., field_center_y=24., equatorial_radius_px=12., flattening=.1,
         pole_pa_rad=10., sub_obs_lat_rad=20., sub_obs_lon0_rad=30.,
         ring_inner_radius_px=16., ring_outer_radius_px=26., ring_transmission=.5,

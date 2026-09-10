@@ -37,6 +37,10 @@ def identity(source,config,calibration,should_cancel=None):
     if config.local_patch_size == 65:
         settings.pop('local_patch_size')
         capture['config'].pop('local_patch_size')
+    if config.rotation_planet is None and not config.reverse_rotation:
+        for key in ('rotation_planet', 'reverse_rotation'):
+            settings.pop(key)
+            capture['config'].pop(key)
     return {'input_sha256':digest.hexdigest(),'config':settings,'capture':capture}
 
 

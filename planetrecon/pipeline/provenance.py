@@ -35,5 +35,12 @@ def capture_provenance(source, config, calibration):
             else:
                 cal[field.name] = value
     from planetrecon.geometry.pose import capture_exposure
-    return {"exposure": capture_exposure(source, config.exposure_s), "config": config.to_dict(), "input_identity": identity,
+    result = {"exposure": capture_exposure(source, config.exposure_s), "config": config.to_dict(), "input_identity": identity,
             "calibration": cal, "calibration_mode": calibration.mode if calibration else "approximate-noise"}
+    if config.rotation_planet is not None:
+        from planetrecon.geometry.rotation import rotation_preset
+        result['surface_rotation_preset'] = rotation_preset(config.rotation_planet,
+            reverse=config.reverse_rotation, radius_px=config.equatorial_radius_px)
+        result['surface_rotation_preset']['used_for_surface_rate'] = (
+            config.surface_rate_rad_s is None and config.geometry_mode in ('surface', 'combined', 'saturn'))
+    return result

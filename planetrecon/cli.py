@@ -183,6 +183,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     st.add_argument("--field-rate-deg-s", type=float, default=None)
     st.add_argument("--surface-rate-deg-s", type=float, default=None)
+    from planetrecon.geometry.rotation import PERIOD_DAYS
+    st.add_argument('--rotation-planet', choices=tuple(PERIOD_DAYS), default=None,
+                    help='use a published sidereal rotation preset unless a surface rate is supplied')
+    st.add_argument('--reverse-rotation', action='store_true', help='reverse the apparent direction of the planet preset')
     st.add_argument("--field-angle0-deg", type=float, default=0.0)
     st.add_argument("--flattening", type=float, default=0.0)
     st.add_argument("--radius", type=float, default=None, help="equatorial radius in pixels")
@@ -417,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
             geometry_mode=args.geometry,
             field_rate_rad_s=_rad(args.field_rate_deg_s),
             surface_rate_rad_s=_rad(args.surface_rate_deg_s),
+            rotation_planet=args.rotation_planet,
+            reverse_rotation=args.reverse_rotation,
             field_angle0_rad=_rad(args.field_angle0_deg) or 0.0,
             flattening=args.flattening,
             equatorial_radius_px=args.radius,
