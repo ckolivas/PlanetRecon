@@ -27,11 +27,6 @@ def identity(source,config,calibration,should_cancel=None):
             digest.update(block)
     settings = config.to_dict()
     capture = capture_provenance(source,config,calibration)
-    # Preserve identities of unchanged linear-weight checkpoints made before
-    # this optional setting existed. Squared weights remain identity-bound.
-    if not config.squared_quality_weights:
-        settings.pop('squared_quality_weights')
-        capture['config'].pop('squared_quality_weights')
     # The established 65-pixel matcher is unchanged. Preserve its checkpoints;
     # custom sizes remain bound to the identity so accumulators cannot be mixed.
     if config.local_patch_size == 65:

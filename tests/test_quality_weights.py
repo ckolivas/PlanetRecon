@@ -1,4 +1,4 @@
-from dataclasses import replace
+import json
 
 import numpy as np
 import pytest
@@ -29,48 +29,36 @@ def config(**kwargs):
 
 
 @pytest.mark.parametrize('colour', [0, 8, 100])
-def test_squared_weights_match_independent_sums_with_identical_registration(tmp_path, monkeypatch, colour):
+def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, colour):
     path = capture(tmp_path/'weights.ser', colour)
     with SERSource(path) as source:
         cfg = config()
         selection = preprocess_source(source, cfg)
-        cache = path.with_name(path.name+'.planetrecon-preprocess.npz')
-        cache_before = cache.read_bytes()
-        projections, shifts = [], []
+        projections = []
         original = local_align.cpu_backproject
         def record(raw, shift, color):
             projected = original(raw, shift, color)
             projections.append((projected[0].copy(), projected[1].copy()))
-            shifts.append(np.array(shift))
             return projected
         monkeypatch.setattr(local_align, 'cpu_backproject', record)
-        linear = baseline.stack_source(source, cfg)
-        count = len(projections)
+        stacked = baseline.stack_source(source, cfg)
         q = selection.measurements[selection.accepted, 0]
-        assert count == linear.n_used == len(q)
-        numerator = np.zeros_like(linear.image)
-        denominator = np.zeros_like(linear.coverage)
+        assert len(projections) == stacked.n_used == len(q)
+        numerator = np.zeros_like(stacked.image)
+        denominator = np.zeros_like(stacked.coverage)
         for quality, (add, support) in zip(q, projections):
-            numerator += quality*quality*add
-            denominator += quality*quality*support
+            numerator += quality*add
+            denominator += quality*support
         expected = np.divide(numerator, denominator, out=np.zeros_like(numerator), where=denominator > 0)
-        squared = baseline.stack_source(source, replace(cfg, squared_quality_weights=True))
         native = denominator > 0
-        np.testing.assert_allclose(squared.image[native], expected[native], rtol=0, atol=1e-12)
-        np.testing.assert_array_equal(squared.coverage[native], denominator[native])
-        np.testing.assert_array_equal(shifts[:count], shifts[count:])
-        assert squared.n_used == linear.n_used and squared.n_rejected == linear.n_rejected
-        assert squared.provenance['reference_index'] == linear.provenance['reference_index']
-        assert squared.provenance['local_alignment'] == linear.provenance['local_alignment']
-        assert squared.provenance['scalar_frame_weight'] == 'squared cached quality'
-        assert not np.array_equal(squared.image, linear.image)
-        assert cache.read_bytes() == cache_before
+        np.testing.assert_allclose(stacked.image[native], expected[native], rtol=0, atol=1e-12)
+        np.testing.assert_array_equal(stacked.coverage[native], denominator[native])
+        assert stacked.provenance['scalar_frame_weight'] == 'linear quality'
 
 
-@pytest.mark.parametrize('stronger', [False, True])
-def test_weight_checkpoint_resumes_exactly_and_rejects_changed_setting(tmp_path, stronger):
+def test_standard_checkpoint_resumes_and_rejects_legacy_squared_sums(tmp_path):
     path = capture(tmp_path/'resume.ser', 8)
-    cfg = config(squared_quality_weights=stronger)
+    cfg = config()
     with SERSource(path) as source:
         preprocess_source(source, cfg)
         whole = baseline.stack_source(source, cfg)
@@ -82,88 +70,41 @@ def test_weight_checkpoint_resumes_exactly_and_rejects_changed_setting(tmp_path,
         partial = baseline.stack_source(source, cfg, on_event=event,
                                         should_cancel=lambda: stop, state_checkpoint=checkpoint)
         assert partial.incomplete
-        import json
         with np.load(checkpoint) as data:
-            identity = json.loads(str(data['metadata']))['identity']
-        for settings in (identity['config'], identity['capture']['config']):
-            # Unchanged linear sums keep the pre-option checkpoint identity.
-            assert ('squared_quality_weights' in settings) is stronger
+            payload = {key:data[key].copy() for key in data.files}
+        metadata = json.loads(str(payload['metadata']))
+        for settings in (metadata['identity']['config'], metadata['identity']['capture']['config']):
+            # Standard checkpoints have always omitted the disabled option.
+            assert 'squared_quality_weights' not in settings
         resumed = baseline.stack_source(source, cfg, resume_from=checkpoint)
         np.testing.assert_array_equal(resumed.image, whole.image)
         np.testing.assert_array_equal(resumed.coverage, whole.coverage)
+        for settings in (metadata['identity']['config'], metadata['identity']['capture']['config']):
+            settings['squared_quality_weights'] = True
+        payload['metadata'] = json.dumps(metadata)
+        np.savez_compressed(tmp_path/'legacy-squared.npz', **payload)
         with pytest.raises(ValueError, match='identity|configuration'):
-            baseline.stack_source(source, replace(cfg, squared_quality_weights=not stronger), resume_from=checkpoint)
+            baseline.stack_source(source, cfg, resume_from=tmp_path/'legacy-squared.npz')
 
 
-def test_squared_weights_are_optional_and_require_supported_configuration():
-    assert not ReconstructionConfig().squared_quality_weights
-    with pytest.raises(ValueError, match='squared_quality_weights must be a bool'):
-        config(squared_quality_weights=1)
-    with pytest.raises(ValueError, match='require experimental local alignment'):
-        ReconstructionConfig(squared_quality_weights=True)
-    cfg = config(squared_quality_weights=True)
-    assert ReconstructionConfig.from_dict(cfg.to_dict()) == cfg
+def test_saved_standard_settings_load_without_removed_option():
+    expected = config()
+    saved = {**expected.to_dict(), 'squared_quality_weights': False}
+    assert ReconstructionConfig.from_dict(saved) == expected
+    assert saved['squared_quality_weights'] is False
+    assert 'squared_quality_weights' not in expected.to_dict()
 
 
-def test_gui_preserves_stronger_weights_while_busy_and_gates_incompatible_modes():
-    from PySide6.QtWidgets import QApplication
-    from planetrecon.gui.controls import ConfigControls
-    app = QApplication.instance() or QApplication([])
-    controls = ConfigControls(ReconstructionConfig())
-    try:
-        stronger = controls.fields['squared_quality_weights']
-        local = controls.fields['local_alignment']
-        assert not stronger.isChecked() and not stronger.isEnabled()
-        local.setChecked(True)
-        stronger.setChecked(True)
-        assert controls.configuration().squared_quality_weights
-        controls.setEnabled(False)
-        assert controls.configuration().squared_quality_weights
-        controls.setEnabled(True)
-        local.setChecked(False)
-        assert not controls.configuration().squared_quality_weights
-        local.setChecked(True)
-        assert controls.configuration().squared_quality_weights
-        controls.fields['frame_preselection'].setChecked(False)
-        assert not controls.configuration().squared_quality_weights
-        controls.fields['frame_preselection'].setChecked(True)
-        geometry = controls.fields['geometry_mode']
-        geometry.setCurrentIndex(geometry.findData('field'))
-        assert not controls.configuration().squared_quality_weights
-        geometry.setCurrentIndex(geometry.findData('none'))
-        assert controls.configuration().squared_quality_weights
-        stronger.setChecked(False)
-        assert not controls.configuration().squared_quality_weights
-    finally:
-        controls.close()
+@pytest.mark.parametrize('value', [True, 1, None])
+def test_saved_stronger_weight_settings_are_not_silently_reinterpreted(value):
+    saved = {**config().to_dict(), 'squared_quality_weights': value}
+    with pytest.raises(ValueError, match='Stronger quality weighting was removed'):
+        ReconstructionConfig.from_dict(saved)
 
 
-def test_cli_passes_stronger_weighting_to_fresh_stack(tmp_path):
+def test_cli_no_longer_offers_stronger_weighting(capsys):
     from planetrecon.cli import main
-    from planetrecon.result import load_snapshot
-    path = capture(tmp_path/'cli.ser', 8)
-    with SERSource(path) as source:
-        preprocess_source(source, config())
-    assert main(['--threads', '2', 'stack', '--path', str(path), '--device', 'cpu',
-                 '--local-alignment', '--squared-quality-weights', '--out', str(tmp_path/'result')]) == 0
-    result = load_snapshot(tmp_path/'result/stack.npz')
-    assert result.provenance['scalar_frame_weight'] == 'squared cached quality'
-
-
-@pytest.mark.hardware
-def test_squared_quality_cpu_cuda_agree(tmp_path):
-    import torch
-    if not torch.cuda.is_available():
-        pytest.skip('CUDA unavailable')
-    with SERSource(capture(tmp_path/'cuda.ser', 8)) as source:
-        cfg = config(squared_quality_weights=True)
-        selection = preprocess_source(source, cfg)
-        cpu = baseline.stack_source(source, cfg)
-        gpu = baseline.stack_source(source, replace(cfg, device='gpu'))
-        assert gpu.backend == 'cuda' and gpu.n_used == cpu.n_used
-        np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-10, atol=1e-7)
-        # Coverage carries arbitrary quality-score units. Compare fractions of
-        # available weight so near-zero CFA support has a meaningful tolerance.
-        total_weight = np.sum(selection.measurements[selection.accepted, 0]**2)
-        np.testing.assert_allclose(gpu.coverage/total_weight, cpu.coverage/total_weight,
-                                   rtol=1e-10, atol=1e-12)
+    with pytest.raises(SystemExit) as exc:
+        main(['stack', '--help'])
+    assert exc.value.code == 0
+    assert '--squared-quality-weights' not in capsys.readouterr().out

@@ -37,6 +37,7 @@ def test_gui_keeps_ordinary_local_defaults():
         config = controls.configuration()
         assert config.local_alignment and config.stack_percent == 50
         assert config.frame_selection_mode == 'quality_range'
-        assert not config.squared_quality_weights
+        assert 'squared_quality_weights' not in controls.fields
+        assert 'squared_quality_weights' not in config.to_dict()
     finally:
         window.window.close()

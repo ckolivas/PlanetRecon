@@ -35,7 +35,6 @@ class ReconstructionConfig:
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
     local_patch_size: int = 65
-    squared_quality_weights: bool = False
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -147,10 +146,6 @@ class ReconstructionConfig:
         if (type(self.local_patch_size) is not int or not 15 <= self.local_patch_size <= 255
                 or self.local_patch_size % 2 != 1):
             raise ValueError('local_patch_size must be an odd integer from 15 to 255 pixels')
-        if type(self.squared_quality_weights) is not bool:
-            raise ValueError('squared_quality_weights must be a bool')
-        if self.squared_quality_weights and not self.local_alignment:
-            raise ValueError('squared quality weights require experimental local alignment')
         if self.local_alignment and (self.geometry_mode != 'none' or not self.frame_preselection):
             raise ValueError('local alignment requires cached preprocessing and geometry_mode=none')
         if type(self.frame_preselection) is not bool:
@@ -326,6 +321,12 @@ class ReconstructionConfig:
             if data["local_cfa_interpolation"] is not False:
                 raise ValueError("Local colour interpolation was removed after artifact review; create a new ordinary stacking job")
             data = {key: value for key, value in data.items() if key != "local_cfa_interpolation"}
+        # Keep ordinary saved jobs usable, but never resume squared-weight sums
+        # as though they used the standard weighting.
+        if "squared_quality_weights" in data:
+            if data["squared_quality_weights"] is not False:
+                raise ValueError("Stronger quality weighting was removed; create a new stacking job with standard weights")
+            data = {key: value for key, value in data.items() if key != "squared_quality_weights"}
         known = set(cls.__dataclass_fields__)
         if set(data) - known:
             raise ValueError(f"unknown config fields: {sorted(set(data) - known)}")

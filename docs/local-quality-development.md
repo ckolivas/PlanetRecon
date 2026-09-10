@@ -19,7 +19,7 @@ and scores strictly above `(capture best + capture worst) / 2`, followed by cach
 screening. This is a quality-range cutoff, not half the frame count. Preserve the
 best selected frame as the reference origin, normal template selection, original
 CFA measurements, direct colour support and existing local ambiguity/fold guards.
-No automatic sharpening. Stronger quality weighting remains optional.
+No automatic sharpening. The stronger quality weighting experiment was removed after visual review.
 
 ## Completed: coupled local registration peak correction
 
