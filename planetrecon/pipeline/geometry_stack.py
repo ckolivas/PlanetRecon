@@ -580,6 +580,7 @@ def stack_source_geometry(
                 diagnostics['registration_peak'] = 'joint two-dimensional quadratic'
             if track_surface:
                 diagnostics['reference_support'] = 'observed reference limb neighbourhood'
+                diagnostics['surface_peak_uniqueness'] = 'separate local maxima; broad shoulders excluded v1'
             colour_anchor = None
             colour_rings = None
             if bayer and (track_surface or track_field or ring_registration is not None):

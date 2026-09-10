@@ -1,7 +1,7 @@
 """Normalized translation matching restricted to observed reference pixels."""
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, map_coordinates
+from scipy.ndimage import gaussian_filter, map_coordinates, maximum_filter
 from scipy.signal import correlate
 
 
@@ -20,7 +20,7 @@ class MaskedRegistration:
             self.template[self.mask] = proxy[self.mask] - proxy[self.mask].mean()
             self.energy = float(np.sum(self.template**2))
 
-    def displacement(self, frame, *, min_improvement=0.):
+    def displacement(self, frame, *, min_improvement=0., distinct_peaks=False):
         """Return a supported displacement, or None when observed pixels do not constrain it."""
         if self.energy <= 1e-12:
             return None
@@ -42,6 +42,11 @@ class MaskedRegistration:
         # Distinct peaks separated by more than the smoothing footprint must
         # not explain the same template equally well.
         competitors = scores.copy()
+        if distinct_peaks:
+            # A well-sampled planet can produce one broad, unique maximum.
+            # Its shoulders outside the fixed exclusion box are not competing
+            # translations. Keep plateaus and truly separate maxima eligible.
+            competitors[scores < maximum_filter(scores, size=3)] = -np.inf
         competitors[max(0, py-3):py+4, max(0, px-3):px+4] = -np.inf
         if competitors.max() >= peak - .02:
             return None

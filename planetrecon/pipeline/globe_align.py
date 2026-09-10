@@ -33,4 +33,4 @@ def surface_displacement(reference, frame, model, pose, reference_pose):
     # pixelated silhouette changes under rotation without any camera drift.
     mask = binary_erosion((support >= 1.-1e-12) & on_globe,
                           structure=np.ones((15, 15), bool))
-    return MaskedRegistration(predicted, mask).displacement(frame)
+    return MaskedRegistration(predicted, mask).displacement(frame, distinct_peaks=True)
