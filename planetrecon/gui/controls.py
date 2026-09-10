@@ -346,6 +346,28 @@ class ConfigControls(QTabWidget):
             values.update(ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         return replace(self.base, **values)
 
+    def wants_midpoint_epoch(self):
+        key = 'reference_epoch_s'
+        if key in self.geometry_manual:
+            return False
+        text = self.fields[key].text()
+        try:
+            value = float(text)
+        except ValueError:
+            return False
+        return value == 0. or text == self.geometry_auto.get(key)
+
+    def prefill_output_epoch(self, timing, *, allow_prefill=True):
+        if not allow_prefill or not self.wants_midpoint_epoch():
+            return
+        duration = timing.get('duration_s')
+        if (timing.get('status') != 'available' or not isinstance(duration, (int, float))
+                or not math.isfinite(duration) or duration < 0):
+            return
+        text = format(duration / 2., '.12g')
+        self.fields['reference_epoch_s'].setText(text)
+        self.geometry_auto['reference_epoch_s'] = text
+
     def _flip_pole(self):
         edit = self.fields['pole_pa_rad']
         try:

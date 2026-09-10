@@ -30,7 +30,7 @@ CONTROL_HELP = {
     'read_noise_e': 'Optional read noise in electrons, recorded as calibration metadata. This does not denoise the stack.',
     'saturate_adu': 'Optional raw-sample saturation threshold in ADU. With saturated-frame rejection enabled, any sample reaching it rejects that frame.',
     'geometry_mode': 'None performs ordinary stacking of any planet, including Saturn and its rings. Other modes apply field or globe motion compensation. Saturn is a separate globe-and-ring motion model requiring manually supplied signed viewing latitude and globe/ring radii; it is not a target selector.',
-    'reference_epoch_s': 'Time of the reconstructed output view, in seconds from the capture start.',
+    'reference_epoch_s': 'Time of the reconstructed output view, in seconds from the capture start. Preprocessing defaults this to half the first-to-last frame timestamp span when timing is known. A manually entered value, including 0, is preserved. Checkpoint settings are not changed.',
     'field_angle0_rad': 'Field orientation at the output epoch, in degrees.',
     'field_rate_rad_s': 'Field rotation rate in degrees per second. Leave blank to estimate it from the capture when geometry requires it; the run stops if the estimate is unresolved. Enter 0 explicitly to disable field rotation.',
     'surface_rate_rad_s': 'Explicit rigid globe rotation rate in degrees per second; overrides the selected planet preset, including when set to 0. With a preset selected, leave blank to use its published period. Without a preset, Preprocess fills this only when motion is reliably measured; an unresolved blank rate blocks Surface, Combined and Saturn runs. Choose Motion model None for ordinary stacking.',

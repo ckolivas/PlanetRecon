@@ -719,10 +719,10 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
     assert 'sub_obs_lat_rad' not in win.error.text()
     # Discovery and inspection remain usable with incomplete physical geometry.
     win._preprocess()
-    assert calls[-1][1] == {'preprocess_only': True}
+    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
     win._finish_job()
     win._inspect()
-    assert calls[-1][1] == {'inspect_only': True}
+    assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True}
     win._finish_job()
     for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',
                        'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60',
@@ -756,7 +756,7 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     assert 'Surface rotation rate' in win.error.text()
     assert win.controls.currentIndex() == 2
     win._preprocess()
-    assert calls[-1][1] == {'preprocess_only': True}
+    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
     win._finish_job()
     fields['surface_rate_rad_s'].setText('0')
     win._run()

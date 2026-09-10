@@ -368,9 +368,11 @@ class MainWindow:
                     if self.resume_check.isChecked():
                         checkpoint_options['resume_from'] = Path(path)
             if preprocess_only:
-                handle = start_stack_job(self.path, cfg, preprocess_only=True)
+                handle = start_stack_job(self.path, cfg, preprocess_only=True,
+                    auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch())
             else:
-                handle = (start_stack_job(self.path, cfg, inspect_only=True) if inspect_only
+                handle = (start_stack_job(self.path, cfg, inspect_only=True,
+                    auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch()) if inspect_only
                           else start_stack_job(self.path, cfg, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
@@ -480,6 +482,8 @@ class MainWindow:
             self.preprocessing_info = info
         self._refresh_preprocessing()
         if info.get('status') == 'ready':
+            self.controls.prefill_output_epoch(info.get('timing', {}),
+                                              allow_prefill=not self.checkpoint_path.text().strip())
             self.controls.prefill_geometry(info.get('geometry_estimate', {}),
                                           allow_prefill=not self.checkpoint_path.text().strip())
 

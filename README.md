@@ -166,7 +166,10 @@ mix partial sums. CUDA allocation budgets remain limited to translation mode.
 Rates in seconds require measured timestamps or an explicit `--cadence`; duplicate
 or reversed timestamps are rejected. Without timing, inferred field motion uses
 frame indices and is labelled accordingly. `--reference-epoch` is the exact output
-time in seconds from the first frame start; exposure midpoints affect observed
+time in seconds from the first frame start. In the GUI, preprocessing defaults
+Output epoch to half the first-to-last frame timestamp span, using SER timestamps
+or supplied cadence. Manual epochs (including zero) and checkpoint settings are
+preserved. The best frame still anchors registration independently. Exposure midpoints affect observed
 poses only. Exposure integration beyond the midpoint approximation is unsupported.
 `reference_index` selects the disc-fit anchor, while `reference_epoch_s` selects the
 output pose. The current prototype assumes a fixed centre and rigid rates;

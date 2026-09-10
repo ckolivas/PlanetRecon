@@ -101,6 +101,7 @@ def _worker_run(
     resume_from: str | None = None,
     state_checkpoint: str | None = None,
     preprocess_only: bool = False,
+    auto_output_epoch: bool = False,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -126,6 +127,12 @@ def _worker_run(
             recover_complete_frames=config.recover_complete_frames,
             crop=config.crop,
         )
+        if auto_output_epoch and (inspect_only or preprocess_only):
+            from dataclasses import replace
+            from planetrecon.geometry.pose import capture_timing
+            timing = capture_timing(source, cadence_s=config.cadence_s)
+            if timing['status'] == 'available':
+                config = replace(config, reference_epoch_s=timing['duration_s'] / 2.)
         emit("progress", {"stage": "scan", "fraction": 0.0})
         if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
             import numpy as np
@@ -400,11 +407,14 @@ def start_stack_job(
     resume_from: str | Path | None = None,
     state_checkpoint: str | Path | None = None,
     preprocess_only: bool = False,
+    auto_output_epoch: bool = False,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
     if inspect_only and preprocess_only:
         raise ValueError('choose inspection or preprocessing')
+    if auto_output_epoch and not (inspect_only or preprocess_only):
+        raise ValueError('automatic output epoch is only resolved during inspection/preprocessing')
     if (inspect_only or preprocess_only) and (resume_from is not None or state_checkpoint is not None):
         raise ValueError('input inspection and preprocessing cannot use accumulator checkpoints')
     if state_checkpoint is not None and checkpoint_dir is not None:
@@ -430,6 +440,7 @@ def start_stack_job(
             None if resume_from is None else str(resume_from),
             None if state_checkpoint is None else str(state_checkpoint),
             preprocess_only,
+            auto_output_epoch,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,
