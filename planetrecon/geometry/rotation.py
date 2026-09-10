@@ -10,7 +10,6 @@ SOURCE_URL = 'https://ssd.jpl.nasa.gov/planets/phys_par.html'
 PERIOD_DAYS = {
     'mercury': 58.6462,
     'venus': -243.018,
-    'earth': .99726968,
     'mars': 1.02595676,
     'jupiter': .41354,
     'saturn': .44401,

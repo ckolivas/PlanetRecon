@@ -17,7 +17,6 @@ retrieved 2026-09-10:
 | --- | ---: |
 | Mercury | 58.6462 |
 | Venus | -243.018 |
-| Earth | 0.99726968 |
 | Mars | 1.02595676 |
 | Jupiter | 0.41354 |
 | Saturn | 0.44401 |
@@ -72,8 +71,7 @@ can supply the date when the trailer is absent; available duration/cadence place
 the lookup at the midpoint. Automatic dates are supported from 1900 through 2100.
 If no usable date or ephemeris is available, Saturn motion refuses to guess an
 edge-on view and explains how to supply an override. Surface runs without a
-known target/date retain their existing equator-on assumption. Earth itself has
-no geocentric viewing direction and requires manual viewing geometry.
+known target/date retain their existing equator-on assumption.
 
 This removes the manual latitude requirement for dated planetary captures; it
 does not infer a globe radius from Saturn's full ring-system diameter. Globe and
