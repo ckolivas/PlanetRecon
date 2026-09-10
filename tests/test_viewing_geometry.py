@@ -224,14 +224,21 @@ def test_preprocessing_view_is_invalidated_by_changed_planet_or_utc(tmp_path):
         assert changed['accepted'] == int(selection.accepted.sum())
 
 
-def test_preprocess_resolves_view_before_a_motion_model_is_chosen(tmp_path, monkeypatch):
-    from planetrecon.geometry.discovery import discover_geometry
-    from planetrecon.pipeline.preprocess import screen_source
+@pytest.mark.parametrize('local,weighted', [(False, False), (True, False), (True, True)])
+def test_preprocess_resolves_view_before_a_motion_model_is_chosen(tmp_path, monkeypatch, local, weighted):
+    from planetrecon.pipeline.preprocess_cache import preprocess_source, load_cache
     monkeypatch.setattr(viewing, 'fetch_response', lambda *a: payload())
-    cfg = ReconstructionConfig(geometry_mode='none', rotation_planet='saturn')
+    cfg = ReconstructionConfig(geometry_mode='none', rotation_planet='saturn', threads=2,
+                               local_alignment=local, squared_quality_weights=weighted, stack_percent=50)
     with ser(tmp_path) as source:
-        report = discover_geometry(source, cfg, screen_source(source, cfg))
+        selected = preprocess_source(source, cfg)
+        restored, cache = load_cache(source, cfg)
+        assert restored is not None and cache['status'] == 'ready'
+        np.testing.assert_array_equal(restored.measurements, selected.measurements)
+        report = cache['geometry_estimate']
     assert cfg.geometry_mode == 'none' and cfg.sub_obs_lat_rad is None
+    assert cfg.local_alignment == local and cfg.squared_quality_weights == weighted
+    assert cfg.stack_percent == 50
     assert report['viewing_geometry']['planet'] == 'saturn'
     assert report['viewing_geometry']['sub_obs_lat_rad'] > 0.
     assert 'sub_obs_lat_rad' not in report['suggestions']

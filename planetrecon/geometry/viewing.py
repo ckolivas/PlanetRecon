@@ -155,9 +155,15 @@ def viewing_geometry(source, planet, cadence_s=None):
     return record
 
 
-def resolve_viewing(source, config, *, strict=True):
-    """Return an effective config and provenance; manual inputs always win."""
-    if config.sub_obs_lat_rad is not None or config.geometry_mode not in ('surface', 'combined', 'saturn'):
+def resolve_viewing(source, config, *, strict=True, for_preprocessing=False):
+    """Resolve latitude without changing stacking settings; manual inputs win.
+
+    Preprocessing may discover a selected planet's view while motion is None.
+    Ordinary stacking does not need a lookup in that mode.
+    """
+    needs_view = (config.geometry_mode in ('surface', 'combined', 'saturn')
+                  or (for_preprocessing and config.geometry_mode == 'none'))
+    if config.sub_obs_lat_rad is not None or not needs_view:
         return config, None
     planet = 'saturn' if config.geometry_mode == 'saturn' else config.rotation_planet
     if planet not in BODY_IDS:

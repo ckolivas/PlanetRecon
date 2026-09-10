@@ -93,12 +93,9 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
 
 def discover_geometry(source, config, selection, calibration=None, should_cancel=None):
     from planetrecon.geometry.viewing import resolve_viewing
-    from dataclasses import replace
-    # Preprocessing also discovers geometry before a motion model is selected.
-    viewing_config = (replace(config, geometry_mode='surface')
-                      if config.geometry_mode == 'none' and config.rotation_planet else config)
-    effective, viewing = resolve_viewing(source, viewing_config, strict=False)
-    effective = replace(effective, geometry_mode=config.geometry_mode)
+    # Discover viewing geometry without changing the chosen stacking mode;
+    # a temporary surface mode would invalidate local-alignment settings.
+    effective, viewing = resolve_viewing(source, config, strict=False, for_preprocessing=True)
     report = _discover_geometry(source, effective, selection, calibration, should_cancel)
     if viewing is not None:
         report['viewing_geometry'] = viewing
