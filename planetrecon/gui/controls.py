@@ -38,6 +38,8 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
         self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
+        self._integer(capture, 'local_patch_size', 'Alignment patch size (odd pixels)', 15, 255)
+        self.fields['local_patch_size'].setSingleStep(2)
         self._check(capture, 'squared_quality_weights', 'Stronger quality weighting (experimental)')
         self.fields['local_alignment'].toggled.connect(self._mode_changed)
         self.fields['frame_preselection'].toggled.connect(self._mode_changed)
@@ -196,6 +198,10 @@ class ConfigControls(QTabWidget):
             self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')
         self.fields['squared_quality_weights'].setEnabled(
+            self.fields['local_alignment'].isChecked()
+            and self.fields['frame_preselection'].isChecked()
+            and self.fields['geometry_mode'].currentData() == 'none')
+        self.fields['local_patch_size'].setEnabled(
             self.fields['local_alignment'].isChecked()
             and self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')

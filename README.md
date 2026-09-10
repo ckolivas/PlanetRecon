@@ -114,6 +114,16 @@ combination with the upper 50% quality range gave the best result in user testin
 set `--stack-percent 100` to retain all screened frames. CLI geometry modes and
 `--no-frame-preselection` disable the implicit local-alignment default.
 
+**Alignment patch size** in the Capture tab (CLI `--local-patch-size`) accepts
+odd widths from 15 to 255 detector pixels, with the existing 65-pixel default.
+Patch spacing follows at half the width, rounded down. Smaller patches can follow
+finer distortions but require sufficient texture; larger patches combine more
+detail and can average over local motion. Size is chosen manually, not estimated
+automatically. A new run uses the edited size with the same preprocessing cache;
+resuming a checkpoint requires its original size. Frames smaller than the size
+plus six pixels cannot support that local matcher and retain global alignment
+with a warning in the result.
+
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER
 headers/trailers, and retain calibrated units. Progress counts processed frames,

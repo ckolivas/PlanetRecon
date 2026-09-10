@@ -229,3 +229,21 @@ Pause this automatic-sizing family rather than adding more confidence thresholds
 or larger calibration budgets. The useful application step is explicit manual
 patch sizing, preserving the existing 65-pixel default. This supports the user's
 capture-dependent workflow without claiming an automatic optimum.
+
+## Available: manual patch size for each capture
+
+The Capture tab now exposes **Alignment patch size (odd pixels)**, with CLI
+`--local-patch-size`. Accept odd widths from 15 to 255 pixels; retain 65 as the
+default and set grid spacing to half the selected width rounded down. New runs
+read the current control value and reuse the existing preprocessing cache.
+Saved jobs retain the choice; old jobs default to 65. Custom sizes are bound to
+checkpoint identity, while unchanged 65-pixel checkpoint identities remain valid.
+An undersized frame retains the established global fallback and reports the
+selected size and required detector dimensions in its warning.
+
+This is an explicit user choice, not an automatic recommendation or a claim that
+a particular size improves every capture. The rejected selectors remain outside
+the application. Validation passed 135 focused CPU/GUI/CUDA checks, including 14
+hardware checks: changed-size output, cache reuse, exact resume, mismatch refusal,
+all-control fresh-run snapshots and custom-size CPU/CUDA parity. Two unrelated
+opt-in checks in the additional regression group remained skipped.

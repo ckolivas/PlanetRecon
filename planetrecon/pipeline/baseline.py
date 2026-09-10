@@ -187,7 +187,9 @@ def _stack_source(
     bayer = is_bayer(color)
     # Only the eligible experimental local path changes its registration proxy.
     # It requires cached screening, so scalar quality weights stay unchanged.
-    colour_registration = (config.local_alignment and bayer and min(h, w) >= 71
+    local_window = config.local_patch_size
+    local_step = local_window // 2
+    colour_registration = (config.local_alignment and bayer and min(h, w) >= local_window + 6
                            and selection is not None and np.count_nonzero(selection.accepted) >= 4)
     alignment_plane = _colour_registration_plane if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
@@ -274,10 +276,10 @@ def _stack_source(
         accepted = np.flatnonzero(selection.accepted)
         order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
         candidates = accepted[order[:64]]
-        enabled = min(h, w) >= 71 and len(candidates) >= 4
+        enabled = min(h, w) >= local_window + 6 and len(candidates) >= 4
         snapshot_provenance['local_alignment'] = {
             'version': 2 if colour_registration else 1, 'enabled': enabled, 'template_candidates': candidates.tolist(),
-            'window_px': 65, 'step_px': 32, 'maximum_residual_px': 3,
+            'window_px': local_window, 'step_px': local_step, 'maximum_residual_px': 3,
             'anchor_index': reference_index,
             'patch_support': 'complete observed search footprint',
             'patch_boundary': 'one grid interval taper to global',
@@ -298,10 +300,12 @@ def _stack_source(
                     cpu_fallback(exc)
                     reference = build_template(reference, candidates, read_plane,
                                                backend.phase_correlation, config.max_shift_px, should_cancel)
-            local_matcher = LocalRegistration(reference)
+            local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
             snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
         else:
-            warnings.append('local_alignment_unavailable: global alignment retained for a small frame or fewer than four screened frames')
+            warnings.append(f'local_alignment_unavailable: global alignment retained; size {local_window} '
+                            f'needs frames at least {local_window+6} by {local_window+6} pixels '
+                            'and four screened frames')
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq

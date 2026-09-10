@@ -32,6 +32,11 @@ def identity(source,config,calibration,should_cancel=None):
     if not config.squared_quality_weights:
         settings.pop('squared_quality_weights')
         capture['config'].pop('squared_quality_weights')
+    # The established 65-pixel matcher is unchanged. Preserve its checkpoints;
+    # custom sizes remain bound to the identity so accumulators cannot be mixed.
+    if config.local_patch_size == 65:
+        settings.pop('local_patch_size')
+        capture['config'].pop('local_patch_size')
     return {'input_sha256':digest.hexdigest(),'config':settings,'capture':capture}
 
 

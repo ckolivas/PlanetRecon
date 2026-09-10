@@ -34,6 +34,7 @@ class ReconstructionConfig:
     stack_percent: int = 100
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
+    local_patch_size: int = 65
     squared_quality_weights: bool = False
     max_shift_px: float = 32.0
     reference_index: int = 0
@@ -115,6 +116,9 @@ class ReconstructionConfig:
             raise ValueError('unknown frame_selection_mode')
         if type(self.local_alignment) is not bool:
             raise ValueError('local_alignment must be a bool')
+        if (type(self.local_patch_size) is not int or not 15 <= self.local_patch_size <= 255
+                or self.local_patch_size % 2 != 1):
+            raise ValueError('local_patch_size must be an odd integer from 15 to 255 pixels')
         if type(self.squared_quality_weights) is not bool:
             raise ValueError('squared_quality_weights must be a bool')
         if self.squared_quality_weights and not self.local_alignment:
