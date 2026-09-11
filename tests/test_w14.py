@@ -390,7 +390,7 @@ def test_gui_saturn_geometry_and_layer_export(gui, tmp_path):
     with tifffile.TiffFile(dest) as tf:
         assert len(tf.pages) == 1
         meta = parse_tiff_description(tf.pages[0].description)
-        assert meta['result']['reference_epoch'] == '0.0'
+        assert meta['result']['reference_epoch'] == '0.05'  # Automatic preprocessing chooses midpoint.
         assert not tf.pages[0].is_shaped
     coverage = dest.with_name(meta['coverage_file'])
     with tifffile.TiffFile(coverage) as tf:
@@ -505,7 +505,8 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     win.controls.fields['max_ram_bytes'].setText('1024');expected['max_ram_bytes'] = 1024**3
     win.checkpoint_path.clear();win.resume_check.setChecked(False)
     win._run()
-    assert calls[-1][1] == replace(second, **expected) and calls[-1][2] == {}
+    assert calls[-1][1] == replace(second, **expected)
+    assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False}
     win._finish_job()
     win.device.setCurrentText('gpu')
     win.controls.fields['geometry_mode'].setCurrentText('none')
@@ -698,7 +699,7 @@ def test_inspection_white_includes_bright_pixel_missing_from_preview(gui,tmp_pat
     assert win.white.value() == pytest.approx(21450)
 
 
-def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_path, monkeypatch):
+def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_path, monkeypatch):
     import planetrecon.gui.app as module
     _, win = gui
     calls = []
@@ -709,7 +710,7 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
     win.path = tmp_path/'saturn.ser'
     fields = win.controls.fields
     fields['geometry_mode'].setCurrentText('saturn')
-    win._run()
+    win._start(inspect_only=False)
     assert not calls and win.job is None
     assert win.controls.currentIndex() == 2
     assert 'Signed observer latitude' not in win.error.text()
@@ -728,14 +729,14 @@ def test_saturn_run_lists_missing_geometry_before_starting_a_worker(gui, tmp_pat
                        'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60',
                        'surface_rate_rad_s': '0'}.items():
         fields[key].setText(value)
-    win._run()
+    win._start(inspect_only=False)
     assert calls[-1][1] == {} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
     win._finish_job()
     # Ordinary Saturn stacking never needs these physical parameters.
     fields['geometry_mode'].setCurrentText('none')
     fields['sub_obs_lat_rad'].clear()
     fields['equatorial_radius_px'].clear()
-    win._run()
+    win._start(inspect_only=False)
     assert calls[-1][0].geometry_mode == 'none'
     win._finish_job()
 
@@ -751,7 +752,7 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     win.path = tmp_path/'input.ser'
     fields = win.controls.fields
     fields['geometry_mode'].setCurrentText('surface')
-    win._run()
+    win._start(inspect_only=False)
     assert not calls and win.job is None
     assert 'Surface rotation rate' in win.error.text()
     assert win.controls.currentIndex() == 2
@@ -759,6 +760,6 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
     win._finish_job()
     fields['surface_rate_rad_s'].setText('0')
-    win._run()
+    win._start(inspect_only=False)
     assert calls[-1][1] == {} and calls[-1][0].surface_rate_rad_s == 0.
     win._finish_job()

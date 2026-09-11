@@ -109,6 +109,7 @@ class MainWindow:
         self.auto_levels = True
         self.inspecting = False
         self.started = None
+        self.run_stage = None
         owner = self
 
         class OwnedWindow(QMainWindow):
@@ -277,7 +278,7 @@ class MainWindow:
         tips = {
             self.open_btn: 'Choose a SER, AVI or observed HDF5 capture, then inspect its metadata and input preview.',
             self.inspect_btn: 'Read capture metadata and preview the input using the current settings, without starting reconstruction.',
-            self.run_btn: 'Start reconstruction with the current settings, or continue the selected checkpoint when Resume is enabled.',
+            self.run_btn: 'Validate the preprocessing cache, measure quality and geometry automatically when needed, then reconstruct with the current settings. Resume continues the selected checkpoint unchanged.',
             self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
             self.checkpoint_btn: 'Choose the NPZ file used to save accumulator progress after each batch. To resume, choose an existing file and enable Resume.',
             self.checkpoint_path: 'Optional accumulator checkpoint path. Progress is saved here during processing; leave blank to disable checkpoints.',
@@ -356,7 +357,7 @@ class MainWindow:
             self.error.setText(f'Could not save settings: {exc}')
 
     def _buttons(self):
-        busy = self.job is not None
+        busy = self.job is not None or self.run_stage is not None
         self.open_btn.setEnabled(not busy and not self.closing)
         self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
@@ -394,7 +395,31 @@ class MainWindow:
             self.checkpoint_path.setText(name)
 
     def _run(self):
-        self._start(inspect_only=False)
+        if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
+            return
+        # Resume must use exactly the saved configuration/cache. A fresh run
+        # validates the on-disk cache rather than trusting stale UI metadata.
+        self.run_stage = 'stack' if self.resume_check.isChecked() else 'inspect'
+        self._start(inspect_only=self.run_stage == 'inspect')
+
+    def _advance_run(self, kind):
+        stage = self.run_stage
+        if kind != 'completed' or stage == 'stack' or self.closing:
+            self.run_stage = None
+            self._buttons()
+            return
+        if stage == 'inspect':
+            info = self.preprocessing_info
+            geometry = self.controls.fields['geometry_mode'].currentData() != 'none'
+            needs_geometry = geometry and (
+                not info.get('geometry_estimate', {}).get('applicable', True)
+                or bool({k: v for k, v in self.controls.configuration().missing_motion_parameters().items()
+                         if k != 'sub_obs_lat_rad'}))
+            self.run_stage = ('preprocess' if info.get('status') != 'ready' or needs_geometry
+                              else 'stack')
+        else:
+            self.run_stage = 'stack'
+        self._start(inspect_only=False, preprocess_only=self.run_stage == 'preprocess')
 
     def _start(self, inspect_only, preprocess_only=False):
         if self.job is not None or self.path is None or self.closing:
@@ -432,8 +457,11 @@ class MainWindow:
                           else start_stack_job(self.path, cfg, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
+            self.run_stage = None
+            self._buttons()
             return
         self.config = cfg
+        self._save_settings()
         self.job = handle
         handle.snapshot_request.set()
         self.inspecting = inspect_only
@@ -443,7 +471,7 @@ class MainWindow:
         self.auto_levels = not inspect_only
         self.error.clear()
         self.warnings.clear()
-        self.run_device.setText('Input inspection; no reconstruction backend selected' if inspect_only
+        self.run_device.setText('Input inspection; no reconstruction backend selected' if inspect_only and self.run_stage is None
                                 else f'Run requested {cfg.device.upper()} · preparing input; backend pending')
         self.details.setPlainText(json.dumps({'current_run_config': cfg.to_dict(),
                                              'inspect_only': inspect_only}, indent=2))
@@ -456,6 +484,7 @@ class MainWindow:
         self._buttons()
 
     def _cancel(self):
+        self.run_stage = None
         if self.job is not None and self.cancel_started is None:
             self.cancel_started = time.monotonic()
             self.job.cancel_event.set()
@@ -520,10 +549,10 @@ class MainWindow:
                 f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained. "
                 f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.{selection_text}")
         else:
-            reason = info.get('reason', 'No preprocessing cache. Run Preprocess; runs without a cache use no quality/shape filtering.')
+            reason = info.get('reason', 'No preprocessing cache. Run will preprocess automatically, or use Preprocess separately.')
             if (self.controls.fields['frame_preselection'].isChecked()
                     and self.controls.fields['stack_percent'].value() < 100):
-                reason += ' Best-frame percentage selection needs a matching cache; run Preprocess first.'
+                reason += ' Run will create a matching cache before selecting frames.'
             self.preprocessing_label.setText(reason)
 
     def _preprocessing_settings_changed(self, value=None):
@@ -639,10 +668,14 @@ class MainWindow:
                     self.status.setText('Last received result remains inspectable and saveable.')
                 else:
                     self.status.setText('Processing cancelled. Last received result remains available.')
-                self._finish_job()
+                self._finish_job(continue_run=True)
+                if self.run_stage is not None:
+                    self._advance_run(event.kind)
                 break
 
-    def _finish_job(self):
+    def _finish_job(self, *, continue_run=False):
+        if not continue_run:
+            self.run_stage = None
         self.timer.stop()
         if self.job is not None:
             self.job.close()
@@ -849,6 +882,7 @@ class MainWindow:
     def _shutdown(self, *_args):
         self.settings_timer.stop()
         self._save_settings()
+        self.run_stage = None
         self._finish_job()
         self._cancel_save()
 
