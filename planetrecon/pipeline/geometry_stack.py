@@ -359,8 +359,8 @@ def prepare_geometry(
     if isinstance(model, SaturnSceneModel):
         # This changes which observations enter each sum. Include it in the
         # checkpoint geometry identity so old masked sums cannot be resumed.
-        diagnostics['ring_globe_overlap_policy'] = 'continuous globe motion with smooth limb taper v2'
-        diagnostics['saturn_boundary_policy'] = 'unclipped detector footprints; smoothstep mu=0.4 at both limbs'
+        diagnostics['ring_globe_overlap_policy'] = 'continuous globe motion with smooth limb taper v3'
+        diagnostics['saturn_boundary_policy'] = 'unclipped footprints; product of squared-mu smoothsteps at both limbs, mu=0.4'
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if surface_origin == 'planet_preset':
@@ -652,6 +652,47 @@ def stack_source_geometry(
         except _UnresolvedMotion:
             if not bayer or colour_retry:
                 raise
+    local_template = local_support = local_render = None
+    if config.local_alignment:
+        from planetrecon.pipeline.motion_local import build_motion_template, local_coordinates
+        if selection is None:
+            raise ValueError('Local motion alignment requires cached preprocessing. Run Preprocess first.')
+        if backend.name == 'cuda' and isinstance(model, SaturnSceneModel):
+            from planetrecon.backends.torch_saturn import TorchSaturnWarp
+            renderer = TorchSaturnWarp((h,w),model).render
+        local_render = renderer or (lambda image, src, ref: render_observed(image,model,src,ref))
+        def local_plane(frame):
+            return _alignment_plane(bilinear_demosaic(frame,color),'RGB') if bayer else _alignment_plane(frame,color)
+        local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
+        accepted = np.flatnonzero(selection.accepted)
+        candidates = accepted[np.argsort(-selection.measurements[accepted,0],kind='stable')[:64]]
+        def read_aligned(index):
+            frame = usable_frame(source.read_raw(index))
+            if frame is None:
+                return None
+            plane = local_plane(frame) if colour_retry else _alignment_plane(frame,color)
+            pose = poses[index]
+            if ring_registration is not None or track_surface or track_field:
+                dx,dy = required_displacement(index,plane,frame)
+            elif track_translation:
+                predicted = anchor_plane if static_attitude or index == anchor_index else local_render(anchor_plane,pose,anchor_pose)
+                dx,dy = phase_correlation_shift(predicted,plane)
+            else:
+                dx,dy = 0.,0.
+            if not np.isfinite([dx,dy]).all() or max(abs(dx),abs(dy)) > config.max_shift_px:
+                return None
+            pose = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy)
+            return (local_render(local_plane(frame),anchor_pose,pose),
+                    local_render(np.ones((h,w)),anchor_pose,pose))
+        local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
+        diagnostics['local_alignment'] = {
+            'version': 1, 'enabled': True, 'window_px':config.local_patch_size,
+            'step_px':config.local_patch_size//2, 'maximum_residual_px':3,
+            'template_candidates':candidates.tolist(), 'anchor_index':anchor_index,
+            'template':'observed mean in best-frame geometry; predicted at each frame time',
+            'composition':'invert residual pull; evaluate geometry; scatter original samples once',
+            'registration_proxy':'RGB luminance' if bayer else 'luminance',
+        }
     xg, yg = detector_xy_grids(h, w)
     # Optical blur crosses globe/ring/shadow boundaries. Keep full bilinear
     # footprints and CFA completion; classification is for scoring/diagnostics.
@@ -668,6 +709,8 @@ def stack_source_geometry(
 
     snapshot_provenance = capture_provenance(source, requested_config, calibration)
     snapshot_provenance["preprocessing_cache"] = cache_status or {"status": "disabled"}
+    if config.local_alignment:
+        snapshot_provenance['local_alignment'] = diagnostics['local_alignment']
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
     next_index = 0
@@ -709,6 +752,9 @@ def stack_source_geometry(
         'drift_matching': 'cuda correlations with cpu peak checks' if ring_acceleration else 'cpu',
         'ring_reference_warps_and_correlations': backend.name if ring_registration is not None else 'unused',
         'drift_peak_acceptance': 'cpu',
+        'local_patch_correlations': backend.name if config.local_alignment else 'unused',
+        'local_reference_prediction': backend.name if config.local_alignment else 'unused',
+        'local_residual_inversion': 'cpu' if config.local_alignment else 'unused',
         'accumulator_precision': 'float64',
     }
     gpu_accumulator = None
@@ -834,14 +880,21 @@ def stack_source_geometry(
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
+            sample_xy = None
+            if config.local_alignment:
+                sample_xy = local_coordinates(local_template,local_support,local_plane(calibrated),
+                    pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda')
             if gpu_accumulator is not None:
                 demo = bilinear_demosaic(calibrated,color) if bayer else None
-                if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo):
+                if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo,sample_xy):
                     n_used += 1
                 else:
                     n_rejected += 1
                 continue
-            xd, yd, valid = model.src_to_ref(xg, yg, pose, ref_pose)
+            sx,sy = (xg,yg) if sample_xy is None else sample_xy
+            xd, yd, valid = model.src_to_ref(sx, sy, pose, ref_pose)
+            if isinstance(model,SaturnSceneModel):
+                valid &= ~layer_info['moon'] & ~layer_info['ring_degenerate']
             y_idx = yd - 0.5
             x_idx = xd - 0.5
             def push_samples(samples, yd, xd, shape, valid):

@@ -147,8 +147,8 @@ class ReconstructionConfig:
         if (type(self.local_patch_size) is not int or not 15 <= self.local_patch_size <= 255
                 or self.local_patch_size % 2 != 1):
             raise ValueError('local_patch_size must be an odd integer from 15 to 255 pixels')
-        if self.local_alignment and (self.geometry_mode != 'none' or not self.frame_preselection):
-            raise ValueError('local alignment requires cached preprocessing and geometry_mode=none')
+        if self.local_alignment and (self.geometry_mode == 'field' or not self.frame_preselection):
+            raise ValueError('local alignment requires cached preprocessing and none, surface, combined or saturn geometry')
         if type(self.frame_preselection) is not bool:
             raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):

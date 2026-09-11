@@ -284,11 +284,11 @@ class ConfigControls(QTabWidget):
             self._set_geometry_help('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
         self.fields['local_alignment'].setEnabled(
             self.fields['frame_preselection'].isChecked()
-            and self.fields['geometry_mode'].currentData() == 'none')
+            and self.fields['geometry_mode'].currentData() != 'field')
         self.fields['local_patch_size'].setEnabled(
             self.fields['local_alignment'].isChecked()
             and self.fields['frame_preselection'].isChecked()
-            and self.fields['geometry_mode'].currentData() == 'none')
+            and self.fields['geometry_mode'].currentData() != 'field')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     @staticmethod
@@ -306,7 +306,7 @@ class ConfigControls(QTabWidget):
         for key, edit in self.fields.items():
             if key == 'local_alignment' and (
                     not self.fields['frame_preselection'].isChecked()
-                    or self.fields['geometry_mode'].currentData() != 'none'):
+                    or self.fields['geometry_mode'].currentData() == 'field'):
                 values[key] = False
                 continue
             if not saturn and key in saturn_defaults:

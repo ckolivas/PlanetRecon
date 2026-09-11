@@ -26,3 +26,13 @@ def test_ring_edges_and_shadows_do_not_gate_observed_samples():
     x,y=detector_xy_grids(112,112)
     mx,my,valid=model.src_to_ref(x,y,FramePose(2.,.08,56.3,55.6),FramePose(0.,0.,56.,56.))
     assert valid.all() and np.isfinite(mx).all() and np.isfinite(my).all()
+
+
+def test_limb_has_no_jump_in_displacement_derivative():
+    model=SaturnSceneModel(GlobeParams(90.,surface_rate_rad_s=.00016,sub_obs_lat_rad=.18),RingParams(130.,210.))
+    src,ref=FramePose(180.,0.,256.,160.),FramePose(0.,0.,256.,160.)
+    for edge in (166.,346.):
+        x=edge+np.linspace(-.002,.002,41);y=np.full_like(x,160.)
+        mx,my,_=model.src_to_ref(x,y,src,ref)
+        assert np.max(np.abs(np.diff(mx-x)/np.diff(x))) < .005
+        assert np.max(np.abs(np.diff(my-y)/np.diff(x))) < .005

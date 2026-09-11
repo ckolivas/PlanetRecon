@@ -97,10 +97,13 @@ class TorchSaturnWarp(TorchGlobeWarp):
         return {'labels':labels,'motion_labels':motion_labels,'regions':regions,'invalid':invalid,
                 'quality_regions':quality_regions}
 
-    def map(self, src, ref, info=None):
-        info = self.classify(src) if info is None else info
-        x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU)
-        return x,y,valid & ~info['invalid']
+    def map(self, src, ref, info=None, *, x=None, y=None):
+        mapped_info = self.classify(src,x,y) if x is not None or info is None else info
+        x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y)
+        valid &= ~mapped_info['invalid']
+        if info is not None:
+            valid &= ~info['invalid']
+        return x,y,valid
 
 
 class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
@@ -120,10 +123,11 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
         self.prepared_pose = pose
         return self.source_info['quality_regions'].cpu().numpy()
 
-    def sample_corners(self, pose, ref):
+    def sample_corners(self, pose, ref, sample_xy=None):
         if self.prepared_pose != pose:
             self.prepare_source(pose)
-        yield from self.corners(*self.map(pose,ref,self.source_info))
+        coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
+        yield from self.corners(*self.map(pose,ref,self.source_info,**coords))
 
     def add_layer_coverage(self, index, weighted):
         labels = self.source_info['motion_labels'].flatten()

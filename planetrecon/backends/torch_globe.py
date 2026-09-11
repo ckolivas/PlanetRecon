@@ -68,8 +68,10 @@ class TorchGlobeWarp:
             sx, sy = self.rotate(sx, sy, ref.field_angle_rad)
         use = on_globe & visible
         if limb_taper is not None:
-            u = (torch.where(use,torch.minimum(mu_src,mu_ref),0.) / limb_taper).clamp(0.,1.)
-            blend = u*u*(3.-2.*u)
+            blend = torch.ones_like(sx)
+            for mu in (mu_src,mu_ref):
+                u = (torch.where(use,mu,0.) / limb_taper).clamp(0.,1.).square()
+                blend *= u*u*(3.-2.*u)
             x = sx+ref.cx+blend*torch.where(blend > 0,rx-sx,0.)
             y = ref.cy-sy-blend*torch.where(blend > 0,ry-sy,0.)
             return x,y,torch.isfinite(x)&torch.isfinite(y)
@@ -113,17 +115,18 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
             self.channels = torch.as_tensor(np.where(labels=='R',0,np.where(labels=='G',1,2)),
                                             device=self.device).flatten()
 
-    def sample_corners(self, pose, ref):
-        return self.corners(*self.map(pose,ref))
+    def sample_corners(self, pose, ref, sample_xy=None):
+        coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
+        return self.corners(*self.map(pose,ref,**coords))
 
     def add_layer_coverage(self, index, weighted):
         pass
 
-    def add(self, frame, pose, ref, score, demo=None):
+    def add(self, frame, pose, ref, score, demo=None, sample_xy=None):
         values = self.tensor(frame).reshape(self.h*self.w,-1)
         demo = None if demo is None else self.tensor(demo).reshape(-1,3)
         covered = torch.zeros((), dtype=torch.float64, device=self.device)
-        for index, weight in self.sample_corners(pose,ref):
+        for index, weight in self.sample_corners(pose,ref,sample_xy):
             covered += weight.sum()
             weighted = weight*score
             if self.channels is not None:

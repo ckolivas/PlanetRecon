@@ -169,12 +169,20 @@ shadow and moon masks, region-constrained projection, accumulation and globe/rin
 coverage run on CUDA. Ring/globe overlap samples retain their observed brightness
 and follow globe motion on both CPU and CUDA. Differential spin smoothly fades
 to field alignment at both source and destination limbs (smoothstep over viewing
-cosine 0–0.4), retaining ordinary alignment for newly visible limb samples.
+cosine 0–0.4, squared before smoothstep for a continuous first derivative),
+retaining ordinary alignment for newly visible limb samples.
 Observed pixel footprints are not clipped to fitted silhouettes or shadow edges;
 telescope blur naturally crosses those boundaries. Layer coverage describes the
 origins of contributions and can overlap. This approximates the foreground
 composite without separating ring and globe light. Moon masks and the refusal of
 edge-on ring geometry remain. Field-only motion still uses CPU float64.
+Local patch alignment is also available for surface, combined and Saturn motion
+with cached preprocessing. Up to 64 selected frames build an observed mean in
+the best frame's geometry; that template is predicted at each observation time.
+Supported, unambiguous patches measure residual seeing rather than planet spin.
+The residual deformation is inverted and composed with the geometry before
+original mono/RGB/CFA samples are scattered once. CUDA runs also accelerate
+template prediction and patch correlations. Weak patches keep global motion.
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
 mix partial sums. CUDA allocation budgets remain limited to translation mode.

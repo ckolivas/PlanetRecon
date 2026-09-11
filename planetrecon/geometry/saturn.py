@@ -188,9 +188,13 @@ class SaturnSceneModel(SceneModel):
         # between independent measurements. Taper only the differential spin
         # displacement at BOTH visible limbs; retain ordinary field alignment
         # wherever surface correspondence is uncertain or newly visible.
-        mu = np.minimum(info['mu'], mu_ref)
-        u = np.clip(np.where(info['on_globe'] & visible, mu, 0.) / LIMB_TAPER_MU, 0., 1.)
-        blend = u*u*(3.-2.*u)
+        blend = np.ones_like(fx)
+        for mu in (info['mu'],mu_ref):
+            u = np.clip(np.where(info['on_globe'] & visible, mu, 0.) / LIMB_TAPER_MU, 0., 1.)**2
+            blend *= u*u*(3.-2.*u)
+        # mu is proportional to sqrt(distance from the projected limb).
+        # Squaring it before smoothstep also makes the displacement's first
+        # derivative continuous there, avoiding an edge after sharpening.
         dx = fx + blend*np.where(blend > 0, gx-fx, 0.)
         dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
         valid = fv & ~info['moon'] & ~info['ring_degenerate']

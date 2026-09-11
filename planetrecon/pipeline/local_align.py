@@ -22,7 +22,7 @@ def pull(image, shift_xy):
 
 class LocalRegistration:
 
-    def __init__(self, reference, *, window=65, step=32, max_shift=3, use_cuda=False):
+    def __init__(self, reference, *, window=65, step=32, max_shift=3, use_cuda=False, valid_mask=None):
         reference = np.asarray(reference, dtype=np.float64)
         if reference.ndim != 2 or not np.isfinite(reference).all():
             raise ValueError('finite two-dimensional reference required')
@@ -37,6 +37,10 @@ class LocalRegistration:
         self.window = window
         self.step = step
         self.max_shift = max_shift
+        if valid_mask is not None:
+            valid_mask = np.asarray(valid_mask,dtype=bool)
+            if valid_mask.shape != reference.shape:
+                raise ValueError('local reference support must match its shape')
         self.ref = self.proxy(reference)
         self.ys = patch_centres(reference.shape[0], window, step, max_shift)
         self.xs = patch_centres(reference.shape[1], window, step, max_shift)
@@ -53,7 +57,9 @@ class LocalRegistration:
                 dx, dy = gx[section], gy[section]
                 xx, yy, xy = ((a*self.weight).sum() for a in (dx*dx, dy*dy, dx*dy))
                 smallest = .5*(xx+yy-np.sqrt(max((xx-yy)**2+4*xy**2, 0.)))
-                self.texture_valid.append(smallest > max(.01*(xx+yy), 1e-12))
+                margin = window//2+max_shift
+                observed = (valid_mask is None or valid_mask[y-margin:y+margin+1,x-margin:x+margin+1].all())
+                self.texture_valid.append(observed and smallest > max(.01*(xx+yy), 1e-12))
                 patch = patch - (patch * self.weight).sum()
                 self.templates.append(patch)
                 self.strength.append(np.sqrt((patch ** 2 * self.weight).sum()))
