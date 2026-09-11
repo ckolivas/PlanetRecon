@@ -423,12 +423,12 @@ def stack_source_geometry(
     if state_checkpoint is not None:
         from planetrecon import resume
         resume.validate_destination(state_checkpoint, source, config)
-    cuda_globe = config.geometry_mode in ('surface', 'combined')
-    backend, report = select_backend(config.device if cuda_globe else 'cpu', threads=config.threads)
+    cuda_geometry = config.geometry_mode in ('surface', 'combined', 'saturn')
+    backend, report = select_backend(config.device if cuda_geometry else 'cpu', threads=config.threads)
     report.requested = config.device
-    if not cuda_globe and config.device != "cpu":
+    if not cuda_geometry and config.device != "cpu":
         report.fallback = True
-        report.reason = "geometry_cpu_only: field-only and Saturn layer operators run on CPU float64"
+        report.reason = "geometry_cpu_only: field-only operators run on CPU float64"
     meta = source.metadata()
     color = source.color_mode()
     n = source.n_frames()
@@ -540,7 +540,7 @@ def stack_source_geometry(
                 diagnostics['registration_proxy'] = 'RGB luminance after unresolved green preflight'
             ref_pose = _reference_pose(poses, config)
             renderer = None
-            if backend.name == 'cuda':
+            if backend.name == 'cuda' and not isinstance(model, SaturnSceneModel):
                 from planetrecon.backends.torch_globe import TorchGlobeWarp
                 renderer = TorchGlobeWarp((h,w),model).render
             anchor_index = diagnostics['reference_index']
@@ -701,14 +701,22 @@ def stack_source_geometry(
     }
     gpu_accumulator = None
     if backend.name == 'cuda':
-        from planetrecon.backends.torch_globe import TorchGlobeAccumulator
-        gpu_accumulator = TorchGlobeAccumulator((h,w),model,color,accum,weight,
-                                               demosaic_accum,demosaic_weight)
+        if isinstance(model, SaturnSceneModel):
+            from planetrecon.backends.torch_saturn import TorchSaturnAccumulator
+            gpu_accumulator = TorchSaturnAccumulator((h,w),model,color,accum,weight,
+                demosaic_accum,demosaic_weight,globe_weight,ring_weight,ref_pose)
+        else:
+            from planetrecon.backends.torch_globe import TorchGlobeAccumulator
+            gpu_accumulator = TorchGlobeAccumulator((h,w),model,color,accum,weight,
+                                                   demosaic_accum,demosaic_weight)
 
     def sync_sums():
-        nonlocal accum, weight, demosaic_accum, demosaic_weight
+        nonlocal accum, weight, demosaic_accum, demosaic_weight, globe_weight, ring_weight
         if gpu_accumulator is not None:
-            accum, weight, demosaic_accum, demosaic_weight = gpu_accumulator.download()
+            sums = gpu_accumulator.download()
+            accum, weight, demosaic_accum, demosaic_weight = sums[:4]
+            if isinstance(model, SaturnSceneModel):
+                globe_weight,ring_weight = sums[4:]
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -793,9 +801,12 @@ def stack_source_geometry(
                 from scipy.ndimage import binary_erosion, convolve
                 from planetrecon.rank import LAPLACIAN_KERNEL
 
-                layer_info = model.classify_detector(xg, yg, pose)
-                layer_labels = layer_info["labels"]
-                source_regions = model.reconstruction_regions(layer_info)
+                if gpu_accumulator is not None:
+                    source_regions = gpu_accumulator.prepare_source(pose)
+                else:
+                    layer_info = model.classify_detector(xg, yg, pose)
+                    layer_labels = layer_info["labels"]
+                    source_regions = model.reconstruction_regions(layer_info)
                 # Evaluate real globe texture only where the whole Laplacian
                 # stencil stays in one illumination region; no artificial edge.
                 score_mask = (binary_erosion(source_regions == 1, iterations=2 if bayer else 1)

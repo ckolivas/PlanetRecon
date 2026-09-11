@@ -155,11 +155,14 @@ macOS Intel/Apple Silicon CPU. Windows/macOS runtime testing is excluded by the
 owner. Independent capture acceptance and refreshed release artifacts remain.
 Advanced atmospheric claims stay gated by scientific requalification.
 
-Surface and combined motion use CUDA float64 when Auto/GPU selects a supported
+Surface, combined and Saturn motion use CUDA float64 when Auto/GPU selects a supported
 device. Globe projection, reference warping and accumulation of mono/RGB/raw
 Bayer samples run on the GPU; image and coverage sums stay resident between
 frames. Geometry estimation, drift matching, calibration and final RGB completion
-remain on CPU. Field-only and Saturn's ring-layer model still use CPU float64.
+remain on CPU, along with quality scoring. Saturn's per-frame layer classification,
+shadow and moon masks, region-constrained projection, accumulation and globe/ring
+coverage run on CUDA. The same unsupported overlaps remain masked; CUDA does not
+change the physical model. Field-only motion still uses CPU float64.
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
 mix partial sums. CUDA allocation budgets remain limited to translation mode.

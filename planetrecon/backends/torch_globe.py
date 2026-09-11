@@ -21,7 +21,7 @@ class TorchGlobeWarp:
             torch.arange(self.w, dtype=torch.float64, device=device)+.5, indexing='ij')
 
     def tensor(self, value):
-        return torch.as_tensor(np.ascontiguousarray(value), dtype=torch.float64, device=self.device)
+        return torch.tensor(np.ascontiguousarray(value), dtype=torch.float64, device=self.device)
 
     @staticmethod
     def rotate(x, y, angle):
@@ -93,8 +93,8 @@ class TorchGlobeWarp:
 
 
 class TorchGlobeAccumulator(TorchGlobeWarp):
-    def __init__(self, shape, model, color, accum, weight, demosaic_accum, demosaic_weight):
-        super().__init__(shape,model)
+    def __init__(self, shape, model, color, accum, weight, demosaic_accum, demosaic_weight, device='cuda:0'):
+        super().__init__(shape,model,device)
         self.accum, self.weight = self.tensor(accum), self.tensor(weight)
         self.demosaic_accum = None if demosaic_accum is None else self.tensor(demosaic_accum)
         self.demosaic_weight = None if demosaic_weight is None else self.tensor(demosaic_weight)
@@ -104,12 +104,17 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
             self.channels = torch.as_tensor(np.where(labels=='R',0,np.where(labels=='G',1,2)),
                                             device=self.device).flatten()
 
+    def sample_corners(self, pose, ref):
+        return self.corners(*self.map(pose,ref))
+
+    def add_layer_coverage(self, index, weighted):
+        pass
+
     def add(self, frame, pose, ref, score, demo=None):
         values = self.tensor(frame).reshape(self.h*self.w,-1)
         demo = None if demo is None else self.tensor(demo).reshape(-1,3)
-        x, y, valid = self.map(pose,ref)
         covered = torch.zeros((), dtype=torch.float64, device=self.device)
-        for index, weight in self.corners(x,y,valid):
+        for index, weight in self.sample_corners(pose,ref):
             covered += weight.sum()
             weighted = weight*score
             if self.channels is not None:
@@ -125,6 +130,7 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
                 dest = index[:,None].expand(-1,3)
                 self.demosaic_accum.view(-1,3).scatter_add_(0,dest,weighted[:,None]*demo)
                 self.demosaic_weight.view(-1,3).scatter_add_(0,dest,weighted[:,None].expand(-1,3))
+            self.add_layer_coverage(index,weighted)
         return bool(covered > 0)
 
     def download(self):
