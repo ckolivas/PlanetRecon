@@ -110,6 +110,10 @@ class MainWindow:
         self.inspecting = False
         self.started = None
         self.run_stage = None
+        self.batch_active = False
+        self.batch_items = []
+        self.batch_current = None
+        self.batch_saving = False
         owner = self
 
         class OwnedWindow(QMainWindow):
@@ -142,9 +146,12 @@ class MainWindow:
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
+        self.batch_btn = QPushButton('Batch…')
+        self.batch_btn.setToolTip('Select multiple captures and an output folder, then run the current processing and export settings on each. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh runs; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
         for b, slot in ((self.open_btn, self._choose), (self.inspect_btn, self._inspect),
                         (self.preprocess_btn, self._preprocess),
+                        (self.batch_btn, self._choose_batch),
                         (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
             buttons.addWidget(b)
@@ -167,6 +174,12 @@ class MainWindow:
         self.preprocessing_label = QLabel('No preprocessing measurements loaded.')
         self.preprocessing_label.setWordWrap(True)
         layout.addWidget(self.preprocessing_label)
+        self.batch_status = QPlainTextEdit()
+        self.batch_status.setReadOnly(True)
+        self.batch_status.setMaximumHeight(100)
+        self.batch_status.setToolTip('Batch queue and results. Failed captures are reported here; processing continues with the remaining files. Cancel processing stops the whole queue.')
+        self.batch_status.hide()
+        layout.addWidget(self.batch_status)
         split = QSplitter()
         self.controls = ConfigControls(self.config)
         self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
@@ -357,8 +370,9 @@ class MainWindow:
             self.error.setText(f'Could not save settings: {exc}')
 
     def _buttons(self):
-        busy = self.job is not None or self.run_stage is not None
+        busy = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
         self.open_btn.setEnabled(not busy and not self.closing)
+        self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
         self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
@@ -366,8 +380,113 @@ class MainWindow:
         for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
             control.setEnabled(not busy and not self.closing)
         self.cancel_btn.setEnabled(busy and self.cancel_started is None)
-        self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing)
+        self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing
+                                 and not self.batch_active)
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
+        for edit in (self.encoding, self.save_black, self.save_white, self.save_gamma):
+            edit.setEnabled(not self.batch_active and not self.batch_saving)
+        if not self.batch_active and not self.batch_saving:
+            self._export_options()
+
+    def _choose_batch(self):
+        names, _ = QFileDialog.getOpenFileNames(self.window, 'Choose batch captures', '',
+                                                'Captures (*.ser *.avi *.h5 *.hdf5)')
+        if not names:
+            return
+        folder = QFileDialog.getExistingDirectory(self.window, 'Batch output folder', str(Path(names[0]).parent))
+        if folder:
+            self.start_batch(names, folder)
+
+    def start_batch(self, paths, directory):
+        if self.job is not None or self.run_stage is not None or self.export_worker is not None or self.batch_active or self.closing:
+            return False
+        from planetrecon.gui.batch import make_queue
+        try:
+            self.controls.configuration()  # Validate typed settings before accepting the queue.
+            self._export_config()
+            items = make_queue(paths, directory, self.encoding.currentText())
+        except (ValueError, TypeError, OSError) as exc:
+            self.error.setText(str(exc))
+            return False
+        self.batch_controls = self.controls.settings_state()
+        self.batch_items = items
+        self.batch_active = True
+        self.batch_current = None
+        self.batch_saving = False
+        self.checkpoint_path.clear()
+        self.resume_check.setChecked(False)
+        self.batch_status.show()
+        self._next_batch()
+        return True
+
+    def _batch_display(self):
+        self.batch_status.setPlainText('\n'.join(
+            f'{i + 1}/{len(self.batch_items)} · {item.status} · {item.source}'
+            + (f' → {item.output}' if item.status == 'saved' else '')
+            + (f' · {item.detail}' if item.detail else '')
+            for i, item in enumerate(self.batch_items)))
+
+    def _next_batch(self):
+        if not self.batch_active or self.closing:
+            return
+        item = next((i for i in self.batch_items if i.status == 'queued'), None)
+        self.batch_current = item
+        if item is None:
+            self.batch_active = False
+            saved = sum(i.status == 'saved' for i in self.batch_items)
+            failed = sum(i.status == 'failed' for i in self.batch_items)
+            self.status.setText(f'Batch complete: {saved} saved, {failed} failed. See the queue for output paths and errors.')
+            self._buttons()
+            return
+        # Each file starts from the user's chosen controls, without carrying
+        # measured sizes, centre, epoch or a filename-selected planet forward.
+        self.controls.restore_settings(self.batch_controls)
+        self.controls.clear_geometry_estimate()
+        self.preprocessing_info = {}
+        self._refresh_preprocessing()
+        self.path = item.source
+        self.input_image = None
+        self.input_metadata = {}
+        self.input_max = None
+        self.last_result = None
+        self.preview = None
+        self.result_label.setText('No scientific result yet for this batch capture')
+        self.source_label.setText(str(self.path))
+        item.status = 'processing'
+        self._batch_display()
+        self._run()
+
+    def _batch_processing_done(self, kind):
+        if not self.batch_active or self.batch_current is None:
+            return
+        item = self.batch_current
+        if kind == 'completed' and self.last_result is not None and not self.last_result.incomplete:
+            try:
+                self.view.setCurrentText('Result')
+                self._fit_levels()  # Each capture's final full-resolution range.
+                cfg = self._export_config()
+                self.batch_saving = True
+                if self.save_result(item.output, cfg):
+                    item.status = 'saving'
+                    self._batch_display()
+                    return
+                raise ValueError('The batch result could not be saved')
+            except (ValueError, TypeError, OSError) as exc:
+                self.batch_saving = False
+                item.detail = str(exc)
+        else:
+            item.detail = self.error.text() or 'No complete result was produced'
+        item.status = 'failed'
+        self._batch_display()
+        QTimer.singleShot(0, self._next_batch)
+
+    def _stop_batch(self):
+        self.batch_active = False
+        for item in self.batch_items:
+            if item.status in ('queued', 'processing'):
+                item.status = 'cancelled'
+        if self.batch_items:
+            self._batch_display()
 
     def _choose(self):
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
@@ -406,15 +525,23 @@ class MainWindow:
         stage = self.run_stage
         if kind != 'completed' or stage == 'stack' or self.closing:
             self.run_stage = None
+            self._batch_processing_done(kind)
             self._buttons()
             return
         if stage == 'inspect':
             info = self.preprocessing_info
             geometry = self.controls.fields['geometry_mode'].currentData() != 'none'
+            try:
+                missing = self.controls.configuration().missing_motion_parameters()
+            except (ValueError, TypeError) as exc:
+                self.error.setText(str(exc))
+                self.run_stage = None
+                self._batch_processing_done('error')
+                self._buttons()
+                return
             needs_geometry = geometry and (
                 not info.get('geometry_estimate', {}).get('applicable', True)
-                or bool({k: v for k, v in self.controls.configuration().missing_motion_parameters().items()
-                         if k != 'sub_obs_lat_rad'}))
+                or bool(set(missing) - {'sub_obs_lat_rad'}))
             self.run_stage = ('preprocess' if info.get('status') != 'ready' or needs_geometry
                               else 'stack')
         else:
@@ -458,6 +585,7 @@ class MainWindow:
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             self.run_stage = None
+            self._batch_processing_done('error')
             self._buttons()
             return
         self.config = cfg
@@ -484,11 +612,16 @@ class MainWindow:
         self._buttons()
 
     def _cancel(self):
+        self._stop_batch()
+        if self.batch_saving:
+            self._cancel_save()
         self.run_stage = None
         if self.job is not None and self.cancel_started is None:
             self.cancel_started = time.monotonic()
             self.job.cancel_event.set()
             self.status.setText('Cancelling processing; last received result remains available.')
+            self._buttons()
+        else:
             self._buttons()
 
     def _set_input(self, payload):
@@ -856,11 +989,18 @@ class MainWindow:
         return True
 
     def _cancel_save(self):
+        if self.batch_saving:
+            self._stop_batch()
         if self.export_worker is not None:
             self.export_worker.cancel_event.set()
             self.save_status.setText('Cancelling save before publication…')
 
     def _save_outcome(self, report, error):
+        if self.batch_saving and self.batch_current is not None:
+            self.batch_current.status = ('cancelled' if isinstance(error, ExportCancelled) else
+                                         'failed' if error is not None else 'saved')
+            self.batch_current.detail = str(error) if error is not None else ''
+            self._batch_display()
         if error is not None:
             self.save_status.setText('Save cancelled.' if isinstance(error, ExportCancelled) else f'Save failed: {error}')
         else:
@@ -875,13 +1015,18 @@ class MainWindow:
             worker.wait()
             worker.deleteLater()
             self.export_worker = None
+        was_batch = self.batch_saving
+        self.batch_saving = False
         self._buttons()
         if self.closing:
             self.window.close()
+        elif was_batch and self.batch_active:
+            self._next_batch()
 
     def _shutdown(self, *_args):
         self.settings_timer.stop()
         self._save_settings()
+        self._stop_batch()
         self.run_stage = None
         self._finish_job()
         self._cancel_save()

@@ -6,12 +6,19 @@ reconstructing or replacing the displayed result. The measurements are cached
 beside the capture as `<capture filename>.planetrecon-preprocess.npz`.
 
 The **Use cached preprocessing (quality and shape)** checkbox independently
-controls whether later runs use those decisions. Processing never launches a
-new analysis automatically. New GUI and CLI runs default to local patch alignment and the upper 50% quality
-range, so run Preprocess before stacking. With local alignment disabled and
+controls whether later runs use those decisions. GUI **Run** validates the cache
+and automatically runs preprocessing when it is missing, stale or invalid,
+then applies automatic geometry and midpoint prefills before stacking. Motion
+runs also refresh inapplicable or incomplete geometry estimates once; required
+parameters that remain unresolved still prevent stacking. Manual overrides are
+preserved. Cancelling during preparation prevents stacking from starting.
+Checkpoint resumes retain their existing settings and cache.
+
+New GUI and CLI runs default to local patch alignment and the upper 50% quality
+range. CLI callers still run `preprocess` explicitly before stacking. With local alignment disabled and
 100% selected, runs without a cache apply only their existing validity, saturation
 and registration checks. A stale or corrupt selected cache
-requires another Preprocess action or disabling cache use. Input files are not
+requires another CLI Preprocess action or disabling cache use. Input files are not
 modified.
 
 The GUI shows quality exclusions, shape exclusions, overlap, other invalid or

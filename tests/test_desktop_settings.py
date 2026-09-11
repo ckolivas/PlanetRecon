@@ -53,3 +53,18 @@ def test_corrupt_settings_and_atomic_write(tmp_path):
     settings.save(path, {'controls': {'fields': {'device': 'cpu'}}})
     assert settings.load(path)[0]['controls']['fields']['device'] == 'cpu'
     assert list(tmp_path.iterdir()) == [path]
+
+
+def test_control_changes_are_saved_without_closing(tmp_path):
+    import time
+    app = create_app([])
+    path = tmp_path / 'preferences.json'
+    win = MainWindow(config=ReconstructionConfig(), settings_path=path)
+    win.controls.fields['stack_percent'].setValue(73)
+    deadline = time.monotonic() + 3
+    while not path.exists() and time.monotonic() < deadline:
+        app.processEvents()
+        time.sleep(.01)
+    assert settings.load(path)[0]['controls']['fields']['stack_percent'] == 73
+    win.window.close()
+    app.processEvents()

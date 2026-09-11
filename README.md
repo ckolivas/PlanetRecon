@@ -299,6 +299,29 @@ regimes if they are missing, then writes classification tables under
 ## Qt capture workflow (W14)
 
 Start `python3 -m planetrecon gui --path capture.ser`, or use **Open capture**.
+The GUI saves the last chosen controls, export options and capture path in
+`PlanetRecon/settings.json` under the operating system's user configuration
+directory (`~/.config/PlanetRecon/settings.json` on Linux). Values restore on
+startup, including inactive controls and the distinction between manual and
+estimated geometry. Checkpoint paths and Resume are not restored automatically.
+Set `PLANETRECON_SETTINGS_PATH` to use a different preferences file.
+
+**Run** validates the capture's preprocessing cache and automatically preprocesses
+if it is missing, stale or unusable, then stacks with the resulting prefills.
+Motion runs also refresh geometry estimates when needed; unresolved required
+geometry still prevents stacking. **Preprocess** remains available separately.
+Checkpoint resumes retain their exact settings and do not rebuild caches.
+
+**Batch…** selects multiple captures and an output folder, then processes and
+saves them sequentially using the current processing and export settings.
+Each capture gets its own cache, automatic geometry and midpoint; manually
+entered overrides apply to every capture. Filename-based planet selection follows
+each file unless a planet was chosen manually. Batch jobs start fresh without
+accumulator checkpoints. Output names use `<capture stem>-planetrecon.tif` (or
+`.png`); numeric suffixes preserve existing files and distinguish duplicate names.
+Blank export levels are fitted to each final result. The queue lists saved outputs
+and failures, continues after individual failures, and stops on cancellation.
+
 **Inspect input** reads metadata and a bounded raw preview in an owned process.
 CFA inputs show labelled nearest-neighbour RGB previews; reconstruction still uses raw samples.
 The four settings tabs expose:
