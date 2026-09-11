@@ -117,6 +117,7 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     from planetrecon.geometry.pose import capture_exposure
     exposure = capture_exposure(source, config.exposure_s)
     config = replace(config, exposure_s=exposure['value_s'])
+    saturn_target = config.geometry_mode == 'saturn' or config.rotation_planet == 'saturn'
     shape = estimate_flattening(selection, config)
     report = {'method': 'projected spherical texture motion v2', 'suggestions': dict(shape['suggestions']),
               'status': 'unresolved', 'notes': [], 'sample_indices': []}
@@ -182,13 +183,13 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     suggestions = report['suggestions']
     # This is only an initial pole-axis hypothesis. Surface tracking supersedes
     # it when resolved; a crescent can exchange the major and polar axes.
-    if abs(axis) > .9 and (1.02 < width/height < 1.35 or config.geometry_mode == 'saturn'):
+    if abs(axis) > .9 and (1.02 < width/height < 1.35 or saturn_target):
         suggestions['pole_pa_rad'] = report['silhouette_axis_rad'] + config.field_angle0_rad
         report['orientation_origin'] = 'silhouette (major axis assumed equatorial)'
         report['notes'].append('Initial pole assumes the stable silhouette major axis is equatorial; phase can bias or interchange the axes.')
     suggestions.update(field_center_x=float(np.mean(centres, axis=0)[0])*scale+.5*bin_scale,
                        field_center_y=float(np.mean(centres, axis=0)[1])*scale+.5*bin_scale)
-    if config.geometry_mode == 'saturn':
+    if saturn_target:
         from planetrecon.geometry.saturn_fit import fit_saturn_geometry
         ring_fits = [fit_saturn_geometry(average, opening_rad=config.sub_obs_lat_rad) for average in averages]
         report['saturn_geometry'] = {'fits': ring_fits, 'status': 'unresolved',
@@ -306,7 +307,7 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
         report['surface_direction'] = ('left' if surface[0] < 0 else 'right') + (' / up' if surface[1] < 0 else ' / down')
         lat = config.sub_obs_lat_rad
         if lat is None:
-            if config.geometry_mode == 'saturn':
+            if saturn_target:
                 report['notes'].append('Saturn needs a supplied signed viewing latitude; an equator-on assumption would incorrectly make the rings edge-on.')
                 return report
             lat = 0.

@@ -404,7 +404,8 @@ class ConfigControls(QTabWidget):
         allow_prefill = allow_prefill and applicable
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
                    'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'}
-        if self.fields['geometry_mode'].currentData() == 'saturn':
+        if (self.fields['geometry_mode'].currentData() == 'saturn'
+                or estimate.get('saturn_geometry', {}).get('status') == 'estimated'):
             allowed.update(('ring_inner_radius_px', 'ring_outer_radius_px'))
         if allow_prefill:
             for key in ('pole_pa_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening',

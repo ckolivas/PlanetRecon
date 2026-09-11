@@ -212,6 +212,7 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         selection.summary['timing'] = capture_timing(source, cadence_s=config.cadence_s)
         selection.summary['geometry_estimate'] = discover_geometry(source, config, selection, calibration, should_cancel)
         selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
+        selection.summary['geometry_analysis_mode'] = config.geometry_mode
         selection.identity = identity(source, config, calibration, should_cancel)
         if selection.identity != before:
             raise ValueError('capture changed during preprocessing; no cache was saved')

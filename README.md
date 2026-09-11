@@ -185,8 +185,10 @@ the next run while retaining the selected rotation rate. The correction is a man
 override, so repeated preprocessing preserves it; clicking again restores the
 original orientation. It works with measured rates and planet presets.
 
-In **Saturn** mode, **Preprocess** measures globe and visible ring radii from
+With **Saturn** selected as the planet or motion model, **Preprocess** measures globe and visible ring radii from
 separate boundary gradients in three aligned averages, and prefills the GUI.
+This also works with Motion model **None** and local alignment; the ring radii
+are retained for a later switch to Saturn motion compensation.
 It also estimates field rotation from the timed ring-axis change and globe
 flattening from the exposed limb, conditional on viewing latitude. Manual edits
 and checkpoint settings are preserved. Re-run preprocessing to obtain these

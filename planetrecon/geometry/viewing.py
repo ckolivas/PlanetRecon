@@ -162,7 +162,7 @@ def resolve_viewing(source, config, *, strict=True, for_preprocessing=False):
     Ordinary stacking does not need a lookup in that mode.
     """
     needs_view = (config.geometry_mode in ('surface', 'combined', 'saturn')
-                  or (for_preprocessing and config.geometry_mode == 'none'))
+                  or for_preprocessing)
     if config.sub_obs_lat_rad is not None or not needs_view:
         return config, None
     planet = 'saturn' if config.geometry_mode == 'saturn' else config.rotation_planet

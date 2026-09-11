@@ -129,3 +129,69 @@ def test_cache_gui_prefill_manual_values_and_actual_saturn_run(tmp_path):
     finally:
         controls.close()
         app.processEvents()
+
+
+@pytest.mark.parametrize('mode', ['none', 'surface', 'combined', 'field'])
+def test_saturn_target_detection_does_not_depend_on_stacking_mode(mode):
+    source, config = recording('RGGB')
+    config = replace(config, geometry_mode=mode, local_alignment=mode == 'none')
+    report = discover_geometry(source, config, screen_source(source, config))
+    assert report['saturn_geometry']['status'] == 'estimated'
+    for key in ('equatorial_radius_px', 'ring_inner_radius_px', 'ring_outer_radius_px'):
+        assert report['suggestions'][key] > 0
+    assert config.geometry_mode == mode and config.local_alignment == (mode == 'none')
+
+
+def test_gui_preprocess_none_then_switch_to_saturn_and_run(tmp_path, monkeypatch):
+    import queue
+    import threading
+    from types import SimpleNamespace
+    from planetrecon.gui.app import create_app, MainWindow
+    from planetrecon.io.ser import write_ser, SERSource, NAME_TO_COLOR
+    from planetrecon.jobs import _worker_run
+    from planetrecon.pipeline.preprocess_cache import load_cache
+    from planetrecon.pipeline.baseline import stack_source
+
+    source, config = recording('RGGB')
+    path = write_ser(tmp_path/'colour-Sat.ser', source._frames.astype('u2'),
+                     color_id=NAME_TO_COLOR['RGGB'], timestamps=np.arange(36)*50000000)
+    config = replace(config, geometry_mode='none', local_alignment=True, stack_percent=50)
+    app = create_app(['saturn-mode-switch'])
+    window = MainWindow(path, config)
+    dispatched = []
+
+    def start(path, cfg, **options):
+        dispatched.append(cfg)
+        events = queue.Queue()
+        if options.get('preprocess_only'):
+            _worker_run('saturn-gui', str(path), cfg.to_dict(), events, threading.Event(), None,
+                        preprocess_only=True, auto_output_epoch=options['auto_output_epoch'])
+        return SimpleNamespace(job_id='saturn-gui', snapshot_request=threading.Event(),
+                               poll=lambda: list(events.queue), close=lambda: None)
+
+    monkeypatch.setattr('planetrecon.gui.app.start_stack_job', start)
+    try:
+        window._preprocess()
+        assert dispatched[-1].geometry_mode == 'none' and dispatched[-1].local_alignment
+        window._poll()
+        assert not window.error.text()
+        assert window.preprocessing_info['geometry_estimate']['saturn_geometry']['status'] == 'estimated'
+        # The inactive tab retains estimates without enabling rings in a None run.
+        assert window.controls.configuration().ring_inner_radius_px is None
+        window.controls.fields['geometry_mode'].setCurrentText('saturn')
+        window._run()
+        assert not window.error.text()
+        actual = dispatched[-1]
+        actual.require_motion_parameters()
+        assert actual.geometry_mode == 'saturn' and not actual.local_alignment
+        assert actual.ring_outer_radius_px == pytest.approx(78, abs=2)
+        with SERSource(path) as capture:
+            selection, report = load_cache(capture, actual)
+            assert report['geometry_estimate'].get('applicable', True)
+            assert selection.summary['geometry_analysis_mode'] == 'none'
+            result = stack_source(capture, actual, preprocessing=selection)
+            assert result.n_used > 0 and result.image.shape[-1] == 3
+    finally:
+        window._finish_job()
+        window.window.close()
+        app.processEvents()
