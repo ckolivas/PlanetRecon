@@ -238,7 +238,7 @@ def test_config_requires_saturn_for_rings():
     )
 
 
-def test_low_opening_masks_overlap():
+def test_low_opening_retains_overlap():
     globe, rings = _setup(0.08)
     model = SaturnSceneModel(globe, rings)
     assert model.low_opening
@@ -248,4 +248,4 @@ def test_low_opening_masks_overlap():
     info = model.classify_detector(x, y, pose)
     overlap = info["on_globe"] & info["on_ring"]
     assert np.any(overlap)
-    assert not np.any(valid[overlap])
+    assert np.all(valid[overlap])

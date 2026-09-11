@@ -47,7 +47,7 @@ def test_exposed_far_ring_is_classified_by_depth():
     assert not np.any(info["near_ring"] & (info["t_ring"] < 0))
 
 
-def test_transparent_overlap_and_target_occlusion_are_excluded():
+def test_overlap_uses_globe_motion_and_retains_observed_samples():
     model = setup(spin=1.2)
     x, y = detector_xy_grids(48, 64)
     source = FramePose(1., .2, 32., 24.)
@@ -55,11 +55,16 @@ def test_transparent_overlap_and_target_occlusion_are_excluded():
     info = model.classify_detector(x, y, source)
     overlap = info["near_ring"] & info["on_globe"]
     xd, yd, valid = model.src_to_ref(x, y, source, reference)
-    assert overlap.any() and not valid[overlap].any()
     gx, gy, gv = model.globe_model.src_to_ref(x, y, source, reference)
+    assert overlap.any() and valid[overlap].any()
+    np.testing.assert_allclose(xd[overlap],gx[overlap],atol=1e-12)
+    np.testing.assert_allclose(yd[overlap],gy[overlap],atol=1e-12)
     target = model.classify_detector(gx, gy, reference)
     occluded = (info["labels"] == LAYER_GLOBE) & gv & target["near_ring"] & target["on_globe"]
-    assert occluded.any() and not valid[occluded].any()
+    regions = model.reconstruction_regions(info)
+    target_regions = model.reconstruction_regions(target)
+    assert occluded.any()
+    np.testing.assert_array_equal(valid[occluded],(regions == target_regions)[occluded])
 
 
 @pytest.mark.parametrize("mode", ["mono", "RGB", "RGGB"])
@@ -255,3 +260,33 @@ def test_saturn_setup_reports_all_missing_values_and_accepts_signed_zero():
     config(sub_obs_lat_rad=0.).require_saturn_geometry()
     config(sub_obs_lat_rad=-.4).require_saturn_geometry()
     ReconstructionConfig().require_saturn_geometry()
+
+
+@pytest.mark.parametrize('opening', [.08, -.18, .4])
+@pytest.mark.parametrize('mode', ['mono', 'RGB', 'RGGB'])
+def test_identity_stack_preserves_overlap_brightness_and_globe_coverage(opening, mode):
+    model = setup(opening=opening, spin=0.)
+    pose = FramePose(0.,0.,32.,24.)
+    image = render_saturn(48,64,pose,model.globe,model.rings,lambda lon,lat: .7+.1*np.cos(3*lat))
+    if mode == 'RGB':
+        image = image[...,None]*[.8,1.,.6]
+    elif mode == 'RGGB':
+        labels = cfa_labels(48,64,mode)
+        image *= np.where(labels=='R',.8,np.where(labels=='B',.6,1.))
+    source = ArraySource(image[None],color_mode=mode,bit_depth=32,timestamps=np.array([0.]))
+    result = stack_source(source,config(frame_preselection=False,sub_obs_lat_rad=opening,
+        surface_rate_rad_s=0.,field_rate_rad_s=0.,exposure_s=0.))
+    x,y = detector_xy_grids(48,64)
+    info = model.classify_detector(x,y,pose)
+    overlap = info['on_globe'] & info['on_ring']
+    assert overlap.any()
+    assert np.all(result.layer_coverage['globe'][overlap] > 0)
+    assert not np.any(result.layer_coverage['ring'][overlap])
+    if mode == 'RGGB':
+        for channel,name in enumerate('RGB'):
+            observed = overlap & (labels == name)
+            assert result.validity[...,channel][observed].all()
+            np.testing.assert_allclose(result.image[...,channel][observed],image[observed],atol=1e-12)
+    else:
+        assert result.validity[overlap].all()
+        np.testing.assert_allclose(result.image[overlap],image[overlap],atol=1e-12)

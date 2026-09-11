@@ -147,24 +147,29 @@ class SaturnSceneModel(SceneModel):
             info["moon"] = np.zeros(np.asarray(x).shape, dtype=bool)
         return info
 
+    def reconstruction_labels(self, info: dict) -> np.ndarray:
+        """Assign observed ring/globe composites to globe motion inside the disc.
+
+        Physical front/back labels remain available for rendering. Stacking
+        retains the measured composite brightness without attempting to unmix
+        or subtract the foreground ring. Moon and edge-on exclusions still apply.
+        """
+        return np.where(info["on_globe"] & ~info["moon"], LAYER_GLOBE, info["labels"])
+
     def reconstruction_regions(self, info: dict) -> np.ndarray:
-        """Disjoint, unmixed regions suitable for a single-image backprojection.
+        """Motion/illumination regions for a single-image backprojection.
 
         Codes 1/3 are lit/shadowed globe, 2/4 are lit/shadowed rings, 0 is
-        background. -1 is unsupported. A transparent ring over a moving globe
-        cannot be inverted with a single warp, so that mixture is excluded.
+        background. -1 is unsupported. Foreground ring/globe composites use
+        the globe warp as an approximation, retaining their observed intensity.
         """
-        labels = info["labels"]
+        labels = self.reconstruction_labels(info)
         globe = labels == LAYER_GLOBE
         ring = (labels == LAYER_NEAR_RING) | (labels == LAYER_FAR_RING)
         region = np.zeros(labels.shape, dtype=np.int8)
         region = np.where(globe, np.where(info["ring_shadow"], 3, 1), region)
         region = np.where(ring, np.where(info["globe_shadow"], 4, 2), region)
         invalid = info["moon"] | info["ring_degenerate"]
-        if self.transmission > 0:
-            invalid |= info["near_ring"] & info["on_globe"]
-        if self.low_opening:
-            invalid |= info["on_globe"] & info["on_ring"]
         return np.where(invalid, -1, region)
 
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
@@ -173,7 +178,7 @@ class SaturnSceneModel(SceneModel):
         field_src = src if self.apply_field else replace(src, field_angle_rad=0.0)
         field_ref = ref if self.apply_field else replace(ref, field_angle_rad=0.0)
         fx, fy, fv = self.field_model.src_to_ref(x, y, field_src, field_ref)
-        globe = info["labels"] == LAYER_GLOBE
+        globe = self.reconstruction_labels(info) == LAYER_GLOBE
         dx = np.where(globe, gx, fx)
         dy = np.where(globe, gy, fy)
         regions = self.reconstruction_regions(info)

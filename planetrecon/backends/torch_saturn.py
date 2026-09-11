@@ -76,10 +76,6 @@ class TorchSaturnWarp(TorchGlobeWarp):
         invalid = torch.zeros_like(on_globe)
         if model.edge_on:
             invalid |= ((n[0]*sx+n[1]*sy).abs() <= rings.outer_radius_px*abs(n[2])+.5) & (torch.hypot(sx,sy) <= rings.outer_radius_px+.5)
-        if model.transmission > 0:
-            invalid |= near & on_globe
-        if model.low_opening:
-            invalid |= on_ring & on_globe
         moon = model.moon
         if moon is not None and mask_moon:
             dt = pose.t_s-g.reference_epoch_s
@@ -89,12 +85,17 @@ class TorchSaturnWarp(TorchGlobeWarp):
             moon_mask = torch.hypot(x-(mx+pose.cx),y-(pose.cy-my)) <= moon.radius_px
             labels = torch.where(moon_mask,LAYER_MOON,labels)
             invalid |= moon_mask
+        motion_labels = torch.where(on_globe & (labels != LAYER_MOON),LAYER_GLOBE,labels)
         regions = torch.zeros_like(labels)
-        regions = torch.where(labels == LAYER_GLOBE,torch.where(ring_shadow,3,1),regions)
-        regions = torch.where((labels == LAYER_NEAR_RING) | (labels == LAYER_FAR_RING),
+        regions = torch.where(motion_labels == LAYER_GLOBE,torch.where(ring_shadow,3,1),regions)
+        regions = torch.where((motion_labels == LAYER_NEAR_RING) | (motion_labels == LAYER_FAR_RING),
                               torch.where(globe_shadow,4,2),regions)
         regions = torch.where(invalid,-1,regions)
-        return {'labels':labels,'regions':regions}
+        # Preserve quality scoring on exposed globe texture, independently of
+        # the added overlap coverage. Ring edges must not inflate frame scores.
+        quality_regions = torch.where((labels == LAYER_GLOBE) & ~(on_ring & model.low_opening),regions,-1)
+        return {'labels':labels,'motion_labels':motion_labels,'regions':regions,
+                'quality_regions':quality_regions}
 
     def map(self, src, ref, info=None):
         info = self.classify(src) if info is None else info
@@ -103,7 +104,7 @@ class TorchSaturnWarp(TorchGlobeWarp):
         if self.model.apply_field:
             sx,sy = self.rotate(sx,sy,ref.field_angle_rad-src.field_angle_rad)
         fx,fy = sx+ref.cx,ref.cy-sy
-        globe = info['labels'] == LAYER_GLOBE
+        globe = info['motion_labels'] == LAYER_GLOBE
         x,y = torch.where(globe,gx,fx),torch.where(globe,gy,fy)
         target = self.classify(ref,x,y,mask_moon=False)['regions']
         valid = torch.where(globe,gv,torch.isfinite(fx)&torch.isfinite(fy))
@@ -127,7 +128,7 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
     def prepare_source(self, pose):
         self.source_info = self.classify(pose)
         self.prepared_pose = pose
-        return self.source_info['regions'].cpu().numpy()
+        return self.source_info['quality_regions'].cpu().numpy()
 
     def sample_corners(self, pose, ref):
         if self.prepared_pose != pose:
@@ -137,7 +138,7 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
             yield index,weight*((regions >= 0)&(regions == self.target_regions[index]))
 
     def add_layer_coverage(self, index, weighted):
-        labels = self.source_info['labels'].flatten()
+        labels = self.source_info['motion_labels'].flatten()
         self.globe_weight.flatten().scatter_add_(0,index,weighted*(labels == LAYER_GLOBE))
         self.ring_weight.flatten().scatter_add_(0,index,weighted*((labels == LAYER_NEAR_RING)|(labels == LAYER_FAR_RING)))
 

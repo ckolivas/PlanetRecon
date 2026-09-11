@@ -356,6 +356,10 @@ def prepare_geometry(
     }
     if viewing_record is not None:
         diagnostics['viewing_geometry'] = viewing_record
+    if isinstance(model, SaturnSceneModel):
+        # This changes which observations enter each sum. Include it in the
+        # checkpoint geometry identity so old masked sums cannot be resumed.
+        diagnostics['ring_globe_overlap_policy'] = 'observed composite follows globe motion v1'
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if surface_origin == 'planet_preset':
@@ -386,10 +390,8 @@ def prepare_geometry(
         warnings.append("roll_unconstrained: insufficient or ambiguous angular detail cannot constrain field angle")
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
-    if isinstance(model, SaturnSceneModel) and model.transmission > 0:
-        warnings.append("mixed_ring_globe: transparent foreground-ring overlap is excluded; a joint layer solve is not implemented")
-    if getattr(model, "low_opening", False):
-        warnings.append("low_opening: globe/ring overlap is conservatively masked")
+    if isinstance(model, SaturnSceneModel) and not model.edge_on:
+        warnings.append("ring_globe_overlap: observed overlap brightness is retained using globe motion; foreground ring and globe light are not separated")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if requested_surface_rate is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")
@@ -810,15 +812,17 @@ def stack_source_geometry(
                 from planetrecon.rank import LAPLACIAN_KERNEL
 
                 if gpu_accumulator is not None:
-                    source_regions = gpu_accumulator.prepare_source(pose)
+                    score_regions = gpu_accumulator.prepare_source(pose)
                 else:
                     layer_info = model.classify_detector(xg, yg, pose)
-                    layer_labels = layer_info["labels"]
+                    layer_labels = model.reconstruction_labels(layer_info)
                     source_regions = model.reconstruction_regions(layer_info)
+                    score_regions = np.where((layer_info['labels'] == LAYER_GLOBE)
+                        & ~(layer_info['on_ring'] & model.low_opening), source_regions, -1)
                 # Evaluate real globe texture only where the whole Laplacian
                 # stencil stays in one illumination region; no artificial edge.
-                score_mask = (binary_erosion(source_regions == 1, iterations=2 if bayer else 1)
-                              | binary_erosion(source_regions == 3, iterations=2 if bayer else 1))
+                score_mask = (binary_erosion(score_regions == 1, iterations=2 if bayer else 1)
+                              | binary_erosion(score_regions == 3, iterations=2 if bayer else 1))
                 score_mask[:2] = score_mask[-2:] = False
                 score_mask[:, :2] = score_mask[:, -2:] = False
                 lap = convolve(quality_plane, LAPLACIAN_KERNEL, mode="nearest")

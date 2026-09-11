@@ -39,6 +39,7 @@ def test_classification_projection_and_pull(device, latitude, transmission, fiel
         actual,expected = warp.classify(pose),model.classify_detector(x,y,pose)
         np.testing.assert_array_equal(actual['labels'].cpu(),expected['labels'])
         np.testing.assert_array_equal(actual['regions'].cpu(),model.reconstruction_regions(expected))
+        np.testing.assert_array_equal(actual['motion_labels'].cpu(),model.reconstruction_labels(expected))
     actual,expected = warp.map(src,ref),model.src_to_ref(x,y,src,ref)
     np.testing.assert_array_equal(actual[2].cpu(),expected[2])
     for a,b in zip(actual[:2],expected[:2]):
@@ -114,8 +115,9 @@ def test_identity_keeps_cfa_and_layer_support(device):
     labels=cfa_labels(*shape,'RGGB')
     for i,c in enumerate('RGB'):
         np.testing.assert_array_equal(weight[...,i],(labels==c)&(regions>=0))
-    np.testing.assert_array_equal(globe,(info['labels']==2)&(regions>=0))
-    np.testing.assert_array_equal(ring,((info['labels']==1)|(info['labels']==3))&(regions>=0))
+    motion_labels=model.reconstruction_labels(info)
+    np.testing.assert_array_equal(globe,(motion_labels==2)&(regions>=0))
+    np.testing.assert_array_equal(ring,((motion_labels==1)|(motion_labels==3))&(regions>=0))
 
 
 @cuda

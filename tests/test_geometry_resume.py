@@ -88,3 +88,18 @@ def test_cancel_before_geometry_preserves_checkpoint(tmp_path):
         result=stack_source(src,cfg,state_checkpoint=state,should_cancel=lambda:True)
     assert result.incomplete and result.n_used==0
     assert state.read_bytes()==b'previous'
+
+
+def test_saturn_checkpoint_before_overlap_policy_is_refused(tmp_path):
+    path=capture(tmp_path,'mono');cfg=config('saturn');state=tmp_path/'state.npz'
+    with SERSource(path) as src:
+        stack_source(src,cfg,state_checkpoint=state)
+    with np.load(state,allow_pickle=False) as data:
+        arrays={key:data[key] for key in data.files}
+    metadata=json.loads(str(arrays['metadata']))
+    del metadata['identity']['geometry']['ring_globe_overlap_policy']
+    arrays['metadata']=json.dumps(metadata)
+    np.savez(state,**arrays)
+    with SERSource(path) as src:
+        with pytest.raises(ValueError,match='identity/configuration mismatch'):
+            stack_source(src,cfg,resume_from=state)
