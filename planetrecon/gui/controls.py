@@ -297,6 +297,60 @@ class ConfigControls(QTabWidget):
         if path:
             edit.setText(path)
 
+    def settings_state(self):
+        """Save displayed values, including inactive controls and manual intent."""
+        fields = {}
+        for key, edit in self.fields.items():
+            if isinstance(edit, QComboBox):
+                fields[key] = edit.currentData()
+            elif isinstance(edit, QCheckBox):
+                fields[key] = edit.isChecked()
+            elif isinstance(edit, QSpinBox):
+                edit.interpretText()
+                fields[key] = edit.value()
+            else:
+                fields[key] = edit.text()
+        return dict(fields=fields, geometry_auto=dict(self.geometry_auto),
+                    geometry_manual=sorted(self.geometry_manual),
+                    planet_choice_manual=self.planet_choice_manual)
+
+    def restore_settings(self, state):
+        if not isinstance(state, dict) or not isinstance(state.get('fields'), dict):
+            raise ValueError('invalid saved controls')
+        self.geometry_auto = {}
+        for key, value in state['fields'].items():
+            edit = self.fields.get(key)
+            if edit is None:
+                continue
+            edit.blockSignals(True)
+            try:
+                if isinstance(edit, QComboBox):
+                    index = edit.findData(value)
+                    if index >= 0:
+                        edit.setCurrentIndex(index)
+                elif isinstance(edit, QCheckBox) and isinstance(value, bool):
+                    edit.setChecked(value)
+                elif isinstance(edit, QSpinBox) and type(value) is int:
+                    edit.setValue(value)
+                elif isinstance(edit, QLineEdit) and isinstance(value, str):
+                    edit.setText(value)
+            finally:
+                edit.blockSignals(False)
+        self._mode_changed()
+        self._selection_mode_changed()
+        self._rotation_changed()
+        for key in ('stack_percent', 'frame_selection_mode'):
+            self.fields[key].setEnabled(self.fields['frame_preselection'].isChecked())
+        auto = state.get('geometry_auto', {})
+        manual = state.get('geometry_manual', [])
+        if not isinstance(auto, dict) or not isinstance(manual, list):
+            raise ValueError('invalid saved geometry intent')
+        self.geometry_auto = {k: v for k, v in auto.items()
+                              if k in self.fields and isinstance(v, str)}
+        self.geometry_manual = {k for k in manual if isinstance(k, str) and k in self.fields}
+        self.planet_choice_manual = bool(state.get('planet_choice_manual', False))
+        self.capture_planet_path = None
+
     def configuration(self):
         values = {}
         saturn = self.fields['geometry_mode'].currentData() == 'saturn'

@@ -82,7 +82,14 @@ class ExportWorker(QThread):
 
 
 class MainWindow:
-    def __init__(self, path: Path | None = None, config: ReconstructionConfig | None = None):
+    def __init__(self, path: Path | None = None, config: ReconstructionConfig | None = None,
+                 *, settings_path: Path | None = None):
+        from planetrecon.gui import settings
+        # Explicit engine configurations are isolated unless a preferences file
+        # is requested (also keeps scripted/test windows independent).
+        self.settings_path = (Path(settings_path) if settings_path is not None else
+                              settings.default_path() if config is None else None)
+        saved, settings_error = settings.load(self.settings_path) if self.settings_path else ({}, None)
         # New interactive jobs use the preferred stacking preset; supplied jobs
         # and saved engine configurations retain their explicit settings.
         self.config = config or ReconstructionConfig(
@@ -292,6 +299,40 @@ class MainWindow:
         self.timer = QTimer(self.window)
         self.timer.setInterval(200)
         self.timer.timeout.connect(self._poll)
+        if saved:
+            try:
+                self.controls.restore_settings(saved['controls'])
+                last_path = saved.get('capture')
+                if self.path is None and isinstance(last_path, str) and Path(last_path).is_file():
+                    self.path = Path(last_path)
+                if self.path is None or str(self.path) != last_path:
+                    self.controls.clear_geometry_estimate()
+                else:
+                    self.controls.capture_planet_path = str(self.path)
+                for key in ('encoding', 'zoom', 'channel'):
+                    value = saved.get(key)
+                    if isinstance(value, str):
+                        getattr(self, key).setCurrentText(value)
+                for key in ('save_black', 'save_white', 'save_gamma'):
+                    value = saved.get(key)
+                    if isinstance(value, str):
+                        getattr(self, key).setText(value)
+            except (KeyError, TypeError, ValueError) as exc:
+                settings_error = f'Could not fully restore settings: {exc}'
+        if self.path is not None:
+            self.source_label.setText(str(self.path))
+        if settings_error:
+            self.error.setText(settings_error)
+        self.settings_timer = QTimer(self.window)
+        self.settings_timer.setSingleShot(True)
+        self.settings_timer.setInterval(500)
+        self.settings_timer.timeout.connect(self._save_settings)
+        for edit in (*self.controls.fields.values(), self.encoding, self.zoom, self.channel,
+                     self.save_black, self.save_white, self.save_gamma):
+            signal = (edit.currentIndexChanged if isinstance(edit, QComboBox) else
+                      edit.toggled if isinstance(edit, QCheckBox) else
+                      edit.textChanged if isinstance(edit, QLineEdit) else edit.valueChanged)
+            signal.connect(lambda *_: self.settings_timer.start())
         self._export_options()
         self._buttons()
         if self.path is not None:
@@ -299,6 +340,20 @@ class MainWindow:
 
     def show(self):
         self.window.show()
+
+    def _save_settings(self):
+        if self.settings_path is None:
+            return
+        from planetrecon.gui import settings
+        try:
+            settings.save(self.settings_path, dict(
+                controls=self.controls.settings_state(),
+                capture=str(self.path) if self.path else None,
+                encoding=self.encoding.currentText(), zoom=self.zoom.currentText(),
+                channel=self.channel.currentText(), save_black=self.save_black.text(),
+                save_white=self.save_white.text(), save_gamma=self.save_gamma.text()))
+        except (OSError, ValueError) as exc:
+            self.error.setText(f'Could not save settings: {exc}')
 
     def _buttons(self):
         busy = self.job is not None
@@ -323,6 +378,7 @@ class MainWindow:
             self.checkpoint_path.clear()
             self.resume_check.setChecked(False)
             self.source_label.setText(str(self.path))
+            self._save_settings()
             self._inspect()
 
     def _inspect(self):
@@ -791,6 +847,8 @@ class MainWindow:
             self.window.close()
 
     def _shutdown(self, *_args):
+        self.settings_timer.stop()
+        self._save_settings()
         self._finish_job()
         self._cancel_save()
 
