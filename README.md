@@ -158,8 +158,13 @@ Advanced atmospheric claims stay gated by scientific requalification.
 Surface, combined and Saturn motion use CUDA float64 when Auto/GPU selects a supported
 device. Globe projection, reference warping and accumulation of mono/RGB/raw
 Bayer samples run on the GPU; image and coverage sums stay resident between
-frames. Geometry estimation, drift matching, calibration and final RGB completion
-remain on CPU, along with quality scoring. Saturn's per-frame layer classification,
+frames. Geometry estimation, calibration and final RGB completion remain on CPU,
+along with quality scoring and drift acceptance checks. Saturn ring tracking uses
+CUDA for field-rotated reference images and normalized linear correlations; the
+CPU retains its complete-support, distinct-peak and interpolation-loss checks.
+Other drift matching remains on CPU. Both processors are active during a CUDA run;
+the backend indicator identifies the reconstruction backend, not every stage.
+Saturn's per-frame layer classification,
 shadow and moon masks, region-constrained projection, accumulation and globe/ring
 coverage run on CUDA. The same unsupported overlaps remain masked; CUDA does not
 change the physical model. Field-only motion still uses CPU float64.

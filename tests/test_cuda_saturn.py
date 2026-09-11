@@ -92,6 +92,10 @@ def test_cuda_stack_matches_cpu(colour, latitude, transmission, moon):
     gpu = stack_source(source,replace(cfg,device='gpu'))
     assert gpu.backend == 'cuda' and gpu.n_used == 4
     assert not gpu.provenance['device_report']['fallback']
+    execution = gpu.provenance['geometry_execution']
+    assert execution['projection_and_accumulation'] == 'cuda'
+    assert execution['ring_reference_warps_and_correlations'] == ('unused' if moon else 'cuda')
+    assert execution['drift_peak_acceptance'] == 'cpu'
     equal_result(gpu,cpu)
 
 

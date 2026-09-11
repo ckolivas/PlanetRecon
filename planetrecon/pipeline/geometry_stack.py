@@ -554,12 +554,17 @@ def stack_source_geometry(
             track_translation = (not isinstance(model, SaturnSceneModel)
                                  or (model.moon is None and static_attitude))
             ring_registration = None
+            ring_acceleration = {}
             if (isinstance(model, SaturnSceneModel) and model.moon is None
                     and not model.edge_on
                     and not static_attitude):
                 from planetrecon.pipeline.ring_align import RingRegistration
+                if backend.name == 'cuda':
+                    from planetrecon.backends.torch_registration import TorchRingRegistrationOps
+                    ring_ops = TorchRingRegistrationOps((h,w))
+                    ring_acceleration = {'score_provider':ring_ops.scores, 'renderer':ring_ops.render}
                 ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
-                    model.globe.equatorial_radius_px, model.rings.outer_radius_px)
+                    model.globe.equatorial_radius_px, model.rings.outer_radius_px, **ring_acceleration)
             track_surface = (isinstance(model, OblateGlobeModel)
                              and diagnostics['surface_rate_rad_s'] != 0)
             track_field = (config.geometry_mode == 'field' and not static_attitude
@@ -617,7 +622,7 @@ def stack_source_geometry(
                         colour_anchor = _alignment_plane(bilinear_demosaic(anchor_frame, color), 'RGB')
                         if ring_registration is not None:
                             colour_rings = RingRegistration(colour_anchor, anchor_pose.cx, anchor_pose.cy,
-                                model.globe.equatorial_radius_px, model.rings.outer_radius_px)
+                                model.globe.equatorial_radius_px, model.rings.outer_radius_px, **ring_acceleration)
                     colour_plane = _alignment_plane(bilinear_demosaic(frame, color), 'RGB')
                     if colour_rings is not None:
                         displacement = (colour_rings.displacement(colour_plane)
@@ -696,7 +701,10 @@ def stack_source_geometry(
     snapshot_provenance['execution_history'] = execution_history
     snapshot_provenance['geometry_execution'] = {
         'projection_and_accumulation': backend.name,
-        'geometry_estimation_and_drift_matching': 'cpu',
+        'geometry_estimation': 'cpu',
+        'drift_matching': 'cuda correlations with cpu peak checks' if ring_acceleration else 'cpu',
+        'ring_reference_warps_and_correlations': backend.name if ring_registration is not None else 'unused',
+        'drift_peak_acceptance': 'cpu',
         'accumulator_precision': 'float64',
     }
     gpu_accumulator = None
