@@ -359,7 +359,8 @@ def prepare_geometry(
     if isinstance(model, SaturnSceneModel):
         # This changes which observations enter each sum. Include it in the
         # checkpoint geometry identity so old masked sums cannot be resumed.
-        diagnostics['ring_globe_overlap_policy'] = 'observed composite follows globe motion v1'
+        diagnostics['ring_globe_overlap_policy'] = 'continuous globe motion with smooth limb taper v2'
+        diagnostics['saturn_boundary_policy'] = 'unclipped detector footprints; smoothstep mu=0.4 at both limbs'
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if surface_origin == 'planet_preset':
@@ -391,7 +392,7 @@ def prepare_geometry(
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
     if isinstance(model, SaturnSceneModel) and not model.edge_on:
-        warnings.append("ring_globe_overlap: observed overlap brightness is retained using globe motion; foreground ring and globe light are not separated")
+        warnings.append("ring_globe_overlap: observed composite uses globe motion, fading to field alignment near the limb; ring and globe light are not separated")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if requested_surface_rate is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")
@@ -652,8 +653,9 @@ def stack_source_geometry(
             if not bayer or colour_retry:
                 raise
     xg, yg = detector_xy_grids(h, w)
-    target_regions = (model.reconstruction_regions(model.classify_detector(xg, yg, ref_pose, mask_moon=False))
-                      if isinstance(model, SaturnSceneModel) else None)
+    # Optical blur crosses globe/ring/shadow boundaries. Keep full bilinear
+    # footprints and CFA completion; classification is for scoring/diagnostics.
+    target_regions = None
     n_used = 0
     n_rejected = 0
     warnings = list(report.warnings) + list(geo_warnings)
@@ -843,20 +845,7 @@ def stack_source_geometry(
             y_idx = yd - 0.5
             x_idx = xd - 0.5
             def push_samples(samples, yd, xd, shape, valid):
-                if target_regions is None:
-                    return bilinear_push(samples, yd, xd, shape, valid=valid)
-                out_shape = (*shape, samples.shape[-1]) if samples.ndim == 3 else shape
-                added = np.zeros(out_shape, dtype=np.float64)
-                covered = np.zeros_like(added)
-                for region in range(5):
-                    a, wt = bilinear_push(samples, yd, xd, shape,
-                                          valid=valid & (source_regions == region))
-                    target_mask = target_regions == region
-                    if samples.ndim == 3:
-                        target_mask = target_mask[..., None]
-                    added += np.where(target_mask, a, 0.0)
-                    covered += np.where(target_mask, wt, 0.0)
-                return added, covered
+                return bilinear_push(samples, yd, xd, shape, valid=valid)
 
             if bayer:
                 labels = cfa_labels(h, w, color)

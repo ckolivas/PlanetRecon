@@ -28,9 +28,10 @@ class TorchGlobeWarp:
         c, s = np.cos(angle), np.sin(angle)
         return c*x-s*y, s*x+c*y
 
-    def map(self, src, ref):
+    def map(self, src, ref, *, limb_taper=None, x=None, y=None):
         g = self.model.globe
-        sx, sy = self.x-src.cx, src.cy-self.y
+        x, y = (self.x,self.y) if x is None else (x,y)
+        sx, sy = x-src.cx, src.cy-y
         if not self.model.apply_surface or g.surface_rate_rad_s*(src.t_s-ref.t_s) == 0:
             angle = ref.field_angle_rad-src.field_angle_rad if self.model.apply_field else 0.
             x, y = self.rotate(sx, sy, angle)
@@ -50,6 +51,7 @@ class TorchGlobeWarp:
         t = torch.where(disc >= 0, (-bb+disc.clamp_min(0).sqrt())/max(2*aa,1e-30), torch.nan)
         xb, yb, zb = [q[i]+t*d[i] for i in range(3)]
         nz = r[2,0]*(xb*ia)+r[2,1]*(yb*ia)+r[2,2]*(zb*ic)
+        mu_src = nz / ((xb*ia)**2+(yb*ia)**2+(zb*ic)**2).sqrt().clamp_min(1e-30)
         on_globe = (disc >= 0) & torch.isfinite(t) & (nz >= -1e-12)
         lon = torch.where(on_globe, torch.atan2(yb, xb), torch.nan)
         lat = torch.where(on_globe, torch.atan2(zb/c, torch.hypot(xb,yb)/a), torch.nan)
@@ -60,10 +62,17 @@ class TorchGlobeWarp:
         nz = r[2,0]*(xb*ia)+r[2,1]*(yb*ia)+r[2,2]*(zb*ic)
         nlen = ((xb*ia)**2+(yb*ia)**2+(zb*ic)**2).sqrt()
         visible = torch.isfinite(rx) & (nz/nlen.clamp_min(1e-30) >= -1e-12)
+        mu_ref = nz/nlen.clamp_min(1e-30)
         if self.model.apply_field:
             rx, ry = self.rotate(rx, ry, ref.field_angle_rad)
             sx, sy = self.rotate(sx, sy, ref.field_angle_rad)
         use = on_globe & visible
+        if limb_taper is not None:
+            u = (torch.where(use,torch.minimum(mu_src,mu_ref),0.) / limb_taper).clamp(0.,1.)
+            blend = u*u*(3.-2.*u)
+            x = sx+ref.cx+blend*torch.where(blend > 0,rx-sx,0.)
+            y = ref.cy-sy-blend*torch.where(blend > 0,ry-sy,0.)
+            return x,y,torch.isfinite(x)&torch.isfinite(y)
         x, y = torch.where(use,rx,sx)+ref.cx, ref.cy-torch.where(use,ry,sy)
         valid = torch.isfinite(x) & torch.isfinite(y) & (~on_globe | visible)
         return x, y, valid

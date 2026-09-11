@@ -8,7 +8,7 @@ import numpy as np
 
 from planetrecon.geometry.coords import detector_to_sky, detector_xy_grids, sky_to_detector
 from planetrecon.geometry.fit import fit_disc_ellipse
-from planetrecon.geometry.globe import GlobeParams, field_rotate_sky, globe_hit, render_globe_texture
+from planetrecon.geometry.globe import GlobeParams, body_to_sky, field_rotate_sky, globe_hit, render_globe_texture
 from planetrecon.geometry.model import FieldOnlyModel, OblateGlobeModel, SceneModel
 from planetrecon.geometry.pose import FramePose
 from planetrecon.geometry.rings import (
@@ -27,6 +27,7 @@ LAYER_FAR_RING = 1
 LAYER_GLOBE = 2
 LAYER_NEAR_RING = 3
 LAYER_MOON = 4
+LIMB_TAPER_MU = 0.4
 
 
 @dataclass(frozen=True)
@@ -174,18 +175,25 @@ class SaturnSceneModel(SceneModel):
 
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
         info = self.classify_detector(x, y, src)
-        gx, gy, gv = self.globe_model.src_to_ref(x, y, src, ref)
         field_src = src if self.apply_field else replace(src, field_angle_rad=0.0)
         field_ref = ref if self.apply_field else replace(ref, field_angle_rad=0.0)
         fx, fy, fv = self.field_model.src_to_ref(x, y, field_src, field_ref)
-        globe = self.reconstruction_labels(info) == LAYER_GLOBE
-        dx = np.where(globe, gx, fx)
-        dy = np.where(globe, gy, fy)
-        regions = self.reconstruction_regions(info)
-        # The target is the static planet scene, with moons removed. Check both
-        # visibility and illumination before admitting a correspondence.
-        target = self.reconstruction_regions(self.classify_detector(dx, dy, ref, mask_moon=False))
-        valid = np.where(globe, gv, fv) & (regions >= 0) & (regions == target)
+        if not self.apply_surface or self.globe.surface_rate_rad_s*(src.t_s-ref.t_s) == 0:
+            return fx, fy, fv & ~info['moon'] & ~info['ring_degenerate']
+        gx, gy, visible, mu_ref = body_to_sky(info['lon'], info['lat'], self.globe, ref.t_s)
+        if self.apply_field:
+            gx, gy = field_rotate_sky(gx, gy, ref.field_angle_rad)
+        gx, gy = sky_to_detector(gx, gy, ref.cx, ref.cy)
+        # Telescope blur crosses silhouettes and shadows. They are not walls
+        # between independent measurements. Taper only the differential spin
+        # displacement at BOTH visible limbs; retain ordinary field alignment
+        # wherever surface correspondence is uncertain or newly visible.
+        mu = np.minimum(info['mu'], mu_ref)
+        u = np.clip(np.where(info['on_globe'] & visible, mu, 0.) / LIMB_TAPER_MU, 0., 1.)
+        blend = u*u*(3.-2.*u)
+        dx = fx + blend*np.where(blend > 0, gx-fx, 0.)
+        dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
+        valid = fv & ~info['moon'] & ~info['ring_degenerate']
         return dx, dy, valid
 
 

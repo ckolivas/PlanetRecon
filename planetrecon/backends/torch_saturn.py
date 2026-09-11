@@ -4,7 +4,7 @@ import torch
 from planetrecon.backends.torch_globe import TorchGlobeAccumulator, TorchGlobeWarp
 from planetrecon.geometry.globe import body_to_obs_matrix
 from planetrecon.geometry.rings import EDGE_ON_MU, ring_normal_obs, sun_direction_obs
-from planetrecon.geometry.saturn import LAYER_FAR_RING, LAYER_GLOBE, LAYER_NEAR_RING, LAYER_MOON
+from planetrecon.geometry.saturn import LAYER_FAR_RING, LAYER_GLOBE, LAYER_NEAR_RING, LAYER_MOON, LIMB_TAPER_MU
 
 
 class TorchSaturnWarp(TorchGlobeWarp):
@@ -94,26 +94,17 @@ class TorchSaturnWarp(TorchGlobeWarp):
         # Preserve quality scoring on exposed globe texture, independently of
         # the added overlap coverage. Ring edges must not inflate frame scores.
         quality_regions = torch.where((labels == LAYER_GLOBE) & ~(on_ring & model.low_opening),regions,-1)
-        return {'labels':labels,'motion_labels':motion_labels,'regions':regions,
+        return {'labels':labels,'motion_labels':motion_labels,'regions':regions,'invalid':invalid,
                 'quality_regions':quality_regions}
 
     def map(self, src, ref, info=None):
         info = self.classify(src) if info is None else info
-        gx,gy,gv = super().map(src,ref)
-        sx,sy = self.x-src.cx,src.cy-self.y
-        if self.model.apply_field:
-            sx,sy = self.rotate(sx,sy,ref.field_angle_rad-src.field_angle_rad)
-        fx,fy = sx+ref.cx,ref.cy-sy
-        globe = info['motion_labels'] == LAYER_GLOBE
-        x,y = torch.where(globe,gx,fx),torch.where(globe,gy,fy)
-        target = self.classify(ref,x,y,mask_moon=False)['regions']
-        valid = torch.where(globe,gv,torch.isfinite(fx)&torch.isfinite(fy))
-        valid &= (info['regions'] >= 0) & (info['regions'] == target)
-        return x,y,valid
+        x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU)
+        return x,y,valid & ~info['invalid']
 
 
 class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
-    """Reuse colour scatter sums with Saturn mapping and per-corner layer gates.
+    """Reuse colour scatter sums with continuous Saturn motion mapping.
 
     The accumulator's cooperative initializer creates the Saturn warp, then
     allocates resident sums. Only scoring's region mask returns to the CPU.
@@ -122,7 +113,6 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
                  globe_weight, ring_weight, ref, device='cuda:0'):
         super().__init__(shape,model,color,accum,weight,demosaic_accum,demosaic_weight,device)
         self.globe_weight,self.ring_weight = self.tensor(globe_weight),self.tensor(ring_weight)
-        self.target_regions = self.classify(ref,mask_moon=False)['regions'].flatten()
         self.prepared_pose,self.source_info = None,None
 
     def prepare_source(self, pose):
@@ -133,9 +123,7 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
     def sample_corners(self, pose, ref):
         if self.prepared_pose != pose:
             self.prepare_source(pose)
-        regions = self.source_info['regions'].flatten()
-        for index,weight in self.corners(*self.map(pose,ref,self.source_info)):
-            yield index,weight*((regions >= 0)&(regions == self.target_regions[index]))
+        yield from self.corners(*self.map(pose,ref,self.source_info))
 
     def add_layer_coverage(self, index, weighted):
         labels = self.source_info['motion_labels'].flatten()

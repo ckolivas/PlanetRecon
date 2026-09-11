@@ -166,10 +166,14 @@ Other drift matching remains on CPU. Both processors are active during a CUDA ru
 the backend indicator identifies the reconstruction backend, not every stage.
 Saturn's per-frame layer classification,
 shadow and moon masks, region-constrained projection, accumulation and globe/ring
-coverage run on CUDA. Within the globe silhouette, ring/globe overlap samples
-retain their observed brightness and follow globe motion on both CPU and CUDA.
-This approximates the foreground composite without separating ring and globe
-light; exposed rings retain field-only motion. Moon masks and the refusal of
+coverage run on CUDA. Ring/globe overlap samples retain their observed brightness
+and follow globe motion on both CPU and CUDA. Differential spin smoothly fades
+to field alignment at both source and destination limbs (smoothstep over viewing
+cosine 0–0.4), retaining ordinary alignment for newly visible limb samples.
+Observed pixel footprints are not clipped to fitted silhouettes or shadow edges;
+telescope blur naturally crosses those boundaries. Layer coverage describes the
+origins of contributions and can overlap. This approximates the foreground
+composite without separating ring and globe light. Moon masks and the refusal of
 edge-on ring geometry remain. Field-only motion still uses CPU float64.
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
