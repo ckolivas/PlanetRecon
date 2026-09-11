@@ -84,14 +84,9 @@ class ConfigControls(QTabWidget):
         self._number(cal, 'saturate_adu', 'Saturation threshold (ADU)')
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
-        guidance = QLabel('Motion model None stacks any planet, including Saturn and its rings. '
-                          'Saturn mode separates globe/ring motion; viewing latitude can come from SER UTC, while globe/ring radii are required.')
-        guidance.setWordWrap(True)
-        geo.addRow(guidance)
-        self.geometry_estimate_label = QLabel('Preprocessing can prefill geometry for the next run. User edits are preserved.')
-        self.geometry_estimate_label.setWordWrap(True)
-        geo.addRow(self.geometry_estimate_label)
+        self.geometry_estimate_text = 'Preprocessing can prefill geometry for the next run. User edits are preserved.'
         self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
+        self.motion_model_label = geo.labelForField(self.fields['geometry_mode'])
         from planetrecon.geometry.rotation import PERIOD_DAYS
         self._choice(geo, 'rotation_planet', 'Planet rotation preset', [None, *PERIOD_DAYS])
         self.fields['rotation_planet'].setItemText(0, 'Measured / manual rate')
@@ -150,6 +145,7 @@ class ConfigControls(QTabWidget):
         for key in ('surface_rate_rad_s', 'equatorial_radius_px'):
             self.fields[key].textChanged.connect(self._rotation_changed)
         self._rotation_changed()
+        self._set_geometry_help(self.geometry_estimate_text)
         for index, text in enumerate((
                 'Input interpretation, processing device, memory and frame handling.',
                 'Optional detector calibration tables and intensity units.',
@@ -285,7 +281,7 @@ class ConfigControls(QTabWidget):
             # A user-supplied replacement latitude is retained, but it must not
             # leave dependent auto rates from the old assumption attached.
             self.geometry_auto.pop('sub_obs_lat_rad', None)
-            self.geometry_estimate_label.setText('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
+            self._set_geometry_help('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
         self.fields['local_alignment'].setEnabled(
             self.fields['frame_preselection'].isChecked()
             and self.fields['geometry_mode'].currentData() == 'none')
@@ -375,12 +371,12 @@ class ConfigControls(QTabWidget):
             if not math.isfinite(angle):
                 raise ValueError
         except ValueError:
-            self.geometry_estimate_label.setText('Enter a finite pole position angle before flipping it.')
+            self._set_geometry_help('Enter a finite pole position angle before flipping it.')
             return
         self.geometry_manual.add('pole_pa_rad')
         self.geometry_auto.pop('pole_pa_rad', None)
         edit.setText(format((angle + 180.) % 360., '.12g'))
-        self.geometry_estimate_label.setText(
+        self._set_geometry_help(
             'Pole direction flipped by 180°. This manual orientation applies to the next run '
             'and is preserved when preprocessing is repeated.')
 
@@ -392,7 +388,13 @@ class ConfigControls(QTabWidget):
                 value = getattr(defaults, key)
                 self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
         self.geometry_auto.clear()
-        self.geometry_estimate_label.setText('Preprocessing can prefill geometry for the next run. User edits are preserved.')
+        self._set_geometry_help('Preprocessing can prefill geometry for the next run. User edits are preserved.')
+
+    def _set_geometry_help(self, text):
+        self.geometry_estimate_text = text
+        tooltip = CONTROL_HELP['geometry_mode'] + '\n\n' + text
+        self.fields['geometry_mode'].setToolTip(tooltip)
+        self.motion_model_label.setToolTip(tooltip)
 
     def prefill_geometry(self, estimate, *, allow_prefill=True):
         from planetrecon.reconstruction import ReconstructionConfig
@@ -444,7 +446,7 @@ class ConfigControls(QTabWidget):
         if allow_prefill and self.fields['rotation_planet'].currentData() is not None:
             usage = ('The selected planet preset supplies rotation even if texture motion is unresolved; '
                      'an explicit surface rate overrides it. Geometry prefills apply to the next run.')
-        self.geometry_estimate_label.setText(
+        self._set_geometry_help(
             f'Surface drift: {direction}; image roll: {roll}. {usage}\n'
             + 'Orientation: ' + estimate.get('orientation_origin', 'unresolved') + '. '
             + ' '.join(estimate.get('notes', [])))

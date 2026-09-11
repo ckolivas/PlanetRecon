@@ -129,7 +129,7 @@ def test_discovery_keeps_auto_latitude_blank_and_gui_shows_source(tmp_path, monk
     try:
         controls.prefill_geometry(report)
         assert controls.configuration().sub_obs_lat_rad is None
-        assert 'JPL Horizons' in controls.geometry_estimate_label.text()
+        assert 'JPL Horizons' in controls.fields['geometry_mode'].toolTip()
     finally:
         controls.close()
         app.processEvents()

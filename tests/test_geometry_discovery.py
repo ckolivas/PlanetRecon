@@ -141,7 +141,7 @@ def test_checkpoint_geometry_settings_are_not_changed_by_discovery():
         provenance={'preprocessing': {'geometry_estimate': {'suggestions': {'pole_pa_rad': .5}}}})
     win._accept_result(result_payload(result))
     assert win.controls.configuration() == cfg
-    assert 'Checkpoint settings retained' in win.controls.geometry_estimate_label.text()
+    assert 'Checkpoint settings retained' in win.controls.fields['geometry_mode'].toolTip()
     win._shutdown()
     win.window.close()
     app.processEvents()

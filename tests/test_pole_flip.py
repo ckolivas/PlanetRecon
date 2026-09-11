@@ -32,7 +32,7 @@ def test_invalid_pole_does_not_crash_or_become_manual_override(gui, text):
     controls.flip_pole_button.click()
     assert controls.fields['pole_pa_rad'].text() == text
     assert 'pole_pa_rad' not in controls.geometry_manual
-    assert 'finite pole position angle' in controls.geometry_estimate_label.text()
+    assert 'finite pole position angle' in controls.fields['geometry_mode'].toolTip()
 
 
 def test_new_surface_runs_use_flipped_pole_without_changing_rate(gui, tmp_path, monkeypatch):
