@@ -754,7 +754,7 @@ def stack_source_geometry(
         'drift_peak_acceptance': 'cpu',
         'local_patch_correlations': backend.name if config.local_alignment else 'unused',
         'local_reference_prediction': backend.name if config.local_alignment else 'unused',
-        'local_residual_inversion': 'cpu' if config.local_alignment else 'unused',
+        'local_residual_inversion': backend.name if config.local_alignment else 'unused',
         'accumulator_precision': 'float64',
     }
     gpu_accumulator = None
