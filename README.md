@@ -94,7 +94,8 @@ Recorded SER exposure is read automatically from supported capture-settings
 headers for geometry midpoint calculations. Leave Exposure blank for automatic
 metadata use; manual seconds override it. Frame cadence remains separate.
 The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
-shows exclusion counts before processing. Runs never repeat the analysis automatically.
+shows exclusion counts before processing. GUI Run validates the cache and performs
+preprocessing when needed; startup and capture selection do not start analysis.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
 `stack --no-frame-preselection` uses global alignment and ignores cached decisions. After preprocessing,
 **Quality range** defaults to 50% for new GUI and CLI runs and keeps
@@ -332,6 +333,9 @@ directory (`~/.config/PlanetRecon/settings.json` on Linux). Values restore on
 startup, including inactive controls and the distinction between manual and
 estimated geometry. Checkpoint paths and Resume are not restored automatically.
 Set `PLANETRECON_SETTINGS_PATH` to use a different preferences file.
+Startup and **Open capture** stay idle: they only select the capture and report
+whether a cache file exists. **Inspect input** explicitly loads a preview and
+validates an existing cache, without creating preprocessing measurements.
 
 **Run** validates the capture's preprocessing cache and automatically preprocesses
 if it is missing, stale or unusable, then stacks with the resulting prefills.

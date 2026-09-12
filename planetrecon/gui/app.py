@@ -289,7 +289,7 @@ class MainWindow:
         layout.addWidget(self.error)
         self.window.setCentralWidget(root)
         tips = {
-            self.open_btn: 'Choose a SER, AVI or observed HDF5 capture, then inspect its metadata and input preview.',
+            self.open_btn: 'Select a SER, AVI or observed HDF5 capture without starting processing. Run validates or creates its preprocessing cache; Inspect input loads metadata and a preview separately.',
             self.inspect_btn: 'Read capture metadata and preview the input using the current settings, without starting reconstruction.',
             self.run_btn: 'Validate the preprocessing cache, measure quality and geometry automatically when needed, then reconstruct with the current settings. Resume continues the selected checkpoint unchanged.',
             self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
@@ -350,7 +350,7 @@ class MainWindow:
         self._export_options()
         self._buttons()
         if self.path is not None:
-            self.controls.suggest_capture_planet(self.path)
+            self._capture_ready()
 
     def show(self):
         self.window.show()
@@ -498,8 +498,24 @@ class MainWindow:
             self.checkpoint_path.clear()
             self.resume_check.setChecked(False)
             self.source_label.setText(str(self.path))
+            self.input_image = None
+            self.input_metadata = {}
+            self.input_max = None
+            self._capture_ready()
             self._save_settings()
-            self._inspect()
+            self._draw()
+            self._buttons()
+
+    def _capture_ready(self):
+        """Announce cache presence without reading frames or starting a worker."""
+        self.controls.suggest_capture_planet(self.path)
+        cache = self.path.with_name(self.path.name + '.planetrecon-preprocess.npz')
+        self.preprocessing_info = (
+            {'status': 'unverified', 'reason': 'Preprocessing cache found. Run will validate and reuse it when compatible.'}
+            if cache.is_file() else
+            {'status': 'missing', 'reason': 'No preprocessing cache. Preprocessing starts when Run is clicked, or when requested with Preprocess.'})
+        self._refresh_preprocessing()
+        self.status.setText('Capture selected. Click Run to process, or Inspect input to preview.')
 
     def _inspect(self):
         self._start(inspect_only=True)

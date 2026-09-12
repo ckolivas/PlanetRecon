@@ -1,5 +1,6 @@
 """Run validates/rebuilds preprocessing before using current GUI settings."""
 import numpy as np
+import pytest
 from planetrecon.io.ser import write_ser
 from test_w14 import gui, pump
 
@@ -42,3 +43,50 @@ def test_cancel_automatic_preparation_does_not_start_stack(gui, tmp_path):
     assert win.run_stage is None
     assert win.last_result is None
     assert win.run_btn.isEnabled()
+
+
+@pytest.mark.parametrize('entry', ['startup', 'restored', 'open'])
+@pytest.mark.parametrize('cached', [False, True])
+def test_selecting_capture_stays_idle_until_requested(monkeypatch, tmp_path, entry, cached):
+    from planetrecon.gui.app import MainWindow, create_app
+    from planetrecon.gui import settings
+    from planetrecon.reconstruction import ReconstructionConfig
+    app = create_app([])
+    capture = write_ser(tmp_path/'input.ser', np.full((16, 48, 48), 100, dtype='u2'))
+    cache = capture.with_name(capture.name+'.planetrecon-preprocess.npz')
+    if cached:
+        # Even an unusable cache must be left alone until explicit inspection/run.
+        cache.write_bytes(b'not yet validated')
+    def unexpected_job(*args, **kwargs):
+        pytest.fail('Selecting a capture must not start a worker')
+    monkeypatch.setattr('planetrecon.gui.app.start_stack_job', unexpected_job)
+    cfg = ReconstructionConfig(device='cpu', threads=2)
+    preferences = tmp_path/'settings.json'
+    if entry == 'restored':
+        saved = MainWindow(config=cfg)
+        settings.save(preferences, {'capture': str(capture), 'controls': saved.controls.settings_state()})
+        saved.window.close()
+        win = MainWindow(settings_path=preferences)
+    else:
+        win = MainWindow(capture if entry == 'startup' else None, cfg)
+    try:
+        if entry == 'open':
+            win.input_image = np.ones((12, 12))
+            monkeypatch.setattr('planetrecon.gui.app.QFileDialog.getOpenFileName',
+                                lambda *args: (str(capture), 'Captures'))
+            win.open_btn.click()
+        win.show()
+        for _ in range(5):
+            app.processEvents()
+        assert win.path == capture
+        assert win.job is None and win.run_stage is None
+        assert win.input_image is None
+        assert win.run_btn.isEnabled()
+        assert win.preprocessing_info['status'] == ('unverified' if cached else 'missing')
+        assert 'Run' in win.status.text()
+        assert cache.exists() == cached
+        if cached:
+            assert cache.read_bytes() == b'not yet validated'
+    finally:
+        win.window.close()
+        app.processEvents()
