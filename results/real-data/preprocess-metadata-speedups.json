@@ -1,0 +1,104 @@
+{
+  "baseline_commit": "08b62c3",
+  "method": "Serial ABBA fresh processes, four CPU threads. screen_source reads the first 256 frames of each original SER in batches of 32 then cancels through on_progress. SER metadata still sees the complete original timestamp trailer. Imports and output serialization excluded. Own process CPU is separate from contended wall time.",
+  "interpretation": "Metadata calls fall from 256 to one. Own CPU median decreases from 1.47 to 0.975 seconds for Saturn L (34 percent) and from 4.105 to 0.695 seconds for Mars L3 (83 percent). These are partial screening passes, not complete preprocessing including geometry discovery or full reconstruction timings.",
+  "validation": "39 preprocessing/cache/timestamp/reference tests passed. All real replay measurement arrays, acceptance masks and summaries are exactly equal. Fresh passes refresh bit depth, cancellation still prevents unnecessary metadata reads, full source-content verification is retained.",
+  "cases": [
+    {
+      "capture": "2023-10-10-1320_8-CK-L-Sat_pipp.ser",
+      "samples": [
+        {
+          "pid": 6,
+          "cpu_seconds": 1.54,
+          "elapsed_seconds": 1.59041818,
+          "metadata_calls": 256,
+          "n_measured": 256,
+          "side": "before"
+        },
+        {
+          "pid": 14,
+          "cpu_seconds": 0.97,
+          "elapsed_seconds": 0.879626807,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 22,
+          "cpu_seconds": 0.98,
+          "elapsed_seconds": 0.864811916,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 30,
+          "cpu_seconds": 1.4,
+          "elapsed_seconds": 1.370687108,
+          "metadata_calls": 256,
+          "n_measured": 256,
+          "side": "before"
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 1.47,
+          "elapsed_seconds": 1.4805526439999999
+        },
+        "after": {
+          "cpu_seconds": 0.975,
+          "elapsed_seconds": 0.8722193615
+        }
+      }
+    },
+    {
+      "capture": "2025-01-10-1459_5-CK-L3-Mars.ser",
+      "samples": [
+        {
+          "pid": 38,
+          "cpu_seconds": 4.06,
+          "elapsed_seconds": 4.114198492,
+          "metadata_calls": 256,
+          "n_measured": 256,
+          "side": "before"
+        },
+        {
+          "pid": 46,
+          "cpu_seconds": 0.7,
+          "elapsed_seconds": 0.622687113,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 54,
+          "cpu_seconds": 0.69,
+          "elapsed_seconds": 0.601242402,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 62,
+          "cpu_seconds": 4.15,
+          "elapsed_seconds": 4.05896767,
+          "metadata_calls": 256,
+          "n_measured": 256,
+          "side": "before"
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 4.105,
+          "elapsed_seconds": 4.086583081000001
+        },
+        "after": {
+          "cpu_seconds": 0.695,
+          "elapsed_seconds": 0.6119647575
+        }
+      }
+    }
+  ]
+}

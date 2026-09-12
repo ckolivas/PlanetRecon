@@ -118,6 +118,7 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
     statuses = np.full(n, 'unmeasured', dtype='<U20')
     processed = 0
     stopped = False
+    bit_depth = None
     for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
         for local, index in enumerate(indices):
             if should_cancel is not None and should_cancel():
@@ -126,7 +127,11 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
             raw = batch[local]
             status = 'invalid'
             if np.isfinite(raw).all():
-                if config.reject_saturated and _saturated(raw, source.metadata().bit_depth):
+                if config.reject_saturated and bit_depth is None:
+                    # Fixed for this open source. SER metadata also measures the
+                    # complete timestamp trailer, so do not rebuild it per frame.
+                    bit_depth = source.metadata().bit_depth
+                if config.reject_saturated and _saturated(raw, bit_depth):
                     status = 'saturated'
                 else:
                     calibrated, info = apply_calibration(raw, calibration)

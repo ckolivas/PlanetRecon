@@ -194,3 +194,29 @@ def test_worker_reports_screening_without_blank_previews(tmp_path):
         assert not any(e.kind == 'preview' and e.payload.get('stage') == 'preprocessing' for e in events)
     finally:
         handle.close()
+
+
+def test_screening_reads_bit_depth_once_and_refreshes_on_next_pass(monkeypatch):
+    source = ArraySource(np.stack([planet() + 300]*6), bit_depth=16)
+    original = source.metadata
+    calls = []
+    def metadata():
+        calls.append(1)
+        return original()
+    monkeypatch.setattr(source, 'metadata', metadata)
+    first = screen_source(source, config())
+    assert len(calls) == 1
+    assert not first.summary['rejected_indices_by_reason']['saturated']
+    source._bit_depth = 8
+    second = screen_source(source, config())
+    assert len(calls) == 2
+    assert second.summary['rejected_indices_by_reason']['saturated'] == list(range(6))
+
+
+@pytest.mark.parametrize('cancel', [False, True])
+def test_screening_skips_unused_metadata(monkeypatch, cancel):
+    source = ArraySource(np.stack([planet()]*3))
+    monkeypatch.setattr(source, 'metadata', lambda: pytest.fail('metadata is unnecessary'))
+    selection = screen_source(source, config(reject_saturated=cancel), should_cancel=lambda: cancel)
+    assert selection.cancelled == cancel
+    assert selection.summary['n_measured'] == (0 if cancel else 3)
