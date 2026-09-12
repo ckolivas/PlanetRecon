@@ -24,9 +24,15 @@ def cfa_labels(height: int, width: int, pattern: str, origin_xy=(0, 0)) -> np.nd
     if pattern not in BAYER_PATTERNS:
         raise ValueError(f"unknown Bayer pattern {pattern!r}")
     ox, oy = int(origin_xy[0]) % 2, int(origin_xy[1]) % 2
-    tiles = np.array(BAYER_PATTERNS[pattern], dtype=object)
-    yy, xx = np.indices((height, width))
-    return tiles[(yy + oy) % 2, (xx + ox) % 2]
+    # A four-site lattice needs neither full detector coordinate grids nor
+    # Python objects. Fixed-width labels also make per-channel masks vectorized
+    # native comparisons instead of a Python string comparison at every pixel.
+    tiles = BAYER_PATTERNS[pattern]
+    labels = np.empty((height, width), dtype='U1')
+    for y in range(2):
+        for x in range(2):
+            labels[y::2, x::2] = tiles[(y + oy) % 2][(x + ox) % 2]
+    return labels
 
 
 def channel_mask(labels: np.ndarray, channel: str) -> np.ndarray:
