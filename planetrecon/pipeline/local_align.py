@@ -1,6 +1,6 @@
 """Confidence-gated local translation matching; image data are never sharpened."""
 import numpy as np
-from scipy.ndimage import gaussian_filter, map_coordinates
+from scipy.ndimage import gaussian_filter, map_coordinates, shift as ndshift
 
 
 def patch_centres(length, window, step, max_shift=3):
@@ -14,6 +14,19 @@ def patch_centres(length, window, step, max_shift=3):
 
 def pull(image, shift_xy):
     image = np.asarray(image, dtype=np.float64)
+    if not np.ndim(shift_xy[0]) and not np.ndim(shift_xy[1]):
+        sx, sy = map(float, shift_xy)
+        if sx == sy == 0 and np.isfinite(image).all():
+            # Motion templates are already predicted at the observation pose.
+            # Their zero residual translation needs no interpolation, but keep
+            # independent ownership for callers that modify the returned image.
+            return image.copy()
+        if np.isfinite([sx, sy]).all():
+            def translate(plane):
+                return ndshift(plane, (-sy, -sx), order=1,
+                               mode='grid-constant', prefilter=False)
+            return (translate(image) if image.ndim == 2 else
+                    np.stack([translate(image[..., c]) for c in range(image.shape[2])], axis=-1))
     yy, xx = np.indices(image.shape[:2], dtype=np.float64)
     coordinates = [yy + shift_xy[1], xx + shift_xy[0]]
     if image.ndim == 2:
