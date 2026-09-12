@@ -1,0 +1,88 @@
+{
+  "baseline_commit": "b2a50c6 (pose conversion also unchanged in 08b62c3 archive)",
+  "method": "Serial ABBA fresh processes, 64 metadata reads from each original SER after one excluded warm read. Timed metadata includes trailer reads, exact epoch conversion and duration/cadence statistics. Own process CPU and contended wall time are separate.",
+  "interpretation": "Vectorized integer epoch subtraction avoids a per-timestamp Python loop while retaining exact nonnegative tick differences, including signed-boundary spans. Median CPU for 64 reads falls from 0.14 to 0.015 seconds for Saturn and 0.82 to 0.07 seconds for Mars. These are metadata microbenchmarks; fixed metadata is already read only once in the screening loop.",
+  "validation": "82 timing/exposure/viewing tests passed, including signed/unsigned integer limits, nonnative endian timestamps, one-tick differences at large epochs, ties, invalid order and complete metadata parity.",
+  "cases": [
+    {
+      "capture": "2023-10-10-1320_8-CK-L-Sat_pipp.ser",
+      "samples": [
+        {
+          "pid": 3,
+          "cpu_seconds": 0.17,
+          "elapsed_seconds": 0.171633338,
+          "side": "before"
+        },
+        {
+          "pid": 10,
+          "cpu_seconds": 0.02,
+          "elapsed_seconds": 0.012043934,
+          "side": "after"
+        },
+        {
+          "pid": 17,
+          "cpu_seconds": 0.01,
+          "elapsed_seconds": 0.01894008,
+          "side": "after"
+        },
+        {
+          "pid": 24,
+          "cpu_seconds": 0.11,
+          "elapsed_seconds": 0.116203093,
+          "side": "before"
+        }
+      ],
+      "identical_metadata": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 0.14,
+          "elapsed_seconds": 0.1439182155
+        },
+        "after": {
+          "cpu_seconds": 0.015,
+          "elapsed_seconds": 0.015492007
+        }
+      }
+    },
+    {
+      "capture": "2025-01-10-1459_5-CK-L3-Mars.ser",
+      "samples": [
+        {
+          "pid": 31,
+          "cpu_seconds": 0.83,
+          "elapsed_seconds": 0.829434194,
+          "side": "before"
+        },
+        {
+          "pid": 38,
+          "cpu_seconds": 0.07,
+          "elapsed_seconds": 0.072842618,
+          "side": "after"
+        },
+        {
+          "pid": 45,
+          "cpu_seconds": 0.07,
+          "elapsed_seconds": 0.070912122,
+          "side": "after"
+        },
+        {
+          "pid": 52,
+          "cpu_seconds": 0.81,
+          "elapsed_seconds": 0.809059671,
+          "side": "before"
+        }
+      ],
+      "identical_metadata": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 0.8200000000000001,
+          "elapsed_seconds": 0.8192469325
+        },
+        "after": {
+          "cpu_seconds": 0.07,
+          "elapsed_seconds": 0.07187737
+        }
+      }
+    }
+  ]
+}

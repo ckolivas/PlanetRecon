@@ -61,7 +61,11 @@ def source_times_s(
         # Subtract integer epochs before conversion: absolute SER ticks lose
         # sub-microsecond cadence when first converted to float64.
         if np.issubdtype(t.dtype, np.integer):
-            relative = np.array([int(v) - int(t[0]) for v in t], dtype=np.float64)
+            # Monotonic integer differences fit uint64 even across the signed
+            # int64 boundary. Modular unsigned subtraction preserves those
+            # nonnegative differences without signed overflow or a Python loop.
+            ticks = t.astype(np.uint64, copy=False)
+            relative = (ticks - ticks[0]).astype(np.float64)
         else:
             relative = np.asarray(t - t[0], dtype=np.float64)
         return relative * scale, "measured"

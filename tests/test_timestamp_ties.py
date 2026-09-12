@@ -10,6 +10,26 @@ from planetrecon.pipeline.geometry_stack import prepare_geometry
 from planetrecon.reconstruction import ReconstructionConfig
 
 
+@pytest.mark.parametrize('dtype', ['i1', 'u1', '<i2', '>u2', '<i4', '>u4', '<i8', '>i8', '<u8', '>u8'])
+def test_integer_epochs_match_unbounded_integer_subtraction(dtype):
+    dtype = np.dtype(dtype)
+    limits = np.iinfo(dtype)
+    lo, hi = int(limits.min), int(limits.max)
+    # Cover ties, sub-tick differences near large epochs and signed overflow.
+    examples = [[lo, lo, lo+1, hi-1, hi], [hi-4, hi-4, hi-3, hi-1, hi]]
+    if lo < 0:
+        examples.append([lo, -1, 0, 1, hi])
+    for values in examples:
+        src = ArraySource(np.zeros((len(values), 1, 1)))
+        src.timestamps = lambda: np.array(values, dtype=dtype)
+        src.timestamp_scale_s = lambda: 1e-7
+        with np.errstate(all='raise'):
+            actual, origin = source_times_s(src)
+        expected = np.array([v-values[0] for v in values], dtype=np.float64)*1e-7
+        np.testing.assert_array_equal(actual, expected)
+        assert origin == 'measured'
+
+
 def source(colour='mono', times=(0., 0., .8)):
     yy, xx = np.indices((64, 64))
     radius = np.hypot(xx-32, yy-32)
