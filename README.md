@@ -206,7 +206,10 @@ If preprocessing identifies the opposite pole, use **Flip pole 180° (north / so
 beside the pole position angle in Geometry. This changes the pole orientation for
 the next run while retaining the selected rotation rate. The correction is a manual
 override, so repeated preprocessing preserves it; clicking again restores the
-original orientation. It works with measured rates and planet presets.
+original orientation. The button stays checked and reads **Pole flipped 180° — Undo flip**
+while active, including after restarting the GUI or moving through a batch.
+Typing a new pole angle clears the indicator and establishes a new starting angle.
+It works with measured rates and planet presets.
 
 With **Saturn** selected as the planet or motion model, **Preprocess** measures globe and visible ring radii from
 separate boundary gradients in three aligned averages, and prefills the GUI.

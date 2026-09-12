@@ -75,8 +75,7 @@ def test_batch_clears_automatic_values_but_retains_manual_overrides(gui, tmp_pat
     monkeypatch.setattr('planetrecon.gui.app.start_stack_job', start)
     win.controls.fields['equatorial_radius_px'].setText('90')
     win.controls.geometry_auto['equatorial_radius_px'] = '90'
-    win.controls.fields['pole_pa_rad'].setText('180')
-    win.controls.geometry_manual.add('pole_pa_rad')
+    win.controls.flip_pole_button.click()
     win.controls.fields['reference_epoch_s'].setText('45')
     win.controls.geometry_auto['reference_epoch_s'] = '45'
     win.controls.suggest_capture_planet('old-Jup.ser')
@@ -84,11 +83,13 @@ def test_batch_clears_automatic_values_but_retains_manual_overrides(gui, tmp_pat
     assert calls[-1].equatorial_radius_px is None
     assert calls[-1].reference_epoch_s == 0
     assert calls[-1].pole_pa_rad == np.pi
+    assert win.controls.flip_pole_button.isChecked()
     assert calls[-1].rotation_planet == 'saturn'
     win._finish_job()
     win.batch_current.status = 'saved'
     win._next_batch()
     assert calls[-1].rotation_planet == 'mars'
+    assert win.controls.flip_pole_button.isChecked()
     assert calls[-1].equatorial_radius_px is None
     win._shutdown()
 

@@ -14,12 +14,17 @@ def test_flip_preserves_manual_direction_through_preprocessing(gui):
     estimate = {'suggestions': {'pole_pa_rad': np.deg2rad(12.5)}}
     controls.prefill_geometry(estimate)
     controls.flip_pole_button.click()
+    assert controls.flip_pole_button.isChecked()
+    assert 'Pole flipped' in controls.flip_pole_button.text()
     assert controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(192.5))
     assert 'pole_pa_rad' in controls.geometry_manual
     controls.prefill_geometry(estimate)
     controls.clear_geometry_estimate()
+    assert controls.flip_pole_button.isChecked()
     assert controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(192.5))
     controls.flip_pole_button.click()
+    assert not controls.flip_pole_button.isChecked()
+    assert 'Pole flip undone' in controls.fields['geometry_mode'].toolTip()
     assert controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(12.5))
     assert controls.flip_pole_button.toolTip()
 
@@ -30,9 +35,30 @@ def test_invalid_pole_does_not_crash_or_become_manual_override(gui, text):
     controls = window.controls
     controls.fields['pole_pa_rad'].setText(text)
     controls.flip_pole_button.click()
+    assert not controls.flip_pole_button.isChecked()
     assert controls.fields['pole_pa_rad'].text() == text
     assert 'pole_pa_rad' not in controls.geometry_manual
     assert 'finite pole position angle' in controls.fields['geometry_mode'].toolTip()
+
+
+def test_flip_indicator_survives_settings_restore_and_clears_on_angle_edit(gui, tmp_path):
+    from planetrecon.gui.app import MainWindow
+    _, window = gui
+    window.settings_path = tmp_path / 'settings.json'
+    window.controls.flip_pole_button.click()
+    window._save_settings()
+    restored = MainWindow(settings_path=window.settings_path)
+    try:
+        assert restored.controls.flip_pole_button.isChecked()
+        assert 'Pole flipped' in restored.controls.flip_pole_button.text()
+        assert restored.controls.configuration().pole_pa_rad == pytest.approx(np.pi)
+        restored.controls.fields['pole_pa_rad'].setText('25')
+        assert not restored.controls.flip_pole_button.isChecked()
+        restored.controls.flip_pole_button.click()
+        assert restored.controls.flip_pole_button.isChecked()
+        assert restored.controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(205))
+    finally:
+        restored.window.close()
 
 
 def test_new_surface_runs_use_flipped_pole_without_changing_rate(gui, tmp_path, monkeypatch):

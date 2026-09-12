@@ -19,6 +19,7 @@ class ConfigControls(QTabWidget):
         self.angular = set()
         self.geometry_manual = set()
         self.geometry_auto = {}
+        self.pole_flipped = False
         self.capture_planet_path = None
         self.planet_choice_manual = config.rotation_planet is not None
         self.setting_capture_planet = False
@@ -112,13 +113,17 @@ class ConfigControls(QTabWidget):
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
             if key == 'pole_pa_rad':
                 self.flip_pole_button = QPushButton('Flip pole 180° (north / south)')
+                self.flip_pole_button.setCheckable(True)
                 self.flip_pole_button.setToolTip(
                     'Add 180° to the pole position angle, wrapped to 0–360°, when '
                     'preprocessing identifies the opposite pole. Uses the existing '
                     'surface rate, including manual overrides. Applies to the next run '
                     'and is preserved as a manual geometry edit during preprocessing. '
-                    'Click again to restore the original orientation.')
+                    'The checked button says Pole flipped while the flip is active. '
+                    'Click again to restore the original orientation. Typing a new '
+                    'pole angle clears the flip indicator and sets a new starting angle.')
                 self.flip_pole_button.clicked.connect(self._flip_pole)
+                self.fields[key].textChanged.connect(self._pole_angle_changed)
                 geo.addRow('', self.flip_pole_button)
         geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
@@ -312,6 +317,7 @@ class ConfigControls(QTabWidget):
                 fields[key] = edit.text()
         return dict(fields=fields, geometry_auto=dict(self.geometry_auto),
                     geometry_manual=sorted(self.geometry_manual),
+                    pole_flipped=self.pole_flipped,
                     planet_choice_manual=self.planet_choice_manual)
 
     def restore_settings(self, state):
@@ -349,6 +355,7 @@ class ConfigControls(QTabWidget):
                               if k in self.fields and isinstance(v, str)}
         self.geometry_manual = {k for k in manual if isinstance(k, str) and k in self.fields}
         self.planet_choice_manual = bool(state.get('planet_choice_manual', False))
+        self._show_pole_flip(state.get('pole_flipped') is True)
         self.capture_planet_path = None
 
     def configuration(self):
@@ -418,6 +425,15 @@ class ConfigControls(QTabWidget):
         self.fields['reference_epoch_s'].setText(text)
         self.geometry_auto['reference_epoch_s'] = text
 
+    def _show_pole_flip(self, flipped):
+        self.pole_flipped = flipped
+        self.flip_pole_button.setChecked(flipped)
+        self.flip_pole_button.setText('Pole flipped 180° — Undo flip' if flipped
+                                     else 'Flip pole 180° (north / south)')
+
+    def _pole_angle_changed(self, _text):
+        self._show_pole_flip(False)
+
     def _flip_pole(self):
         edit = self.fields['pole_pa_rad']
         try:
@@ -425,13 +441,17 @@ class ConfigControls(QTabWidget):
             if not math.isfinite(angle):
                 raise ValueError
         except ValueError:
+            self._show_pole_flip(self.pole_flipped)
             self._set_geometry_help('Enter a finite pole position angle before flipping it.')
             return
+        flipped = not self.pole_flipped
         self.geometry_manual.add('pole_pa_rad')
         self.geometry_auto.pop('pole_pa_rad', None)
         edit.setText(format((angle + 180.) % 360., '.12g'))
+        self._show_pole_flip(flipped)
         self._set_geometry_help(
-            'Pole direction flipped by 180°. This manual orientation applies to the next run '
+            ('Pole direction flipped by 180°. ' if flipped else 'Pole flip undone. ')
+            + 'This manual orientation applies to the next run '
             'and is preserved when preprocessing is repeated.')
 
     def clear_geometry_estimate(self):
