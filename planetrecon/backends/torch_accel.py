@@ -48,10 +48,21 @@ class TorchBackend(Backend):
     @classmethod
     def _pull(cls, image, shift_xy):
         """Exact pixel-coordinate bilinear pull with zero exterior support."""
+        return cls._pull_many((image,), shift_xy)[0]
+
+    @classmethod
+    def _pull_many(cls, images, shift_xy):
+        """Share displacement upload and each corner across signal and support.
+
+        Keep only one corner's indices/weights alive at a time; stacking full
+        RGB/CFA planes into a larger tensor would needlessly raise peak VRAM.
+        """
+        image = images[0]
+        h, w = image.shape[:2]
+        results = [torch.zeros_like(value) for value in images]
         if np.ndim(shift_xy[0]) or np.ndim(shift_xy[1]):
             sx = torch.as_tensor(shift_xy[0], device=image.device, dtype=torch.float64)
             sy = torch.as_tensor(shift_xy[1], device=image.device, dtype=torch.float64)
-            h, w = image.shape[:2]
             if sx.shape != (h, w) or sy.shape != (h, w):
                 raise ValueError('dense displacement must match the detector shape')
             if not bool(torch.isfinite(sx).all() & torch.isfinite(sy).all()):
@@ -60,25 +71,27 @@ class TorchBackend(Backend):
             x = torch.arange(w, device=image.device, dtype=torch.float64)[None, :] + sx
             iy, ix = torch.floor(y).long(), torch.floor(x).long()
             fy, fx = y-iy, x-ix
-            result = torch.zeros_like(image)
             for dy, wy in ((0, 1-fy), (1, fy)):
                 for dx, wx in ((0, 1-fx), (1, fx)):
                     yy, xx = iy+dy, ix+dx
                     weight = wy*wx*((yy >= 0) & (yy < h) & (xx >= 0) & (xx < w))
-                    if image.ndim == 3: weight = weight[..., None]
-                    result += image[yy.clamp(0, h-1), xx.clamp(0, w-1)]*weight
-            return result
+                    yy, xx = yy.clamp(0, h-1), xx.clamp(0, w-1)
+                    for value, result in zip(images, results):
+                        weights = weight[..., None] if value.ndim == 3 else weight
+                        result += value[yy, xx]*weights
+            return results
         import math
         sx,sy=map(float,shift_xy); ix,iy=math.floor(sx),math.floor(sy)
         fx,fy=sx-ix,sy-iy
-        result=torch.zeros_like(image)
         for dy,wy in ((iy,1-fy),(iy+1,fy)):
             for dx,wx in ((ix,1-fx),(ix+1,fx)):
                 if wx*wy==0:continue
                 regions=cls._regions(*image.shape[:2],dy,dx)
                 if regions is not None:
-                    dst,src=regions; result[dst]+=image[src]*(wx*wy)
-        return result
+                    dst,src=regions
+                    for value,result in zip(images,results):
+                        result[dst]+=value[src]*(wx*wy)
+        return results
 
     @classmethod
     def _neighbors(cls, image):
@@ -107,10 +120,8 @@ class TorchBackend(Backend):
                 self._mask_key=key
             planes=image[...,None]*self._mask_weights
             demo=torch.where(self._masks,planes,self._neighbors(planes)/self._demo_weights)
-            add=self._pull(planes,shift_xy);weight=self._pull(self._mask_weights,shift_xy)
-            demo=self._pull(demo,shift_xy)
-            support=self._pull(torch.ones_like(image),shift_xy)
+            add,weight,demo,support=self._pull_many(
+                (planes,self._mask_weights,demo,torch.ones_like(image)),shift_xy)
             return tuple(v.cpu().numpy() for v in (add,weight,demo,support))
-        add=self._pull(image,shift_xy)
-        support=self._pull(torch.ones_like(image),shift_xy)
+        add,support=self._pull_many((image,torch.ones_like(image)),shift_xy)
         return add.cpu().numpy(),support.cpu().numpy(),None,None
