@@ -36,12 +36,13 @@ def test_predicted_rotation_is_retained_while_local_seeing_is_corrected():
     anchor,pose=FramePose(0.,0.,96.,80.),FramePose(1.,.02,96.,80.)
     render=lambda image,src,ref:render_observed(image,model,src,ref)
     predicted=render(template,pose,anchor)
-    identity=local_coordinates(template,np.ones(shape,bool),predicted,pose,anchor,render,33,False)
+    prepared=np.stack((template,np.ones(shape,bool)),axis=-1)
+    identity=local_coordinates(prepared,predicted,pose,anchor,render,33,False)
     np.testing.assert_allclose(identity[0],x+.5,atol=1e-10)
     np.testing.assert_allclose(identity[1],y+.5,atol=1e-10)
     flow=1.5*np.sin(y/25)*np.sin(x/45)
     observed=map_coordinates(predicted,[y,x-flow],order=3,mode='reflect')
-    qx,qy=local_coordinates(template,np.ones(shape,bool),observed,pose,anchor,render,33,False)
+    qx,qy=local_coordinates(prepared,observed,pose,anchor,render,33,False)
     total,weight=bilinear_push(observed,qy-.5,qx-.5,shape)
     corrected=np.divide(total,weight,out=np.zeros_like(total),where=weight>0)
     roi=np.s_[48:-48,48:-48]
@@ -160,3 +161,32 @@ def test_cuda_local_resume_can_continue_on_cpu(tmp_path,monkeypatch):
         cpu=stack_source(source,cfg,preprocessing=selection,resume_from=state)
         equal_result(cpu,whole)
         assert cpu.provenance['execution_history']==['cuda','cpu']
+
+
+@pytest.mark.parametrize('device',['cpu',pytest.param('gpu',marks=pytest.mark.hardware)])
+def test_each_run_reuses_its_own_prepared_motion_reference(monkeypatch,device):
+    import planetrecon.pipeline.motion_local as motion
+    from test_cuda_saturn import capture
+    from planetrecon.pipeline.baseline import stack_source
+    if device=='gpu':
+        torch=pytest.importorskip('torch')
+        if not torch.cuda.is_available():pytest.skip('CUDA unavailable')
+    src,cfg=capture('RGGB')
+    cfg=replace(cfg,device=device,frame_preselection=True,local_alignment=True,local_patch_size=33,stack_percent=100)
+    selection=selected(src,cfg)
+    references=[]
+    original=motion.local_coordinates
+    def record(reference,*args,**kwargs):
+        references.append(reference)
+        assert reference.shape[-1]==2
+        if device=='gpu':assert reference.is_cuda and reference.dtype==torch.float64
+        else:assert isinstance(reference,np.ndarray) and reference.dtype==np.float64
+        return original(reference,*args,**kwargs)
+    monkeypatch.setattr(motion,'local_coordinates',record)
+    first=stack_source(src,cfg,preprocessing=selection)
+    n=len(references)
+    assert n==first.n_used==4 and all(r is references[0] for r in references)
+    second=stack_source(src,cfg,preprocessing=selection)
+    assert references[n] is not references[0]
+    assert all(r is references[n] for r in references[n:])
+    np.testing.assert_array_equal(first.image,second.image)

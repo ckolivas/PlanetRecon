@@ -688,6 +688,13 @@ def stack_source_geometry(
             projected = local_render(np.stack((colour_plane,np.ones((h,w))),axis=-1),anchor_pose,pose)
             return projected[...,0],projected[...,1]
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
+        local_template_with_support = np.stack((local_template,local_support),axis=-1)
+        if backend.name == 'cuda':
+            import torch
+            # The reference stays fixed for this run; avoid rebuilding and
+            # uploading both planes at every observation time.
+            local_template_with_support = torch.as_tensor(
+                local_template_with_support,device='cuda:0',dtype=torch.float64)
         diagnostics['local_alignment'] = {
             'version': 1, 'enabled': True, 'window_px':config.local_patch_size,
             'step_px':config.local_patch_size//2, 'maximum_residual_px':3,
@@ -887,7 +894,7 @@ def stack_source_geometry(
             sample_xy = None
             if config.local_alignment:
                 local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)
-                sample_xy = local_coordinates(local_template,local_support,local_image,
+                sample_xy = local_coordinates(local_template_with_support,local_image,
                     pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda')
             if gpu_accumulator is not None:
                 if bayer and demo is None:

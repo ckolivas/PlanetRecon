@@ -72,8 +72,9 @@ def _cuda_inverse_local_coordinates(shift):
     return output[0],output[1]
 
 
-def local_coordinates(template, template_support, frame, pose, reference_pose, render, window, use_cuda):
-    projected = render(np.stack((template,template_support),axis=-1),pose,reference_pose)
+def local_coordinates(template_with_support, frame, pose, reference_pose, render, window, use_cuda):
+    """Predict a fixed, prepared reference; only pose and observations vary."""
+    projected = render(template_with_support,pose,reference_pose)
     predicted,support = projected[...,0],projected[...,1]
     matcher = LocalRegistration(predicted,window=window,step=window//2,use_cuda=use_cuda,
                                 valid_mask=support >= 1.-1e-9)

@@ -1,0 +1,108 @@
+{
+  "baseline_commit": "e06c10b",
+  "method": "Serial ABBA fresh-process replays of 34 selected Saturn RGGB frames at four CPU threads, local patch 65. CUDA warmed outside timing. Own process CPU time and contended wall time recorded separately.",
+  "interpretation": "Exact output parity in Saturn and surface modes. Whole-run timing differences are within noise; no speedup percentage claimed. A fixed two-plane float64 reference is now stacked and uploaded once per run instead of once per frame. For this 320x512 pilot this avoids 33 uploads totalling 86507520 bytes, at the cost of retaining 2621440 bytes on the GPU during the run.",
+  "validation": "101 tests passed with real CUDA, covering surface/Saturn parity, local alignment, prepared-reference ownership, masks and checkpoint/resume including CUDA-to-CPU resume.",
+  "cases": [
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 29777,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.04,
+          "elapsed_seconds": 4.037309732
+        },
+        {
+          "side": "after",
+          "pid": 29896,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.95,
+          "elapsed_seconds": 3.949948569
+        },
+        {
+          "side": "after",
+          "pid": 30118,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.91,
+          "elapsed_seconds": 3.909480127
+        },
+        {
+          "side": "before",
+          "pid": 30139,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.85,
+          "elapsed_seconds": 3.858354559
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 3.9450000000000003,
+          "elapsed_seconds": 3.9478321454999996
+        },
+        "after": {
+          "process_cpu_seconds": 3.93,
+          "elapsed_seconds": 3.929714348
+        }
+      }
+    },
+    {
+      "mode": "surface",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 30159,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.89,
+          "elapsed_seconds": 5.639759868
+        },
+        {
+          "side": "after",
+          "pid": 30333,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.82,
+          "elapsed_seconds": 5.55214798
+        },
+        {
+          "side": "after",
+          "pid": 30416,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.78,
+          "elapsed_seconds": 5.540414124
+        },
+        {
+          "side": "before",
+          "pid": 30519,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.68,
+          "elapsed_seconds": 5.430397163
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 5.785,
+          "elapsed_seconds": 5.5350785155
+        },
+        "after": {
+          "process_cpu_seconds": 5.800000000000001,
+          "elapsed_seconds": 5.546281051999999
+        }
+      }
+    }
+  ]
+}
