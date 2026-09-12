@@ -279,7 +279,7 @@ def _stack_source(
         snapshot_provenance["resumed_from_frame"] = next_index
 
     def cpu_fallback(exc):
-        nonlocal backend
+        nonlocal backend, reference
         if backend.name != "cuda":
             raise exc
         from planetrecon.backends.cpu import CPUBackend
@@ -288,6 +288,18 @@ def _stack_source(
         report.selected, report.fallback, report.reason = "cpu", True, message
         report.execution_history.append("cpu")
         warnings.append(message)
+        if reference is not None:
+            reference = backend.prepare_reference(reference)
+
+    def prepare_reference():
+        nonlocal reference
+        if reference is not None:
+            try:
+                reference = backend.prepare_reference(reference)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+
+    prepare_reference()
 
     local_matcher = None
     if config.local_alignment:
@@ -320,6 +332,7 @@ def _stack_source(
                 cpu_fallback(exc)
                 reference = build_template(reference, candidates, read_plane,
                                            backend.phase_correlation, config.max_shift_px, should_cancel)
+            prepare_reference()
         local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
         snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
 
@@ -384,6 +397,7 @@ def _stack_source(
             if reference is None:
                 reference = plane
                 reference_index = int(index)
+                prepare_reference()
                 shift = (0.0, 0.0)
             else:
                 try:

@@ -31,10 +31,20 @@ class Backend:
     def to_numpy(self, array: np.ndarray) -> np.ndarray:
         return np.asarray(array, dtype=np.float64)
 
+    def prepare_reference(self, reference: np.ndarray) -> np.ndarray:
+        """Own an immutable reference snapshot and its reusable transform."""
+        snapshot = np.array(reference, dtype=np.float64, copy=True)
+        snapshot.flags.writeable = False
+        spectrum = np.conj(np.fft.fft2(snapshot-snapshot.mean()))
+        self._phase_reference, self._reference_spectrum = snapshot, spectrum
+        return snapshot
+
     def phase_correlation(self, reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
         from planetrecon.pipeline.align import phase_correlation_shift
 
-        return phase_correlation_shift(reference, frame)
+        spectrum = (self._reference_spectrum
+                    if reference is getattr(self, '_phase_reference', None) else None)
+        return phase_correlation_shift(reference, frame, reference_spectrum=spectrum)
 
     def shift(self, image: np.ndarray, shift_xy: tuple[float, float]) -> np.ndarray:
         from scipy.ndimage import shift as ndshift

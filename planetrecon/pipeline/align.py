@@ -34,10 +34,12 @@ def correlation_peak(corr):
     return offsets[1], offsets[0]
 
 
-def phase_correlation_shift(reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
+def phase_correlation_shift(reference: np.ndarray, frame: np.ndarray, *, reference_spectrum=None) -> tuple[float, float]:
     """Amplitude-weighted correlation avoids phase-only locking to Bayer noise."""
     ref = np.asarray(reference, dtype=np.float64)
     img = np.asarray(frame, dtype=np.float64)
-    cross = np.fft.fft2(img-img.mean()) * np.conj(np.fft.fft2(ref-ref.mean()))
+    if reference_spectrum is None:
+        reference_spectrum = np.conj(np.fft.fft2(ref-ref.mean()))
+    cross = np.fft.fft2(img-img.mean()) * reference_spectrum
     corr = np.fft.ifft2(cross * correlation_filter(ref.shape)).real
     return correlation_peak(corr)

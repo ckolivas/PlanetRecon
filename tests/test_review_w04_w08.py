@@ -265,9 +265,9 @@ def test_qt_close_owns_worker_and_preserves_configuration(tmp_path, monkeypatch)
     cfg = cpu_config(batch_frames=1, bayer_override="BGGR", reference_index=1, reject_saturated=False)
     win = MainWindow(path, config=cfg)
     captured = []
-    def start(path, config):
+    def start(path, config, **options):
         captured.append(config)
-        return start_stack_job(path, config)
+        return start_stack_job(path, config, **options)
     monkeypatch.setattr("planetrecon.gui.app.start_stack_job", start)
     win.show()
     try:

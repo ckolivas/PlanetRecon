@@ -15,16 +15,28 @@ class TorchBackend(Backend):
     def to_numpy(self, array: np.ndarray) -> np.ndarray:
         return np.asarray(array, dtype=np.float64)
 
+    def prepare_reference(self, reference: np.ndarray) -> np.ndarray:
+        snapshot = np.array(reference, dtype=np.float64, copy=True)
+        ref = torch.tensor(snapshot, device='cuda:0', dtype=torch.float64)
+        spectrum = torch.conj(torch.fft.fft2(ref-ref.mean()))
+        snapshot.flags.writeable = False
+        self._phase_reference, self._reference_spectrum = snapshot, spectrum
+        return snapshot
+
     def phase_correlation(self, reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
-        ref = torch.as_tensor(reference, device="cuda:0", dtype=torch.float64)
-        img = torch.as_tensor(frame, device="cuda:0", dtype=torch.float64)
-        ref = ref - ref.mean()
+        convert = (torch.tensor if isinstance(frame, np.ndarray) and not frame.flags.writeable
+                   else torch.as_tensor)
+        img = convert(frame, device="cuda:0", dtype=torch.float64)
         img = img - img.mean()
-        fa = torch.fft.fft2(ref)
+        if reference is getattr(self, '_phase_reference', None):
+            spectrum = self._reference_spectrum
+        else:
+            ref = torch.tensor(reference, device='cuda:0', dtype=torch.float64)
+            spectrum = torch.conj(torch.fft.fft2(ref-ref.mean()))
         fb = torch.fft.fft2(img)
-        cross = fb * torch.conj(fa)
+        cross = fb * spectrum
         from planetrecon.pipeline.align import correlation_filter, correlation_peak
-        shape = tuple(ref.shape)
+        shape = tuple(reference.shape)
         if getattr(self, '_correlation_shape', None) != shape:
             self._correlation_filter = torch.as_tensor(correlation_filter(shape), device='cuda:0')
             self._correlation_shape = shape
