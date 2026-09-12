@@ -115,3 +115,16 @@ gain (24.18 -> 25.155 s); do not advertise a CPU Saturn improvement.
 Independent pixel-oracle and CPU/CUDA/memory/resume tests pass. Two outdated
 test assumptions were corrected: small-patch refusal and allocator pool reuse.
 See results/real-data/prepared-demosaic-speedups.json.
+
+## Bounded parallel screening
+
+Independent frame measurements now use at most four threads, bounded further by
+the requested threads, batch count and a conservative 128 MiB scratch estimate.
+BLAS stays single-threaded inside this pool and is restored afterward. Without
+optional threadpoolctl, screening remains serial. Source I/O and result ordering
+remain on the calling thread; cancellation closes queued work and joins workers.
+Exact real-capture parity. Saturn L 256-frame median elapsed 0.922 -> 0.507 s;
+Mars L3 0.637 -> 0.420 s. Own CPU increases about 22% (0.970 -> 1.185 and
+0.705 -> 0.860 s): this is an explicit bounded concurrency tradeoff, not a CPU
+work reduction. See parallel-screening-speedups.json. Parallel calibration,
+ordering, cancellation, exception cleanup and missing-runtime fallback are tested.

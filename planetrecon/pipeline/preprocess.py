@@ -5,6 +5,8 @@ AutoStakkert estimator family, not a claim of bitwise AutoStakkert equivalence.
 See docs/preprocessing.md for the exact reproducible algorithm and limitations.
 """
 from dataclasses import dataclass
+from contextlib import contextmanager
+from functools import partial
 
 import numpy as np
 from scipy.ndimage import binary_dilation, gaussian_filter, label, laplace
@@ -109,9 +111,46 @@ class FrameSelection:
         return int(indices[np.argmax(self.measurements[indices, 0])]) if indices.size else None
 
 
-def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None):
-    """Read in bounded batches, retaining only scalar measurements per frame."""
+def _measure_observation(raw, *, color, bit_depth, reject_saturated, calibration):
     from planetrecon.pipeline.baseline import _saturated
+    values, status = (np.nan,)*4, 'invalid'
+    if np.isfinite(raw).all():
+        if reject_saturated and _saturated(raw, bit_depth):
+            status = 'saturated'
+        else:
+            calibrated, info = apply_calibration(raw, calibration)
+            if np.isfinite(calibrated).all():
+                if reject_saturated and info['saturated']:
+                    status = 'saturated'
+                else:
+                    *values, status = measure_frame(calibrated, color)
+                    if status == 'ok' and not np.isfinite(values).all():
+                        status = 'invalid'
+    return values, status
+
+
+@contextmanager
+def _measurement_pool(source, config):
+    # At most four active frames, bounded by both the requested thread count
+    # and a conservative 128 MiB estimate for concurrent measurement scratch.
+    pixels = max(1, int(np.prod(source.frame_shape())))
+    workers = max(1, min(4, config.threads, config.batch_frames, source.n_frames(),
+                         (128*1024**2)//(128*pixels)))
+    if workers > 1:
+        try:
+            from threadpoolctl import threadpool_limits
+        except ImportError:
+            pass  # Optional runtime: keep serial execution without nested-pool control.
+        else:
+            from concurrent.futures import ThreadPoolExecutor
+            with threadpool_limits(limits=1), ThreadPoolExecutor(max_workers=workers) as pool:
+                yield pool
+            return
+    yield None
+
+
+def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None):
+    """Read serial bounded batches; measure independent frames in a bounded pool."""
 
     n = source.n_frames()
     metrics = np.full((n, 4), np.nan)
@@ -119,36 +158,33 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
     processed = 0
     stopped = False
     bit_depth = None
-    for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
-        for local, index in enumerate(indices):
+    with _measurement_pool(source, config) as pool:
+        for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
             if should_cancel is not None and should_cancel():
                 stopped = True
                 break
-            raw = batch[local]
-            status = 'invalid'
-            if np.isfinite(raw).all():
-                if config.reject_saturated and bit_depth is None:
-                    # Fixed for this open source. SER metadata also measures the
-                    # complete timestamp trailer, so do not rebuild it per frame.
-                    bit_depth = source.metadata().bit_depth
-                if config.reject_saturated and _saturated(raw, bit_depth):
-                    status = 'saturated'
-                else:
-                    calibrated, info = apply_calibration(raw, calibration)
-                    if np.isfinite(calibrated).all():
-                        if config.reject_saturated and info['saturated']:
-                            status = 'saturated'
-                        else:
-                            *values, status = measure_frame(calibrated, source.color_mode())
-                            metrics[index] = values
-                            if status == 'ok' and not np.isfinite(values).all():
-                                status = 'invalid'
-            statuses[index] = status
-            processed += 1
-        if on_progress is not None:
-            on_progress(processed, n)
-        if stopped:
-            break
+            if config.reject_saturated and bit_depth is None and any(np.isfinite(raw).all() for raw in batch):
+                # Metadata can seek/read the SER trailer. Keep all source I/O
+                # on this thread and reuse its fixed bit depth for this pass.
+                bit_depth = source.metadata().bit_depth
+            measure = partial(_measure_observation, color=source.color_mode(), bit_depth=bit_depth,
+                              reject_saturated=config.reject_saturated, calibration=calibration)
+            results = pool.map(measure, batch) if pool is not None else map(measure, batch)
+            try:
+                for index in indices:
+                    if should_cancel is not None and should_cancel():
+                        stopped = True
+                        break
+                    values, status = next(results)
+                    metrics[index], statuses[index] = values, status
+                    processed += 1
+            finally:
+                if pool is not None:
+                    results.close()  # Cancel queued work on cancellation or an exception.
+            if on_progress is not None:
+                on_progress(processed, n)
+            if stopped:
+                break
     stopped = stopped or processed < n or bool(should_cancel and should_cancel())
     accepted, cuts, stats = sigma_selection(metrics, statuses == 'ok')
     reasons = {name: np.flatnonzero(statuses == name).tolist()

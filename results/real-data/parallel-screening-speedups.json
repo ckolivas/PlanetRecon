@@ -1,0 +1,105 @@
+{
+  "baseline_commit": "d3c0475",
+  "method": "Serial ABBA fresh processes; first 256 frames of each original SER, batches of 32, four requested threads. Before uses serial measurements; after uses four measurement workers with BLAS limited to one thread and all source I/O on the caller thread. Own process CPU includes every worker; elapsed time remains subject to background contention.",
+  "interpretation": "Exact measurements, masks and summaries. Median elapsed screening time decreases about 45 percent for Saturn L (0.922 -> 0.507 seconds) and 34 percent for Mars L3 (0.637 -> 0.420 seconds). Own CPU increases about 22 percent in both cases (0.970 -> 1.185 and 0.705 -> 0.860 seconds). This exchanges a bounded amount of additional CPU work for less waiting; it is not a CPU-work reduction or full-preprocessing timing.",
+  "constraints": "At most four workers and never more than the configured threads, batch size, frame count or conservative 128 MiB measurement scratch estimate allows. BLAS limit restored after workers finish. No threadpoolctl means serial fallback. No concurrent reads of source handles; results consumed in capture order.",
+  "validation": "Parallel calibration/order/I/O/thread cleanup, cancellation/restart, serial fallback, GUI autorun/batch, preprocessing/cache and frame-selection checks pass. Two existing CLI selection tests now explicitly disable local alignment for their 64-pixel fixture instead of assuming the obsolete small-patch fallback.",
+  "cases": [
+    {
+      "capture": "2023-10-10-1320_8-CK-L-Sat_pipp.ser",
+      "samples": [
+        {
+          "pid": 6,
+          "cpu_seconds": 1.01,
+          "elapsed_seconds": 1.013819881,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "before"
+        },
+        {
+          "pid": 14,
+          "cpu_seconds": 1.22,
+          "elapsed_seconds": 0.545956995,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 26,
+          "cpu_seconds": 1.15,
+          "elapsed_seconds": 0.468785105,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 38,
+          "cpu_seconds": 0.93,
+          "elapsed_seconds": 0.830298414,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "before"
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 0.97,
+          "elapsed_seconds": 0.9220591475000001
+        },
+        "after": {
+          "cpu_seconds": 1.185,
+          "elapsed_seconds": 0.5073710499999999
+        }
+      }
+    },
+    {
+      "capture": "2025-01-10-1459_5-CK-L3-Mars.ser",
+      "samples": [
+        {
+          "pid": 46,
+          "cpu_seconds": 0.7,
+          "elapsed_seconds": 0.654261302,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "before"
+        },
+        {
+          "pid": 54,
+          "cpu_seconds": 0.83,
+          "elapsed_seconds": 0.424078557,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 66,
+          "cpu_seconds": 0.89,
+          "elapsed_seconds": 0.416779352,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "after"
+        },
+        {
+          "pid": 78,
+          "cpu_seconds": 0.71,
+          "elapsed_seconds": 0.620461286,
+          "metadata_calls": 1,
+          "n_measured": 256,
+          "side": "before"
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "cpu_seconds": 0.705,
+          "elapsed_seconds": 0.637361294
+        },
+        "after": {
+          "cpu_seconds": 0.86,
+          "elapsed_seconds": 0.4204289545
+        }
+      }
+    }
+  ]
+}

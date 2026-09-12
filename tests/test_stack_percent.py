@@ -122,7 +122,8 @@ def test_cli_and_config_roundtrip(tmp_path, mode, expected):
     cfg = config(stack_percent=50, frame_selection_mode=mode)
     assert ReconstructionConfig.from_dict(cfg.to_dict()) == cfg
     assert main(['--threads', '2', 'stack', '--path', str(path), '--device', 'cpu',
-                 '--selection-mode', mode, '--stack-percent', '50', '--out', str(tmp_path/'stack')]) == 0
+                 '--no-local-alignment', '--selection-mode', mode, '--stack-percent', '50',
+                 '--out', str(tmp_path/'stack')]) == 0
     assert load_snapshot(tmp_path/'stack/stack.npz').n_used == expected
 
 
