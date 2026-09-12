@@ -1,0 +1,648 @@
+{
+  "baseline_commit": "45f7e2e",
+  "optimized_commit": "d32c88edb46b13f0ad1d444e420b22a4d1fd7cb9",
+  "capture": "2023-10-10-1320_8-CK-L-Sat_pipp.ser",
+  "shape": [
+    320,
+    512
+  ],
+  "color": "RGGB",
+  "scope": "34 frames sampled from the existing upper-50-percent-quality-range pilot, including its best frame. Local patch size 65; identical selected frames, geometry and exposure on both sides. Template construction is included; preprocessing, GUI previews, imports, input loading, CUDA warmup and export are excluded.",
+  "method": "Serial fresh processes in before/after/after/before order per case. Two measurements per revision. No concurrent benchmark instances or tests. Existing background processes were left running. Timing uses time.process_time (or its nanosecond variant) and time.perf_counter.",
+  "cpu_attribution": "CPU time is the sum for this benchmark process and its own threads. It excludes all unrelated processes. Pipeline replay does not launch child workers.",
+  "caveats": [
+    "Elapsed time includes CPU scheduling and GPU contention. Neither elapsed time nor GPU utilization is attributed as exclusive compute work.",
+    "Own CPU time can also vary with clock speed, shared caches and active waiting. Repeated comparisons and operation counts accompany timings.",
+    "CUDA activities are from torch.profiler in this process alone. Counts include kernels, copies and memset; kernel counts are also separated. Sum only CUDA device events, not their CPU parents. Profiled durations are sums of activities and can be contention-sensitive; they are not end-to-end elapsed times.",
+    "The CUDA microbenchmark times 40 warmed calls with profiling disabled and traces two separate calls. Sharing coordinates raises measured peak allocation by 2.5 MiB. No quality, interpolation or selection algorithm changes.",
+    "These are bounded sample checks, not full-capture performance guarantees. All comparisons had identical output arrays, coverage/validity and used-frame counts."
+  ],
+  "tools": [
+    "tools/benchmark_stack_replay.py",
+    "tools/benchmark_cuda_pull.py"
+  ],
+  "commands": [
+    ".venv/bin/python tools/benchmark_stack_replay.py out/saturn-boundaries/pilot-input.npz out/run-speed/replay.npz --mode saturn --device gpu --threads 32 --source-tree SOURCE_TREE",
+    ".venv/bin/python tools/benchmark_cuda_pull.py out/run-speed/pull.npz --source-tree SOURCE_TREE"
+  ],
+  "saturn": [
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 32,
+      "samples": [
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 31636,
+          "threads": 32,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 95.41,
+          "elapsed_seconds": 9.717153550998773
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 31797,
+          "threads": 32,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 8.079999999999998,
+          "elapsed_seconds": 8.040138537995517
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 32039,
+          "threads": 32,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 7.97,
+          "elapsed_seconds": 7.902154726005392
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 32225,
+          "threads": 32,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 88.79,
+          "elapsed_seconds": 9.06506681398605
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 92.1,
+          "elapsed_seconds": 9.391110182492412
+        },
+        "after": {
+          "process_cpu_seconds": 8.024999999999999,
+          "elapsed_seconds": 7.971146632000455
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "cpu",
+      "threads": 32,
+      "samples": [
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 32339,
+          "threads": 32,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 162.81,
+          "elapsed_seconds": 33.057983114995295
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 32612,
+          "threads": 32,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 43.79,
+          "elapsed_seconds": 32.416477049002424
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 603,
+          "threads": 32,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 42.94,
+          "elapsed_seconds": 31.326073697011452
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 912,
+          "threads": 32,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 162.87,
+          "elapsed_seconds": 31.77352844699635
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 162.84,
+          "elapsed_seconds": 32.41575578099582
+        },
+        "after": {
+          "process_cpu_seconds": 43.364999999999995,
+          "elapsed_seconds": 31.871275373006938
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 1282,
+          "threads": 4,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 17.11,
+          "elapsed_seconds": 8.13749782499508
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 1354,
+          "threads": 4,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 7.92,
+          "elapsed_seconds": 7.833397220005281
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 1481,
+          "threads": 4,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 8.120000000000001,
+          "elapsed_seconds": 8.025244855001802
+        },
+        {
+          "mode": "saturn",
+          "device": "gpu",
+          "backend": "cuda",
+          "n_used": 34,
+          "pid": 1569,
+          "threads": 4,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 16.900000000000002,
+          "elapsed_seconds": 7.837335909018293
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 17.005000000000003,
+          "elapsed_seconds": 7.9874168670066865
+        },
+        "after": {
+          "process_cpu_seconds": 8.02,
+          "elapsed_seconds": 7.9293210375035414
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 1732,
+          "threads": 4,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 55.4,
+          "elapsed_seconds": 30.01878523902269
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 1886,
+          "threads": 4,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 40.86,
+          "elapsed_seconds": 32.272264151019044
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 2194,
+          "threads": 4,
+          "side": "after",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 38.550000000000004,
+          "elapsed_seconds": 30.1313897910004
+        },
+        {
+          "mode": "saturn",
+          "device": "cpu",
+          "backend": "cpu",
+          "n_used": 34,
+          "pid": 2357,
+          "threads": 4,
+          "side": "before",
+          "max_difference_from_first": {
+            "image": 0.0,
+            "coverage": 0.0
+          },
+          "process_cpu_seconds": 55.96,
+          "elapsed_seconds": 30.651897081988864
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 55.68,
+          "elapsed_seconds": 30.335341160505777
+        },
+        "after": {
+          "process_cpu_seconds": 39.705,
+          "elapsed_seconds": 31.201826971009723
+        }
+      }
+    }
+  ],
+  "cuda": [
+    {
+      "kind": "pull",
+      "samples": [
+        {
+          "pid": 3187,
+          "source_tree": "/tmp/planetrecon-speed2-before",
+          "device": "NVIDIA GeForce RTX 5070",
+          "iterations": 40,
+          "process_cpu_seconds": 0.22,
+          "elapsed_seconds": 0.212596058,
+          "peak_allocated_bytes": 54231040,
+          "profiled_iterations": 2,
+          "cuda_activity_count": 788,
+          "summed_cuda_activity_us": 7704.713000000092,
+          "side": "before",
+          "max_output_difference": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "cuda_memory_activities": {
+            "Memcpy HtoD (Pageable -> Device)": 18,
+            "Memset (Device)": 16,
+            "Memcpy DtoH (Device -> Pinned)": 8,
+            "Memcpy DtoH (Device -> Pageable)": 8
+          },
+          "cuda_kernel_count": 738
+        },
+        {
+          "pid": 3286,
+          "source_tree": "/home/conman/Code/PlanetRecon",
+          "device": "NVIDIA GeForce RTX 5070",
+          "iterations": 40,
+          "process_cpu_seconds": 0.11,
+          "elapsed_seconds": 0.112410601,
+          "peak_allocated_bytes": 56852480,
+          "profiled_iterations": 2,
+          "cuda_activity_count": 302,
+          "summed_cuda_activity_us": 6079.795999999971,
+          "side": "after",
+          "max_output_difference": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "cuda_memory_activities": {
+            "Memcpy HtoD (Pageable -> Device)": 6,
+            "Memset (Device)": 4,
+            "Memcpy DtoH (Device -> Pinned)": 2,
+            "Memcpy DtoH (Device -> Pageable)": 8
+          },
+          "cuda_kernel_count": 282
+        },
+        {
+          "pid": 3309,
+          "source_tree": "/home/conman/Code/PlanetRecon",
+          "device": "NVIDIA GeForce RTX 5070",
+          "iterations": 40,
+          "process_cpu_seconds": 0.21,
+          "elapsed_seconds": 0.203847276,
+          "peak_allocated_bytes": 56852480,
+          "profiled_iterations": 2,
+          "cuda_activity_count": 302,
+          "summed_cuda_activity_us": 6474.071000000001,
+          "side": "after",
+          "max_output_difference": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "cuda_memory_activities": {
+            "Memcpy HtoD (Pageable -> Device)": 6,
+            "Memset (Device)": 4,
+            "Memcpy DtoH (Device -> Pinned)": 2,
+            "Memcpy DtoH (Device -> Pageable)": 8
+          },
+          "cuda_kernel_count": 282
+        },
+        {
+          "pid": 3343,
+          "source_tree": "/tmp/planetrecon-speed2-before",
+          "device": "NVIDIA GeForce RTX 5070",
+          "iterations": 40,
+          "process_cpu_seconds": 0.62,
+          "elapsed_seconds": 0.621929271,
+          "peak_allocated_bytes": 54231040,
+          "profiled_iterations": 2,
+          "cuda_activity_count": 788,
+          "summed_cuda_activity_us": 8798.197000000018,
+          "side": "before",
+          "max_output_difference": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "cuda_memory_activities": {
+            "Memcpy HtoD (Pageable -> Device)": 18,
+            "Memset (Device)": 16,
+            "Memcpy DtoH (Device -> Pinned)": 8,
+            "Memcpy DtoH (Device -> Pageable)": 8
+          },
+          "cuda_kernel_count": 738
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 0.42,
+          "elapsed_seconds": 0.4172626645
+        },
+        "after": {
+          "process_cpu_seconds": 0.16,
+          "elapsed_seconds": 0.15812893849999998
+        }
+      }
+    },
+    {
+      "kind": "stack",
+      "samples": [
+        {
+          "pid": 3391,
+          "source_tree": "/tmp/planetrecon-speed2-before",
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.49,
+          "elapsed_seconds": 5.456839334,
+          "side": "before",
+          "max_output_difference": {
+            "image": 0.0,
+            "coverage": 0.0,
+            "validity": 0.0,
+            "n_used": 0.0
+          }
+        },
+        {
+          "pid": 3559,
+          "source_tree": "/home/conman/Code/PlanetRecon",
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.34,
+          "elapsed_seconds": 5.315663267,
+          "side": "after",
+          "max_output_difference": {
+            "image": 0.0,
+            "coverage": 0.0,
+            "validity": 0.0,
+            "n_used": 0.0
+          }
+        },
+        {
+          "pid": 3779,
+          "source_tree": "/home/conman/Code/PlanetRecon",
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.18,
+          "elapsed_seconds": 5.175369878,
+          "side": "after",
+          "max_output_difference": {
+            "image": 0.0,
+            "coverage": 0.0,
+            "validity": 0.0,
+            "n_used": 0.0
+          }
+        },
+        {
+          "pid": 4253,
+          "source_tree": "/tmp/planetrecon-speed2-before",
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 5.73,
+          "elapsed_seconds": 5.697222933,
+          "side": "before",
+          "max_output_difference": {
+            "image": 0.0,
+            "coverage": 0.0,
+            "validity": 0.0,
+            "n_used": 0.0
+          }
+        }
+      ],
+      "median_by_revision": {
+        "before": {
+          "process_cpu_seconds": 5.61,
+          "elapsed_seconds": 5.5770311335
+        },
+        "after": {
+          "process_cpu_seconds": 5.26,
+          "elapsed_seconds": 5.2455165725
+        }
+      },
+      "config": {
+        "schema_name": "planetrecon-reconstruction-config",
+        "schema_version": "1.0",
+        "device": "gpu",
+        "threads": 32,
+        "batch_frames": 32,
+        "max_ram_bytes": null,
+        "max_vram_bytes": null,
+        "bayer_override": null,
+        "endian_override": null,
+        "endian_convention": "ecosystem",
+        "recover_complete_frames": false,
+        "reject_saturated": true,
+        "frame_preselection": true,
+        "stack_percent": 100,
+        "frame_selection_mode": "quality_range",
+        "local_alignment": true,
+        "local_patch_size": 65,
+        "max_shift_px": 32.0,
+        "reference_index": 0,
+        "crop": "feature",
+        "baseline_operator_version": "1.6",
+        "geometry_operator_version": "1.8",
+        "geometry_mode": "none",
+        "reference_epoch_s": 179.9925,
+        "field_angle0_rad": 0.0,
+        "field_rate_rad_s": -2.830724792966078e-07,
+        "field_center_x": 258.3488378,
+        "field_center_y": 161.0837284,
+        "equatorial_radius_px": 93.31865662,
+        "flattening": 0.09238479792,
+        "pole_pa_rad": 0.005974453265302731,
+        "sub_obs_lat_rad": 0.18000416142592313,
+        "sub_obs_lon0_rad": 0.0,
+        "surface_rate_rad_s": null,
+        "rotation_planet": "saturn",
+        "reverse_rotation": false,
+        "exposure_s": 0.02,
+        "cadence_s": null,
+        "geometry_duration_warn_s": 120.0,
+        "freeze_mid_exposure": true,
+        "ring_inner_radius_px": null,
+        "ring_outer_radius_px": null,
+        "ring_transmission": 0.35,
+        "sun_lon_rad": null,
+        "sun_lat_rad": null,
+        "moon_x": null,
+        "moon_y": null,
+        "moon_radius_px": null,
+        "moon_vx_px_s": 0.0,
+        "moon_vy_px_s": 0.0,
+        "bias_path": null,
+        "dark_path": null,
+        "flat_path": null,
+        "gain_e_per_adu": null,
+        "read_noise_e": null,
+        "saturate_adu": null
+      },
+      "input_indices": [
+        0,
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36,
+        40,
+        44,
+        48,
+        52,
+        56,
+        60,
+        64,
+        68,
+        72,
+        76,
+        80,
+        84,
+        85,
+        88,
+        92,
+        96,
+        100,
+        104,
+        108,
+        112,
+        116,
+        120,
+        124,
+        128
+      ]
+    }
+  ],
+  "validation": {
+    "passed": 189,
+    "default_suite_passed": 162,
+    "opt_in_hardware_passed": 27,
+    "default_hardware_skips_subsequently_run": 27,
+    "selected_test_files": [
+      "test_cuda_shared_pull.py",
+      "test_local_alignment.py",
+      "test_local_observed_support.py",
+      "test_cuda_memory.py",
+      "test_cpu_memory.py",
+      "test_quality_weights.py",
+      "test_ring_registration.py",
+      "test_cuda_ring_registration.py",
+      "test_motion_local.py",
+      "test_surface_peak_uniqueness.py",
+      "test_field_observed_support.py",
+      "test_geometry_resume.py"
+    ]
+  }
+}

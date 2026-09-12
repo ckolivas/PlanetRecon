@@ -195,6 +195,18 @@ compare identical samples before and after these changes, including a 129-frame
 Saturn CUDA run improving from 30.8 to 13.0 seconds. These are bounded sample
 measurements, not full-capture or cross-machine timing guarantees.
 
+Further tuning avoids waking BLAS thread pools for small correlation reductions
+and shares CUDA pull coordinates across Bayer signal, masks, demosaic and support.
+The [per-process work measurements](results/real-data/owned-runtime-speedups.json)
+separate this instance's CPU time from elapsed time under background load. Serial
+before/after/after/before replays retained identical outputs; CUDA tracing counted
+62% fewer device activities in Bayer backprojection, with 2.5 MiB additional peak
+allocation. Whole-run elapsed improvements were smaller and depend on contention.
+`tools/benchmark_stack_replay.py` records process CPU and elapsed time for a saved
+8-bit RGGB pilot; `tools/benchmark_cuda_pull.py` traces only its own CUDA activities.
+Run benchmarks sequentially, separately from tests; neither machine-wide GPU
+utilization nor elapsed time measures exclusive work by this instance.
+
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
 mix partial sums. CUDA allocation budgets remain limited to translation mode.
