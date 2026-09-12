@@ -1,0 +1,110 @@
+{
+  "status": "rejected; no candidate production code retained",
+  "baseline_commit": "b6955a5",
+  "candidate_patch": "/tmp/planetrecon-flat-candidate.patch",
+  "method": "Serial ABBA fresh-process local stacking replays of 34 fixed selected Saturn RGGB frames, four requested threads. Generated positive flat = 0.8 + 0.2*x/(width-1) + 0.1*y/(height-1); this is synthetic calibration, not an observed flat. Same preselected measurements, geometry and sample indices on both sides. Imports, input load, CUDA warmup and export excluded; run-owned preparation included. Own process CPU and contended wall time are separate.",
+  "interpretation": "CPU median 4.18 -> 4.11 seconds (1.7%); Saturn CUDA 3.30 -> 3.23 seconds (2.1%). Variability overlaps these small gains. No supplied capture has a measured flat. Added calibration snapshot state, ownership and memory complexity is not justified by this evidence.",
+  "validation": "All replay images, coverage, validity and counts exactly equal. The candidate passed 90 focused calibration, scale, cache invalidation, parallel screening and CPU/CUDA resume tests after correcting a development hook placement. Candidate code was then discarded; the nine previously qualified improvements remain.",
+  "cases": [
+    {
+      "mode": "none",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 22005,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.2,
+          "elapsed_seconds": 4.206134502
+        },
+        {
+          "side": "after",
+          "pid": 22139,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.07,
+          "elapsed_seconds": 4.070232984
+        },
+        {
+          "side": "after",
+          "pid": 22150,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.15,
+          "elapsed_seconds": 4.150976127
+        },
+        {
+          "side": "before",
+          "pid": 22164,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.16,
+          "elapsed_seconds": 4.156317196
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 4.18,
+          "elapsed_seconds": 4.1812258490000005
+        },
+        "after": {
+          "process_cpu_seconds": 4.11,
+          "elapsed_seconds": 4.1106045555
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 22193,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.41,
+          "elapsed_seconds": 3.41713673
+        },
+        {
+          "side": "after",
+          "pid": 22214,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.28,
+          "elapsed_seconds": 3.280329576
+        },
+        {
+          "side": "after",
+          "pid": 22238,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.18,
+          "elapsed_seconds": 3.179536099
+        },
+        {
+          "side": "before",
+          "pid": 22260,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.19,
+          "elapsed_seconds": 3.188579809
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 3.3,
+          "elapsed_seconds": 3.3028582695
+        },
+        "after": {
+          "process_cpu_seconds": 3.23,
+          "elapsed_seconds": 3.2299328375
+        }
+      }
+    }
+  ]
+}

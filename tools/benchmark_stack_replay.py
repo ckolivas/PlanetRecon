@@ -31,6 +31,8 @@ def main():
     parser.add_argument('--device', choices=['cpu', 'gpu'], required=True)
     parser.add_argument('--threads', type=int, default=32, choices=range(1, 33))
     parser.add_argument('--samples', type=int, default=33, help='Uniform samples, plus the best frame')
+    parser.add_argument('--synthetic-flat', action='store_true',
+                        help='Exercise calibration with a generated positive flat; not a measured capture calibration')
     args = parser.parse_args()
     if args.samples < 4:
         parser.error('--samples must be at least 4')
@@ -60,7 +62,13 @@ def main():
         {'rejected_indices_by_reason': {key: [] for key in
          ('low_quality', 'width_outlier', 'height_outlier', 'clipped_target',
           'no_target', 'invalid', 'saturated')}})
-    selection.identity = identity(source, config, None)
+    calibration = None
+    if args.synthetic_flat:
+        from planetrecon.calibration import Calibration
+        h, w = source.frame_shape()
+        y, x = np.indices((h, w), dtype=float)
+        calibration = Calibration(flat=.8+.2*x/max(1,w-1)+.1*y/max(1,h-1))
+    selection.identity = identity(source, config, calibration)
     selection.digest = selection_digest(selection)
     torch = None
     if args.device == 'gpu':
@@ -70,12 +78,13 @@ def main():
         torch.cuda.synchronize()
     cpu_start = time.process_time_ns()
     start = time.perf_counter_ns()
-    result = stack_source(source, config, preprocessing=selection)
+    result = stack_source(source, config, preprocessing=selection, calibration=calibration)
     if torch is not None:
         torch.cuda.synchronize()
     elapsed = (time.perf_counter_ns()-start)/1e9
     cpu_seconds = (time.process_time_ns()-cpu_start)/1e9
     report = dict(pid=os.getpid(), source_tree=str(args.source_tree.resolve()),
+                  synthetic_flat=args.synthetic_flat,
                   input=str(args.input.resolve()), input_indices=indices.tolist(),
                   config=config.to_dict(), backend=result.backend, n_used=result.n_used,
                   process_cpu_seconds=cpu_seconds, elapsed_seconds=elapsed,

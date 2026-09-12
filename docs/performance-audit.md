@@ -1,4 +1,8 @@
-# Performance audit: 12–13 September 2026
+# Performance audit: 12 September 2026
+
+**Stopped early at 2026-09-12 05:11 UTC. The heartbeat is paused.** Nine
+qualified production improvements remain; the final calibration candidate was
+discarded because its marginal gains did not justify the added complexity.
 
 Authorized unattended work ends 2026-09-13 04:01:42 UTC. Continue measured,
 output-preserving improvements without questions; commit completed steps. An
@@ -66,7 +70,7 @@ The frozen baseline is `/tmp/planetrecon-speed3-before` (archive of 781c6a3).
    review found validation, compression and atomic publication work that must be
    retained; no measured reason to rewrite those paths.
 6. Integration qualification complete for the nine improvements below; see
-   the exact result and next bounded candidate at the end.
+   the exact qualification and stop decision at the end.
 
 ## Deferred experiments
 
@@ -130,7 +134,7 @@ Mars L3 0.637 -> 0.420 s. Own CPU increases about 22% (0.970 -> 1.185 and
 work reduction. See parallel-screening-speedups.json. Parallel calibration,
 ordering, cancellation, exception cleanup and missing-runtime fallback are tested.
 
-## Integration qualification and continuation
+## Integration qualification
 
 Completed production commits, in order: ad397ab, 1f4fecd, e06c10b, 378abd3,
 08b62c3, b2a50c6, abe8b52, d3c0475 and fb83392. Each candidate has focused
@@ -153,20 +157,44 @@ blindly replay that cache. Production defaults, startup-idle behavior, saved
 settings semantics and full content checks remain unchanged. User edits in
 AGENTS.md and docs/development-plan.md are untouched.
 
-Next bounded candidate: flat-field correction currently recomputes the same
-normalization/division array per frame in apply_calibration. Supplied real
-captures do not include calibration flats; use clearly labelled synthetic
-calibration only to measure this path, and retain a change only if it improves a
-calibrated replay with identical outputs. Any prepared calibration must own its
-arrays, refresh between runs, preserve dataclass-based calibration provenance and
-cache/resume identities, and retain the existing flat-scale/invalid-flat rules.
-Do not silently cache caller-mutable arrays or merely benchmark a scalar helper.
+The final bounded candidate was reuse of flat-field normalization. The supplied
+captures have no measured calibration flats, so the comparison used explicitly
+synthetic calibration. Results and the rejection decision are recorded below.
 
 Other larger possibilities (persistent GPU pipelines, combining job stages,
 fusing interpolation or altering reduction order) lack evidence sufficient to
 justify their correctness/memory tradeoffs now. SER reads already have bounded
 batching and source checks; weakening full cache verification is excluded. More
 parallelism is not automatically better than the measured four-worker cap.
-After investigating the remaining bounded candidate, reassess whether any
-reasonable output-preserving option remains. If not, stop early and pause the
-heartbeat rather than filling the authorized 24 hours with speculative work.
+No additional speculative rewrite or repeated timing sweep is scheduled.
+
+## Final calibration experiment and early stop
+
+A run-owned calibration snapshot cached flat correction lazily under a lock,
+kept original dataclass fields for provenance and refreshed between runs. The
+experiment preserved array ownership, flat-scale behavior, invalid-flat errors,
+resume identities and detection of caller calibration changes during preprocessing.
+90 focused tests passed after correcting a development hook placement.
+
+The serial ABBA calibrated replays retained exact image/coverage/validity/count
+parity, but CPU medians improved only 4.18 -> 4.11 s for ordinary CPU stacking
+and 3.30 -> 3.23 s for Saturn CUDA. The 1.7–2.1% changes overlap run variability.
+The extra snapshot state, locking, ownership and memory complexity is not
+justified by this evidence. All candidate production edits and its test file
+were removed; those production files were verified byte-for-byte against the
+already-qualified HEAD. No redundant full-suite run was needed after restoration.
+
+Evidence: results/real-data/flat-calibration-audit.json. Reproduction uses
+`tools/benchmark_stack_replay.py --synthetic-flat` against frozen before/after
+source trees. The flag labels the generated flat; it does not change application
+defaults or pretend to supply measured calibration. A scratch copy of the
+rejected patch remains only at /tmp/planetrecon-flat-candidate.patch.
+
+The remaining assessed alternatives require unproven changes to interpolation,
+reduction order, process/state ownership or memory usage, or weakening necessary
+validation. None presently warrants further unattended work. In accordance with
+the user's early-stop instruction, the automation
+`continue-planetrecon-development` was set to PAUSED and that state was verified.
+No further runs are scheduled. Existing user edits, captures and other processes
+were preserved. New captures or a specifically profiled bottleneck can justify
+a fresh audit if requested later.
