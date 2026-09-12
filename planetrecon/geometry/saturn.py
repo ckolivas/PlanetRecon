@@ -174,12 +174,21 @@ class SaturnSceneModel(SceneModel):
         return np.where(invalid, -1, region)
 
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
-        info = self.classify_detector(x, y, src)
         field_src = src if self.apply_field else replace(src, field_angle_rad=0.0)
         field_ref = ref if self.apply_field else replace(ref, field_angle_rad=0.0)
         fx, fy, fv = self.field_model.src_to_ref(x, y, field_src, field_ref)
+        info = self.classify_detector(x, y, src) if self.moon is not None or self.edge_on else None
+        valid = fv if info is None else fv & ~info['moon'] & ~info['ring_degenerate']
         if not self.apply_surface or self.globe.surface_rate_rad_s*(src.t_s-ref.t_s) == 0:
-            return fx, fy, fv & ~info['moon'] & ~info['ring_degenerate']
+            return fx, fy, valid
+        if info is None:
+            # Ring and illumination classification is unnecessary for the
+            # smooth globe warp. Keep the same ray intersection and visibility.
+            sx, sy = detector_to_sky(x, y, src.cx, src.cy)
+            if self.apply_field:
+                sx, sy = field_rotate_sky(sx, sy, -src.field_angle_rad)
+            lon, lat, on_globe, mu, _ = globe_hit(sx, sy, self.globe, src.t_s)
+            info = dict(lon=lon, lat=lat, on_globe=on_globe, mu=mu)
         gx, gy, visible, mu_ref = body_to_sky(info['lon'], info['lat'], self.globe, ref.t_s)
         if self.apply_field:
             gx, gy = field_rotate_sky(gx, gy, ref.field_angle_rad)
@@ -197,7 +206,6 @@ class SaturnSceneModel(SceneModel):
         # derivative continuous there, avoiding an edge after sharpening.
         dx = fx + blend*np.where(blend > 0, gx-fx, 0.)
         dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
-        valid = fv & ~info['moon'] & ~info['ring_degenerate']
         return dx, dy, valid
 
 

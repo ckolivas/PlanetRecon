@@ -1,7 +1,7 @@
 """Exposed-ring translation with optional known field-rotation compensation."""
 
 import numpy as np
-from scipy.ndimage import binary_erosion, gaussian_filter
+from scipy.ndimage import minimum_filter, gaussian_filter
 from planetrecon.pipeline.masked_align import MaskedRegistration
 
 
@@ -50,7 +50,7 @@ class RingRegistration(MaskedRegistration):
         support = render(np.ones(self.shape), pose, reference_pose)
         # Rotation may expose pixels outside the original capture. Neither
         # those zeros nor their smoothing footprint are a reference observation.
-        supported = binary_erosion(support >= 1.-1e-12, structure=np.ones((15, 15), bool))
+        supported = minimum_filter(support >= 1.-1e-12, size=15, mode='constant', cval=0)
         matcher = RingRegistration(predicted, pose.cx, pose.cy, *self.geometry[2:],
                                    valid_mask=supported, score_provider=self.score_provider,
                                    renderer=self.renderer)

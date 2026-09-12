@@ -1,7 +1,7 @@
 """Camera drift from shared visible surface, excluding missing predictions."""
 
 import numpy as np
-from scipy.ndimage import binary_erosion
+from scipy.ndimage import minimum_filter
 
 from planetrecon.geometry.model import render_observed
 from planetrecon.geometry.globe import sky_to_body, field_rotate_sky
@@ -27,7 +27,7 @@ def surface_displacement(reference, frame, model, pose, reference_pose, *, rende
     # Reference limb pixels can contain interpolated sky (especially in a CFA
     # proxy). Foreshortening can stretch that artificial edge deep into the new
     # disc. Require a complete reference neighbourhood before warping support.
-    reference_support = binary_erosion(reference_globe, structure=np.ones((3, 3), bool))
+    reference_support = minimum_filter(reference_globe, size=3, mode='constant', cval=0)
     support = render(reference_support.astype(float))
     sx, sy = x+.5-pose.cx, pose.cy-y-.5
     if model.apply_field:
@@ -35,6 +35,6 @@ def surface_displacement(reference, frame, model, pose, reference_pose, *, rende
     _, _, on_globe, _ = sky_to_body(sx, sy, model.globe, pose.t_s)
     # Exclude the interpolated limb as well as newly visible longitudes. Its
     # pixelated silhouette changes under rotation without any camera drift.
-    mask = binary_erosion((support >= 1.-1e-12) & on_globe,
-                          structure=np.ones((15, 15), bool))
+    mask = minimum_filter((support >= 1.-1e-12) & on_globe,
+                          size=15, mode='constant', cval=0)
     return MaskedRegistration(predicted, mask).displacement(frame, distinct_peaks=True)

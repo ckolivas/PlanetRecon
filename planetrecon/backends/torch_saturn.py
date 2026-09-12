@@ -98,10 +98,14 @@ class TorchSaturnWarp(TorchGlobeWarp):
                 'quality_regions':quality_regions}
 
     def map(self, src, ref, info=None, *, x=None, y=None):
-        mapped_info = self.classify(src,x,y) if x is not None or info is None else info
+        # The continuous warp only consumes exclusions, not ring/shadow labels.
+        # Classification is still performed for scoring and layer coverage.
+        needs_mask = self.model.moon is not None or self.model.edge_on
+        mapped_info = (self.classify(src,x,y) if x is not None or info is None else info) if needs_mask else None
         x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y)
-        valid &= ~mapped_info['invalid']
-        if info is not None:
+        if mapped_info is not None:
+            valid &= ~mapped_info['invalid']
+        if info is not None and needs_mask:
             valid &= ~info['invalid']
         return x,y,valid
 
