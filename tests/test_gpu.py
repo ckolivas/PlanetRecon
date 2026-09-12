@@ -80,17 +80,29 @@ def test_mid_job_cuda_failure_retains_sums_and_continues(monkeypatch):
 
 
 @pytest.mark.hardware
-def test_real_cuda_allocator_oom_falls_back_mid_job(cuda_backend):
+def test_real_cuda_allocator_oom_falls_back_mid_job(cuda_backend, monkeypatch):
     import torch
     rng=np.random.default_rng(77)
     frame=rng.uniform(10,200,(64,80))
     frames=np.stack([frame]*3)
     cfg=ReconstructionConfig(device='cpu',threads=2,batch_frames=1)
     expected=stack_source(ArraySource(frames),cfg)
+    limited = False
+    original = type(cuda_backend).phase_correlation
+    def allocation(self, *args):
+        if limited:
+            # A prepared FFT can keep a CUDA allocator segment alive. Small
+            # later allocations may reuse it despite the lowered limit; force
+            # one fresh allocation, which the real allocator must reject.
+            torch.empty(torch.cuda.memory_reserved()+2*1024**2, device='cuda', dtype=torch.uint8)
+        return original(self, *args)
+    monkeypatch.setattr(type(cuda_backend), 'phase_correlation', allocation)
     def event(result,info):
+        nonlocal limited
         if result.n_used==1:
             torch.cuda.set_per_process_memory_fraction(.000001)
             torch.cuda.empty_cache()
+            limited = True
     try:
         actual=stack_source(ArraySource(frames),replace(cfg,device='gpu'),on_event=event)
         assert actual.backend=='cpu' and actual.n_used==3

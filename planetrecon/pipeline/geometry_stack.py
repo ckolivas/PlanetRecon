@@ -10,7 +10,7 @@ import numpy as np
 from planetrecon import constants as C
 from planetrecon.backends.base import select_backend
 from planetrecon.calibration import Calibration, apply_calibration
-from planetrecon.detector import bilinear_demosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
+from planetrecon.detector import PreparedBilinearDemosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
 from planetrecon.geometry.coords import detector_xy_grids
 from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
 from planetrecon.geometry.model import SceneModel, OblateGlobeModel, select_scene_model, render_observed
@@ -447,6 +447,7 @@ def stack_source_geometry(
     if meta.units == "e-" and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError("gain calibration cannot be applied to observations already in electrons")
     bayer = is_bayer(color)
+    demosaic = PreparedBilinearDemosaic((h, w), color) if bayer else None
     rgb = color in ("RGB", "BGR") or bayer
     if rgb:
         accum = np.zeros((h, w, 3), dtype=np.float64)
@@ -529,7 +530,7 @@ def stack_source_geometry(
     # Preflight emits no output and cannot mix differently registered sums.
     for colour_retry in ((False, True) if bayer else (False,)):
         if colour_retry:
-            sample_planes = [_alignment_plane(bilinear_demosaic(frame, color), 'RGB')
+            sample_planes = [_alignment_plane(demosaic(frame), 'RGB')
                              for frame in sample_frames]
         try:
             poses, model, diagnostics, geo_warnings = prepare_geometry(
@@ -622,11 +623,11 @@ def stack_source_geometry(
                 if displacement is None and bayer and not colour_retry and frame is not None:
                     if colour_anchor is None:
                         anchor_frame = sample_frames[sample_idx.index(anchor_index)]
-                        colour_anchor = _alignment_plane(bilinear_demosaic(anchor_frame, color), 'RGB')
+                        colour_anchor = _alignment_plane(demosaic(anchor_frame), 'RGB')
                         if ring_registration is not None:
                             colour_rings = RingRegistration(colour_anchor, anchor_pose.cx, anchor_pose.cy,
                                 model.globe.equatorial_radius_px, model.rings.outer_radius_px, **ring_acceleration)
-                    colour_plane = _alignment_plane(bilinear_demosaic(frame, color), 'RGB')
+                    colour_plane = _alignment_plane(demosaic(frame), 'RGB')
                     if colour_rings is not None:
                         displacement = (colour_rings.displacement(colour_plane)
                             if diagnostics['field_rate_rad_s'] == 0 else
@@ -662,7 +663,7 @@ def stack_source_geometry(
             renderer = TorchSaturnWarp((h,w),model).render
         local_render = renderer or (lambda image, src, ref: render_observed(image,model,src,ref))
         def local_plane(frame):
-            return _alignment_plane(bilinear_demosaic(frame,color),'RGB') if bayer else _alignment_plane(frame,color)
+            return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
         accepted = np.flatnonzero(selection.accepted)
         candidates = accepted[np.argsort(-selection.measurements[accepted,0],kind='stable')[:64]]
@@ -846,7 +847,7 @@ def stack_source_geometry(
                 n_rejected += 1
                 continue
             quality_plane = _alignment_plane(calibrated, color)
-            demo = bilinear_demosaic(calibrated,color) if bayer and (colour_retry or config.local_alignment) else None
+            demo = demosaic(calibrated) if bayer and (colour_retry or config.local_alignment) else None
             plane = (_alignment_plane(demo, 'RGB')
                      if colour_retry else quality_plane)
             pose = poses[int(index)]
@@ -898,7 +899,7 @@ def stack_source_geometry(
                     pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda')
             if gpu_accumulator is not None:
                 if bayer and demo is None:
-                    demo = bilinear_demosaic(calibrated,color)
+                    demo = demosaic(calibrated)
                 if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo,sample_xy):
                     n_used += 1
                 else:
@@ -932,7 +933,7 @@ def stack_source_geometry(
                 weight += score * rgb_w
                 frame_coverage = rgb_w
                 if demo is None:
-                    demo = bilinear_demosaic(calibrated, color)
+                    demo = demosaic(calibrated)
                 da, dw = push_samples(demo, y_idx, x_idx, (h, w), valid=valid)
                 demosaic_accum += score * da
                 demosaic_weight += score * dw

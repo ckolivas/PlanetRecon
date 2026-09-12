@@ -58,14 +58,18 @@ def test_colour_template_resume_is_exact_and_rejects_green_template_state(tmp_pa
             baseline.stack_source(source,cfg,resume_from=tmp_path/'old-state.npz')
 
 @pytest.mark.parametrize('local,shape',[(False,(96,112)),(True,(64,64))])
-def test_global_and_small_capture_fallback_keep_green_registration(tmp_path,monkeypatch,local,shape):
+def test_global_registration_and_small_capture_patch_refusal(tmp_path,monkeypatch,local,shape):
     path=capture(tmp_path/'fallback.ser',shape);cfg=config(local_alignment=local)
     with SERSource(path) as source:
         selected=preprocess_source(source,cfg);assert selected.accepted.sum()>=4
         expected=baseline.stack_source(source,config())
-        def forbidden(*args):
+        def forbidden(*args, **kwargs):
             pytest.fail('colour proxy must not alter ordinary global registration')
         monkeypatch.setattr(baseline,'_colour_registration_plane',forbidden)
+        if local:
+            with pytest.raises(ValueError, match='Local patch size 65 needs frames at least 71'):
+                baseline.stack_source(source,cfg)
+            return
         actual=baseline.stack_source(source,cfg)
         np.testing.assert_array_equal(actual.image,expected.image)
         np.testing.assert_array_equal(actual.coverage,expected.coverage)

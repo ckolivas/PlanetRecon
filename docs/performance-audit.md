@@ -102,3 +102,16 @@ to this process: 1.56 cumulative in local residual coordinates, 1.48 in building
 the motion template, 0.94 in ring drift registration, and 0.91 in 69 CPU bilinear
 demosaics. Categories overlap; this is not exclusive device timing. Next inspect
 repeated demosaic geometry before considering larger CPU/GPU pipeline rewrites.
+
+## Reusable Bayer geometry
+
+Demosaic masks and float64 neighbour counts are now prepared once per run.
+The arithmetic and neighbour order are unchanged; there is no global cache.
+Private retained storage is 22 bytes per pixel (3.44 MiB for the Saturn pilot).
+All four serial ABBA replays have exact image/coverage/validity/count parity.
+Own CPU medians: ordinary CPU 4.995 -> 4.485 s, ordinary CUDA 2.385 -> 2.000 s,
+Saturn CUDA 4.025 -> 3.545 s. CPU Saturn is variable and does not establish a
+gain (24.18 -> 25.155 s); do not advertise a CPU Saturn improvement.
+Independent pixel-oracle and CPU/CUDA/memory/resume tests pass. Two outdated
+test assumptions were corrected: small-patch refusal and allocator pool reuse.
+See results/real-data/prepared-demosaic-speedups.json.

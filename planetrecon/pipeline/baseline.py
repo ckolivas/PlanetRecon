@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable
 from dataclasses import replace
+from functools import partial
 
 import numpy as np
 from scipy.ndimage import shift as ndshift
@@ -13,6 +14,7 @@ from planetrecon.backends.base import Backend, select_backend
 from planetrecon.calibration import Calibration, apply_calibration, load_calibration
 from planetrecon.detector import (
     bilinear_demosaic,
+    PreparedBilinearDemosaic,
     cfa_accumulate,
     extract_green_proxy,
     is_bayer,
@@ -37,10 +39,11 @@ def _alignment_plane(frame: np.ndarray, color_mode: str) -> np.ndarray:
     return np.asarray(frame, dtype=np.float64)
 
 
-def _colour_registration_plane(frame: np.ndarray, color_mode: str) -> np.ndarray:
+def _colour_registration_plane(frame: np.ndarray, color_mode: str, *, demosaic=None) -> np.ndarray:
     """Use every colour for motion estimates; original samples form the output."""
     if is_bayer(color_mode):
-        return bilinear_demosaic(frame, color_mode) @ np.array([.25, .5, .25])
+        rgb = bilinear_demosaic(frame, color_mode) if demosaic is None else demosaic(frame)
+        return rgb @ np.array([.25, .5, .25])
     return _alignment_plane(frame, color_mode)
 
 
@@ -198,6 +201,7 @@ def _stack_source(
     if meta.units == "e-" and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError("gain calibration cannot be applied to observations already in electrons")
     bayer = is_bayer(color)
+    demosaic = PreparedBilinearDemosaic((h, w), color) if bayer else None
     # Only the eligible experimental local path changes its registration proxy.
     # It requires cached screening, so scalar quality weights stay unchanged.
     local_window = config.local_patch_size
@@ -208,7 +212,7 @@ def _stack_source(
         axes = [patch_centres(length, local_window, local_step) for length in (h, w)]
         centred_local_axis = any(len(axis) == 1 and axis[0] != local_window//2+3 for axis in axes)
     colour_registration = config.local_alignment and bayer
-    alignment_plane = _colour_registration_plane if colour_registration else _alignment_plane
+    alignment_plane = partial(_colour_registration_plane, demosaic=demosaic) if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
     if rgb:
         accum = np.zeros((h, w, 3), dtype=np.float64)
@@ -390,7 +394,7 @@ def _stack_source(
             if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
                 n_rejected += 1
                 continue
-            demosaiced = (bilinear_demosaic(calibrated,color)
+            demosaiced = (demosaic(calibrated)
                           if colour_registration and backend.name != 'cuda' else None)
             plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
                      else alignment_plane(calibrated, color))
@@ -443,7 +447,7 @@ def _stack_source(
                 rgb_add, rgb_w = cfa_accumulate(calibrated, shift, color)
                 accum += score * rgb_add
                 weight += score * rgb_w
-                demo = bilinear_demosaic(calibrated, color)
+                demo = demosaic(calibrated)
                 shifted = np.stack(
                     [
                         ndshift(demo[..., c], shift=(-shift[1], -shift[0]), order=1, prefilter=False, mode="grid-constant")

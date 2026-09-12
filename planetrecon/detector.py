@@ -63,38 +63,62 @@ def extract_green_proxy(raw: np.ndarray, pattern: str, origin_xy=(0, 0)) -> np.n
     return filled
 
 
+def _neighbour_sum(plane):
+    # Keep this order identical for measured intensities and sample counts.
+    acc = np.zeros_like(plane, dtype=np.float64)
+    acc[:-1] += plane[1:]
+    acc[1:] += plane[:-1]
+    acc[:, :-1] += plane[:, 1:]
+    acc[:, 1:] += plane[:, :-1]
+    acc[:-1, :-1] += plane[1:, 1:]
+    acc[1:, 1:] += plane[:-1, :-1]
+    acc[:-1, 1:] += plane[1:, :-1]
+    acc[1:, :-1] += plane[:-1, 1:]
+    return acc
+
+
+def _demosaic_geometry(shape, pattern, origin_xy):
+    labels = cfa_labels(*shape, pattern, origin_xy)
+    for name, idx in CHANNEL_INDEX.items():
+        mask = channel_mask(labels, name)
+        missing = ~mask
+        divisor = np.clip(_neighbour_sum(mask)[missing], 1.0, None)
+        yield idx, mask, missing, divisor
+
+
+def _demosaic_with_geometry(raw, geometry):
+    rgb = np.zeros(raw.shape + (3,), dtype=np.float64)
+    for idx, mask, missing, divisor in geometry:
+        plane = np.zeros_like(raw)
+        plane[mask] = raw[mask]
+        acc = _neighbour_sum(plane)
+        filled = plane.copy()
+        filled[missing] = acc[missing] / divisor
+        rgb[..., idx] = filled
+    return rgb
+
+
 def bilinear_demosaic(raw: np.ndarray, pattern: str, origin_xy=(0, 0)) -> np.ndarray:
     """Conventional demosaic-first comparison path. Labelled, not the joint solve."""
     raw = np.asarray(raw, dtype=np.float64)
-    labels = cfa_labels(raw.shape[0], raw.shape[1], pattern, origin_xy)
-    rgb = np.zeros(raw.shape + (3,), dtype=np.float64)
-    for name, idx in CHANNEL_INDEX.items():
-        mask = channel_mask(labels, name)
-        plane = np.zeros_like(raw)
-        plane[mask] = raw[mask]
-        acc = np.zeros_like(raw)
-        w = np.zeros_like(raw)
-        acc[:-1] += plane[1:]
-        w[:-1] += mask[1:]
-        acc[1:] += plane[:-1]
-        w[1:] += mask[:-1]
-        acc[:, :-1] += plane[:, 1:]
-        w[:, :-1] += mask[:, 1:]
-        acc[:, 1:] += plane[:, :-1]
-        w[:, 1:] += mask[:, :-1]
-        acc[:-1, :-1] += plane[1:, 1:]
-        w[:-1, :-1] += mask[1:, 1:]
-        acc[1:, 1:] += plane[:-1, :-1]
-        w[1:, 1:] += mask[:-1, :-1]
-        acc[:-1, 1:] += plane[1:, :-1]
-        w[:-1, 1:] += mask[1:, :-1]
-        acc[1:, :-1] += plane[:-1, 1:]
-        w[1:, :-1] += mask[:-1, 1:]
-        filled = plane.copy()
-        missing = ~mask
-        filled[missing] = acc[missing] / np.clip(w[missing], 1.0, None)
-        rgb[..., idx] = filled
-    return rgb
+    return _demosaic_with_geometry(raw, _demosaic_geometry(raw.shape, pattern, origin_xy))
+
+
+class PreparedBilinearDemosaic:
+    """Run-owned CFA geometry; no images or global shape cache are retained."""
+
+    def __init__(self, shape, pattern, origin_xy=(0, 0)):
+        self.shape = tuple(shape)
+        self._geometry = tuple(_demosaic_geometry(self.shape, pattern, origin_xy))
+        for _, mask, missing, divisor in self._geometry:
+            for array in (mask, missing, divisor):
+                array.setflags(write=False)
+
+    def __call__(self, raw):
+        raw = np.asarray(raw, dtype=np.float64)
+        if raw.shape != self.shape:
+            raise ValueError('frame shape differs from prepared Bayer geometry')
+        return _demosaic_with_geometry(raw, self._geometry)
 
 
 def nearest_debayer_preview(raw: np.ndarray, pattern: str, origin_xy=(0, 0), stride=1) -> np.ndarray:

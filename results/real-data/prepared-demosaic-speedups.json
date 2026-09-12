@@ -1,0 +1,209 @@
+{
+  "baseline_commit": "c4d317e",
+  "method": "Serial ABBA fresh-process replays of 34 selected Saturn RGGB frames, four CPU threads, local patch 65. CUDA warmed outside timing. Own process CPU and contended elapsed time reported separately. Exact output comparisons include image, coverage, validity and frame count.",
+  "interpretation": "Ordinary CPU own CPU median improves about 10 percent; ordinary CUDA 16 percent; Saturn CUDA 12 percent. CPU Saturn timings are variable and do not establish a gain (24.18 versus 25.155 CPU-seconds). The isolated 100-call demosaic comparison fell from 1.46 to 0.86 CPU-seconds. This does not change interpolation or sharpening.",
+  "storage": "Prepared masks and float64 neighbour divisors retain exactly 22 bytes per detector pixel for this run only (3604480 bytes for 320x512). No global cache or input images are retained.",
+  "validation": "Independent per-pixel oracle covers all Bayer patterns and four origins, singleton/odd/even shapes, nonfinite/readonly/strided inputs. CPU/CUDA stack, reference, fallback, memory and resume tests pass. Two old test assumptions were updated: small patches now refuse rather than silently fall back, and real allocator OOM must force a fresh allocation when an FFT keeps a pool segment alive.",
+  "cases": [
+    {
+      "mode": "none",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 6549,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 5.09,
+          "elapsed_seconds": 5.083470246
+        },
+        {
+          "side": "after",
+          "pid": 6624,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.59,
+          "elapsed_seconds": 4.588201348
+        },
+        {
+          "side": "after",
+          "pid": 6647,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.38,
+          "elapsed_seconds": 4.397939018
+        },
+        {
+          "side": "before",
+          "pid": 6687,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.9,
+          "elapsed_seconds": 4.903115047
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 4.995,
+          "elapsed_seconds": 4.9932926465000005
+        },
+        "after": {
+          "process_cpu_seconds": 4.484999999999999,
+          "elapsed_seconds": 4.493070183
+        }
+      }
+    },
+    {
+      "mode": "none",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 6718,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.37,
+          "elapsed_seconds": 2.350579177
+        },
+        {
+          "side": "after",
+          "pid": 6805,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 1.96,
+          "elapsed_seconds": 1.958358083
+        },
+        {
+          "side": "after",
+          "pid": 6823,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.04,
+          "elapsed_seconds": 2.031493323
+        },
+        {
+          "side": "before",
+          "pid": 6840,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.4,
+          "elapsed_seconds": 2.403296206
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 2.385,
+          "elapsed_seconds": 2.3769376915000002
+        },
+        "after": {
+          "process_cpu_seconds": 2.0,
+          "elapsed_seconds": 1.9949257029999998
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 6987,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.96,
+          "elapsed_seconds": 3.958096711
+        },
+        {
+          "side": "after",
+          "pid": 7183,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.54,
+          "elapsed_seconds": 3.551260441
+        },
+        {
+          "side": "after",
+          "pid": 7204,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 3.55,
+          "elapsed_seconds": 3.555567653
+        },
+        {
+          "side": "before",
+          "pid": 7405,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.09,
+          "elapsed_seconds": 4.080506226
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 4.025,
+          "elapsed_seconds": 4.0193014685
+        },
+        "after": {
+          "process_cpu_seconds": 3.545,
+          "elapsed_seconds": 3.5534140470000004
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 7428,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 25.22,
+          "elapsed_seconds": 16.662539769
+        },
+        {
+          "side": "after",
+          "pid": 7469,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 25.77,
+          "elapsed_seconds": 17.21766132
+        },
+        {
+          "side": "after",
+          "pid": 7596,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 24.54,
+          "elapsed_seconds": 15.735362498
+        },
+        {
+          "side": "before",
+          "pid": 7926,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 23.14,
+          "elapsed_seconds": 14.441593774
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 24.18,
+          "elapsed_seconds": 15.552066771499998
+        },
+        "after": {
+          "process_cpu_seconds": 25.155,
+          "elapsed_seconds": 16.476511909000003
+        }
+      }
+    }
+  ]
+}
