@@ -597,7 +597,7 @@ class MainWindow:
             else:
                 handle = (start_stack_job(self.path, cfg, inspect_only=True,
                     auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch()) if inspect_only
-                          else start_stack_job(self.path, cfg, **checkpoint_options))
+                          else start_stack_job(self.path, cfg, emit_previews=False, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             self.run_stage = None

@@ -102,6 +102,7 @@ def _worker_run(
     state_checkpoint: str | None = None,
     preprocess_only: bool = False,
     auto_output_epoch: bool = False,
+    emit_previews: bool = True,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -185,27 +186,28 @@ def _worker_run(
                 snapshot_request.clear()
                 if not emit("snapshot", result_payload(result)):
                     snapshot_request.set()
-            preview = result.copy_preview()
-            emit(
-                "preview",
-                {
-                    "stage": result.stage,
-                    "n_used": result.n_used,
-                    "n_rejected": result.n_rejected,
-                    "backend": result.backend,
-                    "incomplete": result.incomplete,
-                    "image": preview.image,
-                    "coverage": preview.coverage,
-                    "validity": preview.validity,
-                    "spatial_stride": preview.spatial_stride,
-                    "layer_coverage": preview.layer_coverage,
-                    "channel_order": result.channel_order,
-                    "reference_epoch": result.reference_epoch,
-                    "warnings": result.warnings,
-                    "fraction": float(info.get("n_processed", 0))
-                    / max(float(info.get("n_total", 1)), 1.0),
-                },
-            )
+            if emit_previews:
+                preview = result.copy_preview()
+                emit(
+                    "preview",
+                    {
+                        "stage": result.stage,
+                        "n_used": result.n_used,
+                        "n_rejected": result.n_rejected,
+                        "backend": result.backend,
+                        "incomplete": result.incomplete,
+                        "image": preview.image,
+                        "coverage": preview.coverage,
+                        "validity": preview.validity,
+                        "spatial_stride": preview.spatial_stride,
+                        "layer_coverage": preview.layer_coverage,
+                        "channel_order": result.channel_order,
+                        "reference_epoch": result.reference_epoch,
+                        "warnings": result.warnings,
+                        "fraction": float(info.get("n_processed", 0))
+                        / max(float(info.get("n_total", 1)), 1.0),
+                    },
+                )
             emit(
                 "progress",
                 {
@@ -408,6 +410,7 @@ def start_stack_job(
     state_checkpoint: str | Path | None = None,
     preprocess_only: bool = False,
     auto_output_epoch: bool = False,
+    emit_previews: bool = True,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
@@ -441,6 +444,7 @@ def start_stack_job(
             None if state_checkpoint is None else str(state_checkpoint),
             preprocess_only,
             auto_output_epoch,
+            emit_previews,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,
