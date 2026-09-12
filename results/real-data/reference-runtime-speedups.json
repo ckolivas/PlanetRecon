@@ -1,0 +1,109 @@
+{
+  "baseline_commit": "ad397ab",
+  "optimized_commit": "1f4fecde27fc683fd17b67356a441ffb284df5db",
+  "method": "Serial ABBA fresh-process replays, 34 selected RGGB frames, local patch 65, four CPU threads, identical input/configuration and exact-output comparisons. CUDA warmed outside timing. Process CPU time excludes unrelated processes; wall time includes contention.",
+  "interpretation": "CPU median improves about 2 percent; whole-run CUDA timings show no reliable improvement. Repeated reference forward FFTs are eliminated on both devices. A five-frame independent test uses six forward FFTs (one reference plus five frames), rather than ten.",
+  "validation": "Reference mutation/replacement and CPU fallback regressions pass. CPU/CUDA local alignment, memory and resume controls pass. A pre-existing GUI mock without inspection keyword support was corrected; the opt-in GPU check was explicitly run.",
+  "cases": [
+    {
+      "mode": "none",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 23829,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.84,
+          "elapsed_seconds": 4.846560532
+        },
+        {
+          "side": "after",
+          "pid": 23971,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.76,
+          "elapsed_seconds": 4.762834703
+        },
+        {
+          "side": "after",
+          "pid": 24117,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.77,
+          "elapsed_seconds": 4.769903624
+        },
+        {
+          "side": "before",
+          "pid": 24162,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 4.89,
+          "elapsed_seconds": 4.886431302
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 4.865,
+          "elapsed_seconds": 4.866495917
+        },
+        "after": {
+          "process_cpu_seconds": 4.765,
+          "elapsed_seconds": 4.7663691635
+        }
+      }
+    },
+    {
+      "mode": "none",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 24593,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.42,
+          "elapsed_seconds": 2.413542855
+        },
+        {
+          "side": "after",
+          "pid": 24643,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.35,
+          "elapsed_seconds": 2.34175521
+        },
+        {
+          "side": "after",
+          "pid": 24660,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.4,
+          "elapsed_seconds": 2.410028084
+        },
+        {
+          "side": "before",
+          "pid": 24682,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 2.32,
+          "elapsed_seconds": 2.320840896
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 2.37,
+          "elapsed_seconds": 2.3671918755
+        },
+        "after": {
+          "process_cpu_seconds": 2.375,
+          "elapsed_seconds": 2.375891647
+        }
+      }
+    }
+  ]
+}

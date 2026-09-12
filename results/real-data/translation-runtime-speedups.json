@@ -1,0 +1,158 @@
+{
+  "baseline_commit": "781c6a3",
+  "optimized_commit": "ad397ab383a4c70494fc3855082e27a4729b085f",
+  "method": "Serial fresh-process ABBA replays, 34 RGGB frames from the existing Saturn upper-quality-range pilot, local patch size 65, four CPU threads, CUDA warmup outside timing. time.process_time_ns attributes CPU work only to the process and its threads; wall time includes contention. No benchmark instances or tests overlapped.",
+  "tests_passed": 107,
+  "cases": [
+    {
+      "mode": "none",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 20543,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 6.09,
+          "elapsed_seconds": 6.094923947
+        },
+        {
+          "side": "after",
+          "pid": 20718,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 5.33,
+          "elapsed_seconds": 5.329920384
+        },
+        {
+          "side": "after",
+          "pid": 20764,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 5.02,
+          "elapsed_seconds": 5.026787305
+        },
+        {
+          "side": "before",
+          "pid": 20785,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 5.71,
+          "elapsed_seconds": 5.714014346
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 5.9,
+          "elapsed_seconds": 5.9044691465
+        },
+        "after": {
+          "process_cpu_seconds": 5.175,
+          "elapsed_seconds": 5.1783538445
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "cpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 20805,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 27.28,
+          "elapsed_seconds": 18.659771431
+        },
+        {
+          "side": "after",
+          "pid": 20856,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 26.36,
+          "elapsed_seconds": 17.747297975
+        },
+        {
+          "side": "after",
+          "pid": 20924,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 27.97,
+          "elapsed_seconds": 19.47776215
+        },
+        {
+          "side": "before",
+          "pid": 21168,
+          "backend": "cpu",
+          "n_used": 34,
+          "process_cpu_seconds": 27.2,
+          "elapsed_seconds": 18.642234704
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 27.240000000000002,
+          "elapsed_seconds": 18.6510030675
+        },
+        "after": {
+          "process_cpu_seconds": 27.165,
+          "elapsed_seconds": 18.6125300625
+        }
+      }
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "threads": 4,
+      "samples": [
+        {
+          "side": "before",
+          "pid": 21243,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.64,
+          "elapsed_seconds": 4.633997895
+        },
+        {
+          "side": "after",
+          "pid": 21262,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.15,
+          "elapsed_seconds": 4.104290103
+        },
+        {
+          "side": "after",
+          "pid": 21285,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.27,
+          "elapsed_seconds": 4.270219689
+        },
+        {
+          "side": "before",
+          "pid": 21396,
+          "backend": "cuda",
+          "n_used": 34,
+          "process_cpu_seconds": 4.33,
+          "elapsed_seconds": 4.326189615
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "before": {
+          "process_cpu_seconds": 4.484999999999999,
+          "elapsed_seconds": 4.480093755
+        },
+        "after": {
+          "process_cpu_seconds": 4.21,
+          "elapsed_seconds": 4.187254896000001
+        }
+      }
+    }
+  ]
+}

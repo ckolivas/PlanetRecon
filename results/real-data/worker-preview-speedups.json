@@ -1,0 +1,216 @@
+{
+  "optimized_commit": "e06c10bb8fb05a8ac2b8c2868843073a84872212",
+  "method": "Serial fresh processes with preview subscription enabled/disabled/disabled/enabled. Thirty-four real RGGB pilot frames, global CPU stacking, four threads; simulated consumer serializes events with production pickle protocol and requests snapshots at every batch. Includes reading/stacking/serialization, excludes imports, disk spooling and GUI rendering. Own process CPU time is separate from contended wall time.",
+  "interpretation": "Disabled GUI previews remove 430105967 bytes for batch size 1 and 36866223 bytes for batch size 32. Full snapshots, progress and final output match. Batch-1 CPU median improves about 9%; batch-32 timing is within noise and does not establish a speedup. The reliable benefit is eliminated copying/serialization and event traffic, not a general GUI latency claim.",
+  "tests_passed": 18,
+  "cases": [
+    {
+      "batch_frames": 1,
+      "samples": [
+        {
+          "pid": 5,
+          "emit_previews": true,
+          "batch_frames": 1,
+          "process_cpu_seconds": 2.85,
+          "elapsed_seconds": 2.850324806,
+          "events": {
+            "progress": 36,
+            "source": 1,
+            "snapshot": 35,
+            "preview": 35,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 11911,
+            "source": 984225,
+            "snapshot": 430212832,
+            "preview": 430105967,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 13,
+          "emit_previews": false,
+          "batch_frames": 1,
+          "process_cpu_seconds": 2.61,
+          "elapsed_seconds": 2.61164986,
+          "events": {
+            "progress": 36,
+            "source": 1,
+            "snapshot": 35,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 11911,
+            "source": 984225,
+            "snapshot": 430212832,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 21,
+          "emit_previews": false,
+          "batch_frames": 1,
+          "process_cpu_seconds": 2.61,
+          "elapsed_seconds": 2.603856162,
+          "events": {
+            "progress": 36,
+            "source": 1,
+            "snapshot": 35,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 11911,
+            "source": 984225,
+            "snapshot": 430212832,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 29,
+          "emit_previews": true,
+          "batch_frames": 1,
+          "process_cpu_seconds": 2.86,
+          "elapsed_seconds": 2.862264444,
+          "events": {
+            "progress": 36,
+            "source": 1,
+            "snapshot": 35,
+            "preview": 35,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 11911,
+            "source": 984225,
+            "snapshot": 430212832,
+            "preview": 430105967,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "True": {
+          "process_cpu_seconds": 2.855,
+          "elapsed_seconds": 2.8562946250000003
+        },
+        "False": {
+          "process_cpu_seconds": 2.61,
+          "elapsed_seconds": 2.607753011
+        }
+      }
+    },
+    {
+      "batch_frames": 32,
+      "samples": [
+        {
+          "pid": 37,
+          "emit_previews": true,
+          "batch_frames": 32,
+          "process_cpu_seconds": 2.01,
+          "elapsed_seconds": 2.008214428,
+          "events": {
+            "progress": 4,
+            "source": 1,
+            "snapshot": 3,
+            "preview": 3,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 1159,
+            "source": 984225,
+            "snapshot": 36875382,
+            "preview": 36866223,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 45,
+          "emit_previews": false,
+          "batch_frames": 32,
+          "process_cpu_seconds": 2.03,
+          "elapsed_seconds": 2.030809318,
+          "events": {
+            "progress": 4,
+            "source": 1,
+            "snapshot": 3,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 1159,
+            "source": 984225,
+            "snapshot": 36875382,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 53,
+          "emit_previews": false,
+          "batch_frames": 32,
+          "process_cpu_seconds": 2.27,
+          "elapsed_seconds": 2.274150697,
+          "events": {
+            "progress": 4,
+            "source": 1,
+            "snapshot": 3,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 1159,
+            "source": 984225,
+            "snapshot": 36875382,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        },
+        {
+          "pid": 61,
+          "emit_previews": true,
+          "batch_frames": 32,
+          "process_cpu_seconds": 2.14,
+          "elapsed_seconds": 2.138844226,
+          "events": {
+            "progress": 4,
+            "source": 1,
+            "snapshot": 3,
+            "preview": 3,
+            "completed": 1
+          },
+          "serialized_bytes": {
+            "progress": 1159,
+            "source": 984225,
+            "snapshot": 36875382,
+            "preview": 36866223,
+            "completed": 12291851
+          },
+          "n_used": 34,
+          "n_rejected": 0
+        }
+      ],
+      "identical_outputs": true,
+      "medians": {
+        "True": {
+          "process_cpu_seconds": 2.075,
+          "elapsed_seconds": 2.073529327
+        },
+        "False": {
+          "process_cpu_seconds": 2.15,
+          "elapsed_seconds": 2.1524800075000003
+        }
+      }
+    }
+  ]
+}
