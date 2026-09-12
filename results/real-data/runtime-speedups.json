@@ -1,0 +1,91 @@
+{
+  "baseline_commit": "8608933",
+  "optimized_commit": "d6afc55defa3bcf3987dc1445cd2b655a7e79ce1",
+  "capture": "2023-10-10-1320_8-CK-L-Sat_pipp.ser",
+  "shape": [
+    320,
+    512
+  ],
+  "color": "RGGB",
+  "scope": "Bounded subsets of the existing upper-50-percent-quality-range pilot; all sampled frames retained. Local patch size 65; same geometry, midpoint, calibration and samples on both sides.",
+  "method": "Serial fresh-process before/after pairs, CPU thread limit 4, CUDA initialized before timing, profiler disabled, no GUI previews or export in timing. Includes template construction. Single measurement per case; not a full-capture speed guarantee.",
+  "python": "3.13.5",
+  "cuda_device": "NVIDIA GeForce RTX 5070",
+  "measurements": [
+    {
+      "mode": "none",
+      "device": "cpu",
+      "n_used": 34,
+      "before_s": 7.191134294000221,
+      "after_s": 5.2943476070067845,
+      "speedup": 1.3582663677925382,
+      "same_validity": true,
+      "same_frame_count": true,
+      "max_image_difference": 1.0302869668521453e-12,
+      "max_coverage_difference": 3.82982534574694e-12
+    },
+    {
+      "mode": "none",
+      "device": "gpu",
+      "n_used": 34,
+      "before_s": 2.886646197992377,
+      "after_s": 2.6175695169949904,
+      "speedup": 1.1027963839165924,
+      "same_validity": true,
+      "same_frame_count": true,
+      "max_image_difference": 0.0,
+      "max_coverage_difference": 0.0
+    },
+    {
+      "mode": "saturn",
+      "device": "cpu",
+      "n_used": 34,
+      "before_s": 26.96760461499798,
+      "after_s": 15.247155952005414,
+      "speedup": 1.7686973688657661,
+      "same_validity": true,
+      "same_frame_count": true,
+      "max_image_difference": 1.6484591469634324e-12,
+      "max_coverage_difference": 3.2650859793648124e-10
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "n_used": 34,
+      "before_s": 9.362853653001366,
+      "after_s": 4.31877722099307,
+      "speedup": 2.167940871663774,
+      "same_validity": true,
+      "same_frame_count": true,
+      "max_image_difference": 4.263256414560601e-13,
+      "max_coverage_difference": 7.639755494892597e-11
+    },
+    {
+      "mode": "saturn",
+      "device": "gpu",
+      "n_used": 129,
+      "before_s": 30.83622414598358,
+      "after_s": 12.996296091994736,
+      "speedup": 2.372693260272641,
+      "same_validity": true,
+      "same_frame_count": true,
+      "max_image_difference": 1.2789769243681803e-13,
+      "max_coverage_difference": 8.731149137020111e-11
+    }
+  ],
+  "validation": {
+    "passed": 373,
+    "skipped": 17,
+    "real_cuda": true,
+    "checks": [
+      "CFA origin/site equivalence",
+      "CPU/CUDA inverse-field parity and invalid-field fallback",
+      "multi-channel sample/scatter equivalence",
+      "shared FFT correlations",
+      "local patch confidence and boundaries",
+      "surface and Saturn motion",
+      "CPU/CUDA memory limits",
+      "preprocessing cache and checkpoint resume"
+    ]
+  }
+}

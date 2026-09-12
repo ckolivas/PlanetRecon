@@ -109,7 +109,7 @@ replace that aim with conventional frame rejection.
 small seeing distortions using normalized texture patches and an averaged
 registration template anchored to the best selected frame. It preserves the
 selected frame count and adds no sharpening. It requires cached preprocessing
-and Motion model **none**; ambiguous patches keep global alignment. This
+and Motion model **None**, **Surface**, **Combined** or **Saturn**; ambiguous patches keep global alignment. This
 combination with the upper 50% quality range gave the best result in user testing. Uncheck local alignment or use `--no-local-alignment` for global alignment;
 set `--stack-percent 100` to retain all screened frames. CLI geometry modes and
 `--no-frame-preselection` disable the implicit local-alignment default.
@@ -182,7 +182,19 @@ the best frame's geometry; that template is predicted at each observation time.
 Supported, unambiguous patches measure residual seeing rather than planet spin.
 The residual deformation is inverted and composed with the geometry before
 original mono/RGB/CFA samples are scattered once. CUDA runs also accelerate
-template prediction and patch correlations. Weak patches keep global motion.
+template prediction, patch correlations and residual inversion. Weak patches keep global motion.
+
+The runtime shares Bayer conversions, reference-frame drift measurements, FFTs,
+and multi-channel interpolation footprints. CPU local correlations use bounded
+candidate blocks; CUDA scores only patches eligible for the existing confidence
+checks. Image and support predictions share geometry, and Saturn warps omit
+ring/shadow classification where only globe motion is needed. Quality scoring,
+moon masks, motion guards, frame selection and float64 precision are retained.
+The [recorded CPU/CUDA timing and parity checks](results/real-data/runtime-speedups.json)
+compare identical samples before and after these changes, including a 129-frame
+Saturn CUDA run improving from 30.8 to 13.0 seconds. These are bounded sample
+measurements, not full-capture or cross-machine timing guarantees.
+
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
 mix partial sums. CUDA allocation budgets remain limited to translation mode.
