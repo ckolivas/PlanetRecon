@@ -163,9 +163,9 @@ def test_gui_preprocess_none_then_switch_to_saturn_and_run(tmp_path, monkeypatch
     def start(path, cfg, **options):
         dispatched.append(cfg)
         events = queue.Queue()
-        if options.get('preprocess_only'):
+        if options.get('preprocess_only') or options.get('inspect_only'):
             _worker_run('saturn-gui', str(path), cfg.to_dict(), events, threading.Event(), None,
-                        preprocess_only=True, auto_output_epoch=options['auto_output_epoch'])
+                        **options)
         return SimpleNamespace(job_id='saturn-gui', snapshot_request=threading.Event(),
                                poll=lambda: list(events.queue), close=lambda: None)
 
@@ -180,10 +180,12 @@ def test_gui_preprocess_none_then_switch_to_saturn_and_run(tmp_path, monkeypatch
         assert window.controls.configuration().ring_inner_radius_px is None
         window.controls.fields['geometry_mode'].setCurrentText('saturn')
         window._run()
+        window._poll()  # Validate the cache before dispatching reconstruction.
         assert not window.error.text()
+        assert window.run_stage == 'stack'
         actual = dispatched[-1]
         actual.require_motion_parameters()
-        assert actual.geometry_mode == 'saturn' and not actual.local_alignment
+        assert actual.geometry_mode == 'saturn' and actual.local_alignment
         assert actual.ring_outer_radius_px == pytest.approx(78, abs=2)
         with SERSource(path) as capture:
             selection, report = load_cache(capture, actual)

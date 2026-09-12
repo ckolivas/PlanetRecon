@@ -495,7 +495,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     second = calls[-1][1]
     assert second == replace(first, **expected)
     assert first.device == 'auto' and first.geometry_mode == 'none'
-    assert calls[-1][2] == dict(state_checkpoint=tmp_path/'new-state.npz', resume_from=tmp_path/'new-state.npz')
+    assert calls[-1][2] == dict(state_checkpoint=tmp_path/'new-state.npz', resume_from=tmp_path/'new-state.npz', emit_previews=False)
     win._finish_job()
     # Clearing optional fields must not resurrect values from an earlier run.
     for key in ('bias_path','dark_path','flat_path','max_vram_bytes','gain_e_per_adu'):
@@ -730,7 +730,7 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
                        'surface_rate_rad_s': '0'}.items():
         fields[key].setText(value)
     win._start(inspect_only=False)
-    assert calls[-1][1] == {} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
+    assert calls[-1][1] == {'emit_previews': False} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
     win._finish_job()
     # Ordinary Saturn stacking never needs these physical parameters.
     fields['geometry_mode'].setCurrentText('none')
@@ -761,5 +761,5 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     win._finish_job()
     fields['surface_rate_rad_s'].setText('0')
     win._start(inspect_only=False)
-    assert calls[-1][1] == {} and calls[-1][0].surface_rate_rad_s == 0.
+    assert calls[-1][1] == {'emit_previews': False} and calls[-1][0].surface_rate_rad_s == 0.
     win._finish_job()

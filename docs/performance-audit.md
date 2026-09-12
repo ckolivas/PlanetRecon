@@ -52,7 +52,7 @@ The frozen baseline is `/tmp/planetrecon-speed3-before` (archive of 781c6a3).
    Saturn/surface ABBA outputs; timing changes are within noise. Stacking and
    uploading the fixed reference once saves 33 uploads / 86.5 MB in the 34-frame
    pilot, retaining 2.5 MiB on CUDA during the run. See motion-reference-speedups.json.
-   Re-profile the remaining CPU/CUDA costs before larger changes.
+   Remaining CPU/CUDA costs were profiled and led to demosaic geometry reuse below.
 4. Removed one redundant frame copy per 16-bit SER read. 69 reader/cache tests
    pass; identical decoded digests in serial ABBA. Synthetic decode-plus-hash
    own CPU improves about 2% little-endian and 4% big-endian. Supplied real
@@ -63,9 +63,10 @@ The frozen baseline is `/tmp/planetrecon-speed3-before` (archive of 781c6a3).
    snapshots, legacy checkpoints and batch runs. Exact replay outputs; unused
    serialized payload falls by 37 MB for 34 frames at batch size 32. No reliable
    default-batch timing gain. See worker-preview-speedups.json. Export/checkpoint
-   overhead still needs an output-preserving opportunity before changes.
-6. Final integration/parity and appropriate regression checks; record remaining
-   bottlenecks and rejected candidates without broad speculative benchmark sweeps.
+   review found validation, compression and atomic publication work that must be
+   retained; no measured reason to rewrite those paths.
+6. Integration qualification complete for the nine improvements below; see
+   the exact result and next bounded candidate at the end.
 
 ## Deferred experiments
 
@@ -100,8 +101,8 @@ Metadata remains freshly read and validated. See timestamp-conversion-speedups.j
 The latest Saturn CUDA profile (34 frames, 4 threads) attributes 4.11 CPU-seconds
 to this process: 1.56 cumulative in local residual coordinates, 1.48 in building
 the motion template, 0.94 in ring drift registration, and 0.91 in 69 CPU bilinear
-demosaics. Categories overlap; this is not exclusive device timing. Next inspect
-repeated demosaic geometry before considering larger CPU/GPU pipeline rewrites.
+demosaics. Categories overlap; this is not exclusive device timing. This led to the
+reusable demosaic geometry described below.
 
 ## Reusable Bayer geometry
 
@@ -128,3 +129,44 @@ Mars L3 0.637 -> 0.420 s. Own CPU increases about 22% (0.970 -> 1.185 and
 0.705 -> 0.860 s): this is an explicit bounded concurrency tradeoff, not a CPU
 work reduction. See parallel-screening-speedups.json. Parallel calibration,
 ordering, cancellation, exception cleanup and missing-runtime fallback are tested.
+
+## Integration qualification and continuation
+
+Completed production commits, in order: ad397ab, 1f4fecd, e06c10b, 378abd3,
+08b62c3, b2a50c6, abe8b52, d3c0475 and fb83392. Each candidate has focused
+regressions and scoped measurements above; none changes reconstruction samples.
+
+The tracked integration suite collected 2053 tests with real CUDA explicitly
+opted in. 2017 passed in the broad invocation, and 31 passed on corrected
+reruns; 5 slow/scientific tests remained opt-in/skipped. No unresolved failures.
+The first broad launcher invoked pytest.main from stdin, which cannot be reopened
+by multiprocessing spawn; do not repeat that launcher. Invoke `.venv/bin/python
+-m pytest` normally, passing tracked test filenames as arguments through a
+subprocess or shell array. There is no reason to repeat the whole suite unchanged.
+
+GUI expectations now cover the actual preview subscription, refusal after
+automatic preparation, and retained local alignment when switching from None
+to Saturn. The corrected worker recheck log is out/run-speed/integration-recheck.log
+(30 passes), followed by the corrected Saturn mode-switch test (1 pass). Earlier
+pytest lastfailed entries include removed/renamed historical tests, so do not
+blindly replay that cache. Production defaults, startup-idle behavior, saved
+settings semantics and full content checks remain unchanged. User edits in
+AGENTS.md and docs/development-plan.md are untouched.
+
+Next bounded candidate: flat-field correction currently recomputes the same
+normalization/division array per frame in apply_calibration. Supplied real
+captures do not include calibration flats; use clearly labelled synthetic
+calibration only to measure this path, and retain a change only if it improves a
+calibrated replay with identical outputs. Any prepared calibration must own its
+arrays, refresh between runs, preserve dataclass-based calibration provenance and
+cache/resume identities, and retain the existing flat-scale/invalid-flat rules.
+Do not silently cache caller-mutable arrays or merely benchmark a scalar helper.
+
+Other larger possibilities (persistent GPU pipelines, combining job stages,
+fusing interpolation or altering reduction order) lack evidence sufficient to
+justify their correctness/memory tradeoffs now. SER reads already have bounded
+batching and source checks; weakening full cache verification is excluded. More
+parallelism is not automatically better than the measured four-worker cap.
+After investigating the remaining bounded candidate, reassess whether any
+reasonable output-preserving option remains. If not, stop early and pause the
+heartbeat rather than filling the authorized 24 hours with speculative work.

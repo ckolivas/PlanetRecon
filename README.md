@@ -208,6 +208,13 @@ allocation. Whole-run elapsed improvements were smaller and depend on contention
 Run benchmarks sequentially, separately from tests; neither machine-wide GPU
 utilization nor elapsed time measures exclusive work by this instance.
 
+The [September performance audit](docs/performance-audit.md) records further exact-output
+improvements: fixed reference and Bayer geometry reuse, reduced GUI transport,
+and faster SER timing and preprocessing. Screening uses at most four measurement
+workers within the selected thread count and a conservative scratch-memory estimate;
+without optional `threadpoolctl`, it remains serial. Its elapsed-time improvement
+uses somewhat more total CPU work, as documented in the capture comparisons.
+
 Unavailable CUDA falls back to CPU with a reason in the device report. A failure
 during CUDA geometry processing stops the run; it does not silently restart or
 mix partial sums. CUDA allocation budgets remain limited to translation mode.

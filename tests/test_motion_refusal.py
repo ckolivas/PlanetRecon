@@ -113,7 +113,7 @@ def test_estimated_but_unapplied_rate_gets_distinct_guidance():
     ReconstructionConfig(geometry_mode='surface', surface_rate_rad_s=.001).require_motion_parameters(info)
 
 
-def test_gui_run_shows_saturn_preprocessing_reason_without_starting_worker(monkeypatch):
+def test_gui_stack_shows_saturn_preprocessing_reason_after_preparation(monkeypatch):
     from pathlib import Path
     from planetrecon.gui.app import MainWindow, create_app
     import planetrecon.gui.app as gui
@@ -131,7 +131,8 @@ def test_gui_run_shows_saturn_preprocessing_reason_without_starting_worker(monke
 
     monkeypatch.setattr(gui, 'start_stack_job', unexpected)
     try:
-        win._run()
+        win.run_stage = 'preprocess'
+        win._advance_run('completed')
         assert win.job is None and note in win.error.text()
         assert 'Globe equatorial radius' in win.error.text()
         assert 'Signed observer latitude' not in win.error.text()
