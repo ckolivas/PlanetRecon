@@ -95,7 +95,7 @@ class MaskedRegistration:
                                     order=1, mode='constant', prefilter=False)
             moved -= moved.mean()
             norm = np.sqrt(self.energy*np.sum(moved**2))
-            gain = (np.dot(self.template[self.mask], moved)/norm
+            gain = (np.einsum('i,i->', self.template[self.mask], moved)/norm
                     - scores[self.shape[0]-1, self.shape[1]-1]) if norm > 0 else -np.inf
             if gain <= min_improvement:
                 return 0., 0.

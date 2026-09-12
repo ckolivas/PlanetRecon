@@ -47,7 +47,8 @@ class RingRegistration(MaskedRegistration):
         norm = np.sqrt(self.energy*np.sum(values**2))
         if norm <= 1e-12:
             return None
-        loss = max(1e-12, 1.-float(np.dot(self.template[self.mask], values)/norm))
+        # A vector reduction does not warrant waking the BLAS worker pool.
+        loss = max(1e-12, 1.-float(np.einsum('i,i->', self.template[self.mask], values)/norm))
         # Rotation may expose pixels outside the original capture. Neither
         # those zeros nor their smoothing footprint are a reference observation.
         supported = minimum_filter(support >= 1.-1e-12, size=15, mode='constant', cval=0)
