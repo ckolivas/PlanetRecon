@@ -670,10 +670,13 @@ def stack_source_geometry(
             frame = usable_frame(source.read_raw(index))
             if frame is None:
                 return None
-            plane = local_plane(frame) if colour_retry else _alignment_plane(frame,color)
+            colour_plane = local_plane(frame)
+            plane = colour_plane if colour_retry else _alignment_plane(frame,color)
             pose = poses[index]
             if ring_registration is not None or track_surface or track_field:
-                dx,dy = required_displacement(index,plane,frame)
+                if index not in sampled_displacements:
+                    sampled_displacements[index] = required_displacement(index,plane,frame)
+                dx,dy = sampled_displacements[index]
             elif track_translation:
                 predicted = anchor_plane if static_attitude or index == anchor_index else local_render(anchor_plane,pose,anchor_pose)
                 dx,dy = phase_correlation_shift(predicted,plane)
@@ -682,8 +685,8 @@ def stack_source_geometry(
             if not np.isfinite([dx,dy]).all() or max(abs(dx),abs(dy)) > config.max_shift_px:
                 return None
             pose = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy)
-            return (local_render(local_plane(frame),anchor_pose,pose),
-                    local_render(np.ones((h,w)),anchor_pose,pose))
+            projected = local_render(np.stack((colour_plane,np.ones((h,w))),axis=-1),anchor_pose,pose)
+            return projected[...,0],projected[...,1]
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
         diagnostics['local_alignment'] = {
             'version': 1, 'enabled': True, 'window_px':config.local_patch_size,
@@ -836,7 +839,8 @@ def stack_source_geometry(
                 n_rejected += 1
                 continue
             quality_plane = _alignment_plane(calibrated, color)
-            plane = (_alignment_plane(bilinear_demosaic(calibrated, color), 'RGB')
+            demo = bilinear_demosaic(calibrated,color) if bayer and (colour_retry or config.local_alignment) else None
+            plane = (_alignment_plane(demo, 'RGB')
                      if colour_retry else quality_plane)
             pose = poses[int(index)]
             if ring_registration is not None or track_surface or track_field:
@@ -882,10 +886,12 @@ def stack_source_geometry(
                 continue
             sample_xy = None
             if config.local_alignment:
-                sample_xy = local_coordinates(local_template,local_support,local_plane(calibrated),
+                local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)
+                sample_xy = local_coordinates(local_template,local_support,local_image,
                     pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda')
             if gpu_accumulator is not None:
-                demo = bilinear_demosaic(calibrated,color) if bayer else None
+                if bayer and demo is None:
+                    demo = bilinear_demosaic(calibrated,color)
                 if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo,sample_xy):
                     n_used += 1
                 else:
@@ -918,7 +924,8 @@ def stack_source_geometry(
                 accum += score * rgb_add
                 weight += score * rgb_w
                 frame_coverage = rgb_w
-                demo = bilinear_demosaic(calibrated, color)
+                if demo is None:
+                    demo = bilinear_demosaic(calibrated, color)
                 da, dw = push_samples(demo, y_idx, x_idx, (h, w), valid=valid)
                 demosaic_accum += score * da
                 demosaic_weight += score * dw

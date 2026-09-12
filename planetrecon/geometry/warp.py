@@ -24,7 +24,7 @@ def _weights(y, x):
 
 
 def _gather(src: np.ndarray, yi: np.ndarray, xi: np.ndarray, valid: np.ndarray) -> np.ndarray:
-    out = np.zeros(yi.shape, dtype=np.float64)
+    out = np.zeros(yi.shape + src.shape[2:], dtype=np.float64)
     if not np.any(valid):
         return out
     out[valid] = src[yi[valid], xi[valid]]
@@ -34,15 +34,10 @@ def _gather(src: np.ndarray, yi: np.ndarray, xi: np.ndarray, valid: np.ndarray) 
 def bilinear_sample(src: np.ndarray, y, x, fill: float = 0.0) -> np.ndarray:
     """Sample ``src[y, x]`` with bilinear interpolation. Out-of-bounds is ``fill``."""
     src = np.asarray(src, dtype=np.float64)
-    if src.ndim == 3:
-        planes = [
-            bilinear_sample(src[..., c], y, x, fill=fill) for c in range(src.shape[-1])
-        ]
-        return np.stack(planes, axis=-1)
     y = np.asarray(y, dtype=np.float64)
     x = np.asarray(x, dtype=np.float64)
     y, x = np.broadcast_arrays(y, x)
-    h, w = src.shape
+    h, w = src.shape[:2]
     y0, x0, wy, wx = _weights(y, x)
     corners = (
         (y0, x0, (1.0 - wy) * (1.0 - wx)),
@@ -50,16 +45,18 @@ def bilinear_sample(src: np.ndarray, y, x, fill: float = 0.0) -> np.ndarray:
         (y0 + 1.0, x0, wy * (1.0 - wx)),
         (y0 + 1.0, x0 + 1.0, wy * wx),
     )
-    acc = np.zeros(y.shape, dtype=np.float64)
+    acc = np.zeros(y.shape + src.shape[2:], dtype=np.float64)
     covered = np.zeros(y.shape, dtype=np.float64)
     for yc, xc, wt in corners:
         yi = np.rint(yc).astype(np.int64)
         xi = np.rint(xc).astype(np.int64)
         valid = (yi >= 0) & (yi < h) & (xi >= 0) & (xi < w)
-        acc = acc + wt * _gather(src, yi, xi, valid)
+        scale = wt[...,None] if src.ndim == 3 else wt
+        acc = acc + scale * _gather(src, yi, xi, valid)
         covered = covered + wt * valid.astype(np.float64)
     if float(fill) != 0.0:
-        acc += (1.0 - covered) * float(fill)
+        missing = 1.0 - covered
+        acc += (missing[...,None] if src.ndim == 3 else missing) * float(fill)
     return acc
 
 
@@ -110,16 +107,8 @@ def bilinear_push(
         valid = np.ones(y_dest.shape, dtype=bool)
     else:
         valid = np.asarray(valid, dtype=bool)
-    if src.ndim == 3:
-        accs = []
-        wts = []
-        for c in range(src.shape[-1]):
-            a, w = bilinear_push(src[..., c], y_dest, x_dest, dest_shape, valid=valid)
-            accs.append(a)
-            wts.append(w)
-        return np.stack(accs, axis=-1), np.stack(wts, axis=-1)
     h, w = int(dest_shape[0]), int(dest_shape[1])
-    accum = np.zeros((h, w), dtype=np.float64)
+    accum = np.zeros((h, w) + src.shape[2:], dtype=np.float64)
     weight = np.zeros((h, w), dtype=np.float64)
     y0, x0, wy, wx = _weights(y_dest, x_dest)
     corners = (
@@ -135,8 +124,10 @@ def bilinear_push(
         inb = valid & (yi >= 0) & (yi < h) & (xi >= 0) & (xi < w) & np.isfinite(wt)
         if not np.any(inb):
             continue
-        contrib = (wt * src_flat)[inb]
+        contrib = ((wt[...,None] if src.ndim == 3 else wt) * src_flat)[inb]
         wcontrib = wt[inb]
         np.add.at(accum, (yi[inb], xi[inb]), contrib)
         np.add.at(weight, (yi[inb], xi[inb]), wcontrib)
+    if src.ndim == 3:
+        weight = np.broadcast_to(weight[...,None],accum.shape).copy()
     return accum, weight

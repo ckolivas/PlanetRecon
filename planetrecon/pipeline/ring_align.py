@@ -39,7 +39,8 @@ class RingRegistration(MaskedRegistration):
         from planetrecon.geometry.model import FieldOnlyModel, render_observed
         field = FieldOnlyModel()
         render = self.renderer or (lambda image, src, ref: render_observed(image, field, src, ref))
-        predicted = render(self.reference, pose, reference_pose)
+        projected = render(np.stack((self.reference,np.ones(self.shape)),axis=-1), pose, reference_pose)
+        predicted,support = projected[...,0],projected[...,1]
         roundtrip = render(predicted, reference_pose, pose)
         values = gaussian_filter(roundtrip, 1.5)[self.mask]
         values -= values.mean() if values.size else 0.
@@ -47,7 +48,6 @@ class RingRegistration(MaskedRegistration):
         if norm <= 1e-12:
             return None
         loss = max(1e-12, 1.-float(np.dot(self.template[self.mask], values)/norm))
-        support = render(np.ones(self.shape), pose, reference_pose)
         # Rotation may expose pixels outside the original capture. Neither
         # those zeros nor their smoothing footprint are a reference observation.
         supported = minimum_filter(support >= 1.-1e-12, size=15, mode='constant', cval=0)

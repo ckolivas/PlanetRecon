@@ -36,8 +36,8 @@ def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, 
         selection = preprocess_source(source, cfg)
         projections = []
         original = local_align.cpu_backproject
-        def record(raw, shift, color):
-            projected = original(raw, shift, color)
+        def record(raw, shift, color, **kwargs):
+            projected = original(raw, shift, color, **kwargs)
             projections.append((projected[0].copy(), projected[1].copy()))
             return projected
         monkeypatch.setattr(local_align, 'cpu_backproject', record)

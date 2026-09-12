@@ -377,7 +377,10 @@ def _stack_source(
             if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
                 n_rejected += 1
                 continue
-            plane = alignment_plane(calibrated, color)
+            demosaiced = (bilinear_demosaic(calibrated,color)
+                          if colour_registration and backend.name != 'cuda' else None)
+            plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
+                     else alignment_plane(calibrated, color))
             if reference is None:
                 reference = plane
                 reference_index = int(index)
@@ -410,7 +413,7 @@ def _stack_source(
                 except RuntimeError as exc:
                     cpu_fallback(exc)
             if projected is None and local_matcher is not None:
-                projected = cpu_backproject(calibrated, shift, color)
+                projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
             if projected is not None:
                 add, wt, demo, support = projected
                 accum += score * add

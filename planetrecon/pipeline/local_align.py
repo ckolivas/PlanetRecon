@@ -100,16 +100,19 @@ class LocalRegistration:
                     costs = all_costs[k]
                 else:
                     ref = self.templates[k]
-                    costs = np.empty((2 * m + 1, 2 * m + 1))
-                    for dy in range(-m, m + 1):
-                        for dx in range(-m, m + 1):
-                            patch = img[y - h + dy:y + h + dy + 1, x - h + dx:x + h + dx + 1]
-                            if patch.shape != ref.shape:
-                                costs[dy + m, dx + m] = -1.0
-                                continue
-                            patch = patch - (patch * self.weight).sum()
-                            denom = np.sqrt((patch ** 2 * self.weight).sum()) * self.strength[k]
-                            costs[dy + m, dx + m] = (patch * ref * self.weight).sum() / max(denom, 1e-15)
+                    costs = np.empty((2*m+1,2*m+1))
+                    candidates = np.lib.stride_tricks.sliding_window_view(
+                        img[y-h-m:y+h+m+1,x-h-m:x+h+m+1], (self.window,self.window))
+                    # Centered correlations, with bounded candidate blocks and
+                    # fused reductions instead of per-offset temporary arrays.
+                    rows = max(1,262144//((2*m+1)*self.window**2))
+                    for start in range(0,2*m+1,rows):
+                        patch = candidates[start:start+rows]
+                        mean = np.einsum('ijxy,xy->ij',patch,self.weight)
+                        patch = patch-mean[...,None,None]
+                        variance = np.einsum('ijxy,ijxy,xy->ij',patch,patch,self.weight)
+                        numerator = np.einsum('ijxy,xy,xy->ij',patch,ref,self.weight)
+                        costs[start:start+rows] = numerator/np.maximum(np.sqrt(variance)*self.strength[k],1e-15)
                 py, px = np.unravel_index(costs.argmax(), costs.shape)
                 if py in (0, 2 * m) or px in (0, 2 * m) or costs[py, px] < 0.8:
                     continue
@@ -157,25 +160,33 @@ class LocalRegistration:
 
     def _cuda_costs(self, image):
         import torch
-        img = torch.as_tensor(image, device='cuda:0', dtype=torch.float64)
         w, m = (self.window, self.max_shift)
+        active = np.flatnonzero(np.asarray(self.texture_valid)
+                                & (self.strength >= self.strength.max()*.08))
+        costs = np.full((len(self.templates),2*m+1,2*m+1), -np.inf)
+        if not len(active):
+            return costs
+        img = torch.as_tensor(image, device='cuda:0', dtype=torch.float64)
         margin = w//2+m
         img = img[int(self.ys[0])-margin:int(self.ys[-1])+margin+1,
                   int(self.xs[0])-margin:int(self.xs[-1])+margin+1]
         tile = img.unfold(0, w + 2 * m, self.step).unfold(1, w + 2 * m, self.step)
-        tile = tile.contiguous().reshape(-1, w + 2 * m, w + 2 * m)
         weight = torch.as_tensor(self.weight, device='cuda:0', dtype=torch.float64)
-        ref = torch.as_tensor(self.templates, device='cuda:0', dtype=torch.float64)
-        strength = torch.as_tensor(self.strength, device='cuda:0', dtype=torch.float64)
-        costs = []
-        for start in range(0, len(tile), 8):
-            patches = tile[start:start + 8].unfold(1, w, 1).unfold(2, w, 1)
+        # Only patches eligible for the existing confidence gates need scores.
+        # Gather bounded chunks directly from the strided detector view instead
+        # of copying every tile (including unsupported sky) to a dense tensor.
+        for start in range(0, len(active), 8):
+            ids = active[start:start+8]
+            rows = torch.as_tensor(ids//len(self.xs), device='cuda:0')
+            cols = torch.as_tensor(ids%len(self.xs), device='cuda:0')
+            patches = tile[rows,cols].unfold(1, w, 1).unfold(2, w, 1)
+            ref = torch.as_tensor(self.templates[ids], device='cuda:0', dtype=torch.float64)
+            strength = torch.as_tensor(self.strength[ids], device='cuda:0', dtype=torch.float64)
             mean = (patches * weight).sum(dim=(-1, -2))
             variance = torch.clamp((patches.square() * weight).sum(dim=(-1, -2)) - mean.square(), min=0)
-            numerator = (patches * weight * ref[start:start + 8, None, None]).sum(dim=(-1, -2))
-            denom = torch.sqrt(variance) * strength[start:start + 8, None, None]
-            costs.append((numerator / denom.clamp(min=1e-15)).cpu().numpy())
-        costs = np.concatenate(costs)
+            numerator = (patches * weight * ref[:, None, None]).sum(dim=(-1, -2))
+            denom = torch.sqrt(variance) * strength[:, None, None]
+            costs[ids] = (numerator / denom.clamp(min=1e-15)).cpu().numpy()
         return costs
 
 
@@ -211,13 +222,15 @@ def build_template(reference, indices, read_plane, correlate, max_shift, should_
     return np.divide(anchored, support, out=reference.copy(), where=support > 0)
 
 
-def cpu_backproject(raw, shift, color):
+def cpu_backproject(raw, shift, color, *, demosaiced=None):
     """Resample original colour measurements and their support exactly once."""
     from planetrecon.detector import is_bayer, cfa_labels, bilinear_demosaic
     raw = np.asarray(raw, dtype=np.float64)
     support = pull(np.ones(raw.shape[:2]), shift)
     if is_bayer(color):
         masks = (cfa_labels(*raw.shape, color)[..., None] == np.array(list('RGB'))).astype(float)
+        if demosaiced is None:
+            demosaiced = bilinear_demosaic(raw, color)
         return (pull(raw[..., None]*masks, shift), pull(masks, shift),
-                pull(bilinear_demosaic(raw, color), shift), support)
+                pull(demosaiced, shift), support)
     return pull(raw, shift), np.broadcast_to(support[..., None], raw.shape) if raw.ndim == 3 else support, None, None

@@ -2,7 +2,22 @@
 
 import numpy as np
 from scipy.ndimage import gaussian_filter, map_coordinates, maximum_filter
-from scipy.signal import correlate
+from scipy.fft import rfft2, irfft2, next_fast_len
+
+
+def observed_correlations(proxy, template, mask):
+    """Four linear correlations, sharing the repeated proxy and mask FFTs."""
+    full = tuple(2*n-1 for n in proxy.shape)
+    shape = tuple(next_fast_len(n, real=True) for n in full)
+    observed = rfft2(proxy, s=shape)
+    kernel = rfft2(mask[::-1,::-1], s=shape)
+    def inverse(product):
+        return irfft2(product, s=shape)[:full[0],:full[1]]
+    dot = inverse(observed*rfft2(template[::-1,::-1], s=shape))
+    total = inverse(observed*kernel)
+    squares = inverse(rfft2(proxy**2, s=shape)*kernel)
+    support = inverse(rfft2(np.ones(proxy.shape), s=shape)*kernel)
+    return dot,total,squares,support
 
 
 class MaskedRegistration:
@@ -30,10 +45,7 @@ class MaskedRegistration:
         if score_provider is not None:
             scores = score_provider(proxy, self.template, mask, self.count, self.energy)
         else:
-            dot = correlate(proxy, self.template, mode='full', method='fft')
-            total = correlate(proxy, mask, mode='full', method='fft')
-            squares = correlate(proxy**2, mask, mode='full', method='fft')
-            support = correlate(np.ones(self.shape), mask, mode='full', method='fft')
+            dot,total,squares,support = observed_correlations(proxy,self.template,mask)
             variance = np.maximum(squares - total**2/self.count, 0.)
             denominator = np.sqrt(self.energy*variance)
             valid = (support >= self.count - 1e-6) & (denominator > 1e-12)
