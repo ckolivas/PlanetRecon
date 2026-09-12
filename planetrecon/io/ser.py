@@ -362,12 +362,11 @@ class SERSource(FrameSource):
         data = self._file.read(self.header.frame_bytes)
         if len(data) != self.header.frame_bytes:
             raise OSError("SER frame truncated while open")
-        blob = np.frombuffer(data, dtype=np.uint8)
         if self.header.bytes_per_sample == 1:
-            samples = blob.astype(np.uint16, copy=False)
+            samples = np.frombuffer(data, dtype=np.uint8).astype(np.uint16, copy=False)
         else:
             dt = np.dtype("<u2" if self._little() else ">u2")
-            samples = np.frombuffer(blob.tobytes(), dtype=dt).astype(np.uint16, copy=False)
+            samples = np.frombuffer(data, dtype=dt).astype(np.uint16, copy=False)
         h, w = self.header.height, self.header.width
         if self.header.planes == 3:
             packed = samples.reshape(h, w, 3)

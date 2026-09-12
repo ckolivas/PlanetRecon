@@ -1,0 +1,102 @@
+{
+  "baseline_commit": "378abd3 (unchanged SER reader also archived in e06c10b)",
+  "method": "Serial ABBA fresh processes; synthetic 64-frame mono uint16 SER, 512x768, RNG seed 89. Warm read pass excluded. Timed 64 complete passes (4096 frame reads, 3 GiB), SHA256 of each decoded frame included. Both byte orders. CPU time covers only the process and its threads; wall time is contended.",
+  "interpretation": "Removes one frame-sized bytes copy per 16-bit read. Median decode-plus-hash own CPU decreases about 2 percent for native little-endian and 4 percent for big-endian. This is an I/O-path microbenchmark, not a full run; all currently supplied real captures are 8-bit and do not benefit from this change.",
+  "validation": "69 reader/cache tests passed, including 8/12/16-bit mono/Bayer/BGR ownership, both endian conventions, truncation/cancellation and source edits with preserved file timestamps. All benchmark SHA256 digests identical.",
+  "cases": [
+    {
+      "endian": "little",
+      "samples": [
+        {
+          "pid": 8,
+          "cpu_seconds": 1.71,
+          "elapsed_seconds": 1.653535971,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "before"
+        },
+        {
+          "pid": 12,
+          "cpu_seconds": 1.73,
+          "elapsed_seconds": 1.551740013,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "after"
+        },
+        {
+          "pid": 16,
+          "cpu_seconds": 1.77,
+          "elapsed_seconds": 1.560924336,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "after"
+        },
+        {
+          "pid": 20,
+          "cpu_seconds": 1.85,
+          "elapsed_seconds": 1.695839741,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "before"
+        }
+      ],
+      "medians": {
+        "before": {
+          "cpu_seconds": 1.78,
+          "elapsed_seconds": 1.6746878559999998
+        },
+        "after": {
+          "cpu_seconds": 1.75,
+          "elapsed_seconds": 1.5563321745
+        }
+      }
+    },
+    {
+      "endian": "big",
+      "samples": [
+        {
+          "pid": 24,
+          "cpu_seconds": 1.83,
+          "elapsed_seconds": 1.73474996,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "before"
+        },
+        {
+          "pid": 28,
+          "cpu_seconds": 1.76,
+          "elapsed_seconds": 1.640885372,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "after"
+        },
+        {
+          "pid": 32,
+          "cpu_seconds": 1.79,
+          "elapsed_seconds": 1.666097825,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "after"
+        },
+        {
+          "pid": 36,
+          "cpu_seconds": 1.88,
+          "elapsed_seconds": 1.787682174,
+          "digest": "5993e2db8d3f8ef0ec75b2fe7e20d1a5fce9aaa37ebc98eaa69d19eb5d564363",
+          "frames": 4096,
+          "side": "before"
+        }
+      ],
+      "medians": {
+        "before": {
+          "cpu_seconds": 1.855,
+          "elapsed_seconds": 1.7612160669999999
+        },
+        "after": {
+          "cpu_seconds": 1.775,
+          "elapsed_seconds": 1.6534915985
+        }
+      }
+    }
+  ]
+}
