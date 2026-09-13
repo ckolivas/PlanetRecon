@@ -283,7 +283,6 @@ class MainWindow:
         self.error.setWordWrap(True)
         self.error.setTextFormat(Qt.PlainText)
         self.error.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
-        self.error.setToolTip('Select error text with the mouse or keyboard and copy it with Ctrl+C.')
         self.error.setStyleSheet('color: #bb3333; font-weight: bold')
         layout.addWidget(self.status)
         layout.addWidget(self.error)
