@@ -1,6 +1,7 @@
 """Human-facing configuration controls; values remain in engine units on commit."""
 from dataclasses import replace
 import math
+from pathlib import Path
 
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
@@ -12,8 +13,10 @@ from planetrecon.gui.help import CONTROL_HELP
 
 
 class ConfigControls(QTabWidget):
-    def __init__(self, config):
+    def __init__(self, config, *, dialog_directory=None, remember_directory=None):
         super().__init__()
+        self.dialog_directory = dialog_directory
+        self.remember_directory = remember_directory
         self.base = config
         self.fields = {}
         self.angular = set()
@@ -296,11 +299,13 @@ class ConfigControls(QTabWidget):
             and self.fields['geometry_mode'].currentData() != 'field')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
-    @staticmethod
-    def _choose_table(edit):
-        path, _ = QFileDialog.getOpenFileName(edit, 'Calibration table', '', 'NumPy table (*.npy)')
+    def _choose_table(self, edit):
+        directory = self.dialog_directory() if self.dialog_directory else ''
+        path, _ = QFileDialog.getOpenFileName(edit, 'Calibration table', directory, 'NumPy table (*.npy)')
         if path:
             edit.setText(path)
+            if self.remember_directory:
+                self.remember_directory(Path(path).parent)
 
     def settings_state(self):
         """Save displayed values, including inactive controls and manual intent."""

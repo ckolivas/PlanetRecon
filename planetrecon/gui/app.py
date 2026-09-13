@@ -90,6 +90,9 @@ class MainWindow:
         self.settings_path = (Path(settings_path) if settings_path is not None else
                               settings.default_path() if config is None else None)
         saved, settings_error = settings.load(self.settings_path) if self.settings_path else ({}, None)
+        self.last_directory = saved.get('last_directory', '')
+        if not isinstance(self.last_directory, str):
+            self.last_directory = ''
         # New interactive jobs use the preferred stacking preset; supplied jobs
         # and saved engine configurations retain their explicit settings.
         self.config = config or ReconstructionConfig(
@@ -181,7 +184,8 @@ class MainWindow:
         self.batch_status.hide()
         layout.addWidget(self.batch_status)
         split = QSplitter()
-        self.controls = ConfigControls(self.config)
+        self.controls = ConfigControls(self.config, dialog_directory=self._dialog_directory,
+                                       remember_directory=self._remember_directory)
         self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
         self.controls.fields['stack_percent'].valueChanged.connect(self._refresh_preprocessing)
         self.controls.fields['frame_selection_mode'].currentIndexChanged.connect(self._refresh_preprocessing)
@@ -362,11 +366,23 @@ class MainWindow:
             settings.save(self.settings_path, dict(
                 controls=self.controls.settings_state(),
                 capture=str(self.path) if self.path else None,
+                last_directory=self.last_directory,
                 encoding=self.encoding.currentText(), zoom=self.zoom.currentText(),
                 channel=self.channel.currentText(), save_black=self.save_black.text(),
                 save_white=self.save_white.text(), save_gamma=self.save_gamma.text()))
         except (OSError, ValueError) as exc:
             self.error.setText(f'Could not save settings: {exc}')
+
+    def _dialog_directory(self):
+        if self.last_directory and Path(self.last_directory).is_dir():
+            return self.last_directory
+        if self.path is not None and self.path.absolute().parent.is_dir():
+            return str(self.path.absolute().parent)
+        return str(Path.cwd())
+
+    def _remember_directory(self, directory):
+        self.last_directory = str(Path(directory).absolute())
+        self._save_settings()
 
     def _buttons(self):
         busy = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
@@ -388,12 +404,14 @@ class MainWindow:
             self._export_options()
 
     def _choose_batch(self):
-        names, _ = QFileDialog.getOpenFileNames(self.window, 'Choose batch captures', '',
+        names, _ = QFileDialog.getOpenFileNames(self.window, 'Choose batch captures', self._dialog_directory(),
                                                 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if not names:
             return
+        self._remember_directory(Path(names[0]).parent)
         folder = QFileDialog.getExistingDirectory(self.window, 'Batch output folder', str(Path(names[0]).parent))
         if folder:
+            self._remember_directory(folder)
             self.start_batch(names, folder)
 
     def start_batch(self, paths, directory):
@@ -488,12 +506,13 @@ class MainWindow:
             self._batch_display()
 
     def _choose(self):
-        name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', '', 'Captures (*.ser *.avi *.h5 *.hdf5)')
+        name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', self._dialog_directory(), 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
             self.controls.clear_geometry_estimate()
             self.preprocessing_info = {}
             self._refresh_preprocessing()
             self.path = Path(name)
+            self.last_directory = str(self.path.absolute().parent)
             self.checkpoint_path.clear()
             self.resume_check.setChecked(False)
             self.source_label.setText(str(self.path))
@@ -524,9 +543,10 @@ class MainWindow:
 
     def _choose_checkpoint(self):
         name, _ = QFileDialog.getSaveFileName(self.window, 'Accumulator checkpoint',
-                                             self.checkpoint_path.text(), 'NumPy state (*.npz)')
+                                             self.checkpoint_path.text() or self._dialog_directory(), 'NumPy state (*.npz)')
         if name:
             self.checkpoint_path.setText(name)
+            self._remember_directory(Path(name).parent)
 
     def _run(self):
         if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
@@ -973,13 +993,16 @@ class MainWindow:
             self.save_status.setText(f'Save settings: {exc}')
             return
         extension = '.png' if cfg.encoding == 'png16' else '.tif'
+        source = self.last_result.provenance.get('source', {}).get('path') or self.path
+        stem = Path(source).stem if source else 'result'
         path, _ = QFileDialog.getSaveFileName(self.window, 'Save scientific result',
-                    'intermediate'+extension if self.last_result.incomplete else 'result'+extension,
+                    str(Path(self._dialog_directory()) / (stem + extension)),
                     'PNG (*.png)' if extension == '.png' else 'TIFF (*.tif *.tiff)',
                     options=QFileDialog.Option.DontConfirmOverwrite)
         if not path:
             return
         dest = Path(path)
+        self._remember_directory(dest.parent)
         if not dest.suffix:
             dest = dest.with_suffix(extension)
         overwrite = False
