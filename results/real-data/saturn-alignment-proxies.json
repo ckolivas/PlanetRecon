@@ -1,0 +1,373 @@
+{
+  "date": "2026-09-27",
+  "stacking": {
+    "n_used": 5738,
+    "sigmas": [
+      1.5,
+      3.0,
+      6.0,
+      12.0
+    ],
+    "device": "NVIDIA GeForce RTX 5070",
+    "reference_sha256": "3ffcb6cf01e740482a627d474a35a5bfce4bb99b7064622ed58410b880d3403c",
+    "selected_indices_sha256": "01f4ad5258de473b6852f116ea952952a0862b0727de1934c70e554cb444d8ef",
+    "control": "Global translation only for every sigma; fixed production reference and raw backprojector",
+    "maximum_baseline_shift_difference": 0.0,
+    "variants": {
+      "global_sigma1.5": {
+        "raw": {
+          "upper": {
+            "median": 107.34293433223365,
+            "highpass_percent": 0.1686969265656616,
+            "laplacian_percent": 0.07342684567469647
+          },
+          "lower": {
+            "median": 109.66376284754577,
+            "highpass_percent": 0.14085512899148,
+            "laplacian_percent": 0.06969328926960844
+          }
+        },
+        "half_difference": {
+          "upper": {
+            "median": 107.34293433223365,
+            "highpass_percent": 0.08335192941580488,
+            "laplacian_percent": 0.06571604356943149
+          },
+          "lower": {
+            "median": 109.66376284754577,
+            "highpass_percent": 0.07857301463554513,
+            "laplacian_percent": 0.06902135777917046
+          }
+        },
+        "shift_change_rms_px": 0.0,
+        "shift_change_magnitude_percentiles": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "global_sigma3": {
+        "raw": {
+          "upper": {
+            "median": 107.34555043207345,
+            "highpass_percent": 0.16887814363816112,
+            "laplacian_percent": 0.07368161393619026
+          },
+          "lower": {
+            "median": 109.64129999318305,
+            "highpass_percent": 0.143553720256962,
+            "laplacian_percent": 0.06916755223929212
+          }
+        },
+        "half_difference": {
+          "upper": {
+            "median": 107.34555043207345,
+            "highpass_percent": 0.08505073088344885,
+            "laplacian_percent": 0.06686352483089737
+          },
+          "lower": {
+            "median": 109.64129999318305,
+            "highpass_percent": 0.07929376313449628,
+            "laplacian_percent": 0.06728967377308845
+          }
+        },
+        "shift_change_rms_px": 0.04290048673235807,
+        "shift_change_magnitude_percentiles": [
+          0.04545588593261239,
+          0.0955686584904968,
+          0.14588087739829705,
+          0.23011308107334238
+        ]
+      },
+      "global_sigma6": {
+        "raw": {
+          "upper": {
+            "median": 107.35275100506627,
+            "highpass_percent": 0.1675071614504703,
+            "laplacian_percent": 0.07362556860246182
+          },
+          "lower": {
+            "median": 109.62772860377399,
+            "highpass_percent": 0.1414663298983631,
+            "laplacian_percent": 0.0684903942489557
+          }
+        },
+        "half_difference": {
+          "upper": {
+            "median": 107.35275100506627,
+            "highpass_percent": 0.08648754683796833,
+            "laplacian_percent": 0.06646270406001366
+          },
+          "lower": {
+            "median": 109.62772860377399,
+            "highpass_percent": 0.07866936656066628,
+            "laplacian_percent": 0.06756871032955819
+          }
+        },
+        "shift_change_rms_px": 0.10656927903209908,
+        "shift_change_magnitude_percentiles": [
+          0.11172491063741799,
+          0.2372972195964048,
+          0.36354757754942285,
+          0.6001894366343199
+        ]
+      },
+      "global_sigma12": {
+        "raw": {
+          "upper": {
+            "median": 107.3527121324644,
+            "highpass_percent": 0.16499181959077058,
+            "laplacian_percent": 0.07463481341802702
+          },
+          "lower": {
+            "median": 109.61705839356755,
+            "highpass_percent": 0.1403825820963702,
+            "laplacian_percent": 0.06947765731402546
+          }
+        },
+        "half_difference": {
+          "upper": {
+            "median": 107.3527121324644,
+            "highpass_percent": 0.08617689151959725,
+            "laplacian_percent": 0.06577120002182332
+          },
+          "lower": {
+            "median": 109.61705839356755,
+            "highpass_percent": 0.07872344200993558,
+            "laplacian_percent": 0.06713437090172909
+          }
+        },
+        "shift_change_rms_px": 0.15640501183671418,
+        "shift_change_magnitude_percentiles": [
+          0.16397006229921773,
+          0.348273130975604,
+          0.5329888906267936,
+          0.908327489777686
+        ]
+      }
+    },
+    "maximum_baseline_image_difference_adu": 0.0,
+    "seconds": 96.91684210201493
+  },
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "global_sigma1.5": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/global_sigma1.5.png",
+        "source_sha256": "bb05b5bcbdf770533d5b27c8361f389e04a560a97c67576e7b5897cd2d60f8ea",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/sharpened/global_sigma1.5_sharpened.png",
+        "output_sha256": "15af149fcdd49c3df01304098bc204e8ab2aaea347cf2ed8ec09c29b26a441d1",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/stacking/global_subpixels.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "global_sigma3": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/global_sigma3.png",
+        "source_sha256": "23820c0aa8aeaf040984b9edfb5584bcec8ea7c9b29fab6ebb984520b4dcac14",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/sharpened/global_sigma3_sharpened.png",
+        "output_sha256": "85568fe7d7b94a796a641e9e0edbd64b5bdf19940e730df464e664d4c987e36b"
+      },
+      "global_sigma6": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/global_sigma6.png",
+        "source_sha256": "ae5f252be4a6443ba1544c2143599d0c6af6d024973f91316ea505e0c6c623c8",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/sharpened/global_sigma6_sharpened.png",
+        "output_sha256": "9fed15488fdd9694e7eea0a5c7007cdf047592f380bbf11eb52d34e8d5949bdf"
+      },
+      "global_sigma12": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/global_sigma12.png",
+        "source_sha256": "e3c645f32b401b4762a337ddb10a2e9c1e94ab54447feb0f6a1f2aa5e2ec3eb3",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-alignment-proxies/sharpened/global_sigma12_sharpened.png",
+        "output_sha256": "424418972856b3edd2107513edc33ca15fec436c4830ac9637ad0a9161a44999"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "existing_output_verification": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "local": {
+        "source": "/home/conman/Code/PlanetRecon/stacking/local.png",
+        "source_sha256": "b8f8747961b5fd45a70ef425e312650850942673f6951054a42c8e1b0b061e1f",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-sharpening-reproduction/local_sharpened.png",
+        "output_sha256": "2fe87dd59a9b7db3910752febad4c34b993e34c2023ea22cbe2a5d74c08b0748",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/stacking/locals.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "global_subpixel": {
+        "source": "/home/conman/Code/PlanetRecon/stacking/global_subpixel.png",
+        "source_sha256": "db968dddc5a4323bb960acdaafaeb949d8e80d9cb9cddbd140c06979da9a531b",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-sharpening-reproduction/global_subpixel_sharpened.png",
+        "output_sha256": "15af149fcdd49c3df01304098bc204e8ab2aaea347cf2ed8ec09c29b26a441d1",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/stacking/global_subpixels.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54": {
+        "source": "/home/conman/Code/PlanetRecon/AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54.png",
+        "source_sha256": "63102ed1dd5fc648008c367bad4cc8ba2537c4de98eaa689805a6fdb78d9fbd0",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-sharpening-reproduction/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54_sharpened.png",
+        "output_sha256": "0b91d876a16fb728b4a1e699ba37759eb5312a234dcca99b60f6894bb241a1a5",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54s.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      }
+    }
+  },
+  "sharpened_measurements": {
+    "AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54s.png": {
+      "upper": {
+        "median": 32745.0,
+        "highpass_percent": 0.5732090820395705,
+        "laplacian_percent": 0.2232402997553159
+      },
+      "lower": {
+        "median": 33817.0,
+        "highpass_percent": 0.6418716335434476,
+        "laplacian_percent": 0.26665075917319786
+      }
+    },
+    "out/saturn-alignment-proxies/sharpened/global_sigma1.5_sharpened.png": {
+      "upper": {
+        "median": 32570.0,
+        "highpass_percent": 2.957700868419032,
+        "laplacian_percent": 2.821528655480188
+      },
+      "lower": {
+        "median": 33396.0,
+        "highpass_percent": 2.9832415643182184,
+        "laplacian_percent": 2.82917235381704
+      }
+    },
+    "out/saturn-alignment-proxies/sharpened/global_sigma12_sharpened.png": {
+      "upper": {
+        "median": 32588.0,
+        "highpass_percent": 2.91560047378858,
+        "laplacian_percent": 2.8240394035941874
+      },
+      "lower": {
+        "median": 33448.0,
+        "highpass_percent": 2.901524709616588,
+        "laplacian_percent": 2.8059421488645073
+      }
+    },
+    "out/saturn-alignment-proxies/sharpened/global_sigma3_sharpened.png": {
+      "upper": {
+        "median": 32588.0,
+        "highpass_percent": 2.878894820618505,
+        "laplacian_percent": 2.8174269193998924
+      },
+      "lower": {
+        "median": 33379.0,
+        "highpass_percent": 2.910137485505651,
+        "laplacian_percent": 2.8037969215538134
+      }
+    },
+    "out/saturn-alignment-proxies/sharpened/global_sigma6_sharpened.png": {
+      "upper": {
+        "median": 32605.0,
+        "highpass_percent": 2.8592551889727598,
+        "laplacian_percent": 2.785963076408175
+      },
+      "lower": {
+        "median": 33396.0,
+        "highpass_percent": 2.840310136612865,
+        "laplacian_percent": 2.830661391897996
+      }
+    },
+    "stacking/locals.png": {
+      "upper": {
+        "median": 32553.0,
+        "highpass_percent": 2.9667615072988363,
+        "laplacian_percent": 2.8067077445285884
+      },
+      "lower": {
+        "median": 33379.0,
+        "highpass_percent": 2.975063436365586,
+        "laplacian_percent": 2.7566200339258264
+      }
+    }
+  },
+  "relative_highpass_changes_percent": {
+    "3": {
+      "upper": -2.664436036854889,
+      "lower": -2.450491428081003
+    },
+    "6": {
+      "upper": -3.328452870181353,
+      "lower": -4.791144955035465
+    },
+    "12": {
+      "upper": -1.423416244691289,
+      "lower": -2.739196707334224
+    }
+  }
+}
