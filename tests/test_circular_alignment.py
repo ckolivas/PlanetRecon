@@ -188,7 +188,8 @@ def test_oversized_sampling_uses_explicit_global_fallback(tmp_path):
         assert any('using global alignment' in warning for warning in result.warnings)
 
 
-def test_stack_preserves_absolute_frame_brightness(tmp_path):
+@pytest.mark.parametrize('weighted', [True, False])
+def test_stack_preserves_absolute_frame_brightness(tmp_path, weighted):
     """Matching normalisation must never reach the accumulated observations."""
     from planetrecon.io.ser import write_ser
     with SERSource(capture(tmp_path)) as original:
@@ -196,11 +197,13 @@ def test_stack_preserves_absolute_frame_brightness(tmp_path):
     frames = np.stack([base*gain + 31*i for i, gain in enumerate(range(1, 9))]).astype('u2')
     path = write_ser(tmp_path/'brightness.ser', frames)
     with SERSource(path) as source:
-        cfg = circular_config()
+        cfg = circular_config(quality_weighting=weighted)
         selected = preprocess_source(source, cfg)
         result = stack_source(source, cfg)
     kept = selected.accepted
     weights = np.maximum(selected.measurements[kept, 0], 1e-12)
+    if not weighted:
+        weights = np.ones_like(weights)
     expected = np.average(frames[kept].astype(float), axis=0, weights=weights)
     assert result.n_used == kept.sum() >= 4
     # Gain and background offsets both survive as recorded, in ADU. A common
@@ -228,6 +231,7 @@ def test_capture_controls_persist_sampling_and_classic_stack(tmp_path, method):
         assert '27 px' in win.controls.alignment_size_label.text()
         fields['alignment_method'].setCurrentIndex(fields['alignment_method'].findData(method))
         fields['local_patch_size'].setValue(49)
+        fields['quality_weighting'].setChecked(False)
         # Classic Stack must not demand the incomplete motion geometry.
         fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('saturn'))
         win.path = capture(tmp_path)
@@ -239,6 +243,8 @@ def test_capture_controls_persist_sampling_and_classic_stack(tmp_path, method):
         assert not win.error.text()
         assert win.stack_btn.isEnabled() and win.last_result.n_used > 0
         detail = win.last_result.provenance['local_alignment']
+        assert win.last_result.provenance['scalar_frame_weight'] == 'equal'
+        assert not win.config.quality_weighting
         if method == 'circular_multiscale':
             assert detail['method'] == method
             assert detail['minimum_diameter_px'] == 27

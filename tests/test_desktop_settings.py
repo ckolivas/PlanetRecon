@@ -18,6 +18,8 @@ def test_settings_roundtrip_and_new_capture(tmp_path):
     capture.touch()
     win = MainWindow(capture, ReconstructionConfig(), settings_path=path)
     fields = win.controls.fields
+    assert fields['quality_weighting'].isChecked()
+    fields['quality_weighting'].setChecked(False)
     fields['device'].setCurrentText('gpu')
     fields['geometry_mode'].setCurrentText('saturn')
     fields['ring_inner_radius_px'].setText('120.25')
@@ -42,6 +44,7 @@ def test_settings_roundtrip_and_new_capture(tmp_path):
     assert restored.controls.geometry_auto['equatorial_radius_px'] == '93.3'
     assert restored.encoding.currentText() == 'png16'
     assert restored.save_gamma.text() == '1.2'
+    assert not restored.controls.configuration().quality_weighting
     assert restored.quality_plot.absolute_control.isChecked()
     assert restored.quality_plot.log_control.isChecked()
     other = MainWindow(tmp_path / 'Jup.ser', settings_path=path)

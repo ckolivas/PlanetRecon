@@ -719,6 +719,7 @@ def stack_source_geometry(
     cancelled = False
 
     snapshot_provenance = capture_provenance(source, requested_config, calibration)
+    snapshot_provenance['scalar_frame_weight'] = 'linear quality' if config.quality_weighting else 'equal'
     snapshot_provenance["preprocessing_cache"] = cache_status or {"status": "disabled"}
     if config.local_alignment:
         snapshot_provenance['local_alignment'] = diagnostics['local_alignment']
@@ -892,6 +893,8 @@ def stack_source_geometry(
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
+            if not config.quality_weighting:
+                score = 1.
             sample_xy = None
             if config.local_alignment:
                 local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)

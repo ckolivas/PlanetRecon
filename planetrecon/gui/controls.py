@@ -52,6 +52,7 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
+        self._check(capture, 'quality_weighting', 'Weight frames by quality')
         self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
         self._choice(capture, 'alignment_method', 'Alignment points', ['square', 'circular_multiscale'])
         self.fields['alignment_method'].setItemText(0, 'Fixed square patches')

@@ -15,7 +15,8 @@ from planetrecon.reconstruction import ReconstructionConfig
 
 @pytest.mark.parametrize('color', ['mono', 'RGB', 'RGGB'])
 @pytest.mark.parametrize('preprocessed', [False, True])
-def test_explicit_zero_surface_rate_matches_registered_stack(color, preprocessed):
+@pytest.mark.parametrize('weighted', [True, False])
+def test_explicit_zero_surface_rate_matches_registered_stack(color, preprocessed, weighted):
     y, x = np.indices((80, 96))
     scene = gaussian_filter((((x-48)/25)**2 + ((y-40)/22)**2 < 1)*
                             (100+15*np.cos(y/3)+10*np.cos(x/4)), .8)
@@ -28,7 +29,7 @@ def test_explicit_zero_surface_rate_matches_registered_stack(color, preprocessed
         planes *= np.where(labels == 'R', .8, np.where(labels == 'B', .6, 1.))
     source = ArraySource(planes, color_mode=color, bit_depth=32, timestamps=np.arange(len(planes)))
     cfg = ReconstructionConfig(device='cpu', threads=2, field_center_x=48.5, field_center_y=40.5,
-        equatorial_radius_px=25., pole_pa_rad=.3, flattening=.1, sub_obs_lat_rad=.1)
+        equatorial_radius_px=25., pole_pa_rad=.3, flattening=.1, sub_obs_lat_rad=.1, quality_weighting=weighted)
     selection = preprocess_source(source, cfg) if preprocessed else None
     baseline = stack_source(source, cfg, preprocessing=selection)
     surface = stack_source(source, replace(cfg, geometry_mode='surface', surface_rate_rad_s=0.), preprocessing=selection)

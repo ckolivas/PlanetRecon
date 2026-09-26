@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -29,10 +30,12 @@ def config(**kwargs):
 
 
 @pytest.mark.parametrize('colour', [0, 8, 100])
-def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, colour):
+@pytest.mark.parametrize('weighted', [True, False])
+def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, colour, weighted):
     path = capture(tmp_path/'weights.ser', colour)
     with SERSource(path) as source:
-        cfg = config()
+        # Record projections in capture order for the independent sum.
+        cfg = replace(config(quality_weighting=weighted), threads=1)
         selection = preprocess_source(source, cfg)
         projections = []
         original = local_align.cpu_backproject
@@ -43,6 +46,8 @@ def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, 
         monkeypatch.setattr(local_align, 'cpu_backproject', record)
         stacked = baseline.stack_source(source, cfg)
         q = selection.measurements[selection.accepted, 0]
+        if not weighted:
+            q = np.ones_like(q)
         assert len(projections) == stacked.n_used == len(q)
         numerator = np.zeros_like(stacked.image)
         denominator = np.zeros_like(stacked.coverage)
@@ -53,12 +58,13 @@ def test_standard_quality_weights_match_independent_sums(tmp_path, monkeypatch, 
         native = denominator > 0
         np.testing.assert_allclose(stacked.image[native], expected[native], rtol=0, atol=1e-12)
         np.testing.assert_array_equal(stacked.coverage[native], denominator[native])
-        assert stacked.provenance['scalar_frame_weight'] == 'linear quality'
+        assert stacked.provenance['scalar_frame_weight'] == ('linear quality' if weighted else 'equal')
 
 
-def test_standard_checkpoint_resumes_and_rejects_legacy_squared_sums(tmp_path):
+@pytest.mark.parametrize('weighted', [True, False])
+def test_standard_checkpoint_resumes_and_rejects_legacy_squared_sums(tmp_path, weighted):
     path = capture(tmp_path/'resume.ser', 8)
-    cfg = config()
+    cfg = config(quality_weighting=weighted)
     with SERSource(path) as source:
         preprocess_source(source, cfg)
         whole = baseline.stack_source(source, cfg)
@@ -79,6 +85,8 @@ def test_standard_checkpoint_resumes_and_rejects_legacy_squared_sums(tmp_path):
         resumed = baseline.stack_source(source, cfg, resume_from=checkpoint)
         np.testing.assert_array_equal(resumed.image, whole.image)
         np.testing.assert_array_equal(resumed.coverage, whole.coverage)
+        with pytest.raises(ValueError, match='identity|configuration'):
+            baseline.stack_source(source, replace(cfg, quality_weighting=not weighted), resume_from=checkpoint)
         for settings in (metadata['identity']['config'], metadata['identity']['capture']['config']):
             settings['squared_quality_weights'] = True
         payload['metadata'] = json.dumps(metadata)
@@ -93,6 +101,14 @@ def test_saved_standard_settings_load_without_removed_option():
     assert ReconstructionConfig.from_dict(saved) == expected
     assert saved['squared_quality_weights'] is False
     assert 'squared_quality_weights' not in expected.to_dict()
+    saved.pop('quality_weighting')
+    assert ReconstructionConfig.from_dict(saved).quality_weighting is True
+
+
+@pytest.mark.parametrize('value', [None, 0, 1, 'false'])
+def test_quality_weighting_requires_boolean(value):
+    with pytest.raises(ValueError, match='quality_weighting'):
+        config(quality_weighting=value)
 
 
 @pytest.mark.parametrize('value', [True, 1, None])
@@ -108,3 +124,16 @@ def test_cli_no_longer_offers_stronger_weighting(capsys):
         main(['stack', '--help'])
     assert exc.value.code == 0
     assert '--squared-quality-weights' not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('weighted', [True, False])
+def test_cli_quality_weighting_reaches_stack(tmp_path, weighted):
+    from planetrecon.cli import main
+    from planetrecon.result import load_snapshot
+    path = capture(tmp_path/'cli.ser', 0)
+    options = [] if weighted else ['--no-quality-weighting']
+    assert main(['--threads', '2', 'stack', '--path', str(path), '--device', 'cpu',
+                 '--no-frame-preselection', '--out', str(tmp_path/'result'), *options]) == 0
+    result = load_snapshot(tmp_path/'result/stack.npz')
+    assert result.provenance['config']['quality_weighting'] == weighted
+    assert result.provenance['scalar_frame_weight'] == ('linear quality' if weighted else 'equal')

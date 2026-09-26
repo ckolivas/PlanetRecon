@@ -27,6 +27,11 @@ def identity(source,config,calibration,should_cancel=None):
             digest.update(block)
     settings = config.to_dict()
     capture = capture_provenance(source,config,calibration)
+    # Existing checkpoints used quality weights. Only the opt-out changes
+    # accumulator meaning and must be bound explicitly to the identity.
+    if config.quality_weighting:
+        settings.pop('quality_weighting')
+        capture['config'].pop('quality_weighting')
     # Sampling does not affect the established square matcher. Retain its
     # existing checkpoint identity; circular jobs bind all three new inputs.
     if config.alignment_method == 'square':

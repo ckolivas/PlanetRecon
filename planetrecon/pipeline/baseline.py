@@ -250,7 +250,7 @@ def _stack_source(
 
     snapshot_provenance = capture_provenance(source, config, calibration)
     snapshot_provenance["preprocessing_cache"] = cache_status
-    snapshot_provenance["scalar_frame_weight"] = "linear quality"
+    snapshot_provenance["scalar_frame_weight"] = "linear quality" if config.quality_weighting else "equal"
     snapshot_provenance['frame_brightness'] = 'recorded detector values; explicit calibration only; no per-frame brightness normalisation'
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
@@ -419,6 +419,8 @@ def _stack_source(
         score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
         if not np.isfinite(score):
             return None
+        if not config.quality_weighting:
+            score = 1.
         if local_matcher is not None:
             if local_matcher.use_cuda != (backend.name == 'cuda'):
                 local_matcher.use_cuda = backend.name == 'cuda'
