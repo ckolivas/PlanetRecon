@@ -157,7 +157,7 @@ class MainWindow:
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
         self.stack_btn = QPushButton('Stack')
-        self.stack_btn.setToolTip('Classic stacking with sampling-sized circular multiscale alignment points. Selects Motion model None and enables cached quality screening and local alignment. Uses the current quality selection; automatically preprocesses when needed.')
+        self.stack_btn.setToolTip('Classic stacking with the selected alignment-point method and size. Selects Motion model None and enables cached quality screening and local alignment. Uses the current quality selection; automatically preprocesses when needed.')
         self.batch_btn = QPushButton('Batch…')
         self.batch_btn.setToolTip('Select multiple captures and an output folder, then run the current processing and export settings on each. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh runs; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
@@ -580,7 +580,6 @@ class MainWindow:
         fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('none'))
         fields['frame_preselection'].setChecked(True)
         fields['local_alignment'].setChecked(True)
-        fields['alignment_method'].setCurrentIndex(fields['alignment_method'].findData('circular_multiscale'))
         self._run()
 
     def _run(self):

@@ -210,7 +210,8 @@ def test_stack_preserves_absolute_frame_brightness(tmp_path):
     assert 'no per-frame brightness normalisation' in result.provenance['frame_brightness']
 
 
-def test_capture_controls_persist_sampling_and_classic_stack(tmp_path):
+@pytest.mark.parametrize('method', ['square', 'circular_multiscale'])
+def test_capture_controls_persist_sampling_and_classic_stack(tmp_path, method):
     from planetrecon.gui.app import MainWindow, create_app
     from test_w14 import pump
     app = create_app([])
@@ -225,20 +226,28 @@ def test_capture_controls_persist_sampling_and_classic_stack(tmp_path):
         assert '33 px' in win.controls.alignment_size_label.text()
         fields['alignment_wavelength_nm'].setText('450')
         assert '27 px' in win.controls.alignment_size_label.text()
+        fields['alignment_method'].setCurrentIndex(fields['alignment_method'].findData(method))
+        fields['local_patch_size'].setValue(49)
         # Classic Stack must not demand the incomplete motion geometry.
         fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('saturn'))
         win.path = capture(tmp_path)
         win._buttons()
         win.stack_btn.click()
+        assert fields['alignment_method'].currentData() == method
         assert not win.stack_btn.isEnabled()
         pump(app, lambda: win.job is None and win.run_stage is None, timeout=30)
         assert not win.error.text()
         assert win.stack_btn.isEnabled() and win.last_result.n_used > 0
         detail = win.last_result.provenance['local_alignment']
-        assert detail['method'] == 'circular_multiscale'
-        assert detail['minimum_diameter_px'] == 27
+        if method == 'circular_multiscale':
+            assert detail['method'] == method
+            assert detail['minimum_diameter_px'] == 27
+        else:
+            assert detail['window_px'] == 49
+            assert 'minimum_diameter_px' not in detail
+        assert win.config.alignment_method == method
         assert win.config.geometry_mode == 'none'
-        assert not fields['local_patch_size'].isEnabled()
+        assert fields['local_patch_size'].isEnabled() == (method == 'square')
     finally:
         win.window.close()
     restored = MainWindow(settings_path=settings_path)
@@ -246,6 +255,8 @@ def test_capture_controls_persist_sampling_and_classic_stack(tmp_path):
         assert restored.path is None and restored.job is None
         assert not restored.stack_btn.isEnabled()
         assert restored.controls.configuration().sampling_multiplier == 7
+        assert restored.controls.configuration().alignment_method == method
+        assert restored.controls.configuration().local_patch_size == 49
         assert '27 px' in restored.controls.alignment_size_label.text()
     finally:
         restored.window.close()
