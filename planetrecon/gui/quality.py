@@ -18,6 +18,8 @@ class QualityPlot(QWidget):
         self.selection = None
         self.selected = np.zeros(0, dtype=bool)
         self.order = np.zeros(0, dtype=int)
+        self.quality_order = np.zeros(0, dtype=int)
+        self.quality_ranks = np.zeros(0, dtype=int)
         self.cutoff = None
         self.enabled = True
         self.percent = 100
@@ -89,7 +91,10 @@ class QualityPlot(QWidget):
 
     def loading_frame(self, index):
         self.clear_preview()
-        self.frame_label.setText(f'Loading frame {index + 1:,}…')
+        description = (self.frame_description(index).replace('\n', ' · ')
+                       if self.selection is not None and index < len(self.selected)
+                       else f'Frame {index + 1:,}')
+        self.frame_label.setText(f'{description} · Loading preview…')
 
     def set_browsing_enabled(self, enabled):
         self.browsing_enabled = enabled
@@ -107,6 +112,8 @@ class QualityPlot(QWidget):
         if data is not self.data:
             self.data = data
             self.selection = None
+            self.quality_order = np.zeros(0, dtype=int)
+            self.quality_ranks = np.zeros(0, dtype=int)
             if data is not None:
                 scores = np.asarray(data['scores'], dtype=float)
                 accepted = np.asarray(data['accepted'], dtype=bool)
@@ -114,6 +121,11 @@ class QualityPlot(QWidget):
                 self.low, self.high = quality_range(self.selection)
                 self.normalized = np.full(scores.shape, np.nan)
                 finite = np.isfinite(scores)
+                # Match the graph exactly: stable ties in capture order and
+                # unavailable scores at the end, including screened frames.
+                self.quality_order = np.argsort(-np.where(finite, scores, -np.inf), kind='stable')
+                self.quality_ranks = np.empty(len(scores), dtype=int)
+                self.quality_ranks[self.quality_order] = np.arange(1, len(scores) + 1)
                 if self.low is not None:
                     self.normalized[finite] = (100 * (scores[finite] - self.low) / (self.high - self.low)
                                               if self.high > self.low else 100.)
@@ -151,9 +163,8 @@ class QualityPlot(QWidget):
 
     def _set_order(self, *_):
         if self.selection is not None:
-            scores = self.selection.measurements[:, 0]
-            self.order = (np.argsort(-np.where(np.isfinite(scores), scores, -np.inf), kind='stable')
-                          if self.order_control.currentIndex() else np.arange(len(scores)))
+            self.order = (self.quality_order if self.order_control.currentIndex()
+                          else np.arange(len(self.quality_order)))
         self.canvas.update()
 
     def axis_maximum(self):
@@ -192,6 +203,8 @@ class QualityPlot(QWidget):
 
     def frame_description(self, index):
         score = self.selection.measurements[index, 0]
+        rank, total = int(self.quality_ranks[index]), len(self.quality_ranks)
+        ranking = f'Rank {rank:,}/{total:,} (top {100 * rank / total:.2f}% of all frames)'
         quality = f'{score:.6g} ({self.normalized[index]:.1f}% of range)' if np.isfinite(score) else 'unavailable'
         reasons = [key.replace('_', ' ') for key, indices in self.data['reasons'].items() if index in indices]
         if not self.enabled:
@@ -202,7 +215,7 @@ class QualityPlot(QWidget):
             state = 'Below selection'
         else:
             state = 'Selected'
-        return f'Frame {index + 1} · Quality {quality}\n{state}' + (': ' + ', '.join(reasons) if reasons else '')
+        return f'Frame {index + 1:,} · {ranking} · Quality {quality}\n{state}' + (': ' + ', '.join(reasons) if reasons else '')
 
 
 class QualityCanvas(QWidget):

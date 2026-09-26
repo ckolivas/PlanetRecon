@@ -32,9 +32,11 @@ def test_plot_tracks_threshold_masks_order_and_cache_identity(gui):
     # Equality at the quality cutoff is excluded, and a sharp shape outlier stays excluded.
     assert plot.selected.tolist() == [False, False, True, True, False, False]
     assert 'width outlier' in plot.frame_description(4)
+    assert 'Rank 2/6 (top 33.33% of all frames)' in plot.frame_description(4)
     assert 'unavailable' in plot.frame_description(5)
     plot.order_control.setCurrentIndex(1)
     assert plot.order.tolist() == [3, 4, 2, 1, 0, 5]
+    assert plot.quality_ranks.tolist() == [5, 4, 3, 1, 2, 6]
     fields['stack_percent'].setValue(100)
     assert plot.cutoff == 0
     assert plot.selected.tolist() == [True, True, True, True, False, False]
@@ -47,6 +49,7 @@ def test_plot_tracks_threshold_masks_order_and_cache_identity(gui):
     assert plot.data is info['frame_quality']
     fields['gain_e_per_adu'].setText('2')
     assert plot.selection is None
+    assert not plot.quality_ranks.size
     win._set_preprocessing({**compact, 'digest': 'different-capture'})
     assert plot.selection is None
     app.processEvents()
@@ -61,16 +64,20 @@ def test_flat_scores_count_ties_and_single_frame(gui):
     win._set_preprocessing(report((7, 7, 7, 7), (True, True, True, True)))
     plot = win.quality_plot
     assert plot.selected.all() and plot.cutoff is None
+    assert plot.quality_ranks.tolist() == [1, 2, 3, 4]
+    assert 'Rank 2/4 (top 50.00% of all frames)' in plot.frame_description(1)
     fields['frame_selection_mode'].setCurrentIndex(1)
     assert plot.selected.tolist() == [True, True, False, False]
     assert plot.cutoff is None  # A horizontal line cannot represent tied count selection.
     win._set_preprocessing(report((7,), (True,)))
     app.processEvents()
     assert plot.selected.tolist() == [True]
+    assert 'Rank 1/1 (top 100.00% of all frames)' in plot.frame_description(0)
     assert not plot.canvas.grab().isNull()
     win._set_preprocessing(report((np.nan,), (False,)))
     assert not plot.selected.any() and plot.cutoff is None
     assert 'unavailable' in plot.frame_description(0)
+    assert 'Rank 1/1' in plot.frame_description(0)
     assert not plot.canvas.grab().isNull()
 
 
@@ -166,12 +173,14 @@ def test_graph_clicks_load_original_frames_in_both_orders(gui, tmp_path):
 
     click(1)
     assert plot.preview_index == 1
+    assert 'Frame 2 · Rank 4/6 (top 66.67% of all frames)' in plot.frame_label.text()
     np.testing.assert_array_equal(win.quality_frame_image, frames[1])
     plot.order_control.setCurrentIndex(1)
     plot.absolute_control.setChecked(True)
     plot.log_control.setChecked(True)
     click(1)  # Quality rank 2 is original frame 5, a screened shape outlier.
     assert plot.preview_index == 4
+    assert 'Frame 5 · Rank 2/6 (top 33.33% of all frames)' in plot.frame_label.text()
     np.testing.assert_array_equal(win.quality_frame_image, frames[4])
     assert 'width outlier' in plot.frame_label.text()
     click(5)  # Frames without a quality measurement are still inspectable.
