@@ -198,3 +198,32 @@ unchanged; this user comparison is therefore not a strictly AP-only experiment.
 Nevertheless the grain remains at a similar level and is consistent with the
 controlled local/global experiment. Too-small APs are unlikely to be the main
 explanation for this discrepancy. No production behavior was changed.
+
+## PNG file-size investigation
+
+The user noted that AS's unsharpened PNG is almost twice the size of PR's.
+Direct chunk and DEFLATE inspection explains this difference:
+
+| File | Total bytes | Pixel dimensions | Samples | IDAT bytes |
+|---|---:|---|---|---:|
+| Original PR SatP.png | 291,264 | 696 x 404 | 16-bit grayscale | 254,524 |
+| AS F5738 manual-reference PNG | 558,185 | 696 x 400 | 16-bit grayscale | 557,291 |
+
+The AS DEFLATE stream consists of 17 stored (uncompressed) blocks holding
+557,200 scanline bytes. PR uses normal lossless compression. PR also embeds
+36,523 bytes of provenance text; AS's ancillary chunk records pixel density.
+There are no extra channels or greater sample depth in the larger AS file.
+
+Re-encoding the decoded pixels with the same row representation (PNG predictor
+zero), zlib level 6 and no metadata gives pixel streams of 197,194 bytes for AS
+and 254,524 for PR. Thus AS is actually more compressible under the same encoder.
+Separately, recompressing each original scanline stream and rebuilding the PNG
+in memory preserved every decoded 16-bit pixel exactly. The original files
+were not changed. Results are in `results/real-data/saturn-png-encoding.json`.
+
+PNG compression and its row predictors are reversible encoding operations, not
+image smoothing; see the [PNG specification](https://www.w3.org/TR/png-3/).
+The on-disk size difference supplies no evidence of lost precision in PR and
+does not explain the measured grain. It also supplies no evidence that AS uses
+an image filter. The user prefers to investigate the unfiltered stacking
+discrepancy; no output filtering is being introduced into production.

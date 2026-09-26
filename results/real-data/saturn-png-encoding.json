@@ -1,0 +1,38 @@
+{
+  "2024-09-27-1154_3-CK-R-SatP.png": {
+    "file_bytes": 291264,
+    "dimensions": [
+      404,
+      696
+    ],
+    "bit_depth": 16,
+    "channels": 1,
+    "idat_bytes": 254524,
+    "inflated_bytes": 562772,
+    "recompressed_file_bytes": 291132,
+    "recompressed_pixels_identical": true,
+    "same_encoder_filter0_level6_idat_bytes": 254524,
+    "sha256": "92328eacbd94220d7a68226d3ff14212c11a37a22abda3d0387c11b0b1b03f30"
+  },
+  "AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54.png": {
+    "file_bytes": 558185,
+    "dimensions": [
+      400,
+      696
+    ],
+    "bit_depth": 16,
+    "channels": 1,
+    "idat_bytes": 557291,
+    "inflated_bytes": 557200,
+    "recompressed_file_bytes": 147841,
+    "recompressed_pixels_identical": true,
+    "same_encoder_filter0_level6_idat_bytes": 197194,
+    "sha256": "63102ed1dd5fc648008c367bad4cc8ba2537c4de98eaa689805a6fdb78d9fbd0"
+  },
+  "autostakkert_deflate_audit": {
+    "block_type": "stored/uncompressed",
+    "block_count": 17,
+    "stored_bytes": 557200
+  },
+  "conclusion": "File size difference reflects lossless PNG encoding, not extra channels or bit depth. No evidence of pixel information lost through PNG compression."
+}

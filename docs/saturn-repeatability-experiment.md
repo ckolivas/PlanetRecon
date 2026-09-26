@@ -3,6 +3,12 @@
 2026-09-26. Follow-up to the alignment controls and the user's observation that
 moving the reference anchor toward the midpoint made no noticeable difference.
 
+**Subsequent decision:** the user does not want filtering introduced to explain
+away the AS/PR discrepancy. The frequency controls below remain diagnostic only.
+Their results do not establish that AS filters its stacks, or identify where PR's
+non-repeatable variation arises. The earlier recommendation to pursue an output
+filter was premature; investigation should continue with unfiltered stacking.
+
 ## Question and method
 
 AP size, local alignment and reference-anchor changes did not explain the grain.
