@@ -35,6 +35,9 @@ class ReconstructionConfig:
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
     local_patch_size: int = 65
+    alignment_method: str = 'square'
+    sampling_multiplier: float = 5.0
+    alignment_wavelength_nm: float = 550.0
     max_shift_px: float = 32.0
     reference_index: int = 0
     crop: str = "feature"
@@ -144,6 +147,16 @@ class ReconstructionConfig:
             raise ValueError('unknown frame_selection_mode')
         if type(self.local_alignment) is not bool:
             raise ValueError('local_alignment must be a bool')
+        if self.alignment_method not in ('square', 'circular_multiscale'):
+            raise ValueError('unknown alignment_method')
+        for name, low, high in (('sampling_multiplier', .5, 20.),
+                                ('alignment_wavelength_nm', 300., 1500.)):
+            value = getattr(self, name)
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or not low <= value <= high):
+                raise ValueError(f'{name} must be a number from {low:g} to {high:g}')
+        if self.local_alignment and self.alignment_method == 'circular_multiscale' and self.geometry_mode != 'none':
+            raise ValueError('circular multiscale alignment requires Motion model None')
         if (type(self.local_patch_size) is not int or not 15 <= self.local_patch_size <= 255
                 or self.local_patch_size % 2 != 1):
             raise ValueError('local_patch_size must be an odd integer from 15 to 255 pixels')

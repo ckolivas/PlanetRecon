@@ -106,6 +106,14 @@ Neither repeats preprocessing nor adds sharpening. These optional controls help
 evaluate the aim of improving reconstruction using more frames; they do not
 replace that aim with conventional frame rejection.
 
+**Stack** now provides [classic circular multiscale alignment](docs/classic-stacking.md).
+Enter the capture's **Sampling multiplier** (focal ratio / pixel pitch in µm;
+default 5) and alignment wavelength (default 550 nm) in the Capture tab. The
+minimum circle diameter is shown immediately. Stack automatically prepares the
+quality cache and uses overlapping circles from coarse to fine, retaining larger
+samples where smaller ones cannot be matched reliably. Run and Batch use the
+currently selected settings. This adds alignment and averaging, without sharpening.
+
 **Local patch alignment (experimental)** is enabled by default and corrects
 small seeing distortions using normalized texture patches and an averaged
 registration template anchored to the best selected frame. It preserves the

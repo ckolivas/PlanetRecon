@@ -156,12 +156,14 @@ class MainWindow:
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
+        self.stack_btn = QPushButton('Stack')
+        self.stack_btn.setToolTip('Classic stacking with sampling-sized circular multiscale alignment points. Selects Motion model None and enables cached quality screening and local alignment. Uses the current quality selection; automatically preprocesses when needed.')
         self.batch_btn = QPushButton('Batch…')
         self.batch_btn.setToolTip('Select multiple captures and an output folder, then run the current processing and export settings on each. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh runs; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
         for b, slot in ((self.open_btn, self._choose), (self.preprocess_btn, self._preprocess),
                         (self.batch_btn, self._choose_batch),
-                        (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
+                        (self.stack_btn, self._stack), (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
             buttons.addWidget(b)
         buttons.addStretch()
@@ -401,6 +403,7 @@ class MainWindow:
         self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
+        self.stack_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.controls.setEnabled(not busy and not self.closing)
         for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
             control.setEnabled(not busy and not self.closing)
@@ -559,6 +562,16 @@ class MainWindow:
         if name:
             self.checkpoint_path.setText(name)
             self._remember_directory(Path(name).parent)
+
+    def _stack(self):
+        if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
+            return
+        fields = self.controls.fields
+        fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('none'))
+        fields['frame_preselection'].setChecked(True)
+        fields['local_alignment'].setChecked(True)
+        fields['alignment_method'].setCurrentIndex(fields['alignment_method'].findData('circular_multiscale'))
+        self._run()
 
     def _run(self):
         if self.job is not None or self.run_stage is not None or self.path is None or self.closing:

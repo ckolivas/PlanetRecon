@@ -162,6 +162,12 @@ def main(argv: list[str] | None = None) -> int:
                     help='normalized local patch alignment (default with cached preprocessing and no geometry motion model); --no-local-alignment uses global alignment')
     st.add_argument('--local-patch-size', type=int, default=65,
                     help='local patch width/height in pixels (odd 15-255; default 65); spacing is half the size rounded down')
+    st.add_argument('--alignment-method', choices=('square', 'circular_multiscale'), default='square',
+                    help='local matching method; circular_multiscale uses sampling-sized circular regions')
+    st.add_argument('--sampling-multiplier', type=float, default=5.,
+                    help='capture focal ratio divided by pixel pitch in micrometres (default 5)')
+    st.add_argument('--alignment-wavelength-nm', type=float, default=550.,
+                    help='effective alignment wavelength, default green 550 nm')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
                     help='quality_range: 50 keeps scores above (capture best + worst)/2; frame_count: ranked percentage of screened frames')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
@@ -410,6 +416,9 @@ def main(argv: list[str] | None = None) -> int:
             local_alignment=(args.local_alignment if args.local_alignment is not None
                              else not args.no_frame_preselection and args.geometry == 'none'),
             local_patch_size=args.local_patch_size,
+            alignment_method=args.alignment_method,
+            sampling_multiplier=args.sampling_multiplier,
+            alignment_wavelength_nm=args.alignment_wavelength_nm,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
             crop=args.crop,

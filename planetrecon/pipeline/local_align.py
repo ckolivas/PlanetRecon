@@ -35,7 +35,8 @@ def pull(image, shift_xy):
 
 class LocalRegistration:
 
-    def __init__(self, reference, *, window=65, step=32, max_shift=3, use_cuda=False, valid_mask=None):
+    def __init__(self, reference, *, window=65, step=32, max_shift=3, use_cuda=False, valid_mask=None,
+                 circular=False):
         reference = np.asarray(reference, dtype=np.float64)
         if reference.ndim != 2 or not np.isfinite(reference).all():
             raise ValueError('finite two-dimensional reference required')
@@ -58,6 +59,10 @@ class LocalRegistration:
         self.ys = patch_centres(reference.shape[0], window, step, max_shift)
         self.xs = patch_centres(reference.shape[1], window, step, max_shift)
         self.weight = np.outer(np.hanning(window), np.hanning(window))
+        if circular:
+            yy, xx = np.indices((window, window)) - window // 2
+            radius = np.hypot(xx, yy) / (window // 2)
+            self.weight = np.where(radius < 1., .5 * (1. + np.cos(np.pi * radius)), 0.)
         self.weight /= self.weight.sum()
         gy, gx = np.gradient(self.ref)
         self.texture_valid = []

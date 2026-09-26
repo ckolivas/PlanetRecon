@@ -114,7 +114,7 @@ def _stack_source(
         raise ValueError(f'unsupported reconstruction color mode {source.color_mode()!r}')
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
-    if config.local_alignment:
+    if config.local_alignment and config.alignment_method == 'square':
         h, w = source.frame_shape()[:2]
         required = config.local_patch_size + 6  # Complete +/-3 pixel search footprint.
         if min(h, w) < required:
@@ -207,7 +207,7 @@ def _stack_source(
     local_window = config.local_patch_size
     local_step = local_window // 2
     centred_local_axis = False
-    if config.local_alignment:
+    if config.local_alignment and config.alignment_method == 'square':
         from planetrecon.pipeline.local_align import patch_centres
         axes = [patch_centres(length, local_window, local_step) for length in (h, w)]
         centred_local_axis = any(len(axis) == 1 and axis[0] != local_window//2+3 for axis in axes)
@@ -251,6 +251,7 @@ def _stack_source(
     snapshot_provenance = capture_provenance(source, config, calibration)
     snapshot_provenance["preprocessing_cache"] = cache_status
     snapshot_provenance["scalar_frame_weight"] = "linear quality"
+    snapshot_provenance['frame_brightness'] = 'recorded detector values; explicit calibration only; no per-frame brightness normalisation'
     if selection is not None:
         snapshot_provenance['preprocessing'] = selection.summary
     snapshot_provenance["registration"] = "Gaussian 1.5px amplitude correlation with subpixel peak fit"
@@ -263,6 +264,8 @@ def _stack_source(
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         if config.local_alignment:
+            if config.alignment_method == 'circular_multiscale':
+                state_identity['circular_registration_version'] = 1
             state_identity['local_registration_version'] = 2 if colour_registration else 1
             state_identity['local_patch_support'] = 'complete observed search footprint'
             state_identity['local_patch_boundary'] = 'one grid interval taper to global'
@@ -337,8 +340,21 @@ def _stack_source(
                 reference = build_template(reference, candidates, read_plane,
                                            backend.phase_correlation, config.max_shift_px, should_cancel)
             prepare_reference()
-        local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
-        snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
+        if config.alignment_method == 'circular_multiscale':
+            from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
+            local_matcher = CircularMultiscaleRegistration(reference,
+                sampling_multiplier=config.sampling_multiplier,
+                wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel)
+            detail = snapshot_provenance['local_alignment']
+            for key in ('window_px', 'step_px', 'patch_boundary', 'maximum_residual_px', 'patch_grid'):
+                detail.pop(key, None)
+            detail.update(local_matcher.provenance)
+            if not local_matcher.layers:
+                warnings.append('Capture is smaller than the sampling-derived alignment diameter plus search margin; using global alignment.')
+            snapshot_provenance['registration'] += ' + circular multiscale local alignment'
+        else:
+            local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
+            snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq

@@ -27,6 +27,12 @@ def identity(source,config,calibration,should_cancel=None):
             digest.update(block)
     settings = config.to_dict()
     capture = capture_provenance(source,config,calibration)
+    # Sampling does not affect the established square matcher. Retain its
+    # existing checkpoint identity; circular jobs bind all three new inputs.
+    if config.alignment_method == 'square':
+        for key in ('alignment_method', 'sampling_multiplier', 'alignment_wavelength_nm'):
+            settings.pop(key)
+            capture['config'].pop(key)
     # The established 65-pixel matcher is unchanged. Preserve its checkpoints;
     # custom sizes remain bound to the identity so accumulators cannot be mixed.
     if config.local_patch_size == 65:
