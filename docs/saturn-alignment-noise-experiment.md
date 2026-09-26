@@ -140,3 +140,42 @@ Full local artifacts in `out/saturn-controlled-alignment/`:
 The smaller tracked record is
 `results/real-data/saturn-controlled-alignment.json`. Production stacking and GUI
 behavior have not been changed by these diagnostic tools.
+
+## User-sharpened controls supplied in `stacking/`
+
+The three unsharpened inputs in `stacking/` have exactly identical decoded pixels
+to the corresponding experiment exports. The supplied `locals.png` is also
+byte-identical to the earlier `SatPs.png`. The sharpened images were visually
+inspected and measured with the same centroid-relative patches and native
+16-bit decoding used above. The sharpening settings themselves are not encoded
+in these files.
+
+| Sharpened result | Upper fine-scale variation | Lower fine-scale variation |
+|---|---:|---:|
+| PR local (`locals.png`) | 2.9668% | 2.9751% |
+| PR global only (`global_subpixels.png`) | 2.9577% | 2.9832% |
+| PR Gaussian control (`local_sigma1_controls.png`) | 0.5662% | 0.5410% |
+| AS 5,738 frames, automatic reference | 0.5627% | 0.6574% |
+| AS 5,738 frames, manual 64-frame reference | 0.5732% | 0.6419% |
+
+The local/global differences are only -0.31% and +0.27% of the local variation.
+Thus the same conclusion survives the user's actual sharpening workflow:
+removing local alignment does not remove the visible grain.
+
+The Gaussian control reduces variation by 80.9% and 81.8%. It approaches AS's
+upper-patch value and is below AS in the lower patch. Visually it also softens
+the limb and ring structure, and looks softer than the AS manual-reference
+result in those features. This is a qualitative inspection, not a calibrated
+resolution measurement. Matching the fine-scale variation statistic therefore
+does not establish matched detail or equal stacking performance.
+
+These results strengthen the frequency-response explanation for the sharpening
+sensitivity, but do not establish the mechanism producing AS's response. They
+do not justify adding a one-pixel Gaussian blur as a stacking fix. The remaining
+comparison needs both noise/fine-scale variation and retained feature sharpness;
+the local AP toggle is not a promising solution for this particular discrepancy.
+
+Measurements, source checks and input hashes are recorded in
+`results/real-data/saturn-sharpened-controls.json`, using `measurements()` from
+`tools/alignment_noise_experiment.py` and `bands()` from
+`tools/analyse_alignment_noise.py`. No source images were modified.

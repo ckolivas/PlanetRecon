@@ -1,0 +1,290 @@
+{
+  "date": "2026-09-26",
+  "method": "Native 16-bit grayscale; existing measurements() and bands() helpers; centroid-relative disc patches",
+  "images": {
+    "stacking/global_subpixel.png": {
+      "sha256": "db968dddc5a4323bb960acdaafaeb949d8e80d9cb9cddbd140c06979da9a531b",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32819.5,
+          "highpass_percent": 0.1690450508286952,
+          "laplacian_percent": 0.07373945062880505
+        },
+        "lower": {
+          "median": 33530.0,
+          "highpass_percent": 0.1413045207943863,
+          "laplacian_percent": 0.07019946353245582
+        }
+      },
+      "bands": [
+        [
+          0.4950630835694664,
+          0.30080342070445737,
+          0.26799550947899,
+          0.2035317951473304
+        ],
+        [
+          0.5971620873706114,
+          0.2713623771793201,
+          0.260207592733523,
+          0.23233290923789038
+        ]
+      ]
+    },
+    "stacking/global_subpixels.png": {
+      "sha256": "15af149fcdd49c3df01304098bc204e8ab2aaea347cf2ed8ec09c29b26a441d1",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.957700868419032,
+          "laplacian_percent": 2.821528655480188
+        },
+        "lower": {
+          "median": 33396.0,
+          "highpass_percent": 2.9832415643182184,
+          "laplacian_percent": 2.82917235381704
+        }
+      },
+      "bands": [
+        [
+          67.75289210832798,
+          216.6320532026873,
+          380.3873298768897,
+          393.80738077618616
+        ],
+        [
+          53.87965748553351,
+          228.12055995140815,
+          425.03379445196464,
+          499.60574127800163
+        ]
+      ]
+    },
+    "stacking/local.png": {
+      "sha256": "b8f8747961b5fd45a70ef425e312650850942673f6951054a42c8e1b0b061e1f",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32820.5,
+          "highpass_percent": 0.17034937175860657,
+          "laplacian_percent": 0.07525235190395287
+        },
+        "lower": {
+          "median": 33529.5,
+          "highpass_percent": 0.14191212156091457,
+          "laplacian_percent": 0.0702005103638063
+        }
+      },
+      "bands": [
+        [
+          0.5078850407641282,
+          0.30663334606815273,
+          0.2674264620629186,
+          0.202448541148325
+        ],
+        [
+          0.5948814137876084,
+          0.2711440200111137,
+          0.25945671591345576,
+          0.2317531586375346
+        ]
+      ]
+    },
+    "stacking/local_sigma1_control.png": {
+      "sha256": "009d8c1acf53a72da1aaf462fd5c199d98bb233a0c71ed33e7424eb4833827d4",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32814.5,
+          "highpass_percent": 0.09726276370753047,
+          "laplacian_percent": 0.021721092579190766
+        },
+        "lower": {
+          "median": 33520.5,
+          "highpass_percent": 0.08483798431072004,
+          "laplacian_percent": 0.021758111136679387
+        }
+      },
+      "bands": [
+        [
+          0.2249851514487607,
+          0.030180178820737556,
+          0.003315471554370427,
+          0.00016563567632633301
+        ],
+        [
+          0.3398301284930648,
+          0.026047713768979443,
+          0.002840990725061253,
+          0.00018949626551422269
+        ]
+      ]
+    },
+    "stacking/local_sigma1_controls.png": {
+      "sha256": "ff4254fc893d3424a989911dd2e983b04267c8bc0e39a5c69c6c666c76ed4f1c",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32641.0,
+          "highpass_percent": 0.5662245792831359,
+          "laplacian_percent": 0.2016072072280493
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.5410354837236618,
+          "laplacian_percent": 0.21948382235594172
+        }
+      },
+      "bands": [
+        [
+          16.49983221661261,
+          12.201639946530111,
+          2.928429799257097,
+          0.24622331542392234
+        ],
+        [
+          18.130337036417302,
+          16.226539735116496,
+          3.754985084921788,
+          0.35790727309355524
+        ]
+      ]
+    },
+    "stacking/locals.png": {
+      "sha256": "2fe87dd59a9b7db3910752febad4c34b993e34c2023ea22cbe2a5d74c08b0748",
+      "shape": [
+        404,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9667615072988363,
+          "laplacian_percent": 2.8067077445285884
+        },
+        "lower": {
+          "median": 33379.0,
+          "highpass_percent": 2.975063436365586,
+          "laplacian_percent": 2.7566200339258264
+        }
+      },
+      "bands": [
+        [
+          69.65785133973111,
+          220.3691890220457,
+          382.2175806180878,
+          391.91306471976515
+        ],
+        [
+          54.074012380783245,
+          228.62947182804226,
+          424.11846209942564,
+          498.91465803275673
+        ]
+      ]
+    },
+    "AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54s.png": {
+      "sha256": "0b91d876a16fb728b4a1e699ba37759eb5312a234dcca99b60f6894bb241a1a5",
+      "shape": [
+        400,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32745.0,
+          "highpass_percent": 0.5732090820395705,
+          "laplacian_percent": 0.2232402997553159
+        },
+        "lower": {
+          "median": 33817.0,
+          "highpass_percent": 0.6418716335434476,
+          "laplacian_percent": 0.26665075917319786
+        }
+      },
+      "bands": [
+        [
+          19.303152079410626,
+          15.10363609494183,
+          4.166610258000622,
+          0.5562306720117529
+        ],
+        [
+          20.59371000652088,
+          23.937818119139045,
+          6.111755833080005,
+          0.862255563540991
+        ]
+      ]
+    },
+    "2024-09-27-1154_3-CK-R-Sat_lapl4_ap54s.png": {
+      "sha256": "0af614cda1871737f7b778dd3d61938a425d8494bbb1a0345a67fd7b207f480a",
+      "shape": [
+        400,
+        696
+      ],
+      "measurements": {
+        "upper": {
+          "median": 32762.0,
+          "highpass_percent": 0.5626569295505787,
+          "laplacian_percent": 0.22666611986167698
+        },
+        "lower": {
+          "median": 33808.5,
+          "highpass_percent": 0.6573767234078889,
+          "laplacian_percent": 0.2794653413433718
+        }
+      },
+      "bands": [
+        [
+          18.897588420118836,
+          15.636798169427767,
+          4.352569732766031,
+          0.5971222224857404
+        ],
+        [
+          20.8651926298623,
+          25.418979869513418,
+          6.392706839946172,
+          0.862122381725033
+        ]
+      ]
+    }
+  },
+  "source_validation": {
+    "local": "Exactly identical decoded pixels to controlled experiment export",
+    "global_subpixel": "Exactly identical decoded pixels to controlled experiment export",
+    "local_sigma1_control": "Exactly identical decoded pixels to controlled experiment export"
+  },
+  "limitations": [
+    "Fine-scale variation includes detail and artifacts, not only noise",
+    "Sharpening settings are not encoded in these files",
+    "Visual softness is not a calibrated resolution measurement"
+  ],
+  "relative_highpass_changes_percent": {
+    "global_subpixels": {
+      "upper": -0.30540503028347876,
+      "lower": 0.2748891957283117
+    },
+    "local_sigma1_controls": {
+      "upper": -80.91438836960408,
+      "lower": -81.81432109613755
+    }
+  }
+}
