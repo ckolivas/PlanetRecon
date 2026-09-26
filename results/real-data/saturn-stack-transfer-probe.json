@@ -1,0 +1,43 @@
+{
+  "source": "/home/conman/Code/PlanetRecon/2024-09-27-1154_3-CK-R-Sat.ser",
+  "source_frame_zero_based": 13240,
+  "source_frame_count": 27689,
+  "frame_count": 256,
+  "shape": [
+    404,
+    696
+  ],
+  "truth_sha256": "89c074f367de77eb043d299a56c29c66d28ccb71a1ab7bfe3275b0a4e83dd31d",
+  "truth_tiff_mapping": "uint16 code = original 8-bit ADU * 257",
+  "normalization": false,
+  "interpolation_in_input": false,
+  "AS_results": "pending external run",
+  "captures": {
+    "static": {
+      "verified_frames": 256,
+      "common_support_border_px": 1,
+      "known_shift_mean_max_error_adu": 0.0,
+      "ser_sha256": "f00c1e0e46748db8b776388ff6d9e53fb76a004218f17056a32d0e57576f0f23",
+      "PR_global": {
+        "n_used": 256,
+        "backend": "cpu",
+        "rms_error_adu_interior": 0.0,
+        "max_error_adu_interior": 0.0,
+        "warnings": []
+      }
+    },
+    "integer_motion": {
+      "verified_frames": 256,
+      "common_support_border_px": 4,
+      "known_shift_mean_max_error_adu": 0.0,
+      "ser_sha256": "72d78c14ba65ea0eea4bb1986f648e16c8345d3abf6864d6435e44bf1c2e26f3",
+      "PR_global": {
+        "n_used": 256,
+        "backend": "cpu",
+        "rms_error_adu_interior": 5.973464428670706e-06,
+        "max_error_adu_interior": 8.003108936804892e-05,
+        "warnings": []
+      }
+    }
+  }
+}
