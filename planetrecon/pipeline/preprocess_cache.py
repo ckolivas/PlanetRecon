@@ -80,6 +80,13 @@ def exclusion_counts(selection):
             'other': len(set(reasons['invalid']) | set(reasons['saturated'])), 'excluded': total}
 
 
+def quality_plot_data(selection):
+    """Per-frame display data, sent once by workers, never added to provenance."""
+    return {'scores': selection.measurements[:, 0].copy(),
+            'accepted': selection.accepted.copy(),
+            'reasons': selection.summary['rejected_indices_by_reason']}
+
+
 def cache_report(selection, path=None, config=None, source=None):
     estimate = selection.summary.get('geometry_estimate', {})
     if config is not None:

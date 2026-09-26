@@ -476,3 +476,29 @@ motion, both image-roll directions and signed viewing latitudes. The local
 [Jupiter diagnostic](../results/geometry-discovery/jupiter-estimate.json) gives
 an initial silhouette pole angle of 1.91°, but surface motion is unresolved
 and no rotation rate is prefilled for that capture.
+
+## Frame quality display
+
+The desktop **Frame quality** tab shows the validated per-frame preprocessing
+measurements. **Preprocess** creates the measurements; **Inspect input** loads
+an existing compatible cache. Either action opens the graph when measurements
+are available. Selecting a capture alone still does not start processing.
+
+Switch between capture order and descending quality rank. The vertical axis
+maps the capture's worst and best finite measured qualities to 0 and 100;
+identical scores are displayed at 100. Green marks selected frames, orange marks
+screened frames below the current selection, and red marks preprocessing
+exclusions. The mask strip also marks excluded frames with no quality score.
+Hover for the original frame number (starting at 1), score and screening reasons.
+Large captures retain each display column's quality extrema and exclusion marks.
+
+The dashed marker follows **Upper quality range (%)** immediately. Selection
+uses the stacker's exact strict cutoff and screening mask; 100% and a flat range
+retain all screened frames. **Frame count** mode uses the existing stable ranking
+and displays the corresponding mask without implying a quality threshold for
+tied scores. Disabling cached preprocessing makes the graph neutral and removes
+the cutoff. Masks describe selection before registration and other run-time
+rejections. Changes to input/calibration settings clear unvalidated measurements.
+
+Plot arrays travel only in inspection/preprocessing worker events, not in result
+provenance or exported metadata. Existing cache files need no conversion.

@@ -13,12 +13,13 @@ from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar,
-    QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget,
+    QPushButton, QScrollArea, QSplitter, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from planetrecon.export import ExportCancelled, ExportConfig, export_result
 from planetrecon.gui.controls import ConfigControls
 from planetrecon.gui.preview import display_result_preview
+from planetrecon.gui.quality import QualityPlot
 from planetrecon.jobs import JobHandle, result_from_payload, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits
@@ -177,6 +178,7 @@ class MainWindow:
         self.preprocessing_label = QLabel('No preprocessing measurements loaded.')
         self.preprocessing_label.setWordWrap(True)
         layout.addWidget(self.preprocessing_label)
+        self.quality_plot = QualityPlot()
         self.batch_status = QPlainTextEdit()
         self.batch_status.setReadOnly(True)
         self.batch_status.setMaximumHeight(100)
@@ -274,7 +276,10 @@ class MainWindow:
         self.save_status.setWordWrap(True)
         body.addWidget(self.save_status)
         self.encoding.currentIndexChanged.connect(self._export_options)
-        split.addWidget(right)
+        self.preview_tabs = QTabWidget()
+        self.preview_tabs.addTab(right, 'Image')
+        self.preview_tabs.addTab(self.quality_plot, 'Frame quality')
+        split.addWidget(self.preview_tabs)
         split.setSizes([380, 780])
         layout.addWidget(split, 1)
         self.progress = QProgressBar()
@@ -686,6 +691,10 @@ class MainWindow:
 
     def _refresh_preprocessing(self, checked=None):
         info = self.preprocessing_info
+        self.quality_plot.set_report(
+            info, self.controls.fields['stack_percent'].value(),
+            self.controls.fields['frame_selection_mode'].currentData(),
+            self.controls.fields['frame_preselection'].isChecked())
         if info.get('status') == 'ready':
             usage = 'Will use cache' if self.controls.fields['frame_preselection'].isChecked() else 'Cache disabled for runs'
             percent = self.controls.fields['stack_percent'].value()
@@ -731,9 +740,19 @@ class MainWindow:
             self._refresh_preprocessing()
 
     def _set_preprocessing(self, info):
+        # Stack snapshots contain only the compact report. Retain the plot from
+        # inspection/preprocessing only while its validated cache identity matches.
+        previous = self.preprocessing_info
+        if (info.get('status') == previous.get('status') == 'ready'
+                and info.get('digest') and info['digest'] == previous.get('digest')
+                and 'frame_quality' not in info and 'frame_quality' in previous):
+            info = {**info, 'frame_quality': previous['frame_quality']}
         if info.get('status') != 'disabled' or self.preprocessing_info.get('status') != 'ready':
             self.preprocessing_info = info
         self._refresh_preprocessing()
+        if ('frame_quality' in info and info['frame_quality'] is not previous.get('frame_quality')
+                and self.run_stage is None and not self.batch_active):
+            self.preview_tabs.setCurrentWidget(self.quality_plot)
         if info.get('status') == 'ready':
             self.controls.prefill_output_epoch(info.get('timing', {}),
                                               allow_prefill=not self.checkpoint_path.text().strip())
