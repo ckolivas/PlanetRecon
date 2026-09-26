@@ -28,6 +28,10 @@ def test_settings_roundtrip_and_new_capture(tmp_path):
     fields['geometry_mode'].setCurrentText('none')
     win.save_gamma.setText('1.2')
     win.encoding.setCurrentText('png16')
+    assert not win.quality_plot.absolute_control.isChecked()
+    assert not win.quality_plot.log_control.isChecked()
+    win.quality_plot.absolute_control.setChecked(True)
+    win.quality_plot.log_control.setChecked(True)
     win._shutdown()
     restored = MainWindow(capture, settings_path=path)
     assert restored.path == capture
@@ -38,6 +42,8 @@ def test_settings_roundtrip_and_new_capture(tmp_path):
     assert restored.controls.geometry_auto['equatorial_radius_px'] == '93.3'
     assert restored.encoding.currentText() == 'png16'
     assert restored.save_gamma.text() == '1.2'
+    assert restored.quality_plot.absolute_control.isChecked()
+    assert restored.quality_plot.log_control.isChecked()
     other = MainWindow(tmp_path / 'Jup.ser', settings_path=path)
     assert other.controls.fields['equatorial_radius_px'].text() == ''
     assert other.controls.fields['pole_pa_rad'].text() == '180.34'
@@ -64,11 +70,13 @@ def test_control_changes_are_saved_without_closing(tmp_path):
     path = tmp_path / 'preferences.json'
     win = MainWindow(config=ReconstructionConfig(), settings_path=path)
     win.controls.fields['stack_percent'].setValue(73)
+    win.quality_plot.log_control.setChecked(True)
     deadline = time.monotonic() + 3
     while not path.exists() and time.monotonic() < deadline:
         app.processEvents()
         time.sleep(.01)
     assert settings.load(path)[0]['controls']['fields']['stack_percent'] == 73
+    assert settings.load(path)[0]['quality_plot'] == {'absolute': False, 'log': True}
     win.window.close()
     app.processEvents()
 

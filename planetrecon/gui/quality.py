@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPen
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QSplitter, QToolTip, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QSplitter, QToolTip, QVBoxLayout, QWidget
 
 from planetrecon.pipeline.preprocess import FrameSelection, best_frame_mask, quality_range
 
@@ -39,6 +39,16 @@ class QualityPlot(QWidget):
         self.summary.setWordWrap(True)
         row.addWidget(self.summary, 1)
         layout.addLayout(row)
+        axes = QHBoxLayout()
+        self.absolute_control = QCheckBox('Absolute quality (from zero)')
+        self.absolute_control.setToolTip('Show raw quality scores on an axis starting at zero instead of the capture’s worst-to-best range.')
+        self.log_control = QCheckBox('Log scale')
+        self.log_control.setToolTip('Logarithmic above 0.1% of the axis maximum; linear near zero so zero-quality frames remain visible.')
+        for control in (self.absolute_control, self.log_control):
+            control.toggled.connect(lambda *_: self.canvas.update())
+            axes.addWidget(control)
+        axes.addStretch(1)
+        layout.addLayout(axes)
         graph = QWidget()
         graph_layout = QVBoxLayout(graph)
         graph_layout.setContentsMargins(0, 0, 0, 0)
@@ -146,6 +156,40 @@ class QualityPlot(QWidget):
                           if self.order_control.currentIndex() else np.arange(len(scores)))
         self.canvas.update()
 
+    def axis_maximum(self):
+        if self.absolute_control.isChecked() and self.selection is not None:
+            return self.high if self.high is not None and self.high > 0 else 1.
+        return 100.
+
+    def axis_fraction(self, values):
+        """Map displayed axis units to height, preserving zero on either scale."""
+        fraction = np.asarray(values, dtype=float) / self.axis_maximum()
+        if self.log_control.isChecked():
+            # Three logarithmic decades above a linear toe. Work in relative
+            # units to keep very small absolute quality scores well conditioned.
+            relative = fraction * 1000
+            fraction = np.where(relative <= 1, relative,
+                                1 + np.log10(np.maximum(relative, 1))) / 4
+        return fraction
+
+    def quality_position(self, scores):
+        values = np.asarray(scores, dtype=float)
+        if not self.absolute_control.isChecked():
+            values = ((values - self.low) / (self.high - self.low) * 100
+                      if self.low is not None and self.high > self.low
+                      else np.where(np.isfinite(values), 100., np.nan))
+        return self.axis_fraction(values)
+
+    def axis_ticks(self):
+        fractions = (0, .001, .01, .1, 1) if self.log_control.isChecked() else (0, .25, .5, .75, 1)
+        return np.asarray(fractions) * self.axis_maximum()
+
+    def axis_title(self):
+        title = ('Absolute quality' if self.absolute_control.isChecked() else
+                 'Quality range (%) — worst to best' if self.low != self.high else
+                 'Quality range (%) — all measured scores equal')
+        return title + (' · log (linear near zero)' if self.log_control.isChecked() else '')
+
     def frame_description(self, index):
         score = self.selection.measurements[index, 0]
         quality = f'{score:.6g} ({self.normalized[index]:.1f}% of range)' if np.isfinite(score) else 'unavailable'
@@ -172,7 +216,9 @@ class QualityCanvas(QWidget):
         self.setAccessibleName('Frame quality graph and exclusion mask')
 
     def plot_rect(self):
-        return QRectF(48, 22, max(1, self.width() - 66), max(1, self.height() - 66))
+        ticks = self.plot.axis_ticks()
+        gutter = max(48, max(self.fontMetrics().horizontalAdvance(f'{v:.3g}') for v in ticks) + 12)
+        return QRectF(gutter, 22, max(1, self.width() - gutter - 18), max(1, self.height() - 66))
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -185,13 +231,13 @@ class QualityCanvas(QWidget):
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, 'No validated frame quality loaded')
             return
         painter.drawText(QRectF(8, 1, self.width()-16, 20), Qt.AlignmentFlag.AlignLeft,
-                         'Quality range (%) — worst to best' if plot.low != plot.high else 'Quality range (%) — all measured scores equal')
-        for value in (0, 25, 50, 75, 100):
-            y = rect.bottom() - value / 100 * rect.height()
+                         plot.axis_title())
+        for value in plot.axis_ticks():
+            y = rect.bottom() - plot.axis_fraction(value) * rect.height()
             painter.setPen(QColor('#33414f'))
             painter.drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y))
             painter.setPen(QColor('#cbd5df'))
-            painter.drawText(QRectF(1, y-9, 40, 18), Qt.AlignmentFlag.AlignRight, str(value))
+            painter.drawText(QRectF(1, y-9, rect.left()-9, 18), Qt.AlignmentFlag.AlignRight, f'{value:.3g}')
 
         order = plot.order
         n = len(order)
@@ -199,7 +245,7 @@ class QualityCanvas(QWidget):
         # and mask marks, so a single rejected frame never disappears in a mean.
         columns = max(1, int(rect.width()))
         xbins = np.minimum(columns-1, (np.arange(n) * columns / max(n-1, 1)).astype(int))
-        scores = plot.normalized[order]
+        scores = plot.quality_position(plot.selection.measurements[order, 0])
         if plot.enabled:
             states = np.where(~plot.selection.accepted[order], 2, np.where(plot.selected[order], 0, 1))
             colors = self.colors
@@ -217,7 +263,7 @@ class QualityCanvas(QWidget):
             painter.setPen(QPen(QColor(color), 1.5))
             for col in np.flatnonzero(np.isfinite(lo)):
                 x = rect.left() + col * rect.width() / max(columns-1, 1)
-                y1, y2 = (rect.bottom() - value / 100 * rect.height() for value in (lo[col], hi[col]))
+                y1, y2 = (rect.bottom() - value * rect.height() for value in (lo[col], hi[col]))
                 painter.drawLine(QPointF(x, y1), QPointF(x, y2))
                 painter.drawPoint(QPointF(x, y1))
             for col in np.unique(xbins[member]):
@@ -227,7 +273,7 @@ class QualityCanvas(QWidget):
                 painter.drawLine(QPointF(x, y), QPointF(x, y+2))
         painter.restore()
         if plot.cutoff is not None:
-            y = rect.bottom() - (100 - plot.percent) / 100 * rect.height()
+            y = rect.bottom() - plot.quality_position(plot.cutoff) * rect.height()
             painter.setPen(QPen(QColor('#f4e285'), 1.5, Qt.PenStyle.DashLine))
             painter.drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y))
             painter.drawText(QRectF(rect.right()-190, y-18, 185, 17), Qt.AlignmentFlag.AlignRight,
@@ -238,10 +284,10 @@ class QualityCanvas(QWidget):
                 x = rect.left() + int(ranks[0]) / max(n-1, 1) * rect.width()
                 painter.setPen(QPen(QColor('#ffffff'), 1, Qt.PenStyle.DotLine))
                 painter.drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()+12))
-                score = plot.normalized[plot.preview_index]
+                score = plot.quality_position(plot.selection.measurements[plot.preview_index, 0])
                 if np.isfinite(score):
                     painter.setBrush(QColor('#ffffff'))
-                    painter.drawEllipse(QPointF(x, rect.bottom()-score/100*rect.height()), 3, 3)
+                    painter.drawEllipse(QPointF(x, rect.bottom()-score*rect.height()), 3, 3)
         painter.setPen(QColor('#cbd5df'))
         bottom = QRectF(rect.left(), rect.bottom()+16, rect.width(), 20)
         painter.drawText(bottom, Qt.AlignmentFlag.AlignLeft, '1')

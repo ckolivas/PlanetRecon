@@ -331,6 +331,13 @@ class MainWindow:
         if saved:
             try:
                 self.controls.restore_settings(saved['controls'])
+                quality_settings = saved.get('quality_plot', {})
+                if not isinstance(quality_settings, dict):
+                    quality_settings = {}
+                for key in ('absolute', 'log'):
+                    value = quality_settings.get(key)
+                    if isinstance(value, bool):
+                        getattr(self.quality_plot, f'{key}_control').setChecked(value)
                 last_path = saved.get('capture')
                 # Restore preferences, but only open a capture explicitly chosen
                 # by the user (or supplied as a launch argument).
@@ -357,7 +364,8 @@ class MainWindow:
         self.settings_timer.setInterval(500)
         self.settings_timer.timeout.connect(self._save_settings)
         for edit in (*self.controls.fields.values(), self.encoding, self.zoom, self.channel,
-                     self.save_black, self.save_white, self.save_gamma):
+                     self.save_black, self.save_white, self.save_gamma,
+                     self.quality_plot.absolute_control, self.quality_plot.log_control):
             signal = (edit.currentIndexChanged if isinstance(edit, QComboBox) else
                       edit.toggled if isinstance(edit, QCheckBox) else
                       edit.textChanged if isinstance(edit, QLineEdit) else edit.valueChanged)
@@ -377,6 +385,8 @@ class MainWindow:
         try:
             settings.save(self.settings_path, dict(
                 controls=self.controls.settings_state(),
+                quality_plot=dict(absolute=self.quality_plot.absolute_control.isChecked(),
+                                  log=self.quality_plot.log_control.isChecked()),
                 capture=str(self.path) if self.path else None,
                 last_directory=self.last_directory,
                 encoding=self.encoding.currentText(), zoom=self.zoom.currentText(),

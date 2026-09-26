@@ -74,6 +74,45 @@ def test_flat_scores_count_ties_and_single_frame(gui):
     assert not plot.canvas.grab().isNull()
 
 
+@pytest.mark.parametrize('absolute', [False, True])
+@pytest.mark.parametrize('logarithmic', [False, True])
+def test_axis_modes_preserve_selection_and_transform_cutoff(gui, absolute, logarithmic):
+    app, win = gui
+    plot = win.quality_plot
+    plot.set_report(report((10, 20, 40, 100, 80, np.nan)), 50, 'quality_range', True)
+    selected = plot.selected.copy()
+    plot.absolute_control.setChecked(absolute)
+    plot.log_control.setChecked(logarithmic)
+    assert plot.cutoff == 55
+    np.testing.assert_array_equal(plot.selected, selected)
+    scores = plot.selection.measurements[:, 0]
+    positions = plot.quality_position(scores)
+    assert positions[3] == 1
+    assert np.isnan(positions[5])
+    assert np.all(np.diff(positions[:4]) > 0)
+    assert (positions[0] > 0) == absolute
+    fraction = .55 if absolute else .5
+    expected_cutoff = (1 + np.log10(fraction * 1000)) / 4 if logarithmic else fraction
+    assert plot.quality_position(plot.cutoff) == pytest.approx(expected_cutoff)
+    assert plot.axis_fraction(0) == 0
+    assert plot.axis_ticks()[0] == 0
+    assert not plot.canvas.grab().isNull()
+
+
+@pytest.mark.parametrize('score', [0., 7., 1e-20, np.nan])
+def test_log_absolute_flat_or_unavailable_quality(gui, score):
+    app, win = gui
+    plot = win.quality_plot
+    plot.absolute_control.setChecked(True)
+    plot.log_control.setChecked(True)
+    plot.set_report(report((score,), (np.isfinite(score),)), 50, 'quality_range', True)
+    assert plot.cutoff is None
+    assert np.isfinite(plot.axis_fraction(plot.axis_ticks())).all()
+    if np.isfinite(score):
+        assert plot.quality_position(score) == (1 if score > 0 else 0)
+    assert not plot.canvas.grab().isNull()
+
+
 def test_worker_preprocess_and_inspect_deliver_plot_without_export_bloat(gui, tmp_path):
     from test_preprocess_cache import capture
     app, win = gui
@@ -129,6 +168,8 @@ def test_graph_clicks_load_original_frames_in_both_orders(gui, tmp_path):
     assert plot.preview_index == 1
     np.testing.assert_array_equal(win.quality_frame_image, frames[1])
     plot.order_control.setCurrentIndex(1)
+    plot.absolute_control.setChecked(True)
+    plot.log_control.setChecked(True)
     click(1)  # Quality rank 2 is original frame 5, a screened shape outlier.
     assert plot.preview_index == 4
     np.testing.assert_array_equal(win.quality_frame_image, frames[4])
