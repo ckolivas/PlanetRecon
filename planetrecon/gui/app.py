@@ -330,8 +330,8 @@ class MainWindow:
             try:
                 self.controls.restore_settings(saved['controls'])
                 last_path = saved.get('capture')
-                if self.path is None and isinstance(last_path, str) and Path(last_path).is_file():
-                    self.path = Path(last_path)
+                # Restore preferences, but only open a capture explicitly chosen
+                # by the user (or supplied as a launch argument).
                 if self.path is None or str(self.path) != last_path:
                     self.controls.clear_geometry_estimate()
                 else:

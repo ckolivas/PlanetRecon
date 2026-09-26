@@ -29,7 +29,7 @@ def test_settings_roundtrip_and_new_capture(tmp_path):
     win.save_gamma.setText('1.2')
     win.encoding.setCurrentText('png16')
     win._shutdown()
-    restored = MainWindow(settings_path=path)
+    restored = MainWindow(capture, settings_path=path)
     assert restored.path == capture
     assert restored.controls.fields['device'].currentData() == 'gpu'
     assert restored.controls.fields['ring_inner_radius_px'].text() == '120.25'
@@ -103,7 +103,8 @@ def test_file_dialog_directory_survives_restart(monkeypatch, tmp_path):
         assert seen == [str(exports)]
         assert restored.last_directory == str(exports)
         exports.rmdir()
-        assert restored._dialog_directory() == str(captures)
+        assert restored.path is None
+        assert restored._dialog_directory() == str(Path.cwd())
     finally:
         restored.window.close()
         app.processEvents()

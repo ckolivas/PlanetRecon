@@ -86,6 +86,17 @@ def test_loading_capture_automatically_displays_cached_quality(monkeypatch, tmp_
                                 lambda *args: (str(capture), 'Captures'))
             win.open_btn.click()
         win.show()
+        if entry == 'restored':
+            for _ in range(5):
+                app.processEvents()
+            assert win.path is None and win.job is None and win.frame_job is None
+            assert not calls and win.input_image is None
+            assert win.quality_plot.selection is None
+            assert not win.cancel_btn.isEnabled() and not win.run_btn.isEnabled()
+            assert win.open_btn.isEnabled()
+            if cache.exists():
+                assert cache.stat().st_mtime_ns == stamp
+            return
         if cached != 'missing':
             assert win.job is not None and win.cancel_btn.isEnabled()
         pump(app, lambda: win.job is None, timeout=20)

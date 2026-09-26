@@ -481,8 +481,9 @@ and no rotation rate is prefilled for that capture.
 
 The desktop **Frame quality** tab shows the validated per-frame preprocessing
 measurements. Opening a capture with a cache automatically validates it and
-loads the input preview and graph, including on application startup. Validation
-reports frame progress and can be cancelled. A missing or incompatible cache
+loads the input preview and graph. Startup restores preferences without reopening
+the previous capture; a capture explicitly passed as a launch argument is opened.
+Validation reports frame progress and can be cancelled. A missing or incompatible cache
 can be refreshed with **Preprocess**, which also loads the preview and graph
 when it finishes. There is no separate inspection button. These actions do not
 start stacking; **Run** starts the stack.
