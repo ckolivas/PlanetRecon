@@ -389,115 +389,142 @@ def _stack_source(
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
-    if config.frame_preselection:
-        emit("cache_ready", incomplete=True)
-    for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
-        if should_cancel is not None and should_cancel():
-            cancelled = True
-            break
-        for local, index in enumerate(indices):
-            if should_cancel is not None and should_cancel():
+    def process_frame(item):
+        nonlocal reference, reference_index
+        index, raw = item
+        if selection is not None and not selection.accepted[index]:
+            return None
+        if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
+            return None
+        calibrated, cal_info = apply_calibration(raw, calibration)
+        if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
+            return None
+        demosaiced = (demosaic(calibrated)
+                      if colour_registration and backend.name != 'cuda' else None)
+        plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
+                 else alignment_plane(calibrated, color))
+        if reference is None:
+            reference = plane
+            reference_index = int(index)
+            prepare_reference()
+            shift = (0.0, 0.0)
+        else:
+            try:
+                shift = backend.phase_correlation(reference, plane)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+                shift = backend.phase_correlation(reference, plane)
+        if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
+            return None
+        score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
+        if not np.isfinite(score):
+            return None
+        if local_matcher is not None:
+            if local_matcher.use_cuda != (backend.name == 'cuda'):
+                local_matcher.use_cuda = backend.name == 'cuda'
+            try:
+                shift = local_matcher.displacement(plane, shift)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+                local_matcher.use_cuda = False
+                shift = local_matcher.displacement(plane, shift)
+        projected = None
+        if backend.name == 'cuda':
+            try:
+                projected = backend.backproject(calibrated, shift, color)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+        if projected is None and local_matcher is not None:
+            projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
+        if projected is not None:
+            return (score, *projected)
+        support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
+                          order=1, prefilter=False, mode='grid-constant')
+        if bayer:
+            add, wt = cfa_accumulate(calibrated, shift, color)
+            demo = demosaic(calibrated)
+            shifted = np.stack([ndshift(demo[..., c], shift=(-shift[1], -shift[0]),
+                                order=1, prefilter=False, mode='grid-constant') for c in range(3)], axis=2)
+            return score, add, wt, shifted, support
+        if rgb:
+            if calibrated.ndim != 3:
+                raise ValueError('RGB source produced a 2-D frame')
+            add = np.stack([ndshift(calibrated[..., c], shift=(-shift[1], -shift[0]),
+                           order=1, prefilter=False, mode='grid-constant') for c in range(3)], axis=2)
+            return score, add, support[..., None], None, None
+        add = ndshift(calibrated, shift=(-shift[1], -shift[0]),
+                      order=1, prefilter=False, mode='grid-constant')
+        return score, add, support, None, None
+
+    from planetrecon.pipeline.cpu_pool import CPUFramePool, selected_batches
+    with CPUFramePool(config, shape, n-next_index, enabled=backend.name == 'cpu',
+                      should_cancel=should_cancel) as pool:
+        if backend.name == 'cpu':
+            report.frame_workers = pool.workers
+        snapshot_provenance['cpu_frame_workers'] = {'workers': pool.workers, 'limit': pool.reason,
+            'accumulation': 'capture order; float64; no frame brightness normalisation'}
+        if local_matcher is not None and config.alignment_method == 'circular_multiscale' and pool.workers > 1:
+            # Only the owner polls the caller; workers observe a thread-safe flag.
+            local_matcher.should_cancel = pool.stop.is_set
+        if config.frame_preselection:
+            emit('cache_ready', incomplete=True)
+        def frame_results(items):
+            items = iter(items)
+            # Without screening, establish the first valid observation as the
+            # fixed reference on the owner before any worker can read it.
+            while reference is None:
+                if pool.cancelled():
+                    return
+                try:
+                    item = next(items)
+                except StopIteration:
+                    return
+                yield process_frame(item)
+            yield from pool.map(process_frame, items)
+
+        batches = (selected_batches(source, config.batch_frames, start=next_index,
+                                    accepted=selection.accepted, should_cancel=should_cancel)
+                   if pool.workers > 1 and selection is not None else
+                   source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel))
+        for indices, batch in batches:
+            if pool.cancelled():
                 cancelled = True
                 break
-            raw = batch[local]
-            if selection is not None and not selection.accepted[index]:
-                n_rejected += 1
-                continue
-            if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
-                n_rejected += 1
-                continue
-            calibrated, cal_info = apply_calibration(raw, calibration)
-            if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
-                n_rejected += 1
-                continue
-            demosaiced = (demosaic(calibrated)
-                          if colour_registration and backend.name != 'cuda' else None)
-            plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
-                     else alignment_plane(calibrated, color))
-            if reference is None:
-                reference = plane
-                reference_index = int(index)
-                prepare_reference()
-                shift = (0.0, 0.0)
-            else:
-                try:
-                    shift = backend.phase_correlation(reference, plane)
-                except RuntimeError as exc:
-                    cpu_fallback(exc)
-                    shift = backend.phase_correlation(reference, plane)
-            if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
-                n_rejected += 1
-                continue
-            score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
-            if not np.isfinite(score):
-                n_rejected += 1
-                continue
-            if local_matcher is not None:
-                local_matcher.use_cuda = backend.name == 'cuda'
-                try:
-                    shift = local_matcher.displacement(plane, shift)
-                except RuntimeError as exc:
-                    cpu_fallback(exc)
-                    local_matcher.use_cuda = False
-                    shift = local_matcher.displacement(plane, shift)
-            projected = None
-            if backend.name == "cuda":
-                try:
-                    projected = backend.backproject(calibrated, shift, color)
-                except RuntimeError as exc:
-                    cpu_fallback(exc)
-            if projected is None and local_matcher is not None:
-                projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
-            if projected is not None:
-                add, wt, demo, support = projected
-                accum += score * add
-                weight += score * wt
-                if bayer:
-                    demosaic_accum += score * demo
-                    demosaic_weight += score * support[..., None]
-                n_used += 1
-                continue
-            support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
-                              order=1, prefilter=False, mode="grid-constant")
-            if bayer:
-                rgb_add, rgb_w = cfa_accumulate(calibrated, shift, color)
-                accum += score * rgb_add
-                weight += score * rgb_w
-                demo = demosaic(calibrated)
-                shifted = np.stack(
-                    [
-                        ndshift(demo[..., c], shift=(-shift[1], -shift[0]), order=1, prefilter=False, mode="grid-constant")
-                        for c in range(3)
-                    ],
-                    axis=2,
-                )
-                demosaic_accum += score * shifted
-                demosaic_weight += score * support[..., None]
-            elif rgb:
-                img = calibrated
-                if img.ndim == 2:
-                    raise ValueError("RGB source produced a 2-D frame")
-                for c in range(3):
-                    accum[..., c] += score * ndshift(
-                        img[..., c], shift=(-shift[1], -shift[0]), order=1, prefilter=False, mode="grid-constant"
-                    )
-                    weight[..., c] += score * support
-            else:
-                accum += score * ndshift(
-                    calibrated, shift=(-shift[1], -shift[0]), order=1, prefilter=False, mode="grid-constant"
-                )
-                weight += score * support
-            n_used += 1
-        if state_checkpoint is not None:
-            resume.save(state_checkpoint, state_identity, {
-                "accum": accum, "weight": weight, "reference": reference,
-                "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
-                "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
-                "next_index": n_used + n_rejected,
-                "execution_history": report.execution_history, "warnings": warnings})
-        emit("baseline", incomplete=True)
-        if cancelled:
-            break
+            try:
+                for index, projected in zip(indices, frame_results(zip(indices, batch))):
+                    if pool.cancelled():
+                        cancelled = True
+                        break
+                    # Screening exclusions may have been skipped while filling
+                    # the work batch. Account for exactly the consumed prefix.
+                    n_rejected += int(index) - (n_used + n_rejected)
+                    if projected is None:
+                        n_rejected += 1
+                        continue
+                    score, add, wt, demo, support = projected
+                    accum += score * add
+                    weight += score * wt
+                    if bayer:
+                        demosaic_accum += score * demo
+                        demosaic_weight += score * support[..., None]
+                    n_used += 1
+            except InterruptedError:
+                if not pool.cancelled():
+                    raise
+                cancelled = True
+            cancelled = cancelled or pool.cancelled()
+            if state_checkpoint is not None:
+                resume.save(state_checkpoint, state_identity, {
+                    "accum": accum, "weight": weight, "reference": reference,
+                    "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
+                    "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
+                    "next_index": n_used + n_rejected,
+                    "execution_history": report.execution_history, "warnings": warnings})
+            emit("baseline", incomplete=True)
+            if cancelled:
+                break
+        if not cancelled and not pool.cancelled():
+            n_rejected += n - (n_used + n_rejected)
 
     cancelled = cancelled or bool(should_cancel is not None and should_cancel())
     image = _normalise_stack(accum, weight)

@@ -13,6 +13,7 @@ dependencies = [
     "scipy",
     "h5py",
     "tifffile",
+    "threadpoolctl",
 ]
 
 [project.optional-dependencies]

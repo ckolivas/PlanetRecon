@@ -22,7 +22,7 @@ from planetrecon.gui.preview import display_result_preview
 from planetrecon.gui.quality import QualityPlot
 from planetrecon.jobs import JobHandle, result_from_payload, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
-from planetrecon.runtime import apply_thread_limits
+from planetrecon.runtime import apply_thread_limits, detected_thread_count
 
 
 def _to_qimage(image, black=None, white=None, validity=None):
@@ -97,7 +97,7 @@ class MainWindow:
         # New interactive jobs use the preferred stacking preset; supplied jobs
         # and saved engine configurations retain their explicit settings.
         self.config = config or ReconstructionConfig(
-            device='auto', local_alignment=True, stack_percent=50,
+            device='auto', threads=detected_thread_count(), local_alignment=True, stack_percent=50,
             frame_selection_mode='quality_range')
         self.path = Path(path) if path else None
         self.job: JobHandle | None = None
@@ -861,6 +861,8 @@ class MainWindow:
                     else f'Run requested {self.config.device.upper()} · using {backend.upper()}')
             if reason and reason not in ('ok', 'explicit_cpu'):
                 text += ' · ' + reason
+            if backend == 'cpu' and report.get('frame_workers') is not None:
+                text += f" · {report['frame_workers']} frame workers"
             self.run_device.setText(text)
         if 'warnings' in payload:
             self.warnings.setText('; '.join(payload['warnings']))

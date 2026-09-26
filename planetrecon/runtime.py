@@ -23,17 +23,25 @@ THREAD_ENV_KEYS = (
 )
 
 
+def detected_thread_count() -> int:
+    """Logical CPUs available to this process, within the application ceiling."""
+    try:
+        detected = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        detected = os.cpu_count() or 1
+    return max(1, min(int(detected), MAX_CPU_THREADS))
+
+
 def default_thread_count() -> int:
     raw = os.environ.get("PLANETRECON_THREADS")
-    n = DEFAULT_CPU_THREADS
+    n = detected_thread_count()
     if raw:
         try:
             n = int(raw)
         except ValueError:
-            n = DEFAULT_CPU_THREADS
+            n = detected_thread_count()
     n = max(1, min(int(n), MAX_CPU_THREADS))
-    detected = os.cpu_count() or n
-    return max(1, min(n, int(detected)))
+    return min(n, detected_thread_count())
 
 
 def apply_thread_limits(n: int | None = None) -> int:

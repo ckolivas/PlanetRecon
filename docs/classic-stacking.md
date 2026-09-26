@@ -60,7 +60,27 @@ is the quality-weighted average of the recorded intensities, with coverage
 normalisation at detector edges. Only explicitly configured detector calibration
 changes those values. Display black/white levels affect the preview separately.
 
-CPU matching is available on every supported machine. CUDA forward-correlation
+CPU matching is available on every supported machine. Ordinary CPU stacks process
+independent frames concurrently, up to **CPU threads** in the Capture tab. Fresh
+GUI settings detect available logical CPUs at startup (respecting CPU affinity,
+up to the application limit of 32); saved manual choices are retained. The run
+status shows the actual frame-worker count. Frames per batch, remaining frames
+and a conservative scratch-memory allowance can reduce concurrency. A batch size
+below the requested thread count cannot keep all workers occupied.
+Quality-rejected frames do not occupy work slots: selected frames are collected
+across consecutive input batches, so strict quality cuts can still fill a worker
+batch without loading the whole capture.
+
+Workers share immutable reference data, while source reads and accumulation stay
+in capture order on the owner thread. This preserves recorded brightness and
+bit-for-bit image/coverage results across worker counts. Outstanding work is
+bounded by the worker count, numerical libraries use one native thread per worker,
+and cancellation joins the workers before returning. Geometry-compensated motion
+paths retain their existing execution strategy. More workers need not mean a
+linear speedup: patch fitting, memory traffic and serial preparation still limit
+scaling.
+
+CUDA forward-correlation
 costs and final backprojection use the existing supported backend and CPU fallback;
 reverse checks and field fitting run on CPU. The result records actual diameters,
 spacing, sampling, wavelength and matching rules in its provenance. Sampling or
