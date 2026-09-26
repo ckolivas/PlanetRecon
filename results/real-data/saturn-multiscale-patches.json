@@ -1,0 +1,2972 @@
+{
+  "sizes": [
+    65,
+    93,
+    131,
+    185
+  ],
+  "ap_counts": {
+    "65": 48,
+    "93": 36,
+    "131": 22,
+    "185": 14
+  },
+  "frame_count_per_ap": 5738,
+  "screened_pool": 25476,
+  "reference_sha256": "3ffcb6cf01e740482a627d474a35a5bfce4bb99b7064622ed58410b880d3403c",
+  "source_measurements": "out/saturn-patch-stacking",
+  "quality_sigmas": [
+    2,
+    4
+  ],
+  "normalization": "none",
+  "variants": {
+    "scale65_global": {
+      "raw": {
+        "upper": {
+          "median": 107.34343325323454,
+          "highpass_percent": 0.16841257380735325,
+          "laplacian_percent": 0.07072852316871418
+        },
+        "lower": {
+          "median": 109.66328871422051,
+          "highpass_percent": 0.14268838427504793,
+          "laplacian_percent": 0.06935639463331598
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.904201718387072,
+          "laplacian_percent": 2.7156704375256644
+        },
+        "lower": {
+          "median": 33379.0,
+          "highpass_percent": 2.9574444449633623,
+          "laplacian_percent": 2.800320729833856
+        }
+      }
+    },
+    "scale65_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.34053326353732,
+          "highpass_percent": 0.1585675012516379,
+          "laplacian_percent": 0.06484687916522618
+        },
+        "lower": {
+          "median": 109.62678216052821,
+          "highpass_percent": 0.13526171950211094,
+          "laplacian_percent": 0.06378276766250304
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32596.5,
+          "highpass_percent": 2.5544628305479495,
+          "laplacian_percent": 2.307663723414494
+        },
+        "lower": {
+          "median": 33422.5,
+          "highpass_percent": 2.6199505196380213,
+          "laplacian_percent": 2.449013369052672
+        }
+      }
+    },
+    "scale65_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.3719412357408,
+          "highpass_percent": 0.15572717364427058,
+          "laplacian_percent": 0.06275475404718611
+        },
+        "lower": {
+          "median": 109.66841693574088,
+          "highpass_percent": 0.12405390239173361,
+          "laplacian_percent": 0.05605830395051258
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.404778336193587,
+          "laplacian_percent": 2.4380472933241806
+        },
+        "lower": {
+          "median": 33498.0,
+          "highpass_percent": 2.2747315200016507,
+          "laplacian_percent": 2.2406114048930825
+        }
+      }
+    },
+    "scale65_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.31410589561406,
+          "highpass_percent": 0.14378725148576063,
+          "laplacian_percent": 0.05098366806531504
+        },
+        "lower": {
+          "median": 109.6481335712493,
+          "highpass_percent": 0.11946619958141091,
+          "laplacian_percent": 0.04696308581966042
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32605.0,
+          "highpass_percent": 2.0019917749154943,
+          "laplacian_percent": 1.8667986161625583
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 1.8878712011473135,
+          "laplacian_percent": 1.8418845092302676
+        }
+      }
+    },
+    "scale65_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.33269937050056,
+          "highpass_percent": 0.16185612912642017,
+          "laplacian_percent": 0.06439895338300403
+        },
+        "lower": {
+          "median": 109.67087379678043,
+          "highpass_percent": 0.15330266103466597,
+          "laplacian_percent": 0.06231050179998735
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.570960393037344,
+          "laplacian_percent": 2.4670716658637537
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.5722032247887285,
+          "laplacian_percent": 2.4392866923962315
+        }
+      }
+    },
+    "scale65_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.30590217899383,
+          "highpass_percent": 0.14849180831778172,
+          "laplacian_percent": 0.05609358896076305
+        },
+        "lower": {
+          "median": 109.61765293033307,
+          "highpass_percent": 0.1423299457910096,
+          "laplacian_percent": 0.054895493111171555
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32588.0,
+          "highpass_percent": 2.150771125374934,
+          "laplacian_percent": 1.9542434057292628
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.230721185916288,
+          "laplacian_percent": 2.040652249153863
+        }
+      }
+    },
+    "scale93_global": {
+      "raw": {
+        "upper": {
+          "median": 107.34261512661715,
+          "highpass_percent": 0.16884308680711663,
+          "laplacian_percent": 0.07383543930952038
+        },
+        "lower": {
+          "median": 109.66393626228265,
+          "highpass_percent": 0.14124322927559296,
+          "laplacian_percent": 0.06853007857402584
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9294146728003794,
+          "laplacian_percent": 2.774118975361348
+        },
+        "lower": {
+          "median": 33370.5,
+          "highpass_percent": 2.894968242592437,
+          "laplacian_percent": 2.762289442219392
+        }
+      }
+    },
+    "scale93_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.34588224218415,
+          "highpass_percent": 0.16686191381328486,
+          "laplacian_percent": 0.07151825043354451
+        },
+        "lower": {
+          "median": 109.68320401631172,
+          "highpass_percent": 0.13987202806547747,
+          "laplacian_percent": 0.06625121100877991
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.8213952074593864,
+          "laplacian_percent": 2.6595490837577684
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.7758032619734587,
+          "laplacian_percent": 2.580105044035078
+        }
+      }
+    },
+    "scale93_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.41770161894206,
+          "highpass_percent": 0.15986127651817833,
+          "laplacian_percent": 0.07123037535292583
+        },
+        "lower": {
+          "median": 109.70006520505812,
+          "highpass_percent": 0.1310633913610027,
+          "laplacian_percent": 0.06294814886135189
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.67710612779155,
+          "laplacian_percent": 2.5991246110276554
+        },
+        "lower": {
+          "median": 33498.0,
+          "highpass_percent": 2.5227141492989333,
+          "laplacian_percent": 2.4697198590594915
+        }
+      }
+    },
+    "scale93_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.42311338509634,
+          "highpass_percent": 0.15814121762621597,
+          "laplacian_percent": 0.06739613026183515
+        },
+        "lower": {
+          "median": 109.74051982383924,
+          "highpass_percent": 0.12966552871369275,
+          "laplacian_percent": 0.05674747308868221
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.5686388674080565,
+          "laplacian_percent": 2.4958110617739613
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.28747311774297,
+          "laplacian_percent": 2.2068323644509293
+        }
+      }
+    },
+    "scale93_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.32373333805126,
+          "highpass_percent": 0.16811526184154024,
+          "laplacian_percent": 0.06804435085540109
+        },
+        "lower": {
+          "median": 109.64413436123604,
+          "highpass_percent": 0.13640616642046,
+          "laplacian_percent": 0.06226196882917418
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32535.0,
+          "highpass_percent": 2.653089004255288,
+          "laplacian_percent": 2.4572279869889115
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.571317902345381,
+          "laplacian_percent": 2.442195180116264
+        }
+      }
+    },
+    "scale93_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.33618475436099,
+          "highpass_percent": 0.16692719344773296,
+          "laplacian_percent": 0.06522256611993461
+        },
+        "lower": {
+          "median": 109.65217364920457,
+          "highpass_percent": 0.13529720818538324,
+          "laplacian_percent": 0.06047137854310832
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32535.0,
+          "highpass_percent": 2.484147190385115,
+          "laplacian_percent": 2.3217059789982315
+        },
+        "lower": {
+          "median": 33431.0,
+          "highpass_percent": 2.4922115462464927,
+          "laplacian_percent": 2.302121911147952
+        }
+      }
+    },
+    "scale131_global": {
+      "raw": {
+        "upper": {
+          "median": 107.33967619125096,
+          "highpass_percent": 0.16562183022163757,
+          "laplacian_percent": 0.07192291947051468
+        },
+        "lower": {
+          "median": 109.64523437589091,
+          "highpass_percent": 0.1412976796552566,
+          "laplacian_percent": 0.06904033373741382
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32561.5,
+          "highpass_percent": 2.902402917795797,
+          "laplacian_percent": 2.7459052107982997
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.8968088282343154,
+          "laplacian_percent": 2.7279364808976916
+        }
+      }
+    },
+    "scale131_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.3227337570446,
+          "highpass_percent": 0.16083196917983336,
+          "laplacian_percent": 0.0667590086838824
+        },
+        "lower": {
+          "median": 109.6149617014164,
+          "highpass_percent": 0.13645527506533262,
+          "laplacian_percent": 0.0651527713208835
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.679653141824494,
+          "laplacian_percent": 2.4698554410254965
+        },
+        "lower": {
+          "median": 33396.0,
+          "highpass_percent": 2.7197520818016887,
+          "laplacian_percent": 2.5551893469210736
+        }
+      }
+    },
+    "scale131_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.38607663784506,
+          "highpass_percent": 0.16289641556019907,
+          "laplacian_percent": 0.06491232351704626
+        },
+        "lower": {
+          "median": 109.6929644706587,
+          "highpass_percent": 0.13996418173498143,
+          "laplacian_percent": 0.061693248690134254
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32588.0,
+          "highpass_percent": 2.558493313146867,
+          "laplacian_percent": 2.4293249624578244
+        },
+        "lower": {
+          "median": 33448.0,
+          "highpass_percent": 2.6290653096914713,
+          "laplacian_percent": 2.5408098546853277
+        }
+      }
+    },
+    "scale131_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.35453162767718,
+          "highpass_percent": 0.15688073936833605,
+          "laplacian_percent": 0.05855387852803735
+        },
+        "lower": {
+          "median": 109.64653309118681,
+          "highpass_percent": 0.13658961207504575,
+          "laplacian_percent": 0.05671515466661721
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32605.0,
+          "highpass_percent": 2.304751592838247,
+          "laplacian_percent": 2.11895877782286
+        },
+        "lower": {
+          "median": 33456.0,
+          "highpass_percent": 2.5062840490439586,
+          "laplacian_percent": 2.3222017089892466
+        }
+      }
+    },
+    "scale131_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.31980134337564,
+          "highpass_percent": 0.1651102060090501,
+          "laplacian_percent": 0.06715738820003599
+        },
+        "lower": {
+          "median": 109.6423529926941,
+          "highpass_percent": 0.1372097124445183,
+          "laplacian_percent": 0.06449071579986791
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.601876919023946,
+          "laplacian_percent": 2.43270327799338
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.6369407526748376,
+          "laplacian_percent": 2.4729520562420424
+        }
+      }
+    },
+    "scale131_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.3090574671474,
+          "highpass_percent": 0.15859875832446382,
+          "laplacian_percent": 0.06093248198336543
+        },
+        "lower": {
+          "median": 109.61048105804369,
+          "highpass_percent": 0.1347497775570669,
+          "laplacian_percent": 0.060293081424492426
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.4026570149547957,
+          "laplacian_percent": 2.1905763274604477
+        },
+        "lower": {
+          "median": 33431.0,
+          "highpass_percent": 2.4762352736931725,
+          "laplacian_percent": 2.3001386056031334
+        }
+      }
+    },
+    "scale185_global": {
+      "raw": {
+        "upper": {
+          "median": 107.33501574518357,
+          "highpass_percent": 0.16294015793711542,
+          "laplacian_percent": 0.06545940933711385
+        },
+        "lower": {
+          "median": 109.64852304662094,
+          "highpass_percent": 0.13488546679165409,
+          "laplacian_percent": 0.061602250365416264
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.6295994373958083,
+          "laplacian_percent": 2.3716312291734627
+        },
+        "lower": {
+          "median": 33456.0,
+          "highpass_percent": 2.5764074638403187,
+          "laplacian_percent": 2.4832248699496704
+        }
+      }
+    },
+    "scale185_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.33571143893683,
+          "highpass_percent": 0.1637185829683625,
+          "laplacian_percent": 0.0645660590563291
+        },
+        "lower": {
+          "median": 109.66404474653257,
+          "highpass_percent": 0.13365555910557153,
+          "laplacian_percent": 0.060061828360074905
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.59383416851166,
+          "laplacian_percent": 2.3431309397241677
+        },
+        "lower": {
+          "median": 33464.0,
+          "highpass_percent": 2.498510495808554,
+          "laplacian_percent": 2.3820777238179347
+        }
+      }
+    },
+    "scale185_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.33847232013086,
+          "highpass_percent": 0.15514143095644117,
+          "laplacian_percent": 0.062064408951364565
+        },
+        "lower": {
+          "median": 109.67456252124738,
+          "highpass_percent": 0.129656941946196,
+          "laplacian_percent": 0.05958820602921457
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.3381195164094217,
+          "laplacian_percent": 2.1787453416505564
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.2558698353952105,
+          "laplacian_percent": 2.2617311525401393
+        }
+      }
+    },
+    "scale185_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.34366114622942,
+          "highpass_percent": 0.15329952959337553,
+          "laplacian_percent": 0.06071308785081093
+        },
+        "lower": {
+          "median": 109.70117234016624,
+          "highpass_percent": 0.1281382077015772,
+          "laplacian_percent": 0.056485689236421846
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.303891827619619,
+          "laplacian_percent": 2.105967816806822
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 2.187342591386819,
+          "laplacian_percent": 2.144910597302773
+        }
+      }
+    },
+    "scale185_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.32510935172469,
+          "highpass_percent": 0.15512053109249269,
+          "laplacian_percent": 0.061854191244348856
+        },
+        "lower": {
+          "median": 109.65060010627127,
+          "highpass_percent": 0.13632429222848771,
+          "laplacian_percent": 0.05802745158500591
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32535.0,
+          "highpass_percent": 2.465214013491445,
+          "laplacian_percent": 2.288080217617085
+        },
+        "lower": {
+          "median": 33481.0,
+          "highpass_percent": 2.3429031947487293,
+          "laplacian_percent": 2.2719493183614006
+        }
+      }
+    },
+    "scale185_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.32374591272779,
+          "highpass_percent": 0.15401602644816473,
+          "laplacian_percent": 0.06087580789369058
+        },
+        "lower": {
+          "median": 109.66109343284641,
+          "highpass_percent": 0.13427854538782302,
+          "laplacian_percent": 0.05620781627677678
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32535.0,
+          "highpass_percent": 2.4535510725912926,
+          "laplacian_percent": 2.2152244012912687
+        },
+        "lower": {
+          "median": 33498.0,
+          "highpass_percent": 2.2636101255378254,
+          "laplacian_percent": 2.171829385175738
+        }
+      }
+    },
+    "multiscale_global": {
+      "raw": {
+        "upper": {
+          "median": 107.34269418756995,
+          "highpass_percent": 0.16313869900729447,
+          "laplacian_percent": 0.07022406566151222
+        },
+        "lower": {
+          "median": 109.656976518338,
+          "highpass_percent": 0.13667203458715863,
+          "laplacian_percent": 0.06479959679439692
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.732171739157825,
+          "laplacian_percent": 2.5770587618031904
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.7498112354292332,
+          "laplacian_percent": 2.4913069661880716
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          5694.338156155203,
+          5694.338156155205,
+          5694.338156155207
+        ],
+        "lower": [
+          5694.338156155203,
+          5694.338156155205,
+          5694.338156155207
+        ]
+      }
+    },
+    "multiscale_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.33623095169247,
+          "highpass_percent": 0.15897253434853237,
+          "laplacian_percent": 0.0669733685283554
+        },
+        "lower": {
+          "median": 109.65167392842021,
+          "highpass_percent": 0.1341743494132614,
+          "laplacian_percent": 0.062360412917103536
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.5620987868535146,
+          "laplacian_percent": 2.378756301535786
+        },
+        "lower": {
+          "median": 33431.0,
+          "highpass_percent": 2.542585705689156,
+          "laplacian_percent": 2.2996427792169287
+        }
+      }
+    },
+    "multiscale_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.35420678527942,
+          "highpass_percent": 0.15033892962695974,
+          "laplacian_percent": 0.05494137834760366
+        },
+        "lower": {
+          "median": 109.68592791889094,
+          "highpass_percent": 0.12477524653320572,
+          "laplacian_percent": 0.05332486724652736
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32588.0,
+          "highpass_percent": 2.121735887861199,
+          "laplacian_percent": 1.995952921416353
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 2.1180010946488945,
+          "laplacian_percent": 2.031214022658929
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          8282.535700346207,
+          8924.774482438617,
+          9341.920117142434
+        ],
+        "lower": [
+          9392.653785029028,
+          9889.970145499923,
+          10388.204280732507
+        ]
+      }
+    },
+    "multiscale_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.35164542274727,
+          "highpass_percent": 0.14695113848033703,
+          "laplacian_percent": 0.052183496856636015
+        },
+        "lower": {
+          "median": 109.67941715439717,
+          "highpass_percent": 0.12251526052825178,
+          "laplacian_percent": 0.047831930469488304
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32605.0,
+          "highpass_percent": 1.9606067215994312,
+          "laplacian_percent": 1.7569869328588783
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 1.8697314970194872,
+          "laplacian_percent": 1.7825645572421749
+        }
+      }
+    },
+    "multiscale_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.31658864775385,
+          "highpass_percent": 0.1514117989606589,
+          "laplacian_percent": 0.05940271778574685
+        },
+        "lower": {
+          "median": 109.6430240140254,
+          "highpass_percent": 0.12842745432751487,
+          "laplacian_percent": 0.05458056988412493
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.3199054311561347,
+          "laplacian_percent": 2.1253072989331288
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.1951351096822864,
+          "laplacian_percent": 2.090605200478279
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          7108.302351162728,
+          7487.204012004435,
+          7670.528678876405
+        ],
+        "lower": [
+          8134.914519891505,
+          8462.351996611214,
+          8771.948918145938
+        ]
+      }
+    },
+    "multiscale_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.30013323521908,
+          "highpass_percent": 0.14907572354613374,
+          "laplacian_percent": 0.055345922716278514
+        },
+        "lower": {
+          "median": 109.63142912488416,
+          "highpass_percent": 0.12661972531635934,
+          "laplacian_percent": 0.051303452056043974
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.1237991617190155,
+          "laplacian_percent": 1.927841007748729
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.076830112797776,
+          "laplacian_percent": 1.9333275913578403
+        }
+      }
+    },
+    "multiscale55_global": {
+      "raw": {
+        "upper": {
+          "median": 107.34343233402114,
+          "highpass_percent": 0.1679770183708019,
+          "laplacian_percent": 0.07156411994739757
+        },
+        "lower": {
+          "median": 109.66376284754503,
+          "highpass_percent": 0.1408551289910967,
+          "laplacian_percent": 0.06972434877343538
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9073134881225595,
+          "laplacian_percent": 2.6575122856848155
+        },
+        "lower": {
+          "median": 33396.0,
+          "highpass_percent": 2.9741577141389377,
+          "laplacian_percent": 2.82917235381704
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          5694.338156155203,
+          5694.338156155205,
+          5694.338156155207
+        ],
+        "lower": [
+          5694.338156155204,
+          5694.338156155205,
+          5694.338156155207
+        ]
+      }
+    },
+    "multiscale55_global_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.33983234817211,
+          "highpass_percent": 0.16409800039742992,
+          "laplacian_percent": 0.06753662262052505
+        },
+        "lower": {
+          "median": 109.66031485024384,
+          "highpass_percent": 0.13683790942115426,
+          "laplacian_percent": 0.0653466160270472
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.722717215203465,
+          "laplacian_percent": 2.4632393024033385
+        },
+        "lower": {
+          "median": 33414.0,
+          "highpass_percent": 2.7252735134893875,
+          "laplacian_percent": 2.4962677526599713
+        }
+      }
+    },
+    "multiscale55_local2": {
+      "raw": {
+        "upper": {
+          "median": 107.36085941084588,
+          "highpass_percent": 0.15674036655915788,
+          "laplacian_percent": 0.06038854466341201
+        },
+        "lower": {
+          "median": 109.6846801517792,
+          "highpass_percent": 0.13142666384664134,
+          "laplacian_percent": 0.06368837787913158
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32588.0,
+          "highpass_percent": 2.2996881597657244,
+          "laplacian_percent": 2.1246420368899352
+        },
+        "lower": {
+          "median": 33481.0,
+          "highpass_percent": 2.578960375399472,
+          "laplacian_percent": 2.5888043115519204
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          7338.650907389695,
+          8592.591630982844,
+          9361.676372179676
+        ],
+        "lower": [
+          5965.153635237071,
+          6921.79941100115,
+          8703.570366078873
+        ]
+      }
+    },
+    "multiscale55_local2_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.34756506081219,
+          "highpass_percent": 0.14679777031926955,
+          "laplacian_percent": 0.056907488765837344
+        },
+        "lower": {
+          "median": 109.66813612676715,
+          "highpass_percent": 0.12280071302417518,
+          "laplacian_percent": 0.057163206519892464
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32605.0,
+          "highpass_percent": 2.094684231998966,
+          "laplacian_percent": 1.9100115470922467
+        },
+        "lower": {
+          "median": 33515.0,
+          "highpass_percent": 2.2700901676951,
+          "laplacian_percent": 2.192984021509507
+        }
+      }
+    },
+    "multiscale55_local4": {
+      "raw": {
+        "upper": {
+          "median": 107.32358392208009,
+          "highpass_percent": 0.1532914820307996,
+          "laplacian_percent": 0.06264085240273352
+        },
+        "lower": {
+          "median": 109.67510255914685,
+          "highpass_percent": 0.13574081929078904,
+          "laplacian_percent": 0.0626050768909824
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32535.0,
+          "highpass_percent": 2.455166012071498,
+          "laplacian_percent": 2.1938261895032665
+        },
+        "lower": {
+          "median": 33481.0,
+          "highpass_percent": 2.681962835694852,
+          "laplacian_percent": 2.573456647819255
+        }
+      },
+      "frame_weight_effective_counts_p10_median_p90": {
+        "upper": [
+          6702.062004763939,
+          7231.328320128594,
+          7580.769059054657
+        ],
+        "lower": [
+          5894.2119010452,
+          6393.471647020462,
+          7242.56890500573
+        ]
+      }
+    },
+    "multiscale55_local4_registered": {
+      "raw": {
+        "upper": {
+          "median": 107.31210210648999,
+          "highpass_percent": 0.14578480607048416,
+          "laplacian_percent": 0.05831489526719524
+        },
+        "lower": {
+          "median": 109.65191542303083,
+          "highpass_percent": 0.1309530099710016,
+          "laplacian_percent": 0.05848509582717285
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.20133484533837,
+          "laplacian_percent": 1.9904398577891442
+        },
+        "lower": {
+          "median": 33481.0,
+          "highpass_percent": 2.4449981433430388,
+          "laplacian_percent": 2.2744247479957016
+        }
+      }
+    }
+  },
+  "scales": {
+    "65": {
+      "reliable_match_fraction": 0.2083995721463338,
+      "selection": {
+        "global": {
+          "overlap_with_original_percent": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.028291828048258607,
+              -0.041646808493355315
+            ],
+            [
+              -0.003776187510326877,
+              -0.027200147598756382
+            ],
+            [
+              -0.013718912389012974,
+              -0.012871547640272527
+            ],
+            [
+              -0.08282214281370885,
+              -0.0034385852334248273
+            ],
+            [
+              -0.006992909605611533,
+              0.0012472338369969576
+            ],
+            [
+              0.001876650813065841,
+              -0.0003328573910131646
+            ],
+            [
+              -0.03553305247908791,
+              -0.05034524233725011
+            ],
+            [
+              0.0008095077270840163,
+              0.061997062278365656
+            ],
+            [
+              0.004843739205297925,
+              0.06106468684876364
+            ],
+            [
+              -0.025145844936551472,
+              -0.17163436885835254
+            ],
+            [
+              -0.020296883886513104,
+              -0.05031454913189423
+            ],
+            [
+              -0.01456327065266585,
+              0.041250970743203066
+            ],
+            [
+              -0.006623627022844897,
+              0.0553940543565055
+            ],
+            [
+              -0.0037493995263775184,
+              0.0632267815445294
+            ],
+            [
+              0.005414800813674636,
+              -0.07631172306822183
+            ],
+            [
+              0.011095713520140738,
+              -0.04356376266216545
+            ],
+            [
+              -0.04951668744594621,
+              -0.0452743018604649
+            ],
+            [
+              0.004122509291190309,
+              -0.009244486769430993
+            ],
+            [
+              -0.029835452287377776,
+              0.020108807607836756
+            ],
+            [
+              -0.009768066967015439,
+              0.02792621765102005
+            ],
+            [
+              0.05991374572856894,
+              0.00535602083737011
+            ],
+            [
+              0.01774086432828118,
+              0.03464577588758683
+            ],
+            [
+              -0.015211422852187007,
+              0.05383912579858243
+            ],
+            [
+              0.005006093053539704,
+              0.042192219147041174
+            ],
+            [
+              0.003981919381430721,
+              -0.031872280139555426
+            ],
+            [
+              0.043019451447639134,
+              0.02747705800146345
+            ],
+            [
+              -0.04509331952925698,
+              0.009121122749377935
+            ],
+            [
+              0.0032836785325664297,
+              -0.02881398796936975
+            ],
+            [
+              0.009511974800458048,
+              0.05420499542139722
+            ],
+            [
+              0.028404304270859076,
+              0.237136441856008
+            ],
+            [
+              0.03891842092635274,
+              0.24532796930562067
+            ],
+            [
+              0.00878793847395147,
+              0.20803619390037806
+            ],
+            [
+              -0.03420574902312166,
+              0.04567143129896129
+            ],
+            [
+              -0.005617829128187842,
+              -0.014415012406872653
+            ],
+            [
+              -0.03214586405226458,
+              0.0956600509491824
+            ],
+            [
+              0.03532442162082283,
+              -0.08378470218509382
+            ],
+            [
+              -0.008068439824393736,
+              0.00977319052569286
+            ],
+            [
+              0.005612583782743177,
+              -0.004234358381394528
+            ],
+            [
+              0.004936110137378004,
+              -0.012815408608809234
+            ],
+            [
+              -0.026896796094773648,
+              -0.017594848285949385
+            ],
+            [
+              -0.00015365812698737684,
+              -0.010347722078085632
+            ],
+            [
+              0.00954311767786294,
+              0.01106815729095425
+            ],
+            [
+              -0.04771435963494418,
+              0.051425404756720965
+            ],
+            [
+              -0.016027786508264103,
+              0.018946071726284278
+            ],
+            [
+              0.0016748423488907524,
+              0.011800847329158995
+            ],
+            [
+              -0.006463045759281143,
+              0.01371298746545806
+            ],
+            [
+              -0.0004933227600523128,
+              0.02308361286080715
+            ],
+            [
+              0.0423487088324156,
+              0.03833847865991737
+            ]
+          ]
+        },
+        "local2": {
+          "overlap_with_original_percent": [
+            12.443360055768562,
+            50.03485535029627,
+            77.29173928197979
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.055967934142268444,
+              -0.0682721701791213
+            ],
+            [
+              -0.019080247255018147,
+              -0.03201379934959087
+            ],
+            [
+              -0.01326766940444547,
+              -0.013294299598786289
+            ],
+            [
+              -0.06877768663564912,
+              -0.003998887918821016
+            ],
+            [
+              -0.003095731776643346,
+              -0.0007177622000662248
+            ],
+            [
+              0.016144827938746706,
+              -0.01409720488089702
+            ],
+            [
+              -0.05692911759444509,
+              -0.1356323388023416
+            ],
+            [
+              -0.008282397896555526,
+              0.04733513429573645
+            ],
+            [
+              0.010864310006989827,
+              0.09728766337539467
+            ],
+            [
+              -0.02776003286556612,
+              -0.294868345090444
+            ],
+            [
+              -0.027567428783997445,
+              -0.08781139526281431
+            ],
+            [
+              -0.015102151568472751,
+              0.05639104555812977
+            ],
+            [
+              -0.0066625799585692735,
+              0.058491147817964086
+            ],
+            [
+              -0.009439400784210577,
+              0.06535738650352386
+            ],
+            [
+              0.003186267872797845,
+              -0.09749914208209254
+            ],
+            [
+              0.0017279647505722168,
+              -0.049786370420298695
+            ],
+            [
+              -0.05034996623488669,
+              -0.04763588137522838
+            ],
+            [
+              0.002906238529121081,
+              -0.009884054554464542
+            ],
+            [
+              -0.03505562052908184,
+              0.014337635429947575
+            ],
+            [
+              -0.007145787955343006,
+              0.03369160928626381
+            ],
+            [
+              0.06644560455846996,
+              -0.012838701892424156
+            ],
+            [
+              0.022520109927311988,
+              0.02037850344488239
+            ],
+            [
+              -0.013018586093297549,
+              0.01840666126708246
+            ],
+            [
+              0.01142175212901058,
+              0.03763046613155835
+            ],
+            [
+              -0.02708385583846865,
+              0.13068767925401178
+            ],
+            [
+              0.01905732703756296,
+              0.13220241782484674
+            ],
+            [
+              -0.05948924179802066,
+              0.056538631777121165
+            ],
+            [
+              0.005616177853911525,
+              -0.038093774077047296
+            ],
+            [
+              0.01863311661534235,
+              0.11032615706943959
+            ],
+            [
+              0.03201980022529112,
+              0.4028686302591713
+            ],
+            [
+              0.05273470578033789,
+              0.4010912655901954
+            ],
+            [
+              0.011080984081333525,
+              0.33046221604856185
+            ],
+            [
+              -0.037273900881156015,
+              0.06613053843504538
+            ],
+            [
+              -0.010156447199232813,
+              -0.01828717272356544
+            ],
+            [
+              -0.00417588650750227,
+              0.20523237374286818
+            ],
+            [
+              0.05533914179514949,
+              0.02694359894757145
+            ],
+            [
+              -0.02546240194218483,
+              0.021411297235170965
+            ],
+            [
+              0.0015199170041724965,
+              -0.006430921543929665
+            ],
+            [
+              0.0016415547131194462,
+              -0.02803834047634301
+            ],
+            [
+              -0.04037799778227628,
+              -0.03812261429011187
+            ],
+            [
+              -0.003293675065739941,
+              -0.021469009880427256
+            ],
+            [
+              0.023411134525036112,
+              0.018615994339746204
+            ],
+            [
+              -0.19004136416971124,
+              0.19250685573744228
+            ],
+            [
+              -0.04554520400267805,
+              0.04401477159603279
+            ],
+            [
+              -0.022775443551819933,
+              0.03161645008224385
+            ],
+            [
+              0.01981324330668094,
+              0.03240010851929053
+            ],
+            [
+              0.029326364600776027,
+              0.04573649266897389
+            ],
+            [
+              0.09473777281837283,
+              0.08514643140085738
+            ]
+          ]
+        },
+        "local4": {
+          "overlap_with_original_percent": [
+            20.79121645172534,
+            56.98849773440223,
+            75.94980829557338
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.059968714668774986,
+              -0.07330623762031926
+            ],
+            [
+              -0.015969570957365977,
+              -0.027085988759382593
+            ],
+            [
+              -0.005566015767443223,
+              0.0037855402976367533
+            ],
+            [
+              -0.10590407743970952,
+              0.016677367441675695
+            ],
+            [
+              -0.013655886578299728,
+              0.014345654159950616
+            ],
+            [
+              0.013102745466883873,
+              -0.010811061434302329
+            ],
+            [
+              -0.05568781316486035,
+              -0.13278508478634793
+            ],
+            [
+              -0.006497031250704489,
+              0.047186341907860065
+            ],
+            [
+              0.006397605689862028,
+              0.06811862306966175
+            ],
+            [
+              -0.04077583013894841,
+              -0.2569588423954906
+            ],
+            [
+              -0.024390126192860396,
+              -0.08417317234970795
+            ],
+            [
+              -0.011437191755240383,
+              0.0464662766693967
+            ],
+            [
+              -0.007172757264643607,
+              0.06327973137087631
+            ],
+            [
+              -0.01293042413872404,
+              0.06137460841548045
+            ],
+            [
+              0.004072825776531353,
+              -0.10989460498059175
+            ],
+            [
+              0.0077005562951485956,
+              -0.050360145899762
+            ],
+            [
+              -0.05002453886408113,
+              -0.0413762158528791
+            ],
+            [
+              0.0015230890092498956,
+              -0.008392088183046176
+            ],
+            [
+              -0.03353310386467817,
+              0.02626299873961763
+            ],
+            [
+              -0.005893055877114604,
+              0.036367475822666806
+            ],
+            [
+              0.06946221370567442,
+              -0.00870044168170266
+            ],
+            [
+              0.01102951426746283,
+              -0.009119710798735272
+            ],
+            [
+              -0.010058861102068996,
+              -0.009809076794848255
+            ],
+            [
+              0.014496475153692035,
+              0.039448738093352816
+            ],
+            [
+              -0.03436996264650463,
+              0.15950202401120372
+            ],
+            [
+              0.010045702520881676,
+              0.18555987109558542
+            ],
+            [
+              -0.05769436311822276,
+              0.0674498141484394
+            ],
+            [
+              0.005114040798142413,
+              -0.037576593829713775
+            ],
+            [
+              0.016848422422656103,
+              0.10287289469619672
+            ],
+            [
+              0.03245395051915763,
+              0.3427334043395235
+            ],
+            [
+              0.05615230929870404,
+              0.34575818688644516
+            ],
+            [
+              0.01118917829051598,
+              0.2928009161487239
+            ],
+            [
+              -0.033272987389030506,
+              0.06469469713971687
+            ],
+            [
+              -0.013373239979577966,
+              -0.024442918825687547
+            ],
+            [
+              -0.001446221493256403,
+              0.23478248871296153
+            ],
+            [
+              0.06369701660756615,
+              0.002517210048109654
+            ],
+            [
+              -0.02572776819777504,
+              0.02273705549020007
+            ],
+            [
+              0.00829103240358388,
+              -0.014503387662828162
+            ],
+            [
+              0.027407842793753034,
+              -0.03184206188382337
+            ],
+            [
+              -0.025655290025188474,
+              -0.03349926480317687
+            ],
+            [
+              -0.014236673365176087,
+              -0.02801249094270907
+            ],
+            [
+              0.01934049416580132,
+              0.013191675597758344
+            ],
+            [
+              -0.18480884013426505,
+              0.18637721679943295
+            ],
+            [
+              -0.04667668833664879,
+              0.04363890210896035
+            ],
+            [
+              -0.01411479151557365,
+              0.019521498887149994
+            ],
+            [
+              0.021065479467853743,
+              0.018668841572797527
+            ],
+            [
+              0.02479605917464886,
+              0.0379852234991204
+            ],
+            [
+              0.09604175875053296,
+              0.08633005534662223
+            ]
+          ]
+        }
+      }
+    },
+    "93": {
+      "reliable_match_fraction": 0.27706032693079324,
+      "selection": {
+        "global": {
+          "overlap_with_original_percent": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.044862657225035095,
+              -0.03595586324145253
+            ],
+            [
+              -0.022629431033923925,
+              -0.022678691986981334
+            ],
+            [
+              -0.02517637693675304,
+              -0.013726820261088235
+            ],
+            [
+              0.013769142497415812,
+              -0.01289881128042848
+            ],
+            [
+              -0.026736610099985757,
+              -0.04719689472709235
+            ],
+            [
+              -0.00813717919898222,
+              -0.011536437232103876
+            ],
+            [
+              -0.02016627964402529,
+              0.0025519842730202043
+            ],
+            [
+              -0.01646553098149309,
+              0.01782628239198215
+            ],
+            [
+              -8.762158272755004e-05,
+              0.009528549795188709
+            ],
+            [
+              0.009350974401519758,
+              -0.03533073774468568
+            ],
+            [
+              -0.020392536067575552,
+              0.18222264127373755
+            ],
+            [
+              0.0064369842176863834,
+              -0.0229710632164127
+            ],
+            [
+              0.004041464630126905,
+              -0.05906489379733833
+            ],
+            [
+              -0.0051843252433261,
+              0.03580686480676091
+            ],
+            [
+              -0.01524286451963204,
+              0.019076118868073158
+            ],
+            [
+              0.009080403917594992,
+              0.0003811083271817381
+            ],
+            [
+              -0.0028259072758199826,
+              0.03741658904380346
+            ],
+            [
+              0.018623293772206794,
+              0.025425851034975872
+            ],
+            [
+              0.00882631439882718,
+              0.06060145231604042
+            ],
+            [
+              0.005416526888261524,
+              0.05299242268477181
+            ],
+            [
+              0.003944011380923935,
+              -0.08040246173970897
+            ],
+            [
+              0.014291303017825533,
+              0.016971121723807048
+            ],
+            [
+              0.002914435873035305,
+              -0.02998650489022181
+            ],
+            [
+              0.009273827058840224,
+              -0.06308445000748628
+            ],
+            [
+              -0.0027010987334912216,
+              -0.0599918533033693
+            ],
+            [
+              0.005371584746353999,
+              -0.018348168093009556
+            ],
+            [
+              -0.003636074037483564,
+              0.03060942173102209
+            ],
+            [
+              0.010529587818100232,
+              0.049612993471097225
+            ],
+            [
+              -0.019169673258536236,
+              0.045900067275066486
+            ],
+            [
+              -0.0032842495288419728,
+              0.016139389583956956
+            ],
+            [
+              0.00473936298912412,
+              0.013502646443927714
+            ],
+            [
+              -0.0024138310308177997,
+              0.018902835965302435
+            ],
+            [
+              0.01738668009536046,
+              0.02688604839688817
+            ],
+            [
+              0.04266076730364729,
+              0.055379850256714006
+            ],
+            [
+              -0.060791576626655304,
+              0.05925020478349737
+            ],
+            [
+              0.07763272159061578,
+              0.061812935036199744
+            ]
+          ]
+        },
+        "local2": {
+          "overlap_with_original_percent": [
+            18.089926803764378,
+            50.16556291390728,
+            78.0411293133496
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.09768958311337095,
+              -0.07955551753394337
+            ],
+            [
+              -0.05781295733276676,
+              -0.04847619778745925
+            ],
+            [
+              -0.0010474969081826105,
+              -0.040810193959957615
+            ],
+            [
+              0.07568124131113274,
+              -0.0682278505243398
+            ],
+            [
+              -0.06251862123126434,
+              -0.07827709300820057
+            ],
+            [
+              -0.01600808339259382,
+              -0.011636528933754517
+            ],
+            [
+              -0.017260301397865507,
+              0.01190422261398744
+            ],
+            [
+              -0.011349260163114256,
+              0.024076603109922427
+            ],
+            [
+              0.006432918279132512,
+              0.0024120001945904766
+            ],
+            [
+              0.0567532277018097,
+              -0.1070378429595241
+            ],
+            [
+              -0.03146938494010526,
+              0.16807964482935878
+            ],
+            [
+              -0.0028671984699485233,
+              -0.019529260449554057
+            ],
+            [
+              -0.01015806567135753,
+              -0.07879103102547808
+            ],
+            [
+              -0.004646622795839505,
+              0.030582268524160097
+            ],
+            [
+              -0.012765083995980947,
+              0.012691180260768925
+            ],
+            [
+              0.01107997422073205,
+              0.005464609849748375
+            ],
+            [
+              -0.0032249307449992073,
+              0.042759799847717474
+            ],
+            [
+              0.025301138313800757,
+              -0.004983973907052666
+            ],
+            [
+              0.01647400046684075,
+              0.014770176220051136
+            ],
+            [
+              0.017786718615338953,
+              0.05510715021880955
+            ],
+            [
+              -0.00959966072307301,
+              0.09621336705020825
+            ],
+            [
+              0.014461226557146985,
+              0.005566022684258579
+            ],
+            [
+              0.0015092864297699424,
+              -0.046005298683762484
+            ],
+            [
+              0.011969089911067331,
+              -0.09315456980011037
+            ],
+            [
+              -0.011723197431942958,
+              -0.09494715351323518
+            ],
+            [
+              0.0024464082620025223,
+              -0.02740330251818036
+            ],
+            [
+              -0.005564658899079973,
+              0.027468504909991576
+            ],
+            [
+              0.025108023943796246,
+              0.20443881734118505
+            ],
+            [
+              -0.11643139114589843,
+              0.15725972661763912
+            ],
+            [
+              -0.014616836695385682,
+              0.027802945834880008
+            ],
+            [
+              -0.010196045267076117,
+              0.026016371424349597
+            ],
+            [
+              0.009991719365401256,
+              0.03284654169525245
+            ],
+            [
+              0.0328697959208552,
+              0.043231248664414273
+            ],
+            [
+              0.13203258064338338,
+              0.15955526825653554
+            ],
+            [
+              -0.16439375654282,
+              0.1308550420005478
+            ],
+            [
+              0.18559327046035845,
+              0.1386635693975296
+            ]
+          ]
+        },
+        "local4": {
+          "overlap_with_original_percent": [
+            27.43116068316487,
+            60.256186824677584,
+            76.5597769257581
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.10391927159339638,
+              -0.08500442084938602
+            ],
+            [
+              -0.0544696668475118,
+              -0.04272839561357825
+            ],
+            [
+              -0.006252515003905613,
+              -0.03538486648182843
+            ],
+            [
+              0.08709452230012106,
+              -0.07918868025160572
+            ],
+            [
+              -0.0708085091492275,
+              -0.08799621198965929
+            ],
+            [
+              -0.013046807036415014,
+              -0.008897924762701409
+            ],
+            [
+              -0.011507141596924215,
+              0.01844166516535959
+            ],
+            [
+              -0.028833811598958724,
+              0.036644447538989135
+            ],
+            [
+              0.001664843990472211,
+              0.008306473891166486
+            ],
+            [
+              0.06319586565743264,
+              -0.11257788533635778
+            ],
+            [
+              -0.033660924773995744,
+              0.18745019257467493
+            ],
+            [
+              -0.007467183224433371,
+              -0.0360981652829413
+            ],
+            [
+              -0.008157588710888482,
+              -0.08725420456627805
+            ],
+            [
+              -0.002687153997291996,
+              0.034902125250664814
+            ],
+            [
+              -0.011953019415385773,
+              0.012362317012992027
+            ],
+            [
+              0.009803141059158669,
+              -0.0004947088637522484
+            ],
+            [
+              -0.004053460684328729,
+              0.044541253511202576
+            ],
+            [
+              0.019099366090500447,
+              -0.026582536452470412
+            ],
+            [
+              0.0219750212564543,
+              -0.011467184095231023
+            ],
+            [
+              0.023472703783415573,
+              0.059490229103027016
+            ],
+            [
+              -0.015968531581182704,
+              0.1543039528787071
+            ],
+            [
+              0.016270793805072157,
+              -0.0043736303610770475
+            ],
+            [
+              0.0029384888112583504,
+              -0.04209822227398144
+            ],
+            [
+              0.012592318447720763,
+              -0.02255919335005682
+            ],
+            [
+              -0.008186694047653183,
+              -0.02739694254195495
+            ],
+            [
+              -0.002345398117736387,
+              -0.021812839033632278
+            ],
+            [
+              -0.006286888091790771,
+              0.01940264618743437
+            ],
+            [
+              0.030113686084099048,
+              0.24607062074583472
+            ],
+            [
+              -0.11335819173848782,
+              0.1504887043691434
+            ],
+            [
+              -0.013362774993377735,
+              0.02627948418165189
+            ],
+            [
+              0.0017137286550211596,
+              0.011531610667189622
+            ],
+            [
+              0.001955287698670506,
+              0.017864700935031695
+            ],
+            [
+              0.029933408384380585,
+              0.04021963723243733
+            ],
+            [
+              0.12806041697919995,
+              0.15291236431730287
+            ],
+            [
+              -0.15554070055347125,
+              0.11891272040294038
+            ],
+            [
+              0.17536430598598104,
+              0.1232977840496697
+            ]
+          ]
+        }
+      }
+    },
+    "131": {
+      "reliable_match_fraction": 0.3140442341455059,
+      "selection": {
+        "global": {
+          "overlap_with_original_percent": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.14226291412546727,
+              -0.03738497623532143
+            ],
+            [
+              0.016322559970885404,
+              -0.02919913840597964
+            ],
+            [
+              -0.04435416770034682,
+              -0.07085004109173458
+            ],
+            [
+              -0.003681770185908259,
+              -0.027452189802524958
+            ],
+            [
+              -0.018671175787894286,
+              -0.0607891660513177
+            ],
+            [
+              0.004508935445845723,
+              -0.05160300820742133
+            ],
+            [
+              -0.004737399090736484,
+              0.0040279132149873085
+            ],
+            [
+              -0.00010797852608647136,
+              -0.02702541496914988
+            ],
+            [
+              -0.02689705316798281,
+              -0.061757919773505615
+            ],
+            [
+              -0.0008413956213729959,
+              0.02601583212050776
+            ],
+            [
+              0.000537255661781418,
+              0.033173301920550215
+            ],
+            [
+              0.0016744586426174928,
+              0.044274054245167345
+            ],
+            [
+              0.012591061310181579,
+              0.027203587434737473
+            ],
+            [
+              -0.009098445370067836,
+              0.02852366505449024
+            ],
+            [
+              0.04727148846442257,
+              0.02647670684800281
+            ],
+            [
+              -0.013895113178731962,
+              0.006536161001175038
+            ],
+            [
+              0.008311710979690575,
+              0.029713956567142128
+            ],
+            [
+              0.006832159487837036,
+              0.04498294127695321
+            ],
+            [
+              5.147190097696032e-05,
+              0.04148115679209826
+            ],
+            [
+              -0.00672271835824283,
+              0.006994024061044873
+            ],
+            [
+              -0.029735458748241423,
+              0.02247474328825246
+            ],
+            [
+              0.036327415779806235,
+              0.028049203556167784
+            ]
+          ]
+        },
+        "local2": {
+          "overlap_with_original_percent": [
+            46.00906239107703,
+            57.38062042523528,
+            79.92331822934821
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.21363446440037479,
+              -0.08322517883971395
+            ],
+            [
+              0.09007495103401553,
+              -0.08377664695598441
+            ],
+            [
+              -0.07824324456786282,
+              -0.15982528777911198
+            ],
+            [
+              -0.012234562758944481,
+              -0.04972600940083391
+            ],
+            [
+              -0.0268484156857345,
+              -0.0805093523966673
+            ],
+            [
+              0.011203179987819278,
+              -0.07058155928008615
+            ],
+            [
+              -0.001094410153237687,
+              -0.004287993448854096
+            ],
+            [
+              -0.011129008711770357,
+              0.010160024721784887
+            ],
+            [
+              -0.028730421785797045,
+              -0.04668307501256546
+            ],
+            [
+              -0.002262927679272303,
+              0.023042969470618242
+            ],
+            [
+              0.0006172279240200739,
+              0.03150809271060428
+            ],
+            [
+              0.000989380358491865,
+              0.051305129432027044
+            ],
+            [
+              0.020918033845756055,
+              0.023616871939240853
+            ],
+            [
+              -0.0036305379029246605,
+              0.021115285955357718
+            ],
+            [
+              -0.022143458359873636,
+              0.1705350184852147
+            ],
+            [
+              -0.03692092280676394,
+              0.07698917052832942
+            ],
+            [
+              0.008225764816335699,
+              0.03271172158202066
+            ],
+            [
+              -0.0019294027196372278,
+              0.0668847828661953
+            ],
+            [
+              0.0031710672624726964,
+              0.06167796752359952
+            ],
+            [
+              -0.008540042745143587,
+              0.008507338885747286
+            ],
+            [
+              -0.0729099224823717,
+              0.05903705309228605
+            ],
+            [
+              0.09017954337210905,
+              0.06944766445037107
+            ]
+          ]
+        },
+        "local4": {
+          "overlap_with_original_percent": [
+            47.33356570233531,
+            59.794353433252006,
+            79.08678982223772
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.20704226814863733,
+              -0.08112147708380238
+            ],
+            [
+              0.094175258686076,
+              -0.08907583977598216
+            ],
+            [
+              -0.08367764922964334,
+              -0.1694180316191897
+            ],
+            [
+              -0.012229741859181952,
+              -0.04864007941781306
+            ],
+            [
+              -0.024180340710649686,
+              -0.06730303279884764
+            ],
+            [
+              0.005759532825246847,
+              -0.060972424087175715
+            ],
+            [
+              -0.0005527086737935613,
+              -0.0038779205716869022
+            ],
+            [
+              -0.01589129038338439,
+              0.012390587741156004
+            ],
+            [
+              -0.02849378729120153,
+              -0.03895083537275004
+            ],
+            [
+              -0.002555919221426103,
+              0.017692239007730245
+            ],
+            [
+              0.0018343842488437714,
+              0.03920441174392806
+            ],
+            [
+              0.0013461175384922009,
+              0.04888964320480544
+            ],
+            [
+              0.021166972808782145,
+              0.020962380584189234
+            ],
+            [
+              -0.001166970239177274,
+              0.017772881231113702
+            ],
+            [
+              -0.036728749612341544,
+              0.19178001014678792
+            ],
+            [
+              -0.04206910624839042,
+              0.09818546113700222
+            ],
+            [
+              0.009929571534064159,
+              0.029616254713226018
+            ],
+            [
+              0.008066358215633283,
+              0.046001374768245853
+            ],
+            [
+              -0.0009543025442357719,
+              0.05200959673868171
+            ],
+            [
+              -0.010545265425499325,
+              0.004848236247447929
+            ],
+            [
+              -0.06694325330058697,
+              0.053475417888170076
+            ],
+            [
+              0.08341609076859996,
+              0.06523448657948965
+            ]
+          ]
+        }
+      }
+    },
+    "185": {
+      "reliable_match_fraction": 0.34828578157593704,
+      "selection": {
+        "global": {
+          "overlap_with_original_percent": [
+            100.0,
+            100.0,
+            100.0
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.010523026704004528,
+              0.0008269335481298047
+            ],
+            [
+              0.00034054183464723867,
+              0.008640639240941996
+            ],
+            [
+              0.00426811765128023,
+              0.009028125406661683
+            ],
+            [
+              0.00616500352029566,
+              0.039282484092884054
+            ],
+            [
+              -0.009970433413884731,
+              -0.06225380428747192
+            ],
+            [
+              -0.003974408164450315,
+              0.018170902237305945
+            ],
+            [
+              0.005465432145004967,
+              -0.004852644300657805
+            ],
+            [
+              0.0040335222013315585,
+              0.045990003891574434
+            ],
+            [
+              0.007576026083534818,
+              0.028776380767182586
+            ],
+            [
+              0.0009250056989255607,
+              -0.009309485772852231
+            ],
+            [
+              -0.0008950354868396287,
+              -0.026116443167692426
+            ],
+            [
+              0.008548188322193579,
+              -0.025565092648194822
+            ],
+            [
+              -0.002705291311097327,
+              -0.010773980353063775
+            ],
+            [
+              0.0016399067919096243,
+              0.05993927027340492
+            ]
+          ]
+        },
+        "local2": {
+          "overlap_with_original_percent": [
+            49.18089926803764,
+            67.36667828511676,
+            83.77483443708608
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.02418957438763696,
+              -0.0015654455704426774
+            ],
+            [
+              0.012661786411214224,
+              -0.0017326534063556143
+            ],
+            [
+              0.022908601615831744,
+              -0.01137743803188953
+            ],
+            [
+              -0.0009197185034979841,
+              0.056439135099385786
+            ],
+            [
+              -0.01080633220522267,
+              -0.048641868195680026
+            ],
+            [
+              -0.003864067374682183,
+              0.017615698865982802
+            ],
+            [
+              0.007904585580578084,
+              -0.00760107170109281
+            ],
+            [
+              0.003891085815790769,
+              0.05418223124804349
+            ],
+            [
+              0.025477569729701877,
+              0.007029878846830336
+            ],
+            [
+              -0.006068601802831602,
+              0.08028606864721335
+            ],
+            [
+              -0.001685496821697741,
+              -0.044740523691357295
+            ],
+            [
+              0.012270022406669084,
+              -0.03164240580872756
+            ],
+            [
+              -0.00417872895925433,
+              -0.018437428522468345
+            ],
+            [
+              0.040057505260344364,
+              0.18338239017909377
+            ]
+          ]
+        },
+        "local4": {
+          "overlap_with_original_percent": [
+            49.04147786685256,
+            66.28616242593239,
+            81.89264552108749
+          ],
+          "post_stack_shifts_xy": [
+            [
+              -0.021951621120594216,
+              -0.0018302704719678775
+            ],
+            [
+              0.006815333445976366,
+              0.0031356335088120356
+            ],
+            [
+              0.02520889493881676,
+              -0.015208491157343807
+            ],
+            [
+              -0.004320517817125165,
+              0.053031172172489725
+            ],
+            [
+              -0.010805004607393608,
+              -0.04335700710403752
+            ],
+            [
+              -0.003268323055591261,
+              0.011216820748293117
+            ],
+            [
+              0.008619071838009855,
+              -0.00785537869331553
+            ],
+            [
+              0.004044207248930932,
+              0.05063712992053583
+            ],
+            [
+              0.03284968713833267,
+              0.002115077309353888
+            ],
+            [
+              -0.007334397673533077,
+              0.11017625327410464
+            ],
+            [
+              0.0005970231532004819,
+              -0.04330107580407277
+            ],
+            [
+              0.007941047287902282,
+              -0.028156147622864263
+            ],
+            [
+              -0.005546788036858011,
+              -0.023913887450452788
+            ],
+            [
+              0.04977542957102539,
+              0.22200386990365317
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "sparse_ap_counts": {
+    "65": 22,
+    "93": 15,
+    "131": 10,
+    "185": 8
+  },
+  "sparse_layout": "spatially spread 55-AP subset; not the exact AS coordinates",
+  "scale65_control_max_error_adu": {
+    "global": 0.0,
+    "global_registered": 2.842170943040401e-14,
+    "local2": 0.0,
+    "local2_registered": 2.842170943040401e-14,
+    "local4": 0.0,
+    "local4_registered": 2.842170943040401e-14
+  },
+  "date": "2026-09-27",
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "multiscale55_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_global.png",
+        "source_sha256": "182ec706230310946c672454a1a12673ad67fc5f4b315afc794855e60817d375",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_global_sharpened.png",
+        "output_sha256": "73a8df4d78984bf6b5da4873e0ad6a5cbe88fdb031118e5e172592c0572de549"
+      },
+      "multiscale55_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_global_registered.png",
+        "source_sha256": "5f816b454944d956ee5b485fb8aeb7db88b9000fddcfd63e12dec1b77c9fb57d",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_global_registered_sharpened.png",
+        "output_sha256": "0143afd8d17323224ea957987472c91a3d659692302b8f3f201f8342213d7aa4"
+      },
+      "multiscale55_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_local2.png",
+        "source_sha256": "6b29903379def6772df6241b37cc865292445c52e7d7d47cd11723d5126efbf4",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_local2_sharpened.png",
+        "output_sha256": "e516f59a67d07819a3745f74fc83c9dfaabb40e82d1b8452b6813218c58958f8"
+      },
+      "multiscale55_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_local2_registered.png",
+        "source_sha256": "42a32419574a298fbb2c14ef526dfee5592fb6827c431ba7188cd62a165b741f",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_local2_registered_sharpened.png",
+        "output_sha256": "df55ea6a079b3d85a2bd5da0ec5a15b386d25bd6033efbb9a63715ef3bd7e3c3"
+      },
+      "multiscale55_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_local4.png",
+        "source_sha256": "fc90f189524b7d2433e3abc01d5d4860241f8ec7297e43048012ff4b6e85a151",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_local4_sharpened.png",
+        "output_sha256": "2ff3ee88b8a8e031d61cf784d725ed1d0666463f13c933c3351770987eaeef6d"
+      },
+      "multiscale55_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale55_local4_registered.png",
+        "source_sha256": "d7a1d4ef885de1f6b7ae93592031622ffd33596729d33e5f5b59462492a5d379",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale55_local4_registered_sharpened.png",
+        "output_sha256": "33672a7ff823b5280b3fc0336a85f68e45ef6c6a16f01c0f082d4a662e1d6293"
+      },
+      "multiscale_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_global.png",
+        "source_sha256": "909eb65e57424761d622dc933b885a5f6da5c544203f60dc6bf0410878c36939",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_global_sharpened.png",
+        "output_sha256": "8303d3e6298aeddc52b0a2fb4372a416fbee07f8052d4b62769e269e86f14632"
+      },
+      "multiscale_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_global_registered.png",
+        "source_sha256": "606f47a0b96ff23fb56e5ed7b22767ea534ef21f0bbf14a6ee14372ce65af61f",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_global_registered_sharpened.png",
+        "output_sha256": "ba0e4ebacff1657e846fad783b1bb3e597c4f594c5ffb1519fd5270d4045d04b"
+      },
+      "multiscale_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_local2.png",
+        "source_sha256": "68b251a2b7015537fe27d427f6f04bb499ee68df98ed589a4ae3e3a41a9ce777",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_local2_sharpened.png",
+        "output_sha256": "0cde1f4f4db591716ee019168ff8a2ff3fb6e5316afe31b98c2f7a7250980ea5"
+      },
+      "multiscale_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_local2_registered.png",
+        "source_sha256": "4944c5a8f28aba776e96a8b12cabb97a85dff33d8163440708f8e9442310e877",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_local2_registered_sharpened.png",
+        "output_sha256": "62dd8298a9dda055d7ea974a31678c1ff11a827006198aa4a97370078b73ad87"
+      },
+      "multiscale_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_local4.png",
+        "source_sha256": "0477af47c5e2c28f00a4b31772c24de6b8da909bdbd84cf722cb4cca7a5a1ad6",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_local4_sharpened.png",
+        "output_sha256": "95028d03ac2d654a3035fcb0841408a599e74c13bbb8a74549765563099ff224"
+      },
+      "multiscale_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/multiscale_local4_registered.png",
+        "source_sha256": "b65f449dc52bbf2c5dcdb2bf5db0d99f8bbbcbe0c423b5251c27791c0af6759f",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_local4_registered_sharpened.png",
+        "output_sha256": "c194ddcf5e4fbef33abbaf1e5d7eb040db59ed9c3d02335b7e75dc8c70ad5b0c"
+      },
+      "scale131_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_global.png",
+        "source_sha256": "6dbd54acfe74106bbbb7bee2e096ceabed18a17d460ec79a377a50bc2e953fc0",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_global_sharpened.png",
+        "output_sha256": "3bcf7ed64f6383f21a547a760b3467b759e3f1a874b10fee4e7d7e0c4396c112"
+      },
+      "scale131_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_global_registered.png",
+        "source_sha256": "dff3ba0a4e6b03ce279d9dec0c947bc62bf456012888cba23c002715b3ebe720",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_global_registered_sharpened.png",
+        "output_sha256": "5d72ae1e4cf3a1c70ad1369b147fefc74d7909a1ac5065f638b5e04a68493024"
+      },
+      "scale131_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_local2.png",
+        "source_sha256": "5a2be8461885e0d760fdca7d034e6edbb27e0fe5c8efb93baa83c5d4923e4e0e",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_local2_sharpened.png",
+        "output_sha256": "673622c44e5b4f6ae3178fe02f840014b57172be58d7ab65a2387181a7fa4774"
+      },
+      "scale131_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_local2_registered.png",
+        "source_sha256": "ed929317dbebad9c2b2d2ee3f85ad25378eaa020c4086cddb59d122a8e14df83",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_local2_registered_sharpened.png",
+        "output_sha256": "6a27773c8fbad180cf7455784afb7749c09cc6f7f7e60492d6970d030d803980"
+      },
+      "scale131_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_local4.png",
+        "source_sha256": "2e8fb0ebe0c8f38a6b08fa154c9436d75f0b58b478e751174c091359027b6c82",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_local4_sharpened.png",
+        "output_sha256": "cdea96b1dc75db528fe2dfbbb7bb1673dc5a6b17183cbff850e5a4e607345ff1"
+      },
+      "scale131_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale131_local4_registered.png",
+        "source_sha256": "93c48a29cb1a616122d9e0b12665a521b753cf7a07304fb2b58d518d52aaee24",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale131_local4_registered_sharpened.png",
+        "output_sha256": "c4ba4c7d95e98e8bb41f666098ac2c971bb9e3a00527bbe4fa47bb43af0f6f56"
+      },
+      "scale185_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_global.png",
+        "source_sha256": "4cc10883bf12fd91fd28142d1299fa36bb5d2d11a86464019b4faadc58bcc23a",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_global_sharpened.png",
+        "output_sha256": "a35fc576e5eb41fcda5fc19c4325fcc7f59c410b7980d4fb9fa674533c2b9c1b"
+      },
+      "scale185_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_global_registered.png",
+        "source_sha256": "e3620e982d362be49c806eb441d9d03bbb40d0c0eb68440b66fab1cce218a30e",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_global_registered_sharpened.png",
+        "output_sha256": "70b49ea395c856b6bf3e1b9cbb21c7632393f4301f85ff2b400ab6777a38c563"
+      },
+      "scale185_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_local2.png",
+        "source_sha256": "ccd01aa228fc5bcd1db3b2e930963e0f9ceda765f884d1e45eac6b8bc167bd13",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_local2_sharpened.png",
+        "output_sha256": "b61b89f7de5c66c0144fbce95acddc00d4610a253359491b61fb61091dc061a2"
+      },
+      "scale185_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_local2_registered.png",
+        "source_sha256": "0642669eb14368e5115c707bf597a6f2e9245d05bcafdbc5e4215221f73f73d4",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_local2_registered_sharpened.png",
+        "output_sha256": "cb968509386212bf3c7d42d3f7623ec26de991eac03149643b645a8d0f854a59"
+      },
+      "scale185_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_local4.png",
+        "source_sha256": "43522e5e44582865edc5fa8abe799aa467a58854317ffd00be803fc38bd61501",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_local4_sharpened.png",
+        "output_sha256": "0f90801f797566bce17b2c360003925078a7b60605cd44a03efd75392b7283dc"
+      },
+      "scale185_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale185_local4_registered.png",
+        "source_sha256": "247b1490aba66e7811fbe6bfe18d381c1c720194fc9856be02abd1ce5a950548",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale185_local4_registered_sharpened.png",
+        "output_sha256": "eef8d9c50c945a61442b1d207e0a952fc86d5494247322c7914e44df77325e16"
+      },
+      "scale65_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_global.png",
+        "source_sha256": "d41067141dd479d4e4748beb2ff899a87dfb61fb58927c088b27035aad52a7ad",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_global_sharpened.png",
+        "output_sha256": "965a0fd2f661f61e2b1ff37ac043e6066bbdf64bab280c31cfd4429ca9490e71",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_global_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale65_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_global_registered.png",
+        "source_sha256": "4de1c82529448aebbca85ee767f131e69f39ed6919230e72043cee3a17e7123f",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_global_registered_sharpened.png",
+        "output_sha256": "f4131d88c89bbafeb212252836bba59b37e1337cc45e0450d7d1f1061e9b6de5",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_global_registered_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale65_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_local2.png",
+        "source_sha256": "f63728b946b481e8a7d6bdc3c2718fc05ac1f7657063cce3d2510226819efdc1",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_local2_sharpened.png",
+        "output_sha256": "82a5a935e814a0440906c15ec48b512efb79f991a907251c8b0ccf7afa373f0d",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_local2_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale65_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_local2_registered.png",
+        "source_sha256": "fef0ebd804e0ea59ba27de4a9646bcce83a1e13231e94549ad0822d4f5b77e09",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_local2_registered_sharpened.png",
+        "output_sha256": "850eacd5c4cb81b377e070a9643ee9d70a9b9678bed8ffce3df129433424cbf7",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_local2_registered_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale65_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_local4.png",
+        "source_sha256": "03ca43013f5b9c5ea3245437190b0d2825999cb290c485b310ba382cc8d6dae0",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_local4_sharpened.png",
+        "output_sha256": "f3346e1691b8e17f55358ffbe24f7fd91f5f36fe8a66faa0f519363fc95cbb4b",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_local4_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale65_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale65_local4_registered.png",
+        "source_sha256": "fff42892e46d3ec631678908a5a2d9289b5091249969df5618c2d6e47ab93ba8",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale65_local4_registered_sharpened.png",
+        "output_sha256": "8d26ea01d9c6a54c62bb8291a0cdb279e7d96297c1a80b8ae9bfe19a74bd15d3",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-patch-stacking/sharpened/patch_local4_registered_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "scale93_global": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_global.png",
+        "source_sha256": "4f1fb0d3d334ef014848553b51719e639e36bba39a10d143ed7de1a700819794",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_global_sharpened.png",
+        "output_sha256": "fc6be250fae7eacca83d338abed697a90bd5f6d9b6d154d18ddb39b5378dc6cd"
+      },
+      "scale93_global_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_global_registered.png",
+        "source_sha256": "7d436aab4652583d9c6bafe0ed72f885e1db01b3769be06258a81bcbcfb0534e",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_global_registered_sharpened.png",
+        "output_sha256": "c09017207f1fc29cb0efc564c137dccce218ffcea466dc3f4acee65ef64b4243"
+      },
+      "scale93_local2": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_local2.png",
+        "source_sha256": "3071a80cea281e674042f1e395c17b9618cc1cfc62d2983f7cc975cea5085fab",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_local2_sharpened.png",
+        "output_sha256": "f2d863308f7d2f1f97ee8f1cd675a8c41dc53a3252b194b1de06a805aa8ddede"
+      },
+      "scale93_local2_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_local2_registered.png",
+        "source_sha256": "748cc6fde2e05da36ff04d72d7c8eb2beb833da875fdff65a387c74f85e0b285",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_local2_registered_sharpened.png",
+        "output_sha256": "58ccaab7537d009c1e0ad053bbf7344bf902eb838eb8eee230418aaab840c06e"
+      },
+      "scale93_local4": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_local4.png",
+        "source_sha256": "70e7da80286f15ac7c882f65f9f5b0a0f4edd044ebb2cbb2a318a4ce98b8dd42",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_local4_sharpened.png",
+        "output_sha256": "5afdbc251d9caf962e84f4887db0df5bd31ab3af6911c467b25cd5cfd2ab2f77"
+      },
+      "scale93_local4_registered": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/scale93_local4_registered.png",
+        "source_sha256": "1be6a3a1e57f01cc4c0363d194b262ad25f0bd243fb4c0c553be01232d38b1dd",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/scale93_local4_registered_sharpened.png",
+        "output_sha256": "ccbd22995e050d7967fbd194e00bc9c0b28bdc9975eadc19dcc9bdc12a7e5cf8"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "comparison": {
+    "PR_production": {
+      "path": "2024-09-27-1154_3-CK-R-SatPs.png",
+      "sha256": "2fe87dd59a9b7db3910752febad4c34b993e34c2023ea22cbe2a5d74c08b0748",
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9667615072988363,
+          "laplacian_percent": 2.8067077445285884
+        },
+        "lower": {
+          "median": 33379.0,
+          "highpass_percent": 2.975063436365586,
+          "laplacian_percent": 2.7566200339258264
+        }
+      }
+    },
+    "AS_manual64": {
+      "path": "AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54s.png",
+      "sha256": "0b91d876a16fb728b4a1e699ba37759eb5312a234dcca99b60f6894bb241a1a5",
+      "sharpened": {
+        "upper": {
+          "median": 32745.0,
+          "highpass_percent": 0.5732090820395705,
+          "laplacian_percent": 0.2232402997553159
+        },
+        "lower": {
+          "median": 33817.0,
+          "highpass_percent": 0.6418716335434476,
+          "laplacian_percent": 0.26665075917319786
+        }
+      }
+    }
+  },
+  "limits": [
+    "Tests independent patch stacking at multiple sizes, not the private AutoStakkert algorithm.",
+    "Fixed 64-frame reference, 25476 screened frames, and 5738 contributions per AP.",
+    "120 circular APs at 65/93/131/185px, plus a spatially spread 55-AP subset count control.",
+    "The 55-AP subset does not reproduce the exact positions or size distribution in the AS screenshot.",
+    "Same original scalar quality weights and absolute frame brightness; no normalization or denoising.",
+    "Completed-patch registration adds another bilinear interpolation.",
+    "Frame-weight effective counts omit covariance effects from differing subpixel samples.",
+    "Fine-scale variation includes detail and artifacts; it is not a pure sensor-noise measurement.",
+    "The 65px controls are reconstructed from the preceding experiment and must match its floating images.",
+    "AS comparison uses the supplied manual-64 reference output, not a new AS run."
+  ],
+  "validation": {
+    "focused_tests": "15 passed: 9 new multiscale controls plus 6 preceding patch controls",
+    "single_scale_sharpening_controls": "All six 65px outputs match the preceding experiment pixel-for-pixel.",
+    "single_scale_float_maximum_error_adu": 2.842170943040401e-14,
+    "pilot_sampling_parity": "128-frame pilot: identical finite quality values and local shifts; identical reliability masks.",
+    "visual_review": "Inspected multiscale_local2_registered, multiscale55_local2_registered and scale185_local2_registered; no conspicuous patch-boundary seams, substantial grain remains.",
+    "production_defaults_changed": false,
+    "brightness_normalization_added": false,
+    "output_denoising_added": false
+  },
+  "conclusions": [
+    "Independent multiscale patch stacking gives only a marginal further reduction beyond the previous best single-scale experiment.",
+    "The best combined-scale result is multiscale_local2_registered at 1.9606% and 1.8697% variation in the two disc regions.",
+    "This is a 2.07% and 0.96% reduction relative to scale65_local2_registered, and remains 3.42 and 2.91 times the supplied AS measurements.",
+    "The 55-AP count control is worse than the full layout and does not reproduce the AS result.",
+    "This controlled implementation does not support multiscale combination as the main explanation of the AS/PR gap; it does not establish the private AS implementation or identify sensor noise."
+  ]
+}
