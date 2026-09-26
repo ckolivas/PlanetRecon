@@ -1,0 +1,1186 @@
+{
+  "date": "2026-09-26",
+  "run": {
+    "seed": 260926,
+    "source_experiment": "out/saturn-controlled-alignment",
+    "split": "one random member of each consecutive selected-frame pair",
+    "reference": "separate best 64 from each disjoint half",
+    "halves": [
+      {
+        "n_used": 2869,
+        "candidates": [
+          22877,
+          27352,
+          20210,
+          27216,
+          27590,
+          27597,
+          20206,
+          27138,
+          24632,
+          1638,
+          24137,
+          27643,
+          27376,
+          27555,
+          27137,
+          22879,
+          20171,
+          20208,
+          22806,
+          14901,
+          19666,
+          24640,
+          27599,
+          22293,
+          22294,
+          16245,
+          22465,
+          22974,
+          20215,
+          22256,
+          15126,
+          16235,
+          22950,
+          16236,
+          26390,
+          18050,
+          13250,
+          18096,
+          22875,
+          9964,
+          22772,
+          18049,
+          27636,
+          26391,
+          18549,
+          22963,
+          27344,
+          27393,
+          22708,
+          22714,
+          26153,
+          22349,
+          22809,
+          18067,
+          18053,
+          22419,
+          26519,
+          18138,
+          22860,
+          26883,
+          26325,
+          24683,
+          26922,
+          24138
+        ],
+        "anchor": 22877,
+        "config": {
+          "schema_name": "planetrecon-reconstruction-config",
+          "schema_version": "1.0",
+          "device": "gpu",
+          "threads": 8,
+          "batch_frames": 32,
+          "max_ram_bytes": null,
+          "max_vram_bytes": null,
+          "bayer_override": null,
+          "endian_override": null,
+          "endian_convention": "ecosystem",
+          "recover_complete_frames": false,
+          "reject_saturated": true,
+          "frame_preselection": true,
+          "quality_weighting": true,
+          "stack_percent": 100,
+          "frame_selection_mode": "quality_range",
+          "local_alignment": true,
+          "local_patch_size": 65,
+          "alignment_method": "circular_multiscale",
+          "sampling_multiplier": 5.0,
+          "alignment_wavelength_nm": 550.0,
+          "max_shift_px": 32.0,
+          "reference_index": 0,
+          "crop": "feature",
+          "baseline_operator_version": "1.6",
+          "geometry_operator_version": "1.8",
+          "geometry_mode": "none",
+          "reference_epoch_s": 180.0005,
+          "field_angle0_rad": 0.0,
+          "field_rate_rad_s": null,
+          "field_center_x": 347.517648,
+          "field_center_y": 203.0321037,
+          "equatorial_radius_px": null,
+          "flattening": 0.0,
+          "pole_pa_rad": 3.029391249723176,
+          "sub_obs_lat_rad": null,
+          "sub_obs_lon0_rad": 0.0,
+          "surface_rate_rad_s": null,
+          "rotation_planet": "saturn",
+          "reverse_rotation": false,
+          "exposure_s": null,
+          "cadence_s": null,
+          "geometry_duration_warn_s": 120.0,
+          "freeze_mid_exposure": true,
+          "ring_inner_radius_px": null,
+          "ring_outer_radius_px": null,
+          "ring_transmission": 0.35,
+          "sun_lon_rad": null,
+          "sun_lat_rad": null,
+          "moon_x": null,
+          "moon_y": null,
+          "moon_radius_px": null,
+          "moon_vx_px_s": 0.0,
+          "moon_vy_px_s": 0.0,
+          "bias_path": null,
+          "dark_path": null,
+          "flat_path": null,
+          "gain_e_per_adu": null,
+          "read_noise_e": null,
+          "saturate_adu": null
+        },
+        "backend": "cuda"
+      },
+      {
+        "n_used": 2869,
+        "candidates": [
+          22876,
+          18088,
+          27359,
+          27596,
+          22259,
+          27378,
+          13247,
+          18087,
+          22804,
+          24631,
+          27592,
+          22878,
+          18560,
+          18693,
+          18694,
+          27360,
+          18040,
+          22805,
+          27570,
+          24633,
+          26383,
+          22713,
+          27135,
+          22973,
+          22972,
+          20183,
+          27155,
+          14951,
+          15124,
+          22715,
+          26382,
+          12951,
+          24153,
+          1639,
+          12949,
+          20172,
+          27217,
+          20205,
+          18652,
+          27136,
+          26319,
+          27589,
+          16238,
+          4851,
+          16237,
+          12358,
+          20216,
+          27644,
+          27392,
+          22807,
+          22712,
+          16232,
+          11030,
+          21400,
+          18561,
+          27554,
+          6325,
+          22965,
+          27642,
+          11142,
+          25755,
+          22420,
+          22707,
+          9963
+        ],
+        "anchor": 22876,
+        "config": {
+          "schema_name": "planetrecon-reconstruction-config",
+          "schema_version": "1.0",
+          "device": "gpu",
+          "threads": 8,
+          "batch_frames": 32,
+          "max_ram_bytes": null,
+          "max_vram_bytes": null,
+          "bayer_override": null,
+          "endian_override": null,
+          "endian_convention": "ecosystem",
+          "recover_complete_frames": false,
+          "reject_saturated": true,
+          "frame_preselection": true,
+          "quality_weighting": true,
+          "stack_percent": 100,
+          "frame_selection_mode": "quality_range",
+          "local_alignment": true,
+          "local_patch_size": 65,
+          "alignment_method": "circular_multiscale",
+          "sampling_multiplier": 5.0,
+          "alignment_wavelength_nm": 550.0,
+          "max_shift_px": 32.0,
+          "reference_index": 0,
+          "crop": "feature",
+          "baseline_operator_version": "1.6",
+          "geometry_operator_version": "1.8",
+          "geometry_mode": "none",
+          "reference_epoch_s": 180.0005,
+          "field_angle0_rad": 0.0,
+          "field_rate_rad_s": null,
+          "field_center_x": 347.517648,
+          "field_center_y": 203.0321037,
+          "equatorial_radius_px": null,
+          "flattening": 0.0,
+          "pole_pa_rad": 3.029391249723176,
+          "sub_obs_lat_rad": null,
+          "sub_obs_lon0_rad": 0.0,
+          "surface_rate_rad_s": null,
+          "rotation_planet": "saturn",
+          "reverse_rotation": false,
+          "exposure_s": null,
+          "cadence_s": null,
+          "geometry_duration_warn_s": 120.0,
+          "freeze_mid_exposure": true,
+          "ring_inner_radius_px": null,
+          "ring_outer_radius_px": null,
+          "ring_transmission": 0.35,
+          "sun_lon_rad": null,
+          "sun_lat_rad": null,
+          "moon_x": null,
+          "moon_y": null,
+          "moon_radius_px": null,
+          "moon_vx_px_s": 0.0,
+          "moon_vy_px_s": 0.0,
+          "bias_path": null,
+          "dark_path": null,
+          "flat_path": null,
+          "gain_e_per_adu": null,
+          "read_noise_e": null,
+          "saturate_adu": null
+        },
+        "backend": "cuda"
+      }
+    ],
+    "seconds": 194.39162920502713
+  },
+  "repeatability": {
+    "independent": {
+      "upper_disc": {
+        "bounds_yxyx": [
+          141,
+          292,
+          181,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9931276891920409,
+            "difference_to_mean_power": 0.0035520171950910503,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.5089800846495788,
+            "difference_to_mean_power": 0.32610338740540834,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.07470693030585715,
+            "difference_to_mean_power": 0.8610032323445549,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.09947958497688855,
+            "difference_to_mean_power": 0.819086147393551,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.01590182186130687,
+            "difference_to_mean_power": 1.0321662395054865,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "lower_disc": {
+        "bounds_yxyx": [
+          233,
+          292,
+          273,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9887435240252241,
+            "difference_to_mean_power": 0.005726296033951497,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.537965261401695,
+            "difference_to_mean_power": 0.30190098240149693,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": -0.06092077521352586,
+            "difference_to_mean_power": 1.1297331979334078,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.04849868839524906,
+            "difference_to_mean_power": 0.907653726188058,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.0353126609724213,
+            "difference_to_mean_power": 0.9318271156866224,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "left_ring": {
+        "bounds_yxyx": [
+          183,
+          132,
+          223,
+          247
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9997513542213091,
+            "difference_to_mean_power": 0.0001479867268122401,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9821842563207019,
+            "difference_to_mean_power": 0.009016761459217931,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.8125845894664062,
+            "difference_to_mean_power": 0.10519010169055484,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.04286843392339004,
+            "difference_to_mean_power": 1.0891279797812579,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.06759260225172478,
+            "difference_to_mean_power": 0.8733909656092079,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "right_ring": {
+        "bounds_yxyx": [
+          183,
+          447,
+          223,
+          562
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9998466699429556,
+            "difference_to_mean_power": 8.239225487376508e-05,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9830302712432706,
+            "difference_to_mean_power": 0.008564077481865709,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.7593203733194528,
+            "difference_to_mean_power": 0.137375922966864,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.045714977637021155,
+            "difference_to_mean_power": 1.0957677201490905,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.058718535997573464,
+            "difference_to_mean_power": 1.1247581284983945,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "north_limb": {
+        "bounds_yxyx": [
+          93,
+          277,
+          138,
+          417
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9998190203309449,
+            "difference_to_mean_power": 9.39432463450388e-05,
+            "fourier_samples": 118
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9892575523487647,
+            "difference_to_mean_power": 0.005464775187920777,
+            "fourier_samples": 470
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.39926468721362446,
+            "difference_to_mean_power": 0.42954612714232665,
+            "fourier_samples": 762
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.05204198740434729,
+            "difference_to_mean_power": 1.1095268231052298,
+            "fourier_samples": 1060
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.013458183526917984,
+            "difference_to_mean_power": 0.9736137514702893,
+            "fourier_samples": 1402
+          }
+        ]
+      }
+    },
+    "independent_before_translation": {
+      "upper_disc": {
+        "bounds_yxyx": [
+          141,
+          292,
+          181,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9720817939164439,
+            "difference_to_mean_power": 0.01737029658101998,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.45753788802395745,
+            "difference_to_mean_power": 0.37334681903346595,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.0853841602490756,
+            "difference_to_mean_power": 0.8426838514979046,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.06256854346008563,
+            "difference_to_mean_power": 0.8822758173496037,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.039552073469835726,
+            "difference_to_mean_power": 1.0819256168705629,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "lower_disc": {
+        "bounds_yxyx": [
+          233,
+          292,
+          273,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9499127170428071,
+            "difference_to_mean_power": 0.026579637087849595,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.4467950128459035,
+            "difference_to_mean_power": 0.3833020151098449,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": -0.05972234940157288,
+            "difference_to_mean_power": 1.1270278912970428,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.059774203845842144,
+            "difference_to_mean_power": 0.8873966858711104,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.009979995136311919,
+            "difference_to_mean_power": 0.9802670289733404,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "left_ring": {
+        "bounds_yxyx": [
+          183,
+          132,
+          223,
+          247
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9685074107705618,
+            "difference_to_mean_power": 0.016363546175576695,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.8722306220680041,
+            "difference_to_mean_power": 0.06832065497499648,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.582704132054649,
+            "difference_to_mean_power": 0.26558453154819395,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.08482073775785119,
+            "difference_to_mean_power": 0.8443236229018702,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.005332762857601129,
+            "difference_to_mean_power": 0.9893922535132597,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "right_ring": {
+        "bounds_yxyx": [
+          183,
+          447,
+          223,
+          562
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9692254582870771,
+            "difference_to_mean_power": 0.015633839552747074,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.8269851690027709,
+            "difference_to_mean_power": 0.0948965815643396,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.4908323211431295,
+            "difference_to_mean_power": 0.34238885798746677,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.055910957446288066,
+            "difference_to_mean_power": 0.8941407004740476,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.00030601265342307865,
+            "difference_to_mean_power": 1.000612097294468,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "north_limb": {
+        "bounds_yxyx": [
+          93,
+          277,
+          138,
+          417
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9779292779761076,
+            "difference_to_mean_power": 0.011165684065178889,
+            "fourier_samples": 118
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.8887719933637181,
+            "difference_to_mean_power": 0.058940434962560136,
+            "fourier_samples": 470
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.22420478835924787,
+            "difference_to_mean_power": 0.6342502022242462,
+            "fourier_samples": 762
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.04370688077671491,
+            "difference_to_mean_power": 1.0913676464092206,
+            "fourier_samples": 1060
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.05502509847818985,
+            "difference_to_mean_power": 0.897160030660633,
+            "fourier_samples": 1402
+          }
+        ]
+      }
+    },
+    "shared_reference": {
+      "upper_disc": {
+        "bounds_yxyx": [
+          141,
+          292,
+          181,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9880276520125933,
+            "difference_to_mean_power": 0.006050995855912658,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.5884397882708586,
+            "difference_to_mean_power": 0.26673515620628985,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.02508454619380355,
+            "difference_to_mean_power": 0.951153381197365,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.016519549612362943,
+            "difference_to_mean_power": 0.9675542919456306,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.031140076986253172,
+            "difference_to_mean_power": 0.9396777966317332,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "lower_disc": {
+        "bounds_yxyx": [
+          233,
+          292,
+          273,
+          402
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9868684592716405,
+            "difference_to_mean_power": 0.006678164243649585,
+            "fourier_samples": 78
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.6217289021482264,
+            "difference_to_mean_power": 0.233270061717112,
+            "fourier_samples": 314
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.04948726197079251,
+            "difference_to_mean_power": 0.9056997654514388,
+            "fourier_samples": 502
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.016639511874706546,
+            "difference_to_mean_power": 0.9672723357271499,
+            "fourier_samples": 718
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.06650218051459714,
+            "difference_to_mean_power": 0.8754083359362295,
+            "fourier_samples": 910
+          }
+        ]
+      },
+      "left_ring": {
+        "bounds_yxyx": [
+          183,
+          132,
+          223,
+          247
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.999923497073278,
+            "difference_to_mean_power": 4.1877334023178324e-05,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9931889721051409,
+            "difference_to_mean_power": 0.0034841253673494207,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.7987260874738995,
+            "difference_to_mean_power": 0.11239951505811208,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.01689638834291094,
+            "difference_to_mean_power": 1.0343518594711814,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": 0.07202221480669674,
+            "difference_to_mean_power": 0.8662488539444781,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "right_ring": {
+        "bounds_yxyx": [
+          183,
+          447,
+          223,
+          562
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9999416663077068,
+            "difference_to_mean_power": 3.035695946079781e-05,
+            "fourier_samples": 82
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9868988469415702,
+            "difference_to_mean_power": 0.006630983924365398,
+            "fourier_samples": 324
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.7769938455765564,
+            "difference_to_mean_power": 0.125764948247676,
+            "fourier_samples": 536
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": -0.08046002383804311,
+            "difference_to_mean_power": 1.174934722476027,
+            "fourier_samples": 738
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.09038223609423524,
+            "difference_to_mean_power": 1.1983820588671685,
+            "fourier_samples": 964
+          }
+        ]
+      },
+      "north_limb": {
+        "bounds_yxyx": [
+          93,
+          277,
+          138,
+          417
+        ],
+        "bands": [
+          {
+            "band": [
+              0.05,
+              0.1
+            ],
+            "correlation": 0.9998292104140083,
+            "difference_to_mean_power": 8.794145671474304e-05,
+            "fourier_samples": 118
+          },
+          {
+            "band": [
+              0.1,
+              0.2
+            ],
+            "correlation": 0.9893170825177864,
+            "difference_to_mean_power": 0.005370177625470522,
+            "fourier_samples": 470
+          },
+          {
+            "band": [
+              0.2,
+              0.3
+            ],
+            "correlation": 0.42220713047927294,
+            "difference_to_mean_power": 0.40641783846148594,
+            "fourier_samples": 762
+          },
+          {
+            "band": [
+              0.3,
+              0.4
+            ],
+            "correlation": 0.007100001150296452,
+            "difference_to_mean_power": 0.9859004636298747,
+            "fourier_samples": 1060
+          },
+          {
+            "band": [
+              0.4,
+              0.5
+            ],
+            "correlation": -0.07606642066194436,
+            "difference_to_mean_power": 1.1644169967309543,
+            "fourier_samples": 1402
+          }
+        ]
+      }
+    },
+    "registration": {
+      "shift_yx": [
+        -0.6456852839183529,
+        -0.8043888826649591
+      ],
+      "proxy_rms_before": 0.007587473994046551,
+      "proxy_rms_after": 0.0005372667554523999
+    },
+    "notes": [
+      "No formal resolution threshold or independence confidence interval is inferred.",
+      "Independent runs have disjoint selected frames and reference frames.",
+      "Seeing, reference shapes and common detector patterns remain possible confounds.",
+      "Difference/mean power near one means little common structure in that band.",
+      "Image 2 is translated once in Fourier space; no Gaussian applied to measured images."
+    ]
+  },
+  "frequency_controls": {
+    "local_taper_20_35_control": {
+      "pass_edge": 0.2,
+      "stop_edge": 0.35,
+      "mapping": {
+        "black": 0.0873,
+        "formula": "65535 * clip((linear - black) / (white - black), 0, 1) ** (1 / gamma)",
+        "gamma": 1.0,
+        "rounding": "nearest, ties upward",
+        "shared_across_channels": true,
+        "white": 214.25828
+      },
+      "purpose": "Cosine frequency-taper diagnostic; ringing and detail loss need assessment",
+      "measurements": {
+        "upper": {
+          "median": 107.33911055011683,
+          "highpass_percent": 0.13760398716885217,
+          "laplacian_percent": 0.0303359458353756
+        },
+        "lower": {
+          "median": 109.63103742093973,
+          "highpass_percent": 0.1022798913115771,
+          "laplacian_percent": 0.027045385379705623
+        }
+      }
+    },
+    "local_taper_25_35_control": {
+      "pass_edge": 0.25,
+      "stop_edge": 0.35,
+      "mapping": {
+        "black": 0.0873,
+        "formula": "65535 * clip((linear - black) / (white - black), 0, 1) ** (1 / gamma)",
+        "gamma": 1.0,
+        "rounding": "nearest, ties upward",
+        "shared_across_channels": true,
+        "white": 214.25828
+      },
+      "purpose": "Cosine frequency-taper diagnostic; ringing and detail loss need assessment",
+      "measurements": {
+        "upper": {
+          "median": 107.3379304566356,
+          "highpass_percent": 0.14022438410597557,
+          "laplacian_percent": 0.033854999952012986
+        },
+        "lower": {
+          "median": 109.63363767605682,
+          "highpass_percent": 0.10885303362717809,
+          "laplacian_percent": 0.030237550558812255
+        }
+      }
+    }
+  },
+  "validation": {
+    "scientific_controls_passed": 3,
+    "png_rounding_verified": true
+  },
+  "index_sha256": {
+    "half0": "0c91d0933136bf3da3bdd8de7a42e81cf17b2390872cb72aa0f4e08b818734a7",
+    "half1": "dae90705809af4d9954ac78a41c6b3804b19ae024cc8f968fe718b3082253ba3"
+  }
+}
