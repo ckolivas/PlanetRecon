@@ -1,0 +1,760 @@
+{
+  "n_used": 5738,
+  "pilot": false,
+  "device": "NVIDIA GeForce RTX 5070",
+  "reference_sha256": "3ffcb6cf01e740482a627d474a35a5bfce4bb99b7064622ed58410b880d3403c",
+  "indices_sha256": "01f4ad5258de473b6852f116ea952952a0862b0727de1934c70e554cb444d8ef",
+  "baseline_shift_max_error_px": 0.0,
+  "converged_fraction": 1.0,
+  "refinement_magnitude_px_p50_p90_p99_max": [
+    0.003183389703882332,
+    0.008814706487594455,
+    0.01741691621370941,
+    0.02730038235105862
+  ],
+  "variants": {
+    "existing_bilinear": {
+      "raw": {
+        "upper": {
+          "median": 107.34293433223363,
+          "highpass_percent": 0.1686969265655733,
+          "laplacian_percent": 0.07342684567469208
+        },
+        "lower": {
+          "median": 109.66376284754577,
+          "highpass_percent": 0.1408551289914704,
+          "laplacian_percent": 0.06969328926962133
+        }
+      }
+    },
+    "refined_bilinear": {
+      "raw": {
+        "upper": {
+          "median": 107.34317776956703,
+          "highpass_percent": 0.1684688971058207,
+          "laplacian_percent": 0.07413389122446255
+        },
+        "lower": {
+          "median": 109.6635590746885,
+          "highpass_percent": 0.14086043753391397,
+          "laplacian_percent": 0.06985591791726327
+        }
+      }
+    },
+    "existing_cubic": {
+      "raw": {
+        "upper": {
+          "median": 107.34393568971996,
+          "highpass_percent": 0.19565127172564817,
+          "laplacian_percent": 0.10628858713147951
+        },
+        "lower": {
+          "median": 109.66735619233991,
+          "highpass_percent": 0.1668542795421653,
+          "laplacian_percent": 0.10039717271111703
+        }
+      }
+    },
+    "refined_cubic": {
+      "raw": {
+        "upper": {
+          "median": 107.34401934521884,
+          "highpass_percent": 0.19583936554884449,
+          "laplacian_percent": 0.10642991340752829
+        },
+        "lower": {
+          "median": 109.66646216475564,
+          "highpass_percent": 0.16679153953367326,
+          "laplacian_percent": 0.09990650642269926
+        }
+      }
+    }
+  },
+  "baseline_image_max_error_adu": 1.2789769243681803e-13,
+  "seconds": 121.60188507201383,
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "existing_bilinear_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/existing_bilinear_as_transfer.png",
+        "source_sha256": "ba864bf198b68bbb194016f3935a139685267dca9fbd16135ff3a59cfabfd99c",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/sharpened/existing_bilinear_as_transfer_sharpened.png",
+        "output_sha256": "d7285338adece913d2b7a8ed837b7d8521c4b4a07d88c5c17ce2b7fc781b1bb5"
+      },
+      "refined_bilinear_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/refined_bilinear_as_transfer.png",
+        "source_sha256": "239aa0a80140508fa3729056d2edec79fbe7e04b2436c9bb033d536c20fee112",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/sharpened/refined_bilinear_as_transfer_sharpened.png",
+        "output_sha256": "4757d95189b20bc3f389cb05552ab1844d5914c309ab8a44caddaae139a62f36"
+      },
+      "existing_cubic_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/existing_cubic_as_transfer.png",
+        "source_sha256": "0faa31455e6dc61912d051da14f74262617a29ff9f96b2e65cccba13a0705266",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/sharpened/existing_cubic_as_transfer_sharpened.png",
+        "output_sha256": "c5ca39ab604487af16dd5c1a1b1771e5e0e751f53dc8e089b8311beb3ca80b4e"
+      },
+      "refined_cubic_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/refined_cubic_as_transfer.png",
+        "source_sha256": "2d518b7e38f8533cf5251f2e068ac366b405cde4e96f9b544f5f9442f0c1adca",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-refined-registration/sharpened/refined_cubic_as_transfer_sharpened.png",
+        "output_sha256": "477758937616878d5da17f7ac6cde034c2e0f63a2e2cf403d0319fc22cea86f9"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "comparison": {
+    "production_local": {
+      "path": "out/saturn-matched-transfer/sharpened/pr_original_as_transfer_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32641.0,
+          "highpass_percent": 0.5643798116083868,
+          "laplacian_percent": 0.20414634082034214
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.5401297398792462,
+          "laplacian_percent": 0.21800082355623937
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.818663747311277,
+          "profile": [
+            227.7,
+            269.1,
+            310.5,
+            345.0,
+            372.6,
+            393.3,
+            434.8,
+            504.1333333333333,
+            524.9333333333333,
+            601.2,
+            677.4666666666667,
+            767.6,
+            864.6,
+            954.8,
+            892.4,
+            774.5333333333333,
+            843.6,
+            2015.7,
+            4966.2,
+            8847.966666666667,
+            12152.933333333332,
+            14416.733333333334,
+            16217.266666666666,
+            17795.4,
+            18852.266666666666,
+            19481.166666666668,
+            20030.233333333334,
+            20644.233333333334,
+            21214.666666666668,
+            21560.466666666667,
+            21589.566666666666
+          ],
+          "crossings": [
+            17.157999209173585,
+            24.976662956484862
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.814837493644406,
+          "profile": [
+            296.7,
+            345.0,
+            386.4,
+            400.2,
+            414.0,
+            469.46666666666664,
+            511.06666666666666,
+            573.4666666666667,
+            649.7333333333333,
+            712.1333333333333,
+            760.6666666666666,
+            857.7333333333333,
+            843.8666666666667,
+            684.4,
+            497.2,
+            732.4666666666667,
+            2728.3333333333335,
+            6981.766666666666,
+            12080.1,
+            15962.833333333334,
+            17956.666666666668,
+            18772.966666666667,
+            19235.633333333335,
+            19717.266666666666,
+            20173.166666666668,
+            20468.333333333332,
+            20617.0,
+            20778.6,
+            21027.2,
+            21169.4,
+            21009.633333333335
+          ],
+          "crossings": [
+            15.877244638920436,
+            21.692082132564842
+          ]
+        }
+      }
+    },
+    "AS_manual64": {
+      "path": "out/saturn-matched-transfer/sharpened/as_manual64_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32745.0,
+          "highpass_percent": 0.5732090820395705,
+          "laplacian_percent": 0.2232402997553159
+        },
+        "lower": {
+          "median": 33817.0,
+          "highpass_percent": 0.6418716335434476,
+          "laplacian_percent": 0.26665075917319786
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.2753987193204495,
+          "profile": [
+            234.6,
+            276.0,
+            296.7,
+            338.1,
+            365.7,
+            407.1,
+            420.93333333333334,
+            476.4,
+            524.9333333333333,
+            559.6,
+            656.6666666666666,
+            698.2666666666667,
+            816.1333333333333,
+            933.8,
+            899.3333333333334,
+            733.0,
+            545.8666666666667,
+            875.6666666666666,
+            3040.633333333333,
+            6939.233333333334,
+            11182.2,
+            14353.733333333334,
+            16290.1,
+            17705.133333333335,
+            18850.3,
+            19597.0,
+            20174.0,
+            20812.866666666665,
+            21386.666666666668,
+            21714.266666666666,
+            21749.333333333332
+          ],
+          "crossings": [
+            17.746421038045234,
+            25.021819757365684
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.650876790804805,
+          "profile": [
+            303.6,
+            345.0,
+            365.7,
+            400.2,
+            407.1,
+            462.53333333333336,
+            497.2,
+            573.4666666666667,
+            601.2,
+            684.4,
+            726.0,
+            809.2,
+            878.5333333333333,
+            705.3,
+            393.8666666666667,
+            193.23333333333332,
+            995.3,
+            4525.833333333333,
+            9984.966666666667,
+            15075.866666666667,
+            17819.966666666667,
+            18717.2,
+            19128.5,
+            19529.533333333333,
+            19994.3,
+            20421.9,
+            20641.266666666666,
+            20755.033333333333,
+            20908.766666666666,
+            21120.066666666666,
+            21241.8
+          ],
+          "crossings": [
+            16.42264577589788,
+            22.073522566702685
+          ]
+        }
+      }
+    },
+    "existing_bilinear": {
+      "path": "out/saturn-refined-registration/sharpened/existing_bilinear_as_transfer_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32658.0,
+          "highpass_percent": 0.5692259046065,
+          "laplacian_percent": 0.1989644494930715
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.54489226511813,
+          "laplacian_percent": 0.216023491823303
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.28415322461391,
+          "profile": [
+            227.7,
+            269.1,
+            310.5,
+            345.0,
+            372.6,
+            386.4,
+            434.8,
+            504.1333333333333,
+            524.9333333333333,
+            601.2,
+            670.5333333333333,
+            767.6,
+            864.6,
+            947.8666666666667,
+            899.3333333333334,
+            767.6,
+            815.8666666666667,
+            1949.1666666666667,
+            4766.866666666667,
+            8677.0,
+            12318.4,
+            14860.166666666666,
+            16632.733333333334,
+            18012.266666666666,
+            19049.8,
+            19762.766666666666,
+            20383.2,
+            20906.5,
+            21296.133333333335,
+            21498.9,
+            21435.933333333334
+          ],
+          "crossings": [
+            17.185840697495593,
+            24.469993922109502
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.672052739793402,
+          "profile": [
+            296.7,
+            345.0,
+            386.4,
+            400.2,
+            414.0,
+            469.46666666666664,
+            511.06666666666666,
+            573.4666666666667,
+            649.7333333333333,
+            712.1333333333333,
+            760.6666666666666,
+            857.7333333333333,
+            830.0,
+            677.4666666666667,
+            511.06666666666666,
+            760.1,
+            2762.8,
+            7013.233333333334,
+            12142.733333333334,
+            15978.8,
+            17894.533333333333,
+            18749.866666666665,
+            19260.333333333332,
+            19700.3,
+            20129.533333333333,
+            20424.333333333332,
+            20580.533333333333,
+            20733.733333333334,
+            20943.1,
+            21087.666666666668,
+            20989.5
+          ],
+          "crossings": [
+            15.856372230821725,
+            21.528424970615127
+          ]
+        }
+      }
+    },
+    "existing_cubic": {
+      "path": "out/saturn-refined-registration/sharpened/existing_cubic_as_transfer_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32658.0,
+          "highpass_percent": 0.6177246892510415,
+          "laplacian_percent": 0.24769043712402775
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.604098672832594,
+          "laplacian_percent": 0.2654567851467133
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.266484898234385,
+          "profile": [
+            234.6,
+            276.0,
+            331.2,
+            351.9,
+            379.5,
+            386.4,
+            427.8666666666667,
+            497.2,
+            524.9333333333333,
+            601.2,
+            677.4666666666667,
+            767.6,
+            850.6666666666666,
+            947.8,
+            892.4,
+            732.9333333333333,
+            718.9333333333333,
+            1813.3333333333333,
+            4690.5,
+            8708.933333333332,
+            12396.366666666667,
+            14898.9,
+            16631.233333333334,
+            18039.3,
+            19063.166666666668,
+            19767.4,
+            20393.233333333334,
+            20924.933333333334,
+            21320.533333333333,
+            21531.1,
+            21458.366666666665
+          ],
+          "crossings": [
+            17.23248798007299,
+            24.498972878307374
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.6325255580602,
+          "profile": [
+            289.8,
+            338.1,
+            386.4,
+            400.2,
+            414.0,
+            469.46666666666664,
+            511.06666666666666,
+            580.4,
+            642.8,
+            712.1333333333333,
+            760.6666666666666,
+            871.6,
+            830.0,
+            663.6,
+            469.56666666666666,
+            663.3,
+            2612.8333333333335,
+            6962.866666666667,
+            12230.266666666666,
+            16085.0,
+            17943.0,
+            18751.366666666665,
+            19251.466666666667,
+            19696.866666666665,
+            20140.833333333332,
+            20438.466666666667,
+            20576.766666666666,
+            20734.433333333334,
+            20947.9,
+            21102.266666666666,
+            21018.833333333332
+          ],
+          "crossings": [
+            15.930128577779298,
+            21.562654135839498
+          ]
+        }
+      }
+    },
+    "refined_bilinear": {
+      "path": "out/saturn-refined-registration/sharpened/refined_bilinear_as_transfer_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32658.0,
+          "highpass_percent": 0.5678746067463846,
+          "laplacian_percent": 0.19997957423538307
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.5422925099755558,
+          "laplacian_percent": 0.21651782475653708
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.28078216225051,
+          "profile": [
+            227.7,
+            269.1,
+            310.5,
+            345.0,
+            372.6,
+            386.4,
+            434.8,
+            504.1333333333333,
+            531.8666666666667,
+            601.2,
+            670.5333333333333,
+            767.6,
+            864.6,
+            940.9333333333333,
+            885.4666666666667,
+            767.6,
+            815.8666666666667,
+            1950.1666666666667,
+            4764.833333333333,
+            8673.9,
+            12320.0,
+            14860.733333333334,
+            16624.933333333334,
+            18021.433333333334,
+            19049.233333333334,
+            19763.366666666665,
+            20382.166666666668,
+            20909.933333333334,
+            21297.4,
+            21496.0,
+            21438.766666666666
+          ],
+          "crossings": [
+            17.18558266224538,
+            24.46636482449589
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.681481612405376,
+          "profile": [
+            296.7,
+            345.0,
+            386.4,
+            400.2,
+            414.0,
+            469.46666666666664,
+            511.06666666666666,
+            573.4666666666667,
+            649.7333333333333,
+            712.1333333333333,
+            760.6666666666666,
+            857.7333333333333,
+            836.9333333333333,
+            663.6,
+            504.1333333333333,
+            760.1,
+            2762.8,
+            7008.7,
+            12142.666666666666,
+            15978.733333333334,
+            17898.333333333332,
+            18751.4,
+            19253.7,
+            19707.633333333335,
+            20123.366666666665,
+            20426.5,
+            20576.366666666665,
+            20730.566666666666,
+            20941.0,
+            21089.9,
+            20990.6
+          ],
+          "crossings": [
+            15.85648374694163,
+            21.537965359347005
+          ]
+        }
+      }
+    },
+    "refined_cubic": {
+      "path": "out/saturn-refined-registration/sharpened/refined_cubic_as_transfer_sharpened.png",
+      "sharpened": {
+        "upper": {
+          "median": 32658.0,
+          "highpass_percent": 0.6164945670943095,
+          "laplacian_percent": 0.24921312423749511
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.5995615752873217,
+          "laplacian_percent": 0.259524789947904
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.266787072634962,
+          "profile": [
+            234.6,
+            276.0,
+            331.2,
+            351.9,
+            379.5,
+            386.4,
+            427.8666666666667,
+            497.2,
+            531.8666666666667,
+            601.2,
+            677.4666666666667,
+            767.6,
+            857.5333333333333,
+            961.6,
+            885.4666666666667,
+            739.8666666666667,
+            712.0,
+            1819.9333333333334,
+            4684.5,
+            8704.2,
+            12391.2,
+            14891.466666666667,
+            16636.8,
+            18038.433333333334,
+            19070.133333333335,
+            19768.033333333333,
+            20391.9,
+            20923.466666666667,
+            21315.4,
+            21534.666666666668,
+            21458.366666666665
+          ],
+          "crossings": [
+            17.231331091380895,
+            24.498118164015857
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.6322687785953,
+          "profile": [
+            289.8,
+            338.1,
+            386.4,
+            400.2,
+            414.0,
+            476.4,
+            511.06666666666666,
+            566.5333333333333,
+            642.8,
+            712.1333333333333,
+            753.7333333333333,
+            857.7333333333333,
+            836.9333333333333,
+            670.5333333333333,
+            462.6666666666667,
+            663.3,
+            2619.733333333333,
+            6971.866666666667,
+            12227.3,
+            16083.3,
+            17935.333333333332,
+            18762.4,
+            19247.6,
+            19696.633333333335,
+            20142.466666666667,
+            20433.366666666665,
+            20581.833333333332,
+            20729.2,
+            20948.0,
+            21103.333333333332,
+            21019.533333333333
+          ],
+          "crossings": [
+            15.92690269708483,
+            21.55917147568013
+          ]
+        }
+      }
+    }
+  },
+  "edge_sensitivity": {
+    "left": {
+      "paired_windows": 75,
+      "local_minus_global_width_px_min_median_max": [
+        0.14171515772409293,
+        0.5294821200826263,
+        1.0335490262938514
+      ],
+      "fraction_local_wider": 1.0,
+      "global_minus_AS_width_px_min_median_max": [
+        -0.012631349490902721,
+        0.16196589580827947,
+        0.46276395635853973
+      ]
+    },
+    "right": {
+      "paired_windows": 75,
+      "local_minus_global_width_px_min_median_max": [
+        -0.1821564463377463,
+        -0.027700884154796768,
+        0.34463914098821036
+      ],
+      "fraction_local_wider": 0.3333333333333333,
+      "global_minus_AS_width_px_min_median_max": [
+        -0.062178261042753036,
+        0.09840309617020182,
+        0.5378211867030238
+      ]
+    }
+  },
+  "limits": [
+    "Four experiment cells use global alignment only, fixed 64-frame reference and identical 5738 frames/weights.",
+    "The production-local and AS outputs are external comparison controls, not members of the factorial experiment.",
+    "Every PR comparison has sigma-1 radius-3 smoothing and the same sharpening; no brightness normalization was added.",
+    "Cubic preserves more high-frequency contrast and noise and can introduce overshoot.",
+    "Ansa transition widths include physical geometry, seeing, interpolation and sharpening; not calibrated resolution.",
+    "The smoothing model was measured on supplied AS controls, not extracted from its private implementation.",
+    "No production algorithm or default is changed."
+  ]
+}
