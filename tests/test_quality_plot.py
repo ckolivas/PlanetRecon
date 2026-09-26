@@ -81,13 +81,16 @@ def test_worker_preprocess_and_inspect_deliver_plot_without_export_bloat(gui, tm
     win._preprocess()
     pump(app, lambda: win.job is None, timeout=20)
     assert not win.error.text()
+    assert win.input_image is not None
+    assert win.view.currentText() == 'Input'
+    assert not win.cancel_btn.isEnabled()
     plot = win.quality_plot
     assert len(plot.selected) == 34
     assert np.flatnonzero(~plot.selection.accepted).tolist() == [32, 33]
     original = plot.selection.measurements.copy()
     win.preprocessing_info = {}
     win._refresh_preprocessing()
-    win._inspect()
+    win._capture_ready()
     pump(app, lambda: win.job is None, timeout=20)
     np.testing.assert_array_equal(plot.selection.measurements, original)
     win._run()

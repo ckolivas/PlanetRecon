@@ -135,7 +135,7 @@ def _worker_run(
             if timing['status'] == 'available':
                 config = replace(config, reference_epoch_s=timing['duration_s'] / 2.)
         emit("progress", {"stage": "scan", "fraction": 0.0})
-        if (snapshot_request is not None or inspect_only) and not cancel_event.is_set():
+        if (snapshot_request is not None or inspect_only or preprocess_only) and not cancel_event.is_set():
             import numpy as np
             from planetrecon.detector import is_bayer, nearest_debayer_preview
             from planetrecon.geometry.pose import capture_timing
@@ -155,7 +155,10 @@ def _worker_run(
             if inspect_only:
                 from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for, quality_plot_data
                 selected, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
-                                                              should_cancel=cancel_event.is_set)
+                    should_cancel=cancel_event.is_set,
+                    on_progress=lambda done, total: emit('progress', {
+                        'stage': f'Validating cached preprocessing: {done:,}/{total:,} frames',
+                        'fraction': done / max(total, 1), 'backend': 'cpu'}))
                 if selected is not None:
                     payload['preprocessing_cache']['frame_quality'] = quality_plot_data(selected)
             emit("completed" if inspect_only else "source", payload)
@@ -169,7 +172,9 @@ def _worker_run(
                     'fraction': done/max(total, 1), 'backend': 'cpu'}))
             report = cache_report(selected, default_cache_path(source))
             report['frame_quality'] = quality_plot_data(selected)
-            emit('completed', {'preprocessing_cache': report})
+            # The final event owns the preview too: optional source events may
+            # have been dropped. No second worker or full cache re-read is needed.
+            emit('completed', {**payload, 'preprocessing_cache': report})
             return
         if config.geometry_mode != "none":
             emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",

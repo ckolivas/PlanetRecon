@@ -162,7 +162,7 @@ def test_gui_real_source_inspection_calibration_and_completion(gui, tmp_path):
     app, win = gui
     frame = np.arange(96, dtype=np.uint16).reshape(8,12) + 100
     win.path = write_ser(tmp_path/'real.ser', np.stack([frame]*4))
-    win._inspect()
+    win._start(inspect_only=True)
     pump(app, lambda: win.job is None)
     assert win.input_image.shape == frame.shape and '4 frames' in win.source_label.text()
     assert win.last_result is None
@@ -694,7 +694,7 @@ def test_inspection_white_includes_bright_pixel_missing_from_preview(gui,tmp_pat
     raw = np.full((8,1026),10,dtype='u2')
     raw[1,1] = 15000
     win.path = write_ser(tmp_path/'bright.ser',raw[None])
-    win._inspect();pump(app,lambda:win.job is None)
+    win._start(inspect_only=True);pump(app,lambda:win.job is None)
     assert win.input_image.max() == 10
     assert win.white.value() == pytest.approx(21450)
 
@@ -722,7 +722,7 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
     win._preprocess()
     assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
     win._finish_job()
-    win._inspect()
+    win._start(inspect_only=True)
     assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True}
     win._finish_job()
     for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',

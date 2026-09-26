@@ -33,16 +33,22 @@ def calibration_for(source, config, calibration=None):
     return calibration
 
 
-def identity(source, config, calibration, should_cancel=None):
+def identity(source, config, calibration, should_cancel=None, on_progress=None):
     # Hash observed pixels, not just file timestamps or a few samples. This also
     # distinguishes crops/indexed sources backed by the very same capture file.
     digest = hashlib.sha256()
-    for i in range(source.n_frames()):
+    total = source.n_frames()
+    stride = max(1, total // 100)
+    if on_progress:
+        on_progress(0, total)
+    for i in range(total):
         if should_cancel and should_cancel():
             raise InterruptedError('preprocessing cache verification cancelled')
         frame = np.ascontiguousarray(source.read_raw(i))
         digest.update(frame.dtype.str.encode())
         digest.update(memoryview(frame).cast('B'))
+        if on_progress and ((i + 1) % stride == 0 or i + 1 == total):
+            on_progress(i + 1, total)
     times = source.timestamps()
     time_hash = None if times is None else hashlib.sha256(np.ascontiguousarray(times).tobytes()).hexdigest()
     return {'schema': SCHEMA, 'pixels_sha256': digest.hexdigest(),
@@ -164,7 +170,7 @@ def save_cache(path, selection, source, config):
         Path(tmp).unlink(missing_ok=True)
 
 
-def load_cache(source, config, calibration=None, *, path=None, should_cancel=None):
+def load_cache(source, config, calibration=None, *, path=None, should_cancel=None, on_progress=None):
     path = Path(path) if path is not None else default_cache_path(source)
     if path is None or not path.is_file():
         return None, {'status': 'missing', 'reason': 'No preprocessing cache; run Preprocess to measure exclusions.'}
@@ -184,7 +190,7 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
                 or not np.isfinite(selection.measurements[selection.accepted]).all()
                 or selection_digest(selection) != selection.digest):
             raise ValueError('invalid or incomplete cache measurements')
-        if selection.identity != identity(source, config, calibration, should_cancel):
+        if selection.identity != identity(source, config, calibration, should_cancel, on_progress):
             return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
         return selection, cache_report(selection, path, config, source)
     except (ValueError, OSError, KeyError, TypeError, BadZipFile) as exc:

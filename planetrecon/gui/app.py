@@ -146,15 +146,13 @@ class MainWindow:
         layout = QVBoxLayout(root)
         buttons = QHBoxLayout()
         self.open_btn = QPushButton('Open capture…')
-        self.inspect_btn = QPushButton('Inspect input')
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
         self.run_btn = QPushButton('Run')
         self.batch_btn = QPushButton('Batch…')
         self.batch_btn.setToolTip('Select multiple captures and an output folder, then run the current processing and export settings on each. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh runs; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
-        for b, slot in ((self.open_btn, self._choose), (self.inspect_btn, self._inspect),
-                        (self.preprocess_btn, self._preprocess),
+        for b, slot in ((self.open_btn, self._choose), (self.preprocess_btn, self._preprocess),
                         (self.batch_btn, self._choose_batch),
                         (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
@@ -297,8 +295,7 @@ class MainWindow:
         layout.addWidget(self.error)
         self.window.setCentralWidget(root)
         tips = {
-            self.open_btn: 'Select a SER, AVI or observed HDF5 capture without starting processing. Run validates or creates its preprocessing cache; Inspect input loads metadata and a preview separately.',
-            self.inspect_btn: 'Read capture metadata and preview the input using the current settings, without starting reconstruction.',
+            self.open_btn: 'Open a SER, AVI or observed HDF5 capture. Existing preprocessing is validated automatically and displays the input preview and frame quality. Use Preprocess for new measurements or Run to stack.',
             self.run_btn: 'Validate the preprocessing cache, measure quality and geometry automatically when needed, then reconstruct with the current settings. Resume continues the selected checkpoint unchanged.',
             self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
             self.checkpoint_btn: 'Choose the NPZ file used to save accumulator progress after each batch. To resume, choose an existing file and enable Resume.',
@@ -393,7 +390,6 @@ class MainWindow:
         busy = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
         self.open_btn.setEnabled(not busy and not self.closing)
         self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
-        self.inspect_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.controls.setEnabled(not busy and not self.closing)
@@ -530,18 +526,18 @@ class MainWindow:
             self._buttons()
 
     def _capture_ready(self):
-        """Announce cache presence without reading frames or starting a worker."""
+        """Load cached measurements and the preview without starting a stack."""
         self.controls.suggest_capture_planet(self.path)
         cache = self.path.with_name(self.path.name + '.planetrecon-preprocess.npz')
         self.preprocessing_info = (
-            {'status': 'unverified', 'reason': 'Preprocessing cache found. Run will validate and reuse it when compatible.'}
+            {'status': 'unverified', 'reason': 'Loading cached preprocessing; validating capture data.'}
             if cache.is_file() else
             {'status': 'missing', 'reason': 'No preprocessing cache. Preprocessing starts when Run is clicked, or when requested with Preprocess.'})
         self._refresh_preprocessing()
-        self.status.setText('Capture selected. Click Run to process, or Inspect input to preview.')
-
-    def _inspect(self):
-        self._start(inspect_only=True)
+        if cache.is_file():
+            self._start(inspect_only=True)
+        else:
+            self.status.setText('Capture selected. Click Preprocess to measure frame quality, or Run to process.')
 
     def _preprocess(self):
         self._start(inspect_only=False, preprocess_only=True)
@@ -632,14 +628,14 @@ class MainWindow:
         self._save_settings()
         self.job = handle
         handle.snapshot_request.set()
-        self.inspecting = inspect_only
+        self.inspecting = inspect_only or preprocess_only
         self.cancel_started = None
         self.started = time.monotonic()
         self.last_seq = 0
-        self.auto_levels = not inspect_only
+        self.auto_levels = not self.inspecting
         self.error.clear()
         self.warnings.clear()
-        self.run_device.setText('Input inspection; no reconstruction backend selected' if inspect_only and self.run_stage is None
+        self.run_device.setText('Preparing input preview and frame quality' if self.inspecting and self.run_stage is None
                                 else f'Run requested {cfg.device.upper()} · preparing input; backend pending')
         self.details.setPlainText(json.dumps({'current_run_config': cfg.to_dict(),
                                              'inspect_only': inspect_only}, indent=2))
@@ -715,7 +711,7 @@ class MainWindow:
                 selection_text = (f' Next run: upper {percent}% of quality range ({threshold}): '
                                   f'{selected} frames ({fraction:.1f}% of capture).')
             else:
-                selection_text = ' Inspect input or Preprocess to refresh quality-range counts.'
+                selection_text = ' Reload the capture or Preprocess to refresh quality-range counts.'
             if self.controls.fields['frame_preselection'].isChecked():
                 selection_text += ' Before registration rejection.'
             else:
@@ -735,7 +731,7 @@ class MainWindow:
     def _preprocessing_settings_changed(self, value=None):
         if self.preprocessing_info.get('status') == 'ready':
             self.preprocessing_info = {'status': 'unverified',
-                'reason': 'Input/calibration settings changed. Inspect input to validate the cache, or Preprocess again.'}
+                'reason': 'Input/calibration settings changed. Reload the capture to validate the cache, or Preprocess again.'}
             self.controls.clear_geometry_estimate()
             self._refresh_preprocessing()
 
@@ -764,7 +760,8 @@ class MainWindow:
         if backend:
             report = payload.get('device_report') or {}
             reason = report.get('reason', '')
-            text = f'Run requested {self.config.device.upper()} · using {backend.upper()}'
+            text = (f'Input preparation · {backend.upper()}' if self.inspecting and self.run_stage is None
+                    else f'Run requested {self.config.device.upper()} · using {backend.upper()}')
             if reason and reason not in ('ok', 'explicit_cpu'):
                 text += ' · ' + reason
             self.run_device.setText(text)
@@ -805,6 +802,18 @@ class MainWindow:
         self._buttons()
 
     def _poll(self):
+        try:
+            self._poll_events()
+        except Exception as exc:
+            # poll() may already have consumed a terminal event after this
+            # preview. Never strand that finished worker if displaying it fails.
+            self.error.setText(f'Could not display processing update: {exc}')
+            self.status.setText('Processing stopped. Reload the capture or retry Preprocess.')
+            self._finish_job(continue_run=True)
+            if self.run_stage is not None:
+                self._advance_run('error')
+
+    def _poll_events(self):
         if self.job is None:
             return
         handle = self.job
@@ -838,27 +847,41 @@ class MainWindow:
                 self.status.setText(f"{event.payload.get('stage', '')} · {event.payload.get('backend', '')} "
                     f"· {event.payload.get('n_used', 0)} used · {elapsed:.1f}s elapsed{eta}")
             elif event.kind in ('completed', 'cancelled', 'error'):
-                if event.kind == 'completed':
-                    if 'source_metadata' in event.payload:
-                        self._set_input(event.payload)
-                        self.status.setText('Input inspected. Configure settings and run.')
-                    elif 'preprocessing_cache' in event.payload:
-                        self._set_preprocessing(event.payload['preprocessing_cache'])
-                        self.status.setText('Preprocessing cached. Choose whether to use it, then run with any processing settings.')
-                    else:
-                        self._accept_result(event.payload)
-                        self.status.setText('Processing complete; scientific result is ready to save.')
-                    self.progress.setRange(0, 100)
-                    self.progress.setValue(100)
-                elif event.kind == 'error':
-                    self.error.setText('Processing failed: ' + event.payload.get('message', 'unknown error'))
-                    self.status.setText('Last received result remains inspectable and saveable.')
-                else:
-                    self.status.setText('Processing cancelled. Last received result remains available.')
-                self._finish_job(continue_run=True)
-                if self.run_stage is not None:
-                    self._advance_run(event.kind)
+                self._complete_event(event)
                 break
+
+    def _complete_event(self, event):
+        kind = event.kind
+        try:
+            if kind == 'completed':
+                if 'source_metadata' in event.payload:
+                    self._set_input(event.payload)
+                    ready = self.preprocessing_info.get('status') == 'ready'
+                    self.status.setText('Input preview and frame quality ready. Choose settings, then Run.' if ready
+                                        else 'Input preview loaded. Preprocess to refresh frame quality, or Run to process.')
+                elif 'preprocessing_cache' in event.payload:
+                    self._set_preprocessing(event.payload['preprocessing_cache'])
+                    self.status.setText('Frame quality ready. Choose settings, then Run.')
+                else:
+                    self._accept_result(event.payload)
+                    self.status.setText('Processing complete; scientific result is ready to save.')
+                self.progress.setRange(0, 100)
+                self.progress.setValue(100)
+            elif kind == 'error':
+                self.error.setText('Processing failed: ' + event.payload.get('message', 'unknown error'))
+                self.status.setText('Last received result remains inspectable and saveable.')
+            else:
+                self.status.setText('Processing cancelled. Last received result remains available.')
+        except Exception as exc:
+            # The worker has finished even if updating a widget fails. Release
+            # its handle and surface the error instead of leaving Cancel enabled.
+            kind = 'error'
+            self.error.setText(f'Could not display processing result: {exc}')
+            self.status.setText('Processing stopped. Reload the capture or retry Preprocess.')
+        finally:
+            self._finish_job(continue_run=True)
+        if self.run_stage is not None:
+            self._advance_run(kind)
 
     def _finish_job(self, *, continue_run=False):
         if not continue_run:

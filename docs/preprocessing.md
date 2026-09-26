@@ -480,9 +480,12 @@ and no rotation rate is prefilled for that capture.
 ## Frame quality display
 
 The desktop **Frame quality** tab shows the validated per-frame preprocessing
-measurements. **Preprocess** creates the measurements; **Inspect input** loads
-an existing compatible cache. Either action opens the graph when measurements
-are available. Selecting a capture alone still does not start processing.
+measurements. Opening a capture with a cache automatically validates it and
+loads the input preview and graph, including on application startup. Validation
+reports frame progress and can be cancelled. A missing or incompatible cache
+can be refreshed with **Preprocess**, which also loads the preview and graph
+when it finishes. There is no separate inspection button. These actions do not
+start stacking; **Run** starts the stack.
 
 Switch between capture order and descending quality rank. The vertical axis
 maps the capture's worst and best finite measured qualities to 0 and 100;

@@ -63,7 +63,7 @@ class QualityPlot(QWidget):
         if self.selection is None:
             self.selected = np.zeros(0, dtype=bool)
             self.order = np.zeros(0, dtype=int)
-            self.summary.setText('Inspect input or Preprocess to load frame quality.')
+            self.summary.setText('Open a preprocessed capture or use Preprocess to load frame quality.')
         else:
             self.selected = (best_frame_mask(self.selection, percent, mode) if enabled
                              else np.ones(len(self.selection.accepted), dtype=bool))
