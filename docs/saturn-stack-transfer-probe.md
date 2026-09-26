@@ -58,7 +58,8 @@ against ground truth, excluding eight border pixels on each side:
 | Integer motion | 0.00000597 | 0.00008003 |
 
 These are global controls, not a claim that the local pipeline was exercised.
-Five focused tests pass. AS has **not** yet processed these inputs.
+Five generator tests passed. AS outputs were pending at this preparation stage;
+the supplied results and their analysis are recorded below.
 
 ## Interpretation once AS outputs exist
 
@@ -90,3 +91,67 @@ PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_stack_transfer_probe.py
 
 The generator requires a new output directory; use `--out` for another run.
 No production settings or stacking algorithms were changed.
+
+## Supplied AutoStakkert results (2026-09-27)
+
+Inputs in `stack/` have exactly the same SHA-256 hashes as the generated SERs.
+The supplied results are `stack/AS_P100/static_lapl4_ap55.png` and
+`stack/AS_P100/integer_motion_lapl4_ap55.png`, both 696×400 pixels. Their coarse
+registration samples the truth at `(output_y + 3, output_x)`. A code expansion
+of 256 output counts per input ADU accounts for their brightness; the fitted
+kernel sum independently confirms unity gain to about 0.002%.
+
+**The supplied AS outputs contain an effective Gaussian blur with sigma 1 pixel
+and radius 3 (7×7 support), even when every input frame is identical.**
+
+The measurement does not identify the internal stage or setting responsible,
+or establish that every AS configuration behaves this way. The saved local
+LastSession file predates these outputs and was not used as evidence of their
+active settings.
+
+The comparison region is rows 60–339 and columns 100–599, encompassing the
+planet and rings. Models were fitted on columns 100–349 and checked on the
+separate columns 350–599. AS output pixels were never interpolated.
+
+| Prediction from original pixels | Held-out RMS difference (input ADU) |
+| --- | ---: |
+| Integer translation only | 4.043409 |
+| Fitted fractional translation, cubic interpolation, gain and offset | 3.059323 |
+| Fixed Gaussian sigma 1, radius 3; no fitted gain or offset | 0.002222 |
+| Freely fitted 7×7 kernel and offset | 0.001982 |
+
+The fixed Gaussian's maximum error in the entire comparison region is less
+than two 16-bit output code values. It explains 99.99997% of the squared
+discrepancy from the original pixels on held-out data. This is a measure of
+prediction accuracy, not a percentage of sensor noise removed or recovered
+astronomical detail. The free kernel agrees with the normalized Gaussian
+coefficients within 0.00000791.
+
+The static and moving AS results are **pixel-for-pixel identical throughout
+that comparison region**. Across the full images 97.065% of pixels are identical;
+differences outside the region reach 0.684 input ADU. Thus integer movement
+does not account for the central smoothing in this pair.
+
+The Gaussian effect cannot arise from averaging different independent noise
+realizations here: every input carries the same texture. A fractional shift
+with the tested cubic interpolation also fails to account for the effect.
+This establishes the effective spatial smoothing, not whether AS implements
+it as a named Gaussian filter or another mathematically equivalent operation.
+
+This provides the direct evidence missing from the earlier speculative blur
+control. That control already brought PR's sharpened fine-scale variation close
+to AS's ([earlier measurements](saturn-alignment-noise-experiment.md)). However,
+its ring and limb detail looked softer. Matching this transfer function is now
+a justified comparison control; it still does not establish equal recovered
+resolution or justify silently changing production stacking.
+
+The reproducible analysis is `tools/analyse_stack_transfer.py`; results are
+saved in `out/saturn-transfer-analysis/report.json` and tracked in
+`results/real-data/saturn-stack-transfer-analysis.json`. Eight focused generator
+and analysis tests pass, including recovery of a known Gaussian and independent
+subpixel-translation/brightness-scale controls.
+
+```sh
+OPENBLAS_NUM_THREADS=8 PYTHONPATH=. .venv/bin/python tools/analyse_stack_transfer.py
+PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_analyse_stack_transfer.py tests/test_stack_transfer_probe.py
+```
