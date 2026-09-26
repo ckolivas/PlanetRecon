@@ -1,0 +1,272 @@
+{
+  "purpose": "Comparison with AS empirically measured sigma-1 radius-3 smoothing",
+  "production_changed": false,
+  "brightness_normalization": false,
+  "inputs": {
+    "pr_original": {
+      "source": "2024-09-27-1154_3-CK-R-SatP.png",
+      "sha256": "92328eacbd94220d7a68226d3ff14212c11a37a22abda3d0387c11b0b1b03f30"
+    },
+    "pr_multiscale": {
+      "source": "out/saturn-multiscale-patches/multiscale_local2_registered.png",
+      "sha256": "4944c5a8f28aba776e96a8b12cabb97a85dff33d8163440708f8e9442310e877"
+    },
+    "as_manual64": {
+      "source": "AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54.png",
+      "sha256": "63102ed1dd5fc648008c367bad4cc8ba2537c4de98eaa689805a6fdb78d9fbd0"
+    }
+  },
+  "variants": {
+    "pr_original_as_transfer": {
+      "snapshot": "out/saturn-controlled-alignment/local.npz",
+      "mapping": {
+        "black": 0.0873,
+        "formula": "65535 * clip((linear - black) / (white - black), 0, 1) ** (1 / gamma)",
+        "gamma": 1.0,
+        "rounding": "nearest, ties upward",
+        "shared_across_channels": true,
+        "white": 214.25828
+      },
+      "unmodified_snapshot_reproduces_original_pixels": true
+    },
+    "pr_multiscale_as_transfer": {
+      "snapshot": "out/saturn-multiscale-patches/multiscale_local2_registered.npz",
+      "mapping": {
+        "black": 0.0873,
+        "formula": "65535 * clip((linear - black) / (white - black), 0, 1) ** (1 / gamma)",
+        "gamma": 1.0,
+        "rounding": "nearest, ties upward",
+        "shared_across_channels": true,
+        "white": 214.25828
+      },
+      "unmodified_snapshot_reproduces_original_pixels": true
+    }
+  },
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "pr_original": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/pr_original.png",
+        "source_sha256": "92328eacbd94220d7a68226d3ff14212c11a37a22abda3d0387c11b0b1b03f30",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/sharpened/pr_original_sharpened.png",
+        "output_sha256": "2fe87dd59a9b7db3910752febad4c34b993e34c2023ea22cbe2a5d74c08b0748",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/2024-09-27-1154_3-CK-R-SatPs.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "pr_original_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/pr_original_as_transfer.png",
+        "source_sha256": "d57a0c661a4d275e88b26585fff3d68e7e6f570b2637b4b367a8938750e8585e",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/sharpened/pr_original_as_transfer_sharpened.png",
+        "output_sha256": "96bf3df7250e28dc27a5bf7c3542c70e6a5f0c7363b0433ea90f08006c9a8351"
+      },
+      "pr_multiscale": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/pr_multiscale.png",
+        "source_sha256": "4944c5a8f28aba776e96a8b12cabb97a85dff33d8163440708f8e9442310e877",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/sharpened/pr_multiscale_sharpened.png",
+        "output_sha256": "62dd8298a9dda055d7ea974a31678c1ff11a827006198aa4a97370078b73ad87",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/out/saturn-multiscale-patches/sharpened/multiscale_local2_registered_sharpened.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      },
+      "pr_multiscale_as_transfer": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/pr_multiscale_as_transfer.png",
+        "source_sha256": "aa0f592d208044310154fafa73b85ca7d636a051f017e8f84728f59d632c7581",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/sharpened/pr_multiscale_as_transfer_sharpened.png",
+        "output_sha256": "11616f17bf6ee949654125e5eabd433151c89dec09842200a5645a8964d568f5"
+      },
+      "as_manual64": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/as_manual64.png",
+        "source_sha256": "63102ed1dd5fc648008c367bad4cc8ba2537c4de98eaa689805a6fdb78d9fbd0",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-matched-transfer/sharpened/as_manual64_sharpened.png",
+        "output_sha256": "0b91d876a16fb728b4a1e699ba37759eb5312a234dcca99b60f6894bb241a1a5",
+        "verification": {
+          "expected": "/home/conman/Code/PlanetRecon/AS_F5738/2024-09-27-1154_3-CK-R-Sat_r64_lapl4_ap54s.png",
+          "maximum_code_difference": 0.0,
+          "rms_code_difference": 0.0,
+          "different_channel_samples": 0
+        }
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "measurements": {
+    "pr_original": {
+      "raw": {
+        "upper": {
+          "median": 32820.5,
+          "highpass_percent": 0.17034937175860657,
+          "laplacian_percent": 0.07525235190395287
+        },
+        "lower": {
+          "median": 33529.5,
+          "highpass_percent": 0.14191212156091457,
+          "laplacian_percent": 0.0702005103638063
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9667615072988363,
+          "laplacian_percent": 2.8067077445285884
+        },
+        "lower": {
+          "median": 33379.0,
+          "highpass_percent": 2.975063436365586,
+          "laplacian_percent": 2.7566200339258264
+        }
+      }
+    },
+    "pr_multiscale": {
+      "raw": {
+        "upper": {
+          "median": 32822.5,
+          "highpass_percent": 0.14647191736095222,
+          "laplacian_percent": 0.05201691240680057
+        },
+        "lower": {
+          "median": 33534.5,
+          "highpass_percent": 0.12320161229936867,
+          "laplacian_percent": 0.0484410159055952
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32605.0,
+          "highpass_percent": 1.9606067215994312,
+          "laplacian_percent": 1.7569869328588783
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 1.8697314970194872,
+          "laplacian_percent": 1.7825645572421749
+        }
+      }
+    },
+    "as_manual64": {
+      "raw": {
+        "upper": {
+          "median": 32916.0,
+          "highpass_percent": 0.0951182717351232,
+          "laplacian_percent": 0.020646945212220304
+        },
+        "lower": {
+          "median": 33769.5,
+          "highpass_percent": 0.08834009815843058,
+          "laplacian_percent": 0.022579389928529387
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32745.0,
+          "highpass_percent": 0.5732090820395705,
+          "laplacian_percent": 0.2232402997553159
+        },
+        "lower": {
+          "median": 33817.0,
+          "highpass_percent": 0.6418716335434476,
+          "laplacian_percent": 0.26665075917319786
+        }
+      }
+    },
+    "pr_original_as_transfer": {
+      "raw": {
+        "upper": {
+          "median": 32814.5,
+          "highpass_percent": 0.09737894648180066,
+          "laplacian_percent": 0.02121595089130261
+        },
+        "lower": {
+          "median": 33520.5,
+          "highpass_percent": 0.08475051862865865,
+          "laplacian_percent": 0.021758111136679387
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32641.0,
+          "highpass_percent": 0.5643798116083868,
+          "laplacian_percent": 0.20414634082034214
+        },
+        "lower": {
+          "median": 33532.0,
+          "highpass_percent": 0.5401297398792462,
+          "laplacian_percent": 0.21800082355623937
+        }
+      }
+    },
+    "pr_multiscale_as_transfer": {
+      "raw": {
+        "upper": {
+          "median": 32823.0,
+          "highpass_percent": 0.0909914371058022,
+          "laplacian_percent": 0.01818039146389464
+        },
+        "lower": {
+          "median": 33528.0,
+          "highpass_percent": 0.08710581578739049,
+          "laplacian_percent": 0.019775676350758695
+        }
+      },
+      "sharpened": {
+        "upper": {
+          "median": 32666.5,
+          "highpass_percent": 0.4565907143815261,
+          "laplacian_percent": 0.14715478719757924
+        },
+        "lower": {
+          "median": 33548.0,
+          "highpass_percent": 0.4194860391212006,
+          "laplacian_percent": 0.14872324869080086
+        }
+      }
+    }
+  },
+  "limits": [
+    "Measured AS response came from identical-frame controls, not these real-data stacks.",
+    "This applies a comparison blur to PR copies; production algorithms are unchanged.",
+    "AS and production PR use 5738 frames; experimental PR selects 5738 separately per AP.",
+    "No new brightness normalization; each existing input retains its original export mapping.",
+    "Disc fine-scale variation includes detail and artifacts, not just sensor noise.",
+    "Montage uses rounded-centroid crops and nearest-neighbor 2x display, no subpixel registration.",
+    "Visual sharpness is not a calibrated resolution measurement."
+  ]
+}
