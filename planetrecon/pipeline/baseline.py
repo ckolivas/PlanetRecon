@@ -423,8 +423,13 @@ def _stack_source(
             if local_matcher.use_cuda != (backend.name == 'cuda'):
                 local_matcher.use_cuda = backend.name == 'cuda'
             try:
-                shift = local_matcher.displacement(plane, shift)
+                global_shift = shift
+                shift = (local_matcher.displacement_tensor(plane, shift)
+                         if backend.name == 'cuda' and config.alignment_method == 'circular_multiscale'
+                         else local_matcher.displacement(plane, shift))
             except RuntimeError as exc:
+                if hasattr(local_matcher, 'release_cuda'):
+                    local_matcher.release_cuda()
                 cpu_fallback(exc)
                 local_matcher.use_cuda = False
                 shift = local_matcher.displacement(plane, shift)
@@ -434,6 +439,10 @@ def _stack_source(
                 projected = backend.backproject(calibrated, shift, color)
             except RuntimeError as exc:
                 cpu_fallback(exc)
+                if hasattr(shift, 'detach'):
+                    local_matcher.release_cuda()
+                    local_matcher.use_cuda = False
+                    shift = local_matcher.displacement(plane, global_shift)
         if projected is None and local_matcher is not None:
             projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
         if projected is not None:

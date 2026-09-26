@@ -113,7 +113,8 @@ from planetrecon.jobs import _watch_parent
 from pathlib import Path
 def child(path):
     _watch_parent()
-    Path(path).write_text(str(os.getpid()))
+    Path(path+'.tmp').write_text(str(os.getpid()))
+    Path(path+'.tmp').replace(path)  # Publish PID atomically before signalling ready.
     time.sleep(60)
 if __name__=='__main__':
     proc=multiprocessing.get_context('spawn').Process(target=child,args=(sys.argv[1],))

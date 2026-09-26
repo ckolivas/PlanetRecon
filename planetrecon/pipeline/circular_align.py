@@ -80,6 +80,7 @@ class CircularMultiscaleRegistration:
             raise ValueError('finite two-dimensional reference of at least 5 by 5 required')
         self.shape = reference.shape
         self.use_cuda = use_cuda
+        self._cuda = None
         self.should_cancel = should_cancel
         self.minimum = minimum_diameter(sampling_multiplier, wavelength_nm)
         self.layers = []
@@ -110,11 +111,32 @@ class CircularMultiscaleRegistration:
             'eligible_points': [int(np.count_nonzero(np.asarray(p.texture_valid)
                                 & (p.strength >= max(p.strength.max()*.08, 1e-12))))
                                 for p in self.layers],
+            'cuda_execution': {'used': False},
         }
 
     def _check_cancel(self):
         if self.should_cancel is not None and self.should_cancel():
             raise InterruptedError('cancelled during circular alignment')
+
+    def release_cuda(self):
+        self._cuda = None
+
+    def displacement_tensor(self, frame, global_shift):
+        """Keep the final field on CUDA for direct raw-data backprojection."""
+        frame = np.asarray(frame, dtype=float)
+        if frame.shape != self.shape or not np.isfinite(frame).all():
+            raise ValueError('finite frame matching reference required')
+        if np.shape(global_shift) != (2,) or not np.isfinite(global_shift).all():
+            raise ValueError('finite global displacement required')
+        from planetrecon.backends.torch_circular import TorchCircularRegistration
+        self._check_cancel()
+        if self._cuda is None:
+            self._cuda = TorchCircularRegistration(self)
+            self.provenance['cuda_execution'].update(used=True, precision='float64',
+                matching='GPU forward and reverse correlations, peaks, field blending and composition',
+                fused_correlation=any(layer['fused'] for layer in self._cuda.layers),
+                field_transfer='device field passed directly to raw backprojection')
+        return self._cuda.displacement(LocalRegistration.proxy(frame), global_shift, self._check_cancel)
 
     def displacement(self, frame, global_shift):
         frame = np.asarray(frame, dtype=float)
@@ -122,6 +144,8 @@ class CircularMultiscaleRegistration:
             raise ValueError('finite frame matching reference required')
         if np.shape(global_shift) != (2,) or not np.isfinite(global_shift).all():
             raise ValueError('finite global displacement required')
+        if self.use_cuda:
+            return tuple(self.displacement_tensor(frame, global_shift).cpu().numpy())
         field = np.array([np.full(self.shape, value, dtype=float) for value in global_shift])
         yy, xx = np.indices(self.shape)
         proxy = LocalRegistration.proxy(frame)

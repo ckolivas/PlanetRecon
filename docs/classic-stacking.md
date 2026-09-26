@@ -80,9 +80,29 @@ paths retain their existing execution strategy. More workers need not mean a
 linear speedup: patch fitting, memory traffic and serial preparation still limit
 scaling.
 
-CUDA forward-correlation
-costs and final backprojection use the existing supported backend and CPU fallback;
-reverse checks and field fitting run on CPU. The result records actual diameters,
+Circular CUDA alignment retains templates, forward/reverse matching, peak tests,
+field blending and coordinate composition on the GPU. The resulting device field
+goes directly into raw-data backprojection. CPU preparation still supplies the
+filtered proxy, and the CPU owns the ordered final accumulator and checkpoints.
+All calculations retain float64; frame brightness is unchanged.
+
+When Triton is available with PyTorch, a fused correlation kernel reads each
+candidate directly and reduces it without constructing the large array of all
+shifted patches. It supports windows up to 127 pixels; larger windows and builds
+without Triton use bounded PyTorch batches on the GPU. Reference data is uploaded
+once per run, and no patch-by-patch score downloads are needed. The first fused
+run can include kernel compilation; subsequent runs reuse its disk cache. CUDA
+allocation or execution failures retain the existing CPU fallback.
+
+On the RTX 5070, a 32-frame 696×404 monochrome Saturn subset (29 retained,
+5× sampling, 650 nm) took approximately 6.0 seconds with the earlier CUDA path,
+4.4 seconds on the first fused run including compilation, and 1.2 seconds on the
+next run. The maximum image difference from the earlier CUDA result was below
+6e-13 ADU, with identical coverage. These are small-capture measurements, not a
+full-capture throughput guarantee. GPU tests separately compare monochrome, RGB
+and Bayer output against CPU and exercise failures during matching/backprojection.
+
+The result records CUDA execution details, actual diameters,
 spacing, sampling, wavelength and matching rules in its provenance. Sampling or
 method changes do not invalidate the preprocessing cache, but cannot resume an
 accumulator made with different settings.
