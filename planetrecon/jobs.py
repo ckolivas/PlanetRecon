@@ -61,6 +61,25 @@ def result_from_payload(payload):
                                    if k in ReconstructionResult.__dataclass_fields__})
 
 
+def input_frame_preview(source, index=0):
+    """Read only the requested observation and return a bounded colour preview."""
+    import numpy as np
+    from planetrecon.detector import is_bayer, nearest_debayer_preview
+
+    if not 0 <= index < source.n_frames():
+        raise ValueError('preview frame is outside the capture')
+    raw = source.read_raw(index)
+    color = source.color_mode()
+    if color == 'BGR':
+        raw = raw[..., ::-1]
+    step = max(1, int(np.ceil(max(raw.shape[:2]) / 512)))
+    bayer = is_bayer(color)
+    preview = nearest_debayer_preview(raw, color, stride=step) if bayer else np.array(raw[::step, ::step], copy=True)
+    return {'input_image': preview, 'input_frame_index': index,
+            'input_max': float(np.max(raw, where=np.isfinite(raw), initial=0)),
+            'input_stride': step, 'input_view': 'nearest-neighbour Bayer RGB' if bayer else color}
+
+
 def _watch_parent() -> None:
     """Stop owned work after a hard parent crash, on spawn-supported platforms."""
     import threading
@@ -103,6 +122,7 @@ def _worker_run(
     preprocess_only: bool = False,
     auto_output_epoch: bool = False,
     emit_previews: bool = True,
+    preview_frame: int | None = None,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -128,6 +148,9 @@ def _worker_run(
             recover_complete_frames=config.recover_complete_frames,
             crop=config.crop,
         )
+        if preview_frame is not None:
+            emit('completed', input_frame_preview(source, preview_frame))
+            return
         if auto_output_epoch and (inspect_only or preprocess_only):
             from dataclasses import replace
             from planetrecon.geometry.pose import capture_timing
@@ -136,22 +159,10 @@ def _worker_run(
                 config = replace(config, reference_epoch_s=timing['duration_s'] / 2.)
         emit("progress", {"stage": "scan", "fraction": 0.0})
         if (snapshot_request is not None or inspect_only or preprocess_only) and not cancel_event.is_set():
-            import numpy as np
-            from planetrecon.detector import is_bayer, nearest_debayer_preview
             from planetrecon.geometry.pose import capture_timing
 
-            raw = source.read_raw(0)
-            color = source.color_mode()
-            if color == "BGR":
-                raw = raw[..., ::-1]
-            step = max(1, int(np.ceil(max(raw.shape[:2]) / 512)))
-            bayer = is_bayer(color)
-            preview = nearest_debayer_preview(raw, color, stride=step) if bayer else np.array(raw[::step, ::step], copy=True)
-            payload = {"source_metadata": source.metadata().as_dict(),
-                       "capture_timing": capture_timing(source, cadence_s=config.cadence_s),
-                       "input_image": preview,
-                       "input_max": float(np.max(raw, where=np.isfinite(raw), initial=0)),
-                       "input_stride": step, "input_view": "nearest-neighbour Bayer RGB" if bayer else color}
+            payload = {**input_frame_preview(source), 'source_metadata': source.metadata().as_dict(),
+                       'capture_timing': capture_timing(source, cadence_s=config.cadence_s)}
             if inspect_only:
                 from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for, quality_plot_data
                 selected, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
@@ -420,9 +431,16 @@ def start_stack_job(
     preprocess_only: bool = False,
     auto_output_epoch: bool = False,
     emit_previews: bool = True,
+    preview_frame: int | None = None,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
+    if preview_frame is not None:
+        if type(preview_frame) is not int or preview_frame < 0:
+            raise ValueError('preview frame must be a nonnegative integer')
+        if inspect_only or preprocess_only or auto_output_epoch or any(
+                value is not None for value in (resume_from, state_checkpoint, checkpoint_dir)):
+            raise ValueError('frame preview cannot be combined with processing or checkpoint options')
     if inspect_only and preprocess_only:
         raise ValueError('choose inspection or preprocessing')
     if auto_output_epoch and not (inspect_only or preprocess_only):
@@ -454,6 +472,7 @@ def start_stack_job(
             preprocess_only,
             auto_output_epoch,
             emit_previews,
+            preview_frame,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,

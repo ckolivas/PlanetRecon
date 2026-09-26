@@ -101,6 +101,10 @@ class MainWindow:
             frame_selection_mode='quality_range')
         self.path = Path(path) if path else None
         self.job: JobHandle | None = None
+        self.frame_job: JobHandle | None = None
+        self.frame_pending = None
+        self.quality_frame_image = None
+        self.quality_levels = None
         self.last_result = None
         self.preview = None
         self.input_image = None
@@ -136,6 +140,9 @@ class MainWindow:
                     owner._draw()
 
         self.window = OwnedWindow()
+        self.frame_timer = QTimer(self.window)
+        self.frame_timer.setInterval(50)
+        self.frame_timer.timeout.connect(self._poll_frame_preview)
         self.redraw_timer = QTimer(self.window)
         self.redraw_timer.setSingleShot(True)
         self.redraw_timer.setInterval(0)
@@ -177,6 +184,7 @@ class MainWindow:
         self.preprocessing_label.setWordWrap(True)
         layout.addWidget(self.preprocessing_label)
         self.quality_plot = QualityPlot()
+        self.quality_plot.frameRequested.connect(self._request_quality_frame)
         self.batch_status = QPlainTextEdit()
         self.batch_status.setReadOnly(True)
         self.batch_status.setMaximumHeight(100)
@@ -388,6 +396,7 @@ class MainWindow:
 
     def _buttons(self):
         busy = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
+        self.quality_plot.set_browsing_enabled(not busy and not self.closing)
         self.open_btn.setEnabled(not busy and not self.closing)
         self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
@@ -463,6 +472,7 @@ class MainWindow:
         self.preprocessing_info = {}
         self._refresh_preprocessing()
         self.path = item.source
+        self._clear_quality_preview()
         self.input_image = None
         self.input_metadata = {}
         self.input_max = None
@@ -527,6 +537,7 @@ class MainWindow:
 
     def _capture_ready(self):
         """Load cached measurements and the preview without starting a stack."""
+        self._clear_quality_preview()
         self.controls.suggest_capture_planet(self.path)
         cache = self.path.with_name(self.path.name + '.planetrecon-preprocess.npz')
         self.preprocessing_info = (
@@ -587,6 +598,7 @@ class MainWindow:
     def _start(self, inspect_only, preprocess_only=False):
         if self.job is not None or self.path is None or self.closing:
             return
+        self._stop_frame_preview()
         try:
             if not self.resume_check.isChecked():
                 self.controls.suggest_capture_planet(self.path)
@@ -671,6 +683,13 @@ class MainWindow:
         if 'preprocessing_cache' in payload:
             self._set_preprocessing(payload['preprocessing_cache'])
         self.input_max = payload.get('input_max')
+        samples = np.asarray(self.input_image)[np.isfinite(self.input_image)]
+        black = float(np.percentile(samples, 1)) if samples.size else 0.
+        maximum = payload.get('input_max', float(samples.max()) if samples.size else 1.)
+        bit_depth = meta.get('bit_depth', 32)
+        white = min(1.43 * maximum, (1 << bit_depth) - 1 if bit_depth <= 16 else float('inf'))
+        self.quality_levels = (black, max(black + 1., white))
+        self._display_quality_frame(payload)
         timing = payload.get('capture_timing', meta.get('extras', {}).get('capture_timing', {}).get('value', {}))
         duration = (f"{timing['duration_s']:.6g} s ({timing.get('origin', 'measured')})"
                     if timing.get('status') == 'available' else 'unavailable')
@@ -684,6 +703,70 @@ class MainWindow:
             self.details.setPlainText(json.dumps(meta, indent=2))
             self._fit_levels()
         self._draw()
+
+    def _display_quality_frame(self, payload):
+        self.quality_frame_image = payload['input_image']
+        black, white = self.quality_levels or (None, None)
+        self.quality_plot.set_frame_preview(payload.get('input_frame_index', 0),
+            _to_qimage(self.quality_frame_image, black, white))
+
+    def _request_quality_frame(self, index):
+        if (self.path is None or self.job is not None or self.run_stage is not None
+                or self.batch_active or self.closing or self.quality_plot.selection is None):
+            return
+        if not 0 <= index < len(self.quality_plot.selected):
+            return
+        self.frame_pending = index
+        self.quality_frame_image = None
+        self.quality_plot.loading_frame(index)
+        self._start_frame_preview()
+
+    def _start_frame_preview(self):
+        if self.frame_job is not None or self.frame_pending is None:
+            return
+        index, self.frame_pending = self.frame_pending, None
+        try:
+            # Use the capture interpretation that produced the displayed graph.
+            self.frame_job = start_stack_job(self.path, self.config, preview_frame=index, emit_previews=False)
+        except (ValueError, TypeError, OSError) as exc:
+            self.quality_plot.frame_label.setText(f'Could not load frame {index + 1}: {exc}')
+            return
+        self.frame_timer.start()
+
+    def _poll_frame_preview(self):
+        if self.frame_job is None:
+            return
+        try:
+            for event in self.frame_job.poll():
+                if event.kind not in ('completed', 'cancelled', 'error'):
+                    continue
+                self.frame_job.close()
+                self.frame_job = None
+                self.frame_timer.stop()
+                if self.frame_pending is None:
+                    if event.kind == 'completed':
+                        self._display_quality_frame(event.payload)
+                    else:
+                        self.quality_plot.frame_label.setText('Frame preview unavailable: ' +
+                            event.payload.get('message', 'cancelled'))
+                self._start_frame_preview()
+                break
+        except Exception as exc:
+            self._stop_frame_preview()
+            self.quality_plot.frame_label.setText(f'Could not load frame preview: {exc}')
+
+    def _stop_frame_preview(self):
+        self.frame_timer.stop()
+        self.frame_pending = None
+        if self.frame_job is not None:
+            self.frame_job.close()
+            self.frame_job = None
+
+    def _clear_quality_preview(self):
+        self._stop_frame_preview()
+        self.quality_frame_image = None
+        self.quality_levels = None
+        self.quality_plot.clear_preview()
 
     def _refresh_preprocessing(self, checked=None):
         info = self.preprocessing_info
@@ -730,6 +813,7 @@ class MainWindow:
 
     def _preprocessing_settings_changed(self, value=None):
         if self.preprocessing_info.get('status') == 'ready':
+            self._clear_quality_preview()
             self.preprocessing_info = {'status': 'unverified',
                 'reason': 'Input/calibration settings changed. Reload the capture to validate the cache, or Preprocess again.'}
             self.controls.clear_geometry_estimate()
@@ -1104,6 +1188,7 @@ class MainWindow:
             self._next_batch()
 
     def _shutdown(self, *_args):
+        self._stop_frame_preview()
         self.settings_timer.stop()
         self._save_settings()
         self._stop_batch()

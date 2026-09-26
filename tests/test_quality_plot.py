@@ -3,6 +3,7 @@ import os
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
 import numpy as np
+import pytest
 
 from planetrecon.pipeline.preprocess import FrameSelection
 from planetrecon.pipeline.preprocess_cache import cache_report, quality_plot_data
@@ -98,3 +99,98 @@ def test_worker_preprocess_and_inspect_deliver_plot_without_export_bloat(gui, tm
     assert not win.error.text()
     assert len(plot.selected) == 34
     assert 'frame_quality' not in win.last_result.provenance['preprocessing_cache']
+
+
+def test_graph_clicks_load_original_frames_in_both_orders(gui, tmp_path):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from planetrecon.io.ser import write_ser
+    app, win = gui
+    frames = np.arange(6*12*16, dtype='u2').reshape(6, 12, 16) + 100
+    win.path = write_ser(tmp_path/'frames.ser', frames)
+    win._start(inspect_only=True)
+    pump(app, lambda: win.job is None)
+    plot = win.quality_plot
+    assert plot.preview_index == 0 and not plot.frame_image.image.isNull()
+    np.testing.assert_array_equal(win.quality_frame_image, frames[0])
+    original_input = win.input_image.copy()
+    win._set_preprocessing(report())
+    app.processEvents()
+    levels = win.quality_levels
+
+    def click(rank):
+        rect = plot.canvas.plot_rect()
+        point = rect.center()
+        point.setX(rect.left() + rank / 5 * rect.width())
+        QTest.mouseClick(plot.canvas, Qt.MouseButton.LeftButton, pos=point.toPoint())
+        pump(app, lambda: win.frame_job is None)
+
+    click(1)
+    assert plot.preview_index == 1
+    np.testing.assert_array_equal(win.quality_frame_image, frames[1])
+    plot.order_control.setCurrentIndex(1)
+    click(1)  # Quality rank 2 is original frame 5, a screened shape outlier.
+    assert plot.preview_index == 4
+    np.testing.assert_array_equal(win.quality_frame_image, frames[4])
+    assert 'width outlier' in plot.frame_label.text()
+    click(5)  # Frames without a quality measurement are still inspectable.
+    assert plot.preview_index == 5
+    np.testing.assert_array_equal(win.quality_frame_image, frames[5])
+    assert win.quality_levels == levels
+    np.testing.assert_array_equal(win.input_image, original_input)
+    assert win.last_result is None and not win.cancel_btn.isEnabled()
+
+
+def test_latest_click_wins_and_new_capture_clears_preview(gui, tmp_path, monkeypatch):
+    from planetrecon.io.ser import write_ser
+    from planetrecon.gui import app as module
+    app, win = gui
+    frames = np.arange(6*12*16, dtype='u2').reshape(6, 12, 16)
+    win.path = write_ser(tmp_path/'frames.ser', frames)
+    win._start(inspect_only=True)
+    pump(app, lambda: win.job is None)
+    win._set_preprocessing(report())
+    calls = []
+    start_job = module.start_stack_job
+    def start(*args, **kwargs):
+        calls.append(kwargs['preview_frame'])
+        return start_job(*args, **kwargs)
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    for index in (1, 2, 5):
+        win._request_quality_frame(index)
+    pump(app, lambda: win.frame_job is None)
+    assert calls == [1, 5]
+    assert win.quality_plot.preview_index == 5
+    np.testing.assert_array_equal(win.quality_frame_image, frames[5])
+    win._request_quality_frame(3)
+    old_job = win.frame_job
+    win.path = tmp_path/'different.ser'
+    win._capture_ready()
+    assert win.frame_job is None and not old_job.process.is_alive()
+    assert win.quality_plot.preview_index is None
+    assert win.quality_plot.frame_image.image.isNull()
+    assert win.quality_frame_image is None and not win.frame_timer.isActive()
+
+
+@pytest.mark.parametrize('color', ['mono', 'BGR', 'RGGB'])
+def test_preview_reads_only_requested_frame_with_correct_colour(color):
+    from planetrecon.jobs import input_frame_preview
+    from planetrecon.detector import nearest_debayer_preview
+    frames = np.arange(3*12*16, dtype='u2').reshape(3, 12, 16)
+    if color == 'BGR':
+        frames = np.stack((frames, frames+100, frames+200), axis=-1)
+    reads = []
+    class Source:
+        def n_frames(self): return 3
+        def color_mode(self): return color
+        def read_raw(self, index):
+            reads.append(index)
+            return frames[index]
+    payload = input_frame_preview(Source(), 2)
+    expected = (frames[2, ..., ::-1] if color == 'BGR' else
+                nearest_debayer_preview(frames[2], color) if color == 'RGGB' else frames[2])
+    np.testing.assert_array_equal(payload['input_image'], expected)
+    assert reads == [2] and payload['input_frame_index'] == 2
+    with pytest.raises(ValueError, match='outside'):
+        input_frame_preview(Source(), 3)
+    assert reads == [2]

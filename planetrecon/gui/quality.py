@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import numpy as np
-from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QPainter, QPen
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QToolTip, QVBoxLayout, QWidget
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QImage, QPainter, QPen
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QSplitter, QToolTip, QVBoxLayout, QWidget
 
 from planetrecon.pipeline.preprocess import FrameSelection, best_frame_mask, quality_range
 
 
 class QualityPlot(QWidget):
+    frameRequested = Signal(int)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.data = None
@@ -20,6 +22,8 @@ class QualityPlot(QWidget):
         self.enabled = True
         self.percent = 100
         self.mode = 'quality_range'
+        self.preview_index = None
+        self.browsing_enabled = True
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(2)
@@ -35,12 +39,58 @@ class QualityPlot(QWidget):
         self.summary.setWordWrap(True)
         row.addWidget(self.summary, 1)
         layout.addLayout(row)
+        graph = QWidget()
+        graph_layout = QVBoxLayout(graph)
+        graph_layout.setContentsMargins(0, 0, 0, 0)
         self.canvas = QualityCanvas(self)
-        layout.addWidget(self.canvas, 1)
+        graph_layout.addWidget(self.canvas, 1)
         self.legend = QLabel('Green: selected · Orange: below selection · Red: screened out · Bottom strip: mask')
         self.legend.setWordWrap(True)
-        layout.addWidget(self.legend)
+        graph_layout.addWidget(self.legend)
+        preview = QWidget()
+        preview_layout = QVBoxLayout(preview)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        self.frame_label = QLabel('First frame appears when the capture is loaded.')
+        self.frame_label.setWordWrap(True)
+        preview_layout.addWidget(self.frame_label)
+        self.frame_image = FrameImage()
+        preview_layout.addWidget(self.frame_image, 1)
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.addWidget(graph)
+        self.splitter.addWidget(preview)
+        self.splitter.setSizes([280, 230])
+        layout.addWidget(self.splitter, 1)
         self.set_report({}, 100, 'quality_range', True)
+
+    def clear_preview(self):
+        self.preview_index = None
+        self.frame_image.image = QImage()
+        self.frame_image.update()
+        self.frame_label.setText('First frame appears when the capture is loaded.')
+        self.canvas.update()
+
+    def set_frame_preview(self, index, image):
+        self.preview_index = index
+        self.frame_image.image = image
+        self.frame_image.update()
+        self._frame_caption()
+        self.canvas.update()
+
+    def loading_frame(self, index):
+        self.clear_preview()
+        self.frame_label.setText(f'Loading frame {index + 1:,}…')
+
+    def set_browsing_enabled(self, enabled):
+        self.browsing_enabled = enabled
+        self.canvas.setCursor(Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor)
+
+    def _frame_caption(self):
+        if self.preview_index is not None:
+            index = self.preview_index
+            description = (self.frame_description(index) if self.selection is not None
+                           and index < len(self.selected) else f'Frame {index + 1}')
+            self.frame_label.setText(description.replace('\n', ' · '))
 
     def set_report(self, report, percent, mode, enabled):
         data = report.get('frame_quality') if report.get('status') == 'ready' else None
@@ -86,6 +136,7 @@ class QualityPlot(QWidget):
             'Green: selected · Orange: below selection · Red: screened out · Bottom strip: mask · Before registration rejection'
             if enabled else 'Grey: measured quality · Screening masks are inactive; run-time validity checks still apply')
         self.order_control.setEnabled(self.selection is not None)
+        self._frame_caption()
         self.canvas.update()
 
     def _set_order(self, *_):
@@ -181,6 +232,16 @@ class QualityCanvas(QWidget):
             painter.drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y))
             painter.drawText(QRectF(rect.right()-190, y-18, 185, 17), Qt.AlignmentFlag.AlignRight,
                              f'Upper {plot.percent}% cutoff')
+        if plot.preview_index is not None:
+            ranks = np.flatnonzero(order == plot.preview_index)
+            if len(ranks):
+                x = rect.left() + int(ranks[0]) / max(n-1, 1) * rect.width()
+                painter.setPen(QPen(QColor('#ffffff'), 1, Qt.PenStyle.DotLine))
+                painter.drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()+12))
+                score = plot.normalized[plot.preview_index]
+                if np.isfinite(score):
+                    painter.setBrush(QColor('#ffffff'))
+                    painter.drawEllipse(QPointF(x, rect.bottom()-score/100*rect.height()), 3, 3)
         painter.setPen(QColor('#cbd5df'))
         bottom = QRectF(rect.left(), rect.bottom()+16, rect.width(), 20)
         painter.drawText(bottom, Qt.AlignmentFlag.AlignLeft, '1')
@@ -188,15 +249,47 @@ class QualityCanvas(QWidget):
         painter.drawText(bottom, Qt.AlignmentFlag.AlignCenter,
                          'Quality rank (best first)' if plot.order_control.currentIndex() else 'Frame number (capture order)')
 
-    def mouseMoveEvent(self, event):
+    def frame_at(self, position):
         rect = self.plot_rect()
-        if self.plot.selection is None or not len(self.plot.order) or not rect.left() <= event.position().x() <= rect.right():
+        if (self.plot.selection is None or not len(self.plot.order)
+                or not rect.adjusted(0, 0, 0, 12).contains(position)):
+            return None
+        rank = round((position.x() - rect.left()) / rect.width() * (len(self.plot.order)-1))
+        return int(self.plot.order[rank])
+
+    def mousePressEvent(self, event):
+        index = self.frame_at(event.position())
+        if event.button() == Qt.MouseButton.LeftButton and self.plot.browsing_enabled and index is not None:
+            self.plot.frameRequested.emit(index)
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        index = self.frame_at(event.position())
+        if index is None:
             QToolTip.hideText()
             return
-        rank = round((event.position().x() - rect.left()) / rect.width() * (len(self.plot.order)-1))
-        index = int(self.plot.order[rank])
         QToolTip.showText(event.globalPosition().toPoint(), self.plot.frame_description(index), self)
 
     def leaveEvent(self, event):
         QToolTip.hideText()
         super().leaveEvent(event)
+
+
+class FrameImage(QWidget):
+    """Fit the selected frame without letting its dimensions resize the layout."""
+    def __init__(self):
+        super().__init__()
+        self.image = QImage()
+        self.setMinimumHeight(120)
+        self.setAccessibleName('Selected capture frame')
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor('#101820'))
+        if not self.image.isNull():
+            size = self.image.size().scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
+            target = QRectF((self.width()-size.width())/2, (self.height()-size.height())/2,
+                            size.width(), size.height())
+            painter.drawImage(target, self.image)

@@ -495,6 +495,14 @@ exclusions. The mask strip also marks excluded frames with no quality score.
 Hover for the original frame number (starting at 1), score and screening reasons.
 Large captures retain each display column's quality extrema and exclusion marks.
 
+The first capture frame appears below the graph. Click the graph or its mask
+strip to display that observation, including screened-out frames. In quality-rank
+view, clicks map back to the original capture frame number. A white marker shows
+the displayed frame. Drag the divider to resize the graph and image. Display
+levels stay fixed to the first frame so brightness changes remain visible.
+Frame browsing reads only the requested observation in a background worker;
+rapid clicks keep the latest request without queuing every intervening frame.
+
 The dashed marker follows **Upper quality range (%)** immediately. Selection
 uses the stacker's exact strict cutoff and screening mask; 100% and a flat range
 retain all screened frames. **Frame count** mode uses the existing stable ranking
