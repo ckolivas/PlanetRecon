@@ -179,3 +179,22 @@ Measurements, source checks and input hashes are recorded in
 `results/real-data/saturn-sharpened-controls.json`, using `measurements()` from
 `tools/alignment_noise_experiment.py` and `bands()` from
 `tools/analyse_alignment_noise.py`. No source images were modified.
+
+## Larger minimum AP size
+
+The user reports that AS used a minimum AP size of 64 pixels and that increasing
+PR's minimum from 23 to 65 pixels produced an indistinguishable result.
+The supplied `2024-09-27-1154_3-CK-R-Satpx65.png` confirms that this setting took
+effect: sampling multiplier 14, actual circular diameters 65, 93, 131 and 185,
+5,738 frames, quality weighting enabled. The original PR stack used diameters
+23, 33, 47 and 67. Thus this is a change to all four scales, not only the
+smallest scale.
+
+The larger-AP raw export measures 0.1732% and 0.1480% fine-scale variation in the
+two patches, compared with 0.1703% and 0.1419% in the original raw PNG. Brightness
+normalization accounts for the different export mapping. The saved reference
+anchor is 13240 rather than 22877, although the 64 reference candidate IDs are
+unchanged; this user comparison is therefore not a strictly AP-only experiment.
+Nevertheless the grain remains at a similar level and is consistent with the
+controlled local/global experiment. Too-small APs are unlikely to be the main
+explanation for this discrepancy. No production behavior was changed.
