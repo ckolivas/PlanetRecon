@@ -54,6 +54,10 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
         self._check(capture, 'quality_weighting', 'Weight frames by quality')
+        self._check(capture, 'normalise_brightness', 'Normalise brightness')
+        self._integer(capture, 'normalise_percent', 'Normalise brightness (%)', 1, 100)
+        self.fields['normalise_percent'].setEnabled(config.normalise_brightness)
+        self.fields['normalise_brightness'].toggled.connect(self.fields['normalise_percent'].setEnabled)
         self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
         self._choice(capture, 'alignment_method', 'Alignment points', ['square', 'circular_multiscale'])
         self.fields['alignment_method'].setItemText(0, 'Fixed square patches')
@@ -390,6 +394,7 @@ class ConfigControls(QTabWidget):
         self._mode_changed()
         self._sampling_changed()
         self._selection_mode_changed()
+        self.fields['normalise_percent'].setEnabled(self.fields['normalise_brightness'].isChecked())
         self._rotation_changed()
         for key in ('stack_percent', 'frame_selection_mode'):
             self.fields[key].setEnabled(self.fields['frame_preselection'].isChecked())

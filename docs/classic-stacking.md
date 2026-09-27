@@ -53,12 +53,27 @@ proxies are warped during fitting; original calibrated detector measurements and
 their support are resampled once for accumulation. Existing linear frame-quality
 weights and colour support normalisation remain in use. No sharpening is added.
 
-Frames retain their recorded brightness by default: there is no per-frame
+Frames retain their recorded brightness during stacking: there is no per-frame
 gain, mean, histogram or background matching before accumulation. Normalisation
 inside the correlation calculation is used only to estimate motion. The output
 is the quality-weighted average of the recorded intensities, with coverage
 normalisation at detector edges. Only explicitly configured detector calibration
-changes those values. Display black/white levels affect the preview separately.
+changes those values before stacking. Display black/white levels affect the preview separately.
+
+The Capture tab's optional **Normalise brightness** applies one gain to the
+output stack. The percentage defaults to **70%** of the capture's full brightness
+range: 178.5 ADU for 8-bit data, or 45874.5 ADU for 16-bit data. The brightest
+finite supported output sample sets the gain, shared across every pixel and RGB
+channel. This retains intrinsic frame brightness, colour ratios, frame weights
+and coverage. It applies no gamma, clipping, background subtraction or filtering.
+Normalisation is off by default. Automatic result display and default export
+levels use zero to full scale so they preserve the chosen percentage.
+
+The CLI equivalents are `--normalise-brightness --normalise-percent 70`.
+Gain-calibrated captures use the corresponding full scale in electrons; floating
+captures without a known detector range cannot use this option. The applied
+gain and original peak are recorded in result metadata. Accumulator checkpoints
+remain unscaled, so the percentage can be changed when resuming a stack.
 
 CPU matching is available on every supported machine. Ordinary CPU stacks process
 independent frames concurrently, up to **CPU threads** in the Capture tab. Fresh

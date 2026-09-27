@@ -1,6 +1,8 @@
 """Hover help for capture configuration, expressed in the GUI's displayed units."""
 
 CONTROL_HELP = {
+    'normalise_brightness': 'Apply one gain after stacking so the supported stack peak reaches the selected percentage of the capture brightness range. Every input frame retains its intrinsic brightness; RGB colour ratios are preserved. Disabled by default.',
+    'normalise_percent': 'Target stack peak as a percentage of capture full scale; defaults to 70%. For an 8-bit SER, 70% is 178.5 ADU. No per-frame adjustment, gamma or clipping is applied.',
     'quality_weighting': 'Weight retained frames in proportion to their quality score (default on). Turn off for equal frame weights. Frame selection and alignment are unchanged; neither mode adjusts individual frame brightness.',
     'sampling_multiplier': 'Actual capture focal ratio divided by the camera pixel pitch in micrometres. Default 5: a 3.75 µm camera at f/18.75. Enter 7 for that camera at f/26.25. Use the effective pixel pitch if the capture was binned or resized. Used by circular multiscale stacking; changing it does not require preprocessing again.',
     'alignment_wavelength_nm': 'Effective wavelength of the detail used for alignment. Default 550 nm for green-weighted colour captures; use your filter wavelength for monochrome or infrared. The starting circle diameter is eight diffraction FWHMs, rounded up to an odd pixel count, with a 15-pixel floor. This is a starting heuristic; larger samples support regions that cannot be matched reliably at the smallest scale.',

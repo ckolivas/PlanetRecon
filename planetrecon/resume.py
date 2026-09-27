@@ -27,6 +27,10 @@ def identity(source,config,calibration,should_cancel=None):
             digest.update(block)
     settings = config.to_dict()
     capture = capture_provenance(source,config,calibration)
+    # Output brightness never changes raw sums; allow changing it on resume.
+    for key in ('normalise_brightness', 'normalise_percent'):
+        settings.pop(key)
+        capture['config'].pop(key)
     # Existing checkpoints used quality weights. Only the opt-out changes
     # accumulator meaning and must be bound explicitly to the identity.
     if config.quality_weighting:

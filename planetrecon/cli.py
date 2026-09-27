@@ -160,6 +160,10 @@ def main(argv: list[str] | None = None) -> int:
                     help='upper quality-range or ranked frame-count percentage (1-100; default 50); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
     st.add_argument('--quality-weighting', action=argparse.BooleanOptionalAction, default=True,
                     help='weight retained frames by quality (default); --no-quality-weighting gives retained frames equal weight')
+    st.add_argument('--normalise-brightness', action=argparse.BooleanOptionalAction, default=False,
+                    help='apply one output gain so the stack peak reaches the requested full-scale percentage')
+    st.add_argument('--normalise-percent', type=int, default=70,
+                    help='normalised stack peak as a percentage of capture full scale (1-100; default 70)')
     st.add_argument('--local-alignment', action=argparse.BooleanOptionalAction, default=None,
                     help='normalized local patch alignment (default with cached preprocessing and no geometry motion model); --no-local-alignment uses global alignment')
     st.add_argument('--local-patch-size', type=int, default=65,
@@ -416,6 +420,8 @@ def main(argv: list[str] | None = None) -> int:
             batch_frames=args.batch,
             frame_preselection=not args.no_frame_preselection,
             quality_weighting=args.quality_weighting,
+            normalise_brightness=args.normalise_brightness,
+            normalise_percent=args.normalise_percent,
             stack_percent=args.stack_percent,
             frame_selection_mode=args.selection_mode,
             local_alignment=(args.local_alignment if args.local_alignment is not None

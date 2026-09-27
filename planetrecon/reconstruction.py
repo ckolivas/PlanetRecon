@@ -32,6 +32,8 @@ class ReconstructionConfig:
     reject_saturated: bool = True
     frame_preselection: bool = True
     quality_weighting: bool = True
+    normalise_brightness: bool = False
+    normalise_percent: int = 70
     stack_percent: int = 100
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
@@ -143,6 +145,10 @@ class ReconstructionConfig:
                    if self.geometry_mode == 'saturn' else ''))
 
     def __post_init__(self) -> None:
+        if type(self.normalise_brightness) is not bool:
+            raise ValueError('normalise_brightness must be a bool')
+        if type(self.normalise_percent) is not int or not 1 <= self.normalise_percent <= 100:
+            raise ValueError('normalise_percent must be an integer from 1 to 100')
         if type(self.quality_weighting) is not bool:
             raise ValueError('quality_weighting must be a bool')
         if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:

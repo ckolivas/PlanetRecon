@@ -71,11 +71,16 @@ def stack_source(
     from contextlib import nullcontext
     from planetrecon.backends.memory import cuda_allocation_limit
     from planetrecon.memory import cpu_memory_limit
+    from planetrecon.pipeline.brightness import detector_full_scale, normalise_result
+
+    full_scale = detector_full_scale(source, config, calibration) if config.normalise_brightness else None
 
     context = (cuda_allocation_limit(config.max_vram_bytes)
                if config.device != 'cpu' and config.geometry_mode == 'none' else nullcontext(None))
     with cpu_memory_limit(config.max_ram_bytes) as cpu_report, context as memory_report:
         def event(result, info):
+            if full_scale is not None:
+                normalise_result(result, config.normalise_percent, full_scale)
             if cpu_report is not None:
                 result.provenance['cpu_memory_budget'] = cpu_report
             if on_event is not None:
@@ -87,6 +92,8 @@ def stack_source(
                              cache_validation=cache_validation)
         if cpu_report is not None:
             result.provenance['cpu_memory_budget'] = cpu_report
+        if full_scale is not None:
+            normalise_result(result, config.normalise_percent, full_scale)
         return result
 
 

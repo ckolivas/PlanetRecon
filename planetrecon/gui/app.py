@@ -1069,6 +1069,12 @@ class MainWindow:
         if source.get('units') == 'adu' and isinstance(bits, int) and 0 < bits <= 32:
             full_scale = ((1 << bits)-1) * gain
         high = min(1.43 * maximum, full_scale) if maximum > 0 else min(1., full_scale)
+        if mode == 'Result' and self.last_result is not None:
+            normalisation = self.last_result.provenance.get('brightness_normalisation', {})
+            if normalisation.get('applied'):
+                # Preserve the requested percentage in preview/default export;
+                # automatic display stretching must not undo output normalisation.
+                low, high = 0., normalisation['full_scale']
         if high <= low:
             low = high - 1.
         self.black.blockSignals(True)
