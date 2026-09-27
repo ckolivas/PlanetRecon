@@ -92,3 +92,59 @@ def test_new_surface_runs_use_flipped_pole_without_changing_rate(gui, tmp_path, 
         assert valid.all()
         deltas.append([x[0]-64., y[0]-64.])
     np.testing.assert_allclose(deltas[0], -np.array(deltas[1]), atol=1e-12)
+
+
+def test_saved_manual_angle_can_return_to_current_measurement(gui):
+    _, window = gui
+    controls = window.controls
+    state = controls.settings_state()
+    state['fields']['pole_pa_rad'] = '173.571333103'
+    state['geometry_manual'] = ['pole_pa_rad']
+    controls.restore_settings(state)
+    estimate = {'suggestions': {'pole_pa_rad': np.deg2rad(179.73363931235963)}}
+    controls.prefill_geometry(estimate)
+    assert controls.fields['pole_pa_rad'].text() == '173.571333103'
+    assert '179.734°' in controls.measured_pole_button.text()
+    controls.measured_pole_button.click()
+    assert controls.configuration().pole_pa_rad == pytest.approx(estimate['suggestions']['pole_pa_rad'])
+    assert 'pole_pa_rad' not in controls.geometry_manual
+    assert controls.geometry_auto['pole_pa_rad'] == controls.fields['pole_pa_rad'].text()
+    # Saving and restoring now retains automatic intent, so later measurements apply.
+    controls.restore_settings(controls.settings_state())
+    controls.prefill_geometry({'suggestions': {'pole_pa_rad': np.deg2rad(179.8)}})
+    assert controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(179.8))
+
+
+@pytest.mark.parametrize('invalidate', ['new_capture', 'unresolved', 'inapplicable', 'checkpoint', 'nonfinite'])
+def test_measured_pole_action_cannot_reuse_unavailable_estimate(gui, invalidate):
+    _, window = gui
+    controls = window.controls
+    controls.prefill_geometry({'suggestions': {'pole_pa_rad': .1}})
+    controls.flip_pole_button.click()
+    before = controls.configuration().pole_pa_rad
+    if invalidate == 'new_capture':
+        controls.clear_geometry_estimate()
+    else:
+        controls.prefill_geometry({
+            'suggestions': {} if invalidate == 'unresolved' else
+                          {'pole_pa_rad': float('nan') if invalidate == 'nonfinite' else .2},
+            'applicable': invalidate != 'inapplicable',
+        }, allow_prefill=invalidate != 'checkpoint')
+    assert not controls.measured_pole_button.isEnabled()
+    controls.measured_pole_button.click()
+    assert controls.configuration().pole_pa_rad == before
+    assert controls.pole_flipped
+
+
+def test_using_measured_pole_clears_manual_flip_and_preserves_other_overrides(gui):
+    _, window = gui
+    controls = window.controls
+    controls.prefill_geometry({'suggestions': {'pole_pa_rad': .1}})
+    controls.fields['field_rate_rad_s'].setText('0.5')
+    controls.fields['field_rate_rad_s'].textEdited.emit('0.5')
+    controls.flip_pole_button.click()
+    controls.measured_pole_button.click()
+    assert controls.configuration().pole_pa_rad == pytest.approx(.1)
+    assert not controls.pole_flipped
+    assert controls.fields['field_rate_rad_s'].text() == '0.5'
+    assert controls.geometry_manual == {'field_rate_rad_s'}

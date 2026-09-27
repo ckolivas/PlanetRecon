@@ -22,6 +22,7 @@ class ConfigControls(QTabWidget):
         self.angular = set()
         self.geometry_manual = set()
         self.geometry_auto = {}
+        self.measured_pole = None
         self.pole_flipped = False
         self.capture_planet_path = None
         self.planet_choice_manual = config.rotation_planet is not None
@@ -131,6 +132,14 @@ class ConfigControls(QTabWidget):
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
             if key == 'pole_pa_rad':
+                self.measured_pole_button = QPushButton('Use measured angle')
+                self.measured_pole_button.setEnabled(False)
+                self.measured_pole_button.setToolTip(
+                    'Replace the retained pole angle with the current preprocessing '
+                    'measurement and allow automatic updates on subsequent runs. '
+                    'This also clears any manual pole flip.')
+                self.measured_pole_button.clicked.connect(self._use_measured_pole)
+                geo.addRow('', self.measured_pole_button)
                 self.flip_pole_button = QPushButton('Flip pole 180° (north / south)')
                 self.flip_pole_button.setCheckable(True)
                 self.flip_pole_button.setToolTip(
@@ -359,6 +368,7 @@ class ConfigControls(QTabWidget):
         if not isinstance(state, dict) or not isinstance(state.get('fields'), dict):
             raise ValueError('invalid saved controls')
         self.geometry_auto = {}
+        self._set_measured_pole(None)
         for key, value in state['fields'].items():
             edit = self.fields.get(key)
             if edit is None:
@@ -468,6 +478,22 @@ class ConfigControls(QTabWidget):
     def _pole_angle_changed(self, _text):
         self._show_pole_flip(False)
 
+    def _set_measured_pole(self, angle):
+        self.measured_pole = angle if angle is not None and math.isfinite(angle) else None
+        self.measured_pole_button.setEnabled(self.measured_pole is not None)
+        self.measured_pole_button.setText('Use measured angle' if self.measured_pole is None else
+                                        f'Use measured angle ({math.degrees(self.measured_pole):.3f}°)')
+
+    def _use_measured_pole(self):
+        if self.measured_pole is None:
+            return
+        text = format(math.degrees(self.measured_pole), '.10g')
+        self.geometry_manual.discard('pole_pa_rad')
+        self.fields['pole_pa_rad'].setText(text)
+        self.geometry_auto['pole_pa_rad'] = text
+        self._show_pole_flip(False)
+        self._set_geometry_help('Measured pole angle applied. Future preprocessing estimates can update it automatically.')
+
     def _flip_pole(self):
         edit = self.fields['pole_pa_rad']
         try:
@@ -491,6 +517,7 @@ class ConfigControls(QTabWidget):
     def clear_geometry_estimate(self):
         from planetrecon.reconstruction import ReconstructionConfig
         defaults = ReconstructionConfig()
+        self._set_measured_pole(None)
         for key, text in self.geometry_auto.items():
             if key not in self.geometry_manual and self.fields[key].text() == text:
                 value = getattr(defaults, key)
@@ -512,6 +539,7 @@ class ConfigControls(QTabWidget):
         defaults = ReconstructionConfig()
         applicable = estimate.get('applicable', True)
         allow_prefill = allow_prefill and applicable
+        self._set_measured_pole(estimate.get('suggestions', {}).get('pole_pa_rad') if allow_prefill else None)
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
                    'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'}
         if (self.fields['geometry_mode'].currentData() == 'saturn'

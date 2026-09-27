@@ -242,6 +242,11 @@ estimates can alias large rotations between sampled frames; use a declared rate
 for those captures. Moment-based radius estimates are approximate for textured or
 limb-darkened discs, so use a measured radius for surface reconstruction.
 
+The Geometry tab's **Use measured angle (…)** button replaces a retained manual
+pole angle with the current preprocessing measurement and restores automatic
+updates. The measured value appears on the button even while a manual override
+is retained. It is unavailable until an applicable measurement has been loaded.
+
 If preprocessing identifies the opposite pole, use **Flip pole 180° (north / south)**
 beside the pole position angle in Geometry. This changes the pole orientation for
 the next run while retaining the selected rotation rate. The correction is a manual
