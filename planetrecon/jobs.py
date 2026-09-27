@@ -191,7 +191,9 @@ def _worker_run(
             report['frame_quality'] = quality_plot_data(selected)
             # The final event owns the preview too: optional source events may
             # have been dropped. No second worker or full cache re-read is needed.
-            emit('completed', {**payload, 'preprocessing_cache': report, 'cache_validation': vars(cache_validation).copy()})
+            emit('completed', {**payload, 'preprocessing_cache': report,
+                               'preprocessing_completed': True,
+                               'cache_validation': vars(cache_validation).copy()})
             return
         if config.geometry_mode != "none":
             emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",

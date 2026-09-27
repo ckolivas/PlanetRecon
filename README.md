@@ -242,15 +242,18 @@ estimates can alias large rotations between sampled frames; use a declared rate
 for those captures. Moment-based radius estimates are approximate for textured or
 limb-darkened discs, so use a measured radius for surface reconstruction.
 
-The Geometry tab's **Use measured angle (…)** button replaces a retained manual
-pole angle with the current preprocessing measurement and restores automatic
-updates. The measured value appears on the button even while a manual override
-is retained. It is unavailable until an applicable measurement has been loaded.
+Successful interface **Preprocess** applies the calculated geometry, replacing
+overrides wherever a calculated value is available. The Geometry tab's
+**Use calculated values** button restores all available calculations together,
+including the output midpoint and Saturn ring radii. It is greyed out until a
+calculated value has been overridden, and disables itself after restoring them.
+Ordinary cache loading retains edits; unavailable measurements are not invented.
 
 If preprocessing identifies the opposite pole, use **Flip pole 180° (north / south)**
 beside the pole position angle in Geometry. This changes the pole orientation for
 the next run while retaining the selected rotation rate. The correction is a manual
-override, so repeated preprocessing preserves it; clicking again restores the
+override until Preprocess or Use calculated values restores the calculation;
+clicking again restores the
 original orientation. The button stays checked and reads **Pole flipped 180° — Undo flip**
 while active, including after restarting the GUI or moving through a batch.
 Typing a new pole angle clears the indicator and establishes a new starting angle.
@@ -261,8 +264,8 @@ separate boundary gradients in three aligned averages, and prefills the GUI.
 This also works with Motion model **None** and local alignment; the ring radii
 are retained for a later switch to Saturn motion compensation.
 It also estimates field rotation from the timed ring-axis change and globe
-flattening from the exposed limb, conditional on viewing latitude. Manual edits
-and checkpoint settings are preserved. Re-run preprocessing to obtain these
+flattening from the exposed limb, conditional on viewing latitude. Fresh interface
+preprocessing applies those estimates over manual edits. Checkpoint settings are preserved. Re-run preprocessing to obtain these
 estimates from an older cache. Clipped, unresolved or inconsistent boundaries
 still require manual radii; faint ring material below the noise floor is not
 measured. CLI runs accept the measured values through their geometry options.

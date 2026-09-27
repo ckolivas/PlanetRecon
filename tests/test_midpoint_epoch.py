@@ -105,7 +105,7 @@ def test_worker_estimates_and_reloads_geometry_at_the_chosen_epoch(tmp_path, mon
     assert info['geometry_estimate'].get('applicable', True)
 
 
-def test_preprocessing_options_respect_manual_zero_and_checkpoints(gui, tmp_path, monkeypatch):
+def test_preprocessing_uses_midpoint_despite_manual_zero_but_retains_checkpoints(gui, tmp_path, monkeypatch):
     _, window = gui
     options = []
     def start(path, cfg, **kwargs):
@@ -117,6 +117,10 @@ def test_preprocessing_options_respect_manual_zero_and_checkpoints(gui, tmp_path
     assert options[-1]['auto_output_epoch']
     window._finish_job()
     window.controls.fields['reference_epoch_s'].textEdited.emit('0')
+    window._preprocess()
+    assert options[-1]['auto_output_epoch']
+    window._finish_job()
+    window.checkpoint_path.setText(str(tmp_path/'state.npz'))
     window._preprocess()
     assert not options[-1]['auto_output_epoch']
     window._finish_job()

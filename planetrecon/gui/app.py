@@ -649,7 +649,7 @@ class MainWindow:
             if preprocess_only:
                 handle = start_stack_job(self.path, cfg, preprocess_only=True,
                     cache_validation=self.cache_validation,
-                    auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch())
+                    auto_output_epoch=not self.checkpoint_path.text().strip())
             else:
                 handle = (start_stack_job(self.path, cfg, inspect_only=True,
                     cache_validation=self.cache_validation,
@@ -707,7 +707,8 @@ class MainWindow:
             f'Automatic: {exposure:.6g} s' if exposure is not None else 'No recorded exposure')
 
         if 'preprocessing_cache' in payload:
-            self._set_preprocessing(payload['preprocessing_cache'])
+            self._set_preprocessing(payload['preprocessing_cache'],
+                                    replace_manual=payload.get('preprocessing_completed', False))
         self.input_max = payload.get('input_max')
         samples = np.asarray(self.input_image)[np.isfinite(self.input_image)]
         black = float(np.percentile(samples, 1)) if samples.size else 0.
@@ -845,7 +846,7 @@ class MainWindow:
             self.controls.clear_geometry_estimate()
             self._refresh_preprocessing()
 
-    def _set_preprocessing(self, info):
+    def _set_preprocessing(self, info, *, replace_manual=False):
         # Stack snapshots contain only the compact report. Retain the plot from
         # inspection/preprocessing only while its validated cache identity matches.
         previous = self.preprocessing_info
@@ -861,9 +862,11 @@ class MainWindow:
             self.preview_tabs.setCurrentWidget(self.quality_plot)
         if info.get('status') == 'ready':
             self.controls.prefill_output_epoch(info.get('timing', {}),
-                                              allow_prefill=not self.checkpoint_path.text().strip())
+                                              allow_prefill=not self.checkpoint_path.text().strip(),
+                                              replace_manual=replace_manual)
             self.controls.prefill_geometry(info.get('geometry_estimate', {}),
-                                          allow_prefill=not self.checkpoint_path.text().strip())
+                                          allow_prefill=not self.checkpoint_path.text().strip(),
+                                          replace_manual=replace_manual)
 
     def _update_run_device(self, payload):
         backend = payload.get('backend')
@@ -973,7 +976,8 @@ class MainWindow:
                     self.status.setText('Input preview and frame quality ready. Choose settings, then Run.' if ready
                                         else 'Input preview loaded. Preprocess to refresh frame quality, or Run to process.')
                 elif 'preprocessing_cache' in event.payload:
-                    self._set_preprocessing(event.payload['preprocessing_cache'])
+                    self._set_preprocessing(event.payload['preprocessing_cache'],
+                        replace_manual=event.payload.get('preprocessing_completed', False))
                     self.status.setText('Frame quality ready. Choose settings, then Run.')
                 else:
                     self._accept_result(event.payload)

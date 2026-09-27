@@ -10,8 +10,12 @@ controls whether later runs use those decisions. GUI **Run** validates the cache
 and automatically runs preprocessing when it is missing, stale or invalid,
 then applies automatic geometry and midpoint prefills before stacking. Motion
 runs also refresh inapplicable or incomplete geometry estimates once; required
-parameters that remain unresolved still prevent stacking. Manual overrides are
-preserved. Cancelling during preparation prevents stacking from starting.
+parameters that remain unresolved still prevent stacking. Successful interface
+preprocessing applies all available calculated geometry over manual overrides.
+The Geometry tab's **Use calculated values** button restores the same calculations
+after subsequent edits; it is disabled while those values are already in use.
+Ordinary cache refreshes retain manual edits, and unresolved parameters still
+require supplied values. Cancelling during preparation prevents stacking from starting.
 Checkpoint resumes retain their existing settings and cache.
 
 Opening a cached capture performs one full pixel validation. The desktop passes

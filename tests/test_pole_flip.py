@@ -8,7 +8,7 @@ import pytest
 from test_w14 import gui
 
 
-def test_flip_preserves_manual_direction_through_preprocessing(gui):
+def test_flip_preserves_manual_direction_through_cache_refresh(gui):
     _, window = gui
     controls = window.controls
     estimate = {'suggestions': {'pole_pa_rad': np.deg2rad(12.5)}}
@@ -104,8 +104,9 @@ def test_saved_manual_angle_can_return_to_current_measurement(gui):
     estimate = {'suggestions': {'pole_pa_rad': np.deg2rad(179.73363931235963)}}
     controls.prefill_geometry(estimate)
     assert controls.fields['pole_pa_rad'].text() == '173.571333103'
-    assert '179.734°' in controls.measured_pole_button.text()
-    controls.measured_pole_button.click()
+    assert controls.calculated_values_button.text() == 'Use calculated values'
+    assert controls.calculated_values_button.isEnabled()
+    controls.calculated_values_button.click()
     assert controls.configuration().pole_pa_rad == pytest.approx(estimate['suggestions']['pole_pa_rad'])
     assert 'pole_pa_rad' not in controls.geometry_manual
     assert controls.geometry_auto['pole_pa_rad'] == controls.fields['pole_pa_rad'].text()
@@ -116,7 +117,7 @@ def test_saved_manual_angle_can_return_to_current_measurement(gui):
 
 
 @pytest.mark.parametrize('invalidate', ['new_capture', 'unresolved', 'inapplicable', 'checkpoint', 'nonfinite'])
-def test_measured_pole_action_cannot_reuse_unavailable_estimate(gui, invalidate):
+def test_calculated_values_action_cannot_reuse_unavailable_estimate(gui, invalidate):
     _, window = gui
     controls = window.controls
     controls.prefill_geometry({'suggestions': {'pole_pa_rad': .1}})
@@ -130,20 +131,20 @@ def test_measured_pole_action_cannot_reuse_unavailable_estimate(gui, invalidate)
                           {'pole_pa_rad': float('nan') if invalidate == 'nonfinite' else .2},
             'applicable': invalidate != 'inapplicable',
         }, allow_prefill=invalidate != 'checkpoint')
-    assert not controls.measured_pole_button.isEnabled()
-    controls.measured_pole_button.click()
+    assert not controls.calculated_values_button.isEnabled()
+    controls.calculated_values_button.click()
     assert controls.configuration().pole_pa_rad == before
     assert controls.pole_flipped
 
 
-def test_using_measured_pole_clears_manual_flip_and_preserves_other_overrides(gui):
+def test_calculated_values_clear_flip_and_preserve_unmeasured_overrides(gui):
     _, window = gui
     controls = window.controls
     controls.prefill_geometry({'suggestions': {'pole_pa_rad': .1}})
     controls.fields['field_rate_rad_s'].setText('0.5')
     controls.fields['field_rate_rad_s'].textEdited.emit('0.5')
     controls.flip_pole_button.click()
-    controls.measured_pole_button.click()
+    controls.calculated_values_button.click()
     assert controls.configuration().pole_pa_rad == pytest.approx(.1)
     assert not controls.pole_flipped
     assert controls.fields['field_rate_rad_s'].text() == '0.5'

@@ -22,7 +22,7 @@ class ConfigControls(QTabWidget):
         self.angular = set()
         self.geometry_manual = set()
         self.geometry_auto = {}
-        self.measured_pole = None
+        self.calculated_geometry = {}
         self.pole_flipped = False
         self.capture_planet_path = None
         self.planet_choice_manual = config.rotation_planet is not None
@@ -102,7 +102,7 @@ class ConfigControls(QTabWidget):
         self._number(cal, 'saturate_adu', 'Saturation threshold (ADU)')
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
-        self.geometry_estimate_text = 'Preprocessing can prefill geometry for the next run. User edits are preserved.'
+        self.geometry_estimate_text = 'Preprocess applies calculated geometry. Manual edits apply until the next Preprocess or Use calculated values.'
         self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
         self.motion_model_label = geo.labelForField(self.fields['geometry_mode'])
         self._choice(geo, 'motion_reference', 'Automatic motion reference', ['midpoint', 'best'])
@@ -132,27 +132,26 @@ class ConfigControls(QTabWidget):
         ]:
             self._number(geo, key, label, angular=key.endswith(('_rad', '_rad_s')))
             if key == 'pole_pa_rad':
-                self.measured_pole_button = QPushButton('Use measured angle')
-                self.measured_pole_button.setEnabled(False)
-                self.measured_pole_button.setToolTip(
-                    'Replace the retained pole angle with the current preprocessing '
-                    'measurement and allow automatic updates on subsequent runs. '
-                    'This also clears any manual pole flip.')
-                self.measured_pole_button.clicked.connect(self._use_measured_pole)
-                geo.addRow('', self.measured_pole_button)
                 self.flip_pole_button = QPushButton('Flip pole 180° (north / south)')
                 self.flip_pole_button.setCheckable(True)
                 self.flip_pole_button.setToolTip(
                     'Add 180° to the pole position angle, wrapped to 0–360°, when '
                     'preprocessing identifies the opposite pole. Uses the existing '
                     'surface rate, including manual overrides. Applies to the next run '
-                    'and is preserved as a manual geometry edit during preprocessing. '
+                    'until Preprocess or Use calculated values restores calculated geometry. '
                     'The checked button says Pole flipped while the flip is active. '
                     'Click again to restore the original orientation. Typing a new '
                     'pole angle clears the flip indicator and sets a new starting angle.')
                 self.flip_pole_button.clicked.connect(self._flip_pole)
                 self.fields[key].textChanged.connect(self._pole_angle_changed)
                 geo.addRow('', self.flip_pole_button)
+        self.calculated_values_button = QPushButton('Use calculated values')
+        self.calculated_values_button.setEnabled(False)
+        self.calculated_values_button.setToolTip(
+            'Restore all available calculated geometry values, including the output '
+            'midpoint and Saturn ring sizes, and clear their manual overrides.')
+        self.calculated_values_button.clicked.connect(self.use_calculated_values)
+        geo.addRow(self.calculated_values_button)
         geo.addRow(QLabel('Centre anchors tracking; rates are rigid.\nSaturn moon tracks keep a fixed centre. Exposure uses its midpoint.'))
         sat = self._tab('Saturn')
         sat.addRow(QLabel('Preprocess measures globe/ring radii when resolved.\nViewing latitude comes from SER UTC or a Geometry override.'))
@@ -170,7 +169,7 @@ class ConfigControls(QTabWidget):
         for key, edit in self.fields.items():
             edit.setToolTip(CONTROL_HELP[key])
             if isinstance(edit, QLineEdit):
-                edit.textEdited.connect(lambda text, key=key: self.geometry_manual.add(key))
+                edit.textEdited.connect(lambda text, key=key: self._geometry_edited(key))
         self.fields['rotation_planet'].currentIndexChanged.connect(self._rotation_changed)
         self.fields['rotation_planet'].currentIndexChanged.connect(self._planet_choice_changed)
         self.fields['rotation_planet'].activated.connect(self._planet_choice_changed)
@@ -368,7 +367,8 @@ class ConfigControls(QTabWidget):
         if not isinstance(state, dict) or not isinstance(state.get('fields'), dict):
             raise ValueError('invalid saved controls')
         self.geometry_auto = {}
-        self._set_measured_pole(None)
+        self.calculated_geometry.clear()
+        self._update_calculated_button()
         for key, value in state['fields'].items():
             edit = self.fields.get(key)
             if edit is None:
@@ -458,16 +458,22 @@ class ConfigControls(QTabWidget):
             return False
         return value == 0. or text == self.geometry_auto.get(key)
 
-    def prefill_output_epoch(self, timing, *, allow_prefill=True):
-        if not allow_prefill or not self.wants_midpoint_epoch():
+    def prefill_output_epoch(self, timing, *, allow_prefill=True, replace_manual=False):
+        self.calculated_geometry.pop('reference_epoch_s', None)
+        self._update_calculated_button()
+        if not allow_prefill:
             return
         duration = timing.get('duration_s')
         if (timing.get('status') != 'available' or not isinstance(duration, (int, float))
                 or not math.isfinite(duration) or duration < 0):
             return
         text = format(duration / 2., '.12g')
-        self.fields['reference_epoch_s'].setText(text)
-        self.geometry_auto['reference_epoch_s'] = text
+        self.calculated_geometry['reference_epoch_s'] = text
+        if replace_manual or self.wants_midpoint_epoch():
+            self.fields['reference_epoch_s'].setText(text)
+            self.geometry_auto['reference_epoch_s'] = text
+            self.geometry_manual.discard('reference_epoch_s')
+        self._update_calculated_button()
 
     def _show_pole_flip(self, flipped):
         self.pole_flipped = flipped
@@ -478,21 +484,24 @@ class ConfigControls(QTabWidget):
     def _pole_angle_changed(self, _text):
         self._show_pole_flip(False)
 
-    def _set_measured_pole(self, angle):
-        self.measured_pole = angle if angle is not None and math.isfinite(angle) else None
-        self.measured_pole_button.setEnabled(self.measured_pole is not None)
-        self.measured_pole_button.setText('Use measured angle' if self.measured_pole is None else
-                                        f'Use measured angle ({math.degrees(self.measured_pole):.3f}°)')
+    def _geometry_edited(self, key):
+        self.geometry_manual.add(key)
+        self._update_calculated_button()
 
-    def _use_measured_pole(self):
-        if self.measured_pole is None:
-            return
-        text = format(math.degrees(self.measured_pole), '.10g')
-        self.geometry_manual.discard('pole_pa_rad')
-        self.fields['pole_pa_rad'].setText(text)
-        self.geometry_auto['pole_pa_rad'] = text
-        self._show_pole_flip(False)
-        self._set_geometry_help('Measured pole angle applied. Future preprocessing estimates can update it automatically.')
+    def _update_calculated_button(self):
+        self.calculated_values_button.setEnabled(any(
+            key in self.geometry_manual or self.fields[key].text() != text
+            for key, text in self.calculated_geometry.items()))
+
+    def use_calculated_values(self):
+        for key, text in self.calculated_geometry.items():
+            self.geometry_manual.discard(key)
+            self.fields[key].setText(text)
+            self.geometry_auto[key] = text
+        if 'pole_pa_rad' in self.calculated_geometry:
+            self._show_pole_flip(False)
+        self._update_calculated_button()
+        self._set_geometry_help('Calculated geometry applied. Manual edits apply until the next Preprocess or Use calculated values.')
 
     def _flip_pole(self):
         edit = self.fields['pole_pa_rad']
@@ -509,21 +518,23 @@ class ConfigControls(QTabWidget):
         self.geometry_auto.pop('pole_pa_rad', None)
         edit.setText(format((angle + 180.) % 360., '.12g'))
         self._show_pole_flip(flipped)
+        self._update_calculated_button()
         self._set_geometry_help(
             ('Pole direction flipped by 180°. ' if flipped else 'Pole flip undone. ')
             + 'This manual orientation applies to the next run '
-            'and is preserved when preprocessing is repeated.')
+            'until Preprocess or Use calculated values restores the calculated geometry.')
 
     def clear_geometry_estimate(self):
         from planetrecon.reconstruction import ReconstructionConfig
         defaults = ReconstructionConfig()
-        self._set_measured_pole(None)
+        self.calculated_geometry.clear()
+        self._update_calculated_button()
         for key, text in self.geometry_auto.items():
             if key not in self.geometry_manual and self.fields[key].text() == text:
                 value = getattr(defaults, key)
                 self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
         self.geometry_auto.clear()
-        self._set_geometry_help('Preprocessing can prefill geometry for the next run. User edits are preserved.')
+        self._set_geometry_help('Preprocess applies calculated geometry. Manual edits apply until the next Preprocess or Use calculated values.')
 
     def _set_geometry_help(self, text):
         self.geometry_estimate_text = text
@@ -531,7 +542,7 @@ class ConfigControls(QTabWidget):
         self.fields['geometry_mode'].setToolTip(tooltip)
         self.motion_model_label.setToolTip(tooltip)
 
-    def prefill_geometry(self, estimate, *, allow_prefill=True):
+    def prefill_geometry(self, estimate, *, allow_prefill=True, replace_manual=False):
         from planetrecon.reconstruction import ReconstructionConfig
         if self.fields['geometry_mode'].currentData() == 'saturn':
             from planetrecon.geometry.discovery import without_assumed_saturn_view
@@ -539,7 +550,10 @@ class ConfigControls(QTabWidget):
         defaults = ReconstructionConfig()
         applicable = estimate.get('applicable', True)
         allow_prefill = allow_prefill and applicable
-        self._set_measured_pole(estimate.get('suggestions', {}).get('pole_pa_rad') if allow_prefill else None)
+        self.calculated_geometry = {key: text for key, text in self.calculated_geometry.items()
+                                    if key == 'reference_epoch_s'}
+        if not allow_prefill:
+            self.calculated_geometry.clear()
         allowed = {'field_center_x', 'field_center_y', 'equatorial_radius_px',
                    'pole_pa_rad', 'sub_obs_lat_rad', 'surface_rate_rad_s', 'field_rate_rad_s', 'flattening'}
         if (self.fields['geometry_mode'].currentData() == 'saturn'
@@ -554,11 +568,21 @@ class ConfigControls(QTabWidget):
                     value = getattr(defaults, key)
                     self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
                     del self.geometry_auto[key]
+        if allow_prefill and self.fields['rotation_planet'].currentData() is not None:
+            self.calculated_geometry['surface_rate_rad_s'] = ''
+        if allow_prefill and estimate.get('viewing_geometry', {}).get('origin') == 'jpl_horizons_geocentric':
+            # Blank selects the calculated capture-specific latitude, rather
+            # than turning an ephemeris value into a persistent manual input.
+            self.calculated_geometry['sub_obs_lat_rad'] = ''
         applied = []
         for key, value in estimate.get('suggestions', {}).items():
             if key == 'surface_rate_rad_s' and self.fields['rotation_planet'].currentData() is not None:
                 continue
-            if not allow_prefill or key not in allowed or key in self.geometry_manual or not math.isfinite(value):
+            if not allow_prefill or key not in allowed or not math.isfinite(value):
+                continue
+            new_text = format(math.degrees(value) if key in self.angular else value, '.10g')
+            self.calculated_geometry[key] = new_text
+            if key in self.geometry_manual and not replace_manual:
                 continue
             edit = self.fields[key]
             text = edit.text()
@@ -568,12 +592,14 @@ class ConfigControls(QTabWidget):
                 continue
             if current is not None and key in self.angular:
                 current = math.radians(current)
-            if text != self.geometry_auto.get(key) and current != getattr(defaults, key):
+            if not replace_manual and text != self.geometry_auto.get(key) and current != getattr(defaults, key):
                 continue
-            new_text = format(math.degrees(value) if key in self.angular else value, '.10g')
             edit.setText(new_text)
             self.geometry_auto[key] = new_text
             applied.append(key)
+        if replace_manual and allow_prefill:
+            self.use_calculated_values()
+        self._update_calculated_button()
         direction = estimate.get('surface_direction', 'unresolved')
         roll = estimate.get('roll_direction', 'unresolved')
         usage = ('Geometry estimates need refreshing.' if not applicable else
