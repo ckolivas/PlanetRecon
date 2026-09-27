@@ -97,6 +97,14 @@ def main():
         print(name, 'variation', [round(v['highpass_percent'], 6) for v in measurements(pixels).values()],
               'widths', [round(v['width_10_90_px'], 6) for v in ring_edges(pixels).values()], flush=True)
     report['raw_halves'] = {}
+    with np.load('out/saturn-controlled-alignment/diagnostics.npz') as diagnostic:
+        quality = np.maximum(diagnostic['quality'], 1e-12)
+        if diagnostic['indices'].tolist() != report['frame_indices']:
+            raise ValueError('Half-weight frame order differs')
+    report['half_quality_weights'] = dict(
+        fraction=[float(q.sum()/quality.sum()) for q in (quality[::2], quality[1::2])],
+        effective_frame_count=[float(q.sum()**2/np.sum(q*q)) for q in (quality[::2], quality[1::2])],
+        full_effective_frame_count=float(quality.sum()**2/np.sum(quality*quality)))
     with np.load(root/'half_stacks.npz') as data:
         for i, name in enumerate(POLICIES):
             sums, weights = data['signal'][i], data['support'][i]
@@ -122,6 +130,9 @@ def main():
         report['fit_summary'][key] = dict(count=len(values), min_p25_median_p75_max=np.percentile(values, [0, 25, 50, 75, 100]).tolist())
     report['fit_summary']['residual_motion_rms_px'] = np.percentile(
         [s['residual_vector_rms_px'] for s in stats], [0, 25, 50, 75, 100]).tolist()
+    report['fit_summary']['heldout_loss_over_global_loss'] = np.percentile(
+        [s['fit']['heldout_loss']/s['fit']['global_heldout_loss'] for s in stats],
+        [0, 25, 50, 75, 100]).tolist()
     report['fit_summary']['blur_lower_bound_count'] = sum(s['fit'].get('sigma', 1.) < 1e-6 for s in stats)
     report['fit_summary']['blur_upper_bound_count'] = sum(s['fit'].get('sigma', 0.) > 2.-1e-6 for s in stats)
     report['fit_summary']['guard_or_optimizer_reasons'] = dict(Counter(s['fit'].get('reason', s['fit'].get('message', '')) for s in stats))

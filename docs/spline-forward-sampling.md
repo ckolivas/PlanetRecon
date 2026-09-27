@@ -208,3 +208,9 @@ The focused suite passes 33 CPU/CUDA tests, including spline/SciPy parity at
 fractional coordinates and reflected boundaries, analytic-gradient checks,
 zero-motion translation fits, preservation of observations, independent
 detector-integral verification and continuous-blur flux conservation.
+
+The subsequent [full 5,738-frame Saturn replay](joint-spline-saturn-replay.md)
+is a negative real-data result: the corrected joint estimator increases
+sharpened variation and slightly widens ring transitions relative to coherent
+AP fitting. It remains experimental despite the sampling correction passing
+the controlled-scene checks.

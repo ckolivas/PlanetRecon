@@ -8,6 +8,37 @@ from tools.analyse_joint_saturn import sharp_identity
 from tools.joint_saturn_experiment import digest
 
 
+def comparison(root):
+    import os
+    os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+    import numpy as np
+    from scipy.ndimage import center_of_mass
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QGuiApplication, QImage, QPainter, QColor, QFont
+    app = QGuiApplication.instance() or QGuiApplication([])
+    paths = [root/'sharpened'/f'{name}_sharpened.png' for name in ('square_1', 'square_half', 'point')]
+    paths.append(Path('out/saturn-matched-transfer/sharpened/as_manual64_sharpened.png'))
+    labels = ['Unit square: identical to global bilinear', 'Half-pixel square footprint',
+              'Point placement: identical to integer shifts', 'AutoStakkert: own selection and local alignment']
+    canvas = QImage(2000, 1090, QImage.Format.Format_RGB32)
+    canvas.fill(QColor('black'))
+    painter = QPainter(canvas)
+    painter.setPen(QColor('white'))
+    painter.setFont(QFont('Sans', 18))
+    for i, (path, label) in enumerate(zip(paths, labels)):
+        pixels = read_png(path)[0]
+        cy, cx = np.rint(center_of_mass(np.maximum(pixels-.02*pixels.max(), 0))).astype(int)
+        image = QImage(str(path)).copy(int(cx-250), int(cy-115), 500, 230)
+        image = image.scaled(1000, 460, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
+        x, y = (i % 2)*1000, (i//2)*510
+        painter.drawText(x+12, y+32, label)
+        painter.drawImage(x, y+45, image)
+    painter.drawText(12, 1060, '5,738 frames; exact user sharpening; deposition controls use fixed global translations')
+    painter.end()
+    if not canvas.save(str(root/'comparison.png')):
+        raise OSError('comparison image')
+
+
 def main():
     root = Path('out/saturn-native-drizzle')
     report = json.loads((root/'report.json').read_text())
@@ -30,6 +61,7 @@ def main():
         description='Distinguishes integer regular stacking, subpixel enlarged drizzle and temporal Bayer channel reconstruction; not a current-version implementation audit.')
     (root/'analysis.json').write_text(json.dumps(report, indent=2)+'\n')
     Path('results/registration/native-mono-drizzle.json').write_text(json.dumps(report, indent=2)+'\n')
+    comparison(root)
 
 
 if __name__ == '__main__':
