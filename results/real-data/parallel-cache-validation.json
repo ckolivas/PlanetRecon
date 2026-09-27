@@ -1,0 +1,155 @@
+{
+  "capture": "2024-09-27-1154_3-CK-R-Sat.ser",
+  "n_frames": 27689,
+  "shape": [
+    404,
+    696
+  ],
+  "file_bytes": 7785925466,
+  "scope": "Full observed-pixel identity including timestamps and metadata; no cache flush",
+  "identities_equal_across_worker_counts": true,
+  "runs": [
+    {
+      "mode": "legacy_identity",
+      "threads": 1,
+      "wall_s": 7.313470377004705,
+      "cpu_s": 7.3100000000000005,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "read_raw",
+      "threads": 1,
+      "wall_s": 0.9523292139638215,
+      "cpu_s": 0.9500000000000002,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 1,
+      "wall_s": 7.3486391540500335,
+      "cpu_s": 7.35,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 2,
+      "wall_s": 4.487536779022776,
+      "cpu_s": 8.760000000000002,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 4,
+      "wall_s": 2.7891180340084247,
+      "cpu_s": 9.309999999999999,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 8,
+      "wall_s": 2.4755148649564944,
+      "cpu_s": 8.979999999999997,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 16,
+      "wall_s": 3.0250323939835653,
+      "cpu_s": 9.68,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 32,
+      "wall_s": 3.2192684749606997,
+      "cpu_s": 9.790000000000006,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "legacy_identity",
+      "threads": 1,
+      "wall_s": 7.75725628004875,
+      "cpu_s": 7.759999999999998,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "read_raw",
+      "threads": 1,
+      "wall_s": 1.5231894399621524,
+      "cpu_s": 1.519999999999996,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 32,
+      "wall_s": 3.006076170015149,
+      "cpu_s": 9.439999999999998,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 16,
+      "wall_s": 2.8441412019892596,
+      "cpu_s": 9.480000000000004,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 8,
+      "wall_s": 2.905635725997854,
+      "cpu_s": 9.489999999999995,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 4,
+      "wall_s": 2.9703853849787265,
+      "cpu_s": 9.540000000000006,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 2,
+      "wall_s": 4.479485401010606,
+      "cpu_s": 8.829999999999998,
+      "physical_read_bytes": 0
+    },
+    {
+      "mode": "parallel_identity",
+      "threads": 1,
+      "wall_s": 8.053101906029042,
+      "cpu_s": 8.049999999999997,
+      "physical_read_bytes": 0
+    }
+  ],
+  "existing_cache_roundtrip": {
+    "scope": "Temporary copy of existing Saturn cache; original unchanged; each load opens a new source and has no session receipt",
+    "selection_digest_preserved": true,
+    "runs": [
+      {
+        "mode": "legacy_upgrade",
+        "wall_s": 12.619929032982327,
+        "cpu_s": 20.71,
+        "status": "ready"
+      },
+      {
+        "mode": "fast_new_session",
+        "wall_s": 0.013364705024287105,
+        "cpu_s": 0.00999999999999801,
+        "status": "ready"
+      },
+      {
+        "mode": "force_full",
+        "wall_s": 4.672589740017429,
+        "cpu_s": 12.350000000000001,
+        "status": "ready"
+      },
+      {
+        "mode": "fast_new_session",
+        "wall_s": 0.008820969960652292,
+        "cpu_s": 0.0,
+        "status": "ready"
+      }
+    ]
+  }
+}

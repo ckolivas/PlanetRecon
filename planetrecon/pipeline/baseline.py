@@ -139,7 +139,10 @@ def _stack_source(
     if config.frame_preselection:
         from planetrecon.pipeline.preprocess_cache import load_cache, identity, cache_report, selection_digest
         if preprocessing is not None:
-            if (preprocessing.cancelled or preprocessing.identity != identity(source, config, calibration, should_cancel)
+            from planetrecon.pipeline.capture_hash import LEGACY_HASH_METHOD
+            expected = preprocessing.validation_identity or preprocessing.identity
+            if (preprocessing.cancelled or expected != identity(source, config, calibration, should_cancel,
+                    hash_method=expected.get('pixels_hash_method', LEGACY_HASH_METHOD))
                     or preprocessing.digest != selection_digest(preprocessing)):
                 raise ValueError('preprocessing measurements do not match the input or configuration')
             selection = preprocessing

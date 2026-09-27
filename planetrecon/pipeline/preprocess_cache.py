@@ -13,6 +13,7 @@ import numpy as np
 from planetrecon.calibration import load_calibration
 from planetrecon.pipeline.preprocess import FrameSelection, screen_source, quality_range_counts
 from planetrecon.pipeline.provenance import capture_provenance
+from planetrecon.pipeline.capture_hash import HASH_METHOD, LEGACY_HASH_METHOD, pixel_hash
 
 SCHEMA = 'planetrecon-preprocessing-1'
 GEOMETRY_KEYS = ('cadence_s', 'exposure_s', 'field_angle0_rad', 'field_rate_rad_s',
@@ -52,7 +53,8 @@ def _validation_key(source, config, calibration):
 class CacheValidation:
     """Session-only proof of a full check, passed between desktop workers.
 
-    Never store this in settings, preprocessing files or result provenance.
+    Never store this object in settings, preprocessing files or result provenance.
+    A separate cache-bound digest permits file-metadata reuse across sessions.
     Both the cache digest and file stamps are still checked on every use.
     """
     source_key: object = None
@@ -83,31 +85,43 @@ def calibration_for(source, config, calibration=None):
     return calibration
 
 
-def identity(source, config, calibration, should_cancel=None, on_progress=None):
+def identity(source, config, calibration, should_cancel=None, on_progress=None, *,
+             hash_method=HASH_METHOD, legacy_identity=None):
     # Hash observed pixels, not just file timestamps or a few samples. This also
     # distinguishes crops/indexed sources backed by the very same capture file.
-    digest = hashlib.sha256()
-    total = source.n_frames()
-    stride = max(1, total // 100)
-    if on_progress:
-        on_progress(0, total)
-    for i in range(total):
-        if should_cancel and should_cancel():
-            raise InterruptedError('preprocessing cache verification cancelled')
-        frame = np.ascontiguousarray(source.read_raw(i))
-        digest.update(frame.dtype.str.encode())
-        digest.update(memoryview(frame).cast('B'))
-        if on_progress and ((i + 1) % stride == 0 or i + 1 == total):
-            on_progress(i + 1, total)
+    pixels, legacy = pixel_hash(source, config, should_cancel, on_progress,
+                                method=hash_method, include_legacy=legacy_identity is not None)
     times = source.timestamps()
     time_hash = None if times is None else hashlib.sha256(np.ascontiguousarray(times).tobytes()).hexdigest()
-    return {'schema': SCHEMA, 'pixels_sha256': digest.hexdigest(),
+    result = {'schema': SCHEMA, 'pixels_sha256': pixels,
             'shape': list(source.frame_shape()), 'n_frames': source.n_frames(),
             'color_mode': source.color_mode(), 'bit_depth': source.metadata().bit_depth,
             'units': source.metadata().units, 'timestamps_sha256': time_hash,
             'timestamp_scale_s': source.timestamp_scale_s(),
             'reject_saturated': config.reject_saturated,
             'calibration': capture_provenance(source, config, calibration)['calibration']}
+    if legacy_identity is not None:
+        legacy_identity.update(result, pixels_sha256=legacy)
+    if hash_method != LEGACY_HASH_METHOD:
+        result['pixels_hash_method'] = hash_method
+    return result
+
+
+def _validation_digest(selection):
+    """Bind a migrated verification identity to the unchanged cached selection."""
+    def without_pixels(data):
+        return {k: v for k, v in data.items() if k not in ('pixels_sha256', 'pixels_hash_method')}
+    if (selection.validation_identity.get('pixels_hash_method') != HASH_METHOD
+            or without_pixels(selection.validation_identity) != without_pixels(selection.identity)):
+        raise ValueError('cache verification interpretation does not match its measurements')
+    return hashlib.sha256(json.dumps([selection.digest, selection.validation_identity],
+                                    sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def _source_validation_digest(selection, key):
+    """Bind an established full check to file metadata and cached measurements."""
+    return hashlib.sha256(json.dumps(['source-validation-v1', selection.digest, key],
+                                    sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
 def selection_digest(selection):
@@ -202,7 +216,7 @@ def cache_report(selection, path=None, config=None, source=None):
             'geometry_estimate': estimate}
 
 
-def save_cache(path, selection, source, config):
+def save_cache(path, selection, source, config, *, validation_key=None):
     path = Path(path)
     for value in (source.metadata().path, config.bias_path, config.dark_path, config.flat_path):
         if value and (path.resolve() == Path(value).resolve() or
@@ -218,6 +232,11 @@ def save_cache(path, selection, source, config):
             raise FileExistsError('cache destination contains another file; choose a different cache path')
     meta = {'schema': SCHEMA, 'identity': selection.identity, 'summary': selection.summary,
             'digest': selection.digest}
+    if selection.validation_identity is not None:
+        meta['validation_identity'] = selection.validation_identity
+        meta['validation_digest'] = _validation_digest(selection)
+    if validation_key is not None:
+        meta['source_validation_digest'] = _source_validation_digest(selection, validation_key)
     fd, tmp = tempfile.mkstemp(prefix='.'+path.name, suffix='.tmp', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:
@@ -231,7 +250,8 @@ def save_cache(path, selection, source, config):
 
 
 def load_cache(source, config, calibration=None, *, path=None, should_cancel=None, on_progress=None,
-               validation=None):
+               validation=None, force_full_validation=False):
+    """Use verified file metadata by default; hash fully on changes or request."""
     previous = (validation.source_key, validation.cache_stamp, validation.digest) if validation else None
     if validation is not None:
         validation.clear()
@@ -243,29 +263,58 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
     if calibration is None:
         calibration = calibration_for(source, config)
     try:
-        key = _validation_key(source, config, calibration) if validation is not None else None
+        key = _validation_key(source, config, calibration)
         stamp = _file_stamp(path)
         with np.load(path, allow_pickle=False) as data:
             meta = json.loads(str(data['metadata']))
             if meta['schema'] != SCHEMA:
                 raise ValueError('unsupported cache schema')
             selection = FrameSelection(data['accepted'].copy(), data['measurements'].copy(),
-                                       meta['summary'], identity=meta['identity'], digest=meta['digest'])
+                meta['summary'], identity=meta['identity'], digest=meta['digest'],
+                validation_identity=meta.get('validation_identity'))
         n = source.n_frames()
-        if (selection.accepted.dtype != np.bool_ or selection.accepted.shape != (n,)
+        if (not isinstance(selection.identity, dict)
+                or selection.accepted.dtype != np.bool_ or selection.accepted.shape != (n,)
                 or selection.measurements.dtype != np.float64 or selection.measurements.shape != (n, 4)
                 or not selection.summary['complete'] or selection.summary['n_measured'] != n
                 or not np.isfinite(selection.measurements[selection.accepted]).all()
                 or selection_digest(selection) != selection.digest):
             raise ValueError('invalid or incomplete cache measurements')
-        reused = key is not None and previous == (key, stamp, selection.digest)
-        if not reused and selection.identity != identity(source, config, calibration, should_cancel, on_progress):
-            return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
+        if (selection.validation_identity is not None
+                and (not isinstance(selection.validation_identity, dict)
+                     or meta.get('validation_digest') != _validation_digest(selection))):
+            raise ValueError('invalid cache verification identity')
+        persisted = (key is not None and meta.get('source_validation_digest')
+                     == _source_validation_digest(selection, key))
+        reused = not force_full_validation and (persisted or
+                    key is not None and previous == (key, stamp, selection.digest))
+        upgraded = False
+        if not reused:
+            expected = selection.validation_identity or selection.identity
+            old = {} if 'pixels_hash_method' not in expected else None
+            current = identity(source, config, calibration, should_cancel, on_progress,
+                               hash_method=expected.get('pixels_hash_method', HASH_METHOD), legacy_identity=old)
+            if expected != (old if old is not None else current):
+                return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
+            if old is not None:
+                selection.validation_identity = current
+                upgraded = True
+        if key != _validation_key(source, config, calibration) or stamp != _file_stamp(path):
+            raise ValueError('capture or cache changed during validation; retry')
+        if should_cancel and should_cancel():
+            raise InterruptedError('preprocessing cache verification cancelled')
+        if upgraded or (key is not None and not persisted):
+            # One complete legacy check upgrades verification, without changing
+            # quality/geometry measurements, their digest, or checkpoint identity.
+            try:
+                save_cache(path, selection, source, config, validation_key=key)
+            except OSError:
+                pass  # Read-only caches remain usable; retry migration next load.
         if validation is not None and key is not None:
-            if key != _validation_key(source, config, calibration) or stamp != _file_stamp(path):
-                raise ValueError('capture or cache changed during validation; retry')
             validation.remember(key, path, selection)
         return selection, cache_report(selection, path, config, source)
+    except InterruptedError:
+        raise
     except (ValueError, OSError, KeyError, TypeError, BadZipFile) as exc:
         return None, {'status': 'invalid', 'reason': f'Preprocessing cache unavailable: {exc}'}
 
@@ -290,7 +339,7 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         if source.color_mode() not in ('mono', 'RGB', 'BGR', 'RGGB', 'BGGR', 'GRBG', 'GBRG'):
             raise ValueError('unsupported preprocessing color mode')
         calibration = calibration_for(source, config, calibration)
-        key = _validation_key(source, config, calibration) if validation is not None else None
+        key = _validation_key(source, config, calibration)
         if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
             raise ValueError('gain calibration cannot be applied to observations already in electrons')
         before = identity(source, config, calibration, should_cancel)
@@ -308,12 +357,14 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         selection.identity = identity(source, config, calibration, should_cancel)
         if selection.identity != before:
             raise ValueError('capture changed during preprocessing; no cache was saved')
+        if key != _validation_key(source, config, calibration):
+            raise ValueError('capture or calibration changed during preprocessing; no cache was saved')
         selection.digest = selection_digest(selection)
         path = cache_path if cache_path is not None else default_cache_path(source)
         if should_cancel and should_cancel():
             raise InterruptedError('preprocessing cancelled')
         if path is not None:
-            save_cache(path, selection, source, config)
+            save_cache(path, selection, source, config, validation_key=key)
             if validation is not None and key is not None and key == _validation_key(source, config, calibration):
                 validation.remember(key, path, selection)
         return selection

@@ -42,7 +42,8 @@ def test_cache_is_optional_and_runs_never_implicitly_preprocess(tmp_path, monkey
     monkeypatch.setattr(module, 'screen_source', lambda *a, **k: pytest.fail('run repeated preprocessing'))
     with SERSource(path) as source:
         progress = []
-        loaded, report = load_cache(source, cfg, on_progress=lambda done, total: progress.append((done, total)))
+        loaded, report = load_cache(source, cfg, force_full_validation=True,
+                                    on_progress=lambda done, total: progress.append((done, total)))
         assert report['status'] == 'ready'
         assert progress[0] == (0, 34) and progress[-1] == (34, 34)
         assert all(a[0] < b[0] for a, b in zip(progress, progress[1:]))

@@ -110,6 +110,9 @@ class FrameSelection:
     cancelled: bool = False
     identity: dict | None = None
     digest: str | None = None
+    # Optional parallel verification for caches made with the legacy checksum.
+    # Excluded from selection/checkpoint identity to preserve existing results.
+    validation_identity: dict | None = None
 
     @property
     def best_reference_index(self) -> int | None:

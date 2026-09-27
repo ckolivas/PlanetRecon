@@ -52,16 +52,42 @@ Ordinary cache refreshes retain manual edits, and unresolved parameters still
 require supplied values. Cancelling during preparation prevents stacking from starting.
 Checkpoint resumes retain their existing settings and cache.
 
-Opening a cached capture performs one full pixel validation. The desktop passes
-the successful check between its inspection, preprocessing and stacking workers,
-so pressing **Stack** does not scan the unchanged capture again. Reuse is limited
-to the running session and concrete SER, AVI and HDF5 adapters. Each use still
-checks the cache contents/digest, capture and cache file identity, size, modification
-and change times, input interpretation, and actual calibration contents. A change
-forces full validation; geometry applicability is refreshed on every use. Fresh
-preprocessing can hand its completed validation directly to stacking. CLI/library
-calls without a session validation object retain full pixel checks, and resumable
-accumulator checkpoints retain their separate input validation.
+Opening a cached capture normally uses **fast file-metadata validation**, including
+across application restarts. After a full check, the cache stores a verification
+record bound to its measurement digest, the capture's path, device/inode, size,
+modification and change times, input interpretation, and calibration contents.
+Matching records avoid rereading the full capture. Changed metadata triggers a
+complete pixel check; unchanged pixels refresh the record, while changed pixels
+invalidate the cache. Geometry applicability is refreshed on every use.
+
+This shortcut applies to concrete SER, AVI and HDF5 adapters. Custom and in-memory
+sources still receive full checks. The desktop also passes validation between
+its inspection and stacking workers. Library callers can request a strict full
+check with `load_cache(..., force_full_validation=True)`. Resumable accumulator
+checkpoints retain their separate input validation.
+
+Full cache validation uses the **CPU threads** setting for SHA-256 checksums.
+It hashes every observed frame independently, then combines those hashes in
+capture order. Results are independent of worker count and batch size. File
+reads stay sequential on the owning thread; a bounded queue overlaps them with
+checksum work. The queue is constrained by half of total physical RAM and, when
+set, half of the remaining process memory allowance. Slow storage can still
+limit uncached reads, and reading/decoding limits scaling after hashing is fast.
+
+Existing caches receive one complete check against their original sequential
+checksum while the new checksums are computed in the same read pass. Successful
+validation adds the file-metadata record and parallel verification data atomically;
+subsequent sessions use fast metadata checks without recalculating quality or geometry. Measurements, selection digests
+and existing checkpoint identities are preserved. Read-only caches remain usable
+but cannot retain this upgrade. Newly preprocessed caches save the verification
+record immediately. Cancellation leaves an existing cache intact and joins its workers.
+
+The [Saturn validation replay](../results/real-data/parallel-cache-validation.json)
+checked all 27,689 frames. The old checksum scan took 7.3–7.8 seconds with the
+capture already in the filesystem cache and zero physical disk reads. On a
+temporary copy of its existing preprocessing cache, subsequent loads without a
+session receipt took 9–13 milliseconds using the new metadata record. The
+original cache and its measurement/selection identity were preserved by this test.
 
 New GUI and CLI runs default to local patch alignment and the upper 50% quality
 range. CLI callers still run `preprocess` explicitly before stacking. With local alignment disabled and

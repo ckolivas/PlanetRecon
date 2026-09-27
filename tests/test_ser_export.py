@@ -115,7 +115,8 @@ def test_reuses_validation_receipt_without_second_capture_hash(tmp_path, monkeyp
     validation = CacheValidation()
     with SERSource(path) as source:
         assert load_cache(source, cfg, validation=validation)[0] is not None
-    monkeypatch.setattr(SERSource, 'read_raw', lambda *a: pytest.fail('rehashed unchanged capture'))
+    from planetrecon.pipeline import preprocess_cache
+    monkeypatch.setattr(preprocess_cache, 'identity', lambda *a, **kw: pytest.fail('rehashed unchanged capture'))
     export_filtered_ser(path, tmp_path/'filtered.ser', cfg, validation=validation)
 
 

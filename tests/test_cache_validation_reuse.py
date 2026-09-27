@@ -13,7 +13,7 @@ from test_preprocess_cache import capture, config
 from test_w14 import gui, pump
 
 
-def test_full_check_once_then_reuse_for_inspect_and_stack(tmp_path, monkeypatch):
+def test_preprocess_proof_reused_across_workers_and_sessions(tmp_path, monkeypatch):
     path, cfg = capture(tmp_path), config()
     receipt = cache.CacheValidation()
     with SERSource(path) as source:
@@ -25,17 +25,19 @@ def test_full_check_once_then_reuse_for_inspect_and_stack(tmp_path, monkeypatch)
             return identity(*args, **kwargs)
         monkeypatch.setattr(cache, 'identity', counted)
         selected, report = cache.load_cache(source, cfg, validation=receipt)
-        assert report['status'] == 'ready' and len(hashes) == 1
+        assert report['status'] == 'ready' and not hashes
     # Reopened adapters model separate desktop workers; output settings can change.
     with SERSource(path) as source:
         selected, report = cache.load_cache(source, replace(cfg, threads=1, stack_percent=50), validation=receipt)
         assert report['status'] == 'ready'
         result = stack_source(source, cfg, cache_validation=receipt)
         assert result.n_used == int(expected.accepted.sum())
-        assert len(hashes) == 1
+        assert not hashes
         assert 'cache_validation' not in result.provenance
-        cache.load_cache(source, cfg)  # CLI/library callers still check fully.
-        assert len(hashes) == 2
+        cache.load_cache(source, cfg)  # A new session also uses the persisted proof.
+        assert not hashes
+        cache.load_cache(source, cfg, force_full_validation=True)
+        assert len(hashes) == 1
 
 
 def test_preprocess_hands_validation_directly_to_stack(tmp_path, monkeypatch):
@@ -135,7 +137,7 @@ def test_desktop_load_then_stack_passes_validation_between_processes(gui, tmp_pa
     win._capture_ready()
     pump(app, lambda: win.job is None, timeout=30)
     assert not win.error.text()
-    assert any('Validating cached preprocessing' in stage for stage in stages)
+    assert not any('Validating cached preprocessing' in stage for stage in stages)
     assert win.cache_validation['digest']
     stages.clear()
     win._stack()
@@ -159,12 +161,12 @@ def test_changed_capture_during_validation_does_not_issue_receipt(tmp_path, monk
             os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1_000_000))
             return result
         monkeypatch.setattr(cache, 'identity', changing)
-        selected, report = cache.load_cache(source, cfg, validation=receipt)
+        selected, report = cache.load_cache(source, cfg, validation=receipt, force_full_validation=True)
     assert selected is None and report['status'] == 'invalid'
     assert receipt.digest is None
 
 
-def test_replaced_cache_is_revalidated_even_with_identical_contents(tmp_path, monkeypatch):
+def test_identical_cache_copy_retains_verified_source_proof(tmp_path, monkeypatch):
     path, cfg = capture(tmp_path), config()
     receipt = cache.CacheValidation()
     with SERSource(path) as source:
@@ -176,4 +178,4 @@ def test_replaced_cache_is_revalidated_even_with_identical_contents(tmp_path, mo
         progress = []
         _, report = cache.load_cache(source, cfg, validation=receipt,
                                      on_progress=lambda done, total: progress.append(done))
-        assert report['status'] == 'ready' and progress[-1] == source.n_frames()
+        assert report['status'] == 'ready' and not progress
