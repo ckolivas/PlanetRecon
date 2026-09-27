@@ -1,0 +1,1474 @@
+{
+  "hashes": {
+    "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+    "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+    "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+    "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+    "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+    "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+    "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+    "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+    "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+    "tools/ap_oracle_observations.py": "2ab251f327ad9f83bf8ade3f0ba6bb45fa190f5b2577e5ee8072869ec249c02b",
+    "tools/ap_stability_validation.py": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+    "tools/validate_local_warp_centring.py": "0fb343aecddf1594b787c6a624e38311dd5014c44e468ac0360f73df86d151eb"
+  },
+  "frames": 32,
+  "seed": 9033,
+  "device": "cuda:0",
+  "variants": [
+    "measured",
+    "truth_gated",
+    "truth_accepted_uniform",
+    "truth_all",
+    "truth_untapered",
+    "oracle"
+  ],
+  "shape": [
+    128,
+    160
+  ],
+  "ap_count": 107,
+  "coefficient_count": 143,
+  "object_pixels": 13372,
+  "untapered_object_pixels": 12350,
+  "cases": {
+    "stationary": {
+      "wavelengths": [
+        160.0,
+        240.0
+      ],
+      "raw_sha256": "dc2ac8da5e7e1aa6c42ecb527619038e84057e9a7811676d5208c18529806d0f",
+      "quadrature_endpoint_error_adu": 1.8514214161768905e-08,
+      "variants": {
+        "measured": {
+          "image": {
+            "rmse_adu": 0.32287112450662997,
+            "gradient_vector_rmse_adu_per_px": 0.23248553403442065
+          },
+          "clean_image": {
+            "rmse_adu": 0.22487761601580983,
+            "gradient_vector_rmse_adu_per_px": 0.023776189745909188
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.24083309017845025,
+            "gradient_vector_rmse_adu_per_px": 0.09005678642975923
+          },
+          "field": {
+            "total_vector_rmse_px": 0.242968288486044,
+            "mean_error_vector_rms_px": 0.1586545279696814,
+            "temporal_error_vector_rms_px": 0.1840172001867076,
+            "estimated_mean_vector_rms_px": 0.15865452796968138,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.22228890182210714,
+            "mean_error_vector_rms_px": 0.141181503808654,
+            "temporal_error_vector_rms_px": 0.1716978126115927,
+            "estimated_mean_vector_rms_px": 0.14118150380865396,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008825421333312988,
+            "gradient_vector_rmse_adu_per_px": 0.009066294878721237
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0017262366600334644,
+            "gradient_vector_rmse_adu_per_px": 0.001609852653928101
+          }
+        },
+        "truth_gated": {
+          "image": {
+            "rmse_adu": 0.23120032949259636,
+            "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+          },
+          "clean_image": {
+            "rmse_adu": 3.75335112173688e-16,
+            "gradient_vector_rmse_adu_per_px": 3.717024966805562e-16
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 6.847482989586448e-16,
+            "gradient_vector_rmse_adu_per_px": 6.991988450685173e-16
+          },
+          "field": {
+            "total_vector_rmse_px": 3.971288541136796e-16,
+            "mean_error_vector_rms_px": 4.696383962919991e-19,
+            "temporal_error_vector_rms_px": 3.9712857642005683e-16,
+            "estimated_mean_vector_rms_px": 4.3581899434156514e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 6.801530546205269e-18,
+            "mean_error_vector_rms_px": 2.943437052722533e-19,
+            "temporal_error_vector_rms_px": 6.795158537821612e-18,
+            "estimated_mean_vector_rms_px": 4.4206293554397214e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008780859410762787,
+            "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        },
+        "truth_accepted_uniform": {
+          "image": {
+            "rmse_adu": 0.23120032949259636,
+            "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+          },
+          "clean_image": {
+            "rmse_adu": 3.75335112173688e-16,
+            "gradient_vector_rmse_adu_per_px": 3.717024966805562e-16
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 6.847482989586448e-16,
+            "gradient_vector_rmse_adu_per_px": 6.991988450685173e-16
+          },
+          "field": {
+            "total_vector_rmse_px": 3.9707682724276697e-16,
+            "mean_error_vector_rms_px": 4.661516167464229e-19,
+            "temporal_error_vector_rms_px": 3.9707655362140484e-16,
+            "estimated_mean_vector_rms_px": 4.358350724043117e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 6.566913962053476e-18,
+            "mean_error_vector_rms_px": 2.9012257137734813e-19,
+            "temporal_error_vector_rms_px": 6.560502105676842e-18,
+            "estimated_mean_vector_rms_px": 4.420182860642547e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008780859410762787,
+            "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        },
+        "truth_all": {
+          "image": {
+            "rmse_adu": 0.23120032949259636,
+            "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+          },
+          "clean_image": {
+            "rmse_adu": 3.75335112173688e-16,
+            "gradient_vector_rmse_adu_per_px": 3.717024966805562e-16
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 6.840587234574814e-16,
+            "gradient_vector_rmse_adu_per_px": 6.985235351487234e-16
+          },
+          "field": {
+            "total_vector_rmse_px": 3.970342333075981e-16,
+            "mean_error_vector_rms_px": 3.2338189698449257e-19,
+            "temporal_error_vector_rms_px": 3.970341016113112e-16,
+            "estimated_mean_vector_rms_px": 4.359576602331525e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 6.399933576915606e-18,
+            "mean_error_vector_rms_px": 6.145576457291182e-20,
+            "temporal_error_vector_rms_px": 6.399638503691638e-18,
+            "estimated_mean_vector_rms_px": 4.420550670895637e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008780859410762787,
+            "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        },
+        "truth_untapered": {
+          "image": {
+            "rmse_adu": 0.23120032949259636,
+            "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+          },
+          "clean_image": {
+            "rmse_adu": 3.434923195063148e-17,
+            "gradient_vector_rmse_adu_per_px": 3.6025778397671176e-17
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 6.869846390126296e-17,
+            "gradient_vector_rmse_adu_per_px": 6.826774828286939e-17
+          },
+          "field": {
+            "total_vector_rmse_px": 8.903763176677813e-18,
+            "mean_error_vector_rms_px": 8.18230298149209e-20,
+            "temporal_error_vector_rms_px": 8.903387203652085e-18,
+            "estimated_mean_vector_rms_px": 4.4239615000904676e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 6.399933576915606e-18,
+            "mean_error_vector_rms_px": 6.145576457291182e-20,
+            "temporal_error_vector_rms_px": 6.399638503691638e-18,
+            "estimated_mean_vector_rms_px": 4.420550670895637e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 32
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008780859410762787,
+            "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.23120032949259636,
+            "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 4.423544863740858e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 4.423544863740858e-17,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008780859410762787,
+            "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        }
+      },
+      "accepted_ap_counts": [
+        107,
+        105,
+        107,
+        106,
+        107,
+        106,
+        106,
+        105,
+        106,
+        100,
+        99,
+        99,
+        100,
+        97,
+        94,
+        94,
+        95,
+        95,
+        95,
+        96,
+        96,
+        94,
+        96,
+        96,
+        96,
+        100,
+        101,
+        101,
+        102,
+        102,
+        107,
+        107
+      ],
+      "observation_vector_rmse_px": {
+        "all": 0.18138407669719522,
+        "accepted": 0.1760339000933541,
+        "weighted": 0.17287409038445184
+      },
+      "stage_sha256": {
+        "measured": "0a9404d5104309f1a17159d5d3a1ba79bf5538de6abcc158e951d2a3cdb34b85",
+        "truth_gated": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "truth_accepted_uniform": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "truth_all": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "truth_untapered": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "oracle": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "target": "6713381b94524bb1b3e5cc221694b075e6f004166430d079c68810fe1d8772ef"
+      }
+    },
+    "long_motion": {
+      "wavelengths": [
+        160.0,
+        240.0
+      ],
+      "raw_sha256": "f1bfed0a8b726479c915052f286f82d194a93c90f4cddaa306f2068d09f18324",
+      "quadrature_endpoint_error_adu": 1.7839411725617538e-08,
+      "variants": {
+        "measured": {
+          "image": {
+            "rmse_adu": 0.3357540458632354,
+            "gradient_vector_rmse_adu_per_px": 0.24020266559999356
+          },
+          "clean_image": {
+            "rmse_adu": 0.23555090168248613,
+            "gradient_vector_rmse_adu_per_px": 0.024962555725197125
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.2587292271889034,
+            "gradient_vector_rmse_adu_per_px": 0.10992788970129933
+          },
+          "field": {
+            "total_vector_rmse_px": 0.3112427349604695,
+            "mean_error_vector_rms_px": 0.16334883782154114,
+            "temporal_error_vector_rms_px": 0.2649324390255466,
+            "estimated_mean_vector_rms_px": 0.16334883782154117,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.27928977815518696,
+            "mean_error_vector_rms_px": 0.1457436725160803,
+            "temporal_error_vector_rms_px": 0.23824685119325206,
+            "estimated_mean_vector_rms_px": 0.1457436725160803,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.009966552257537842,
+            "gradient_vector_rmse_adu_per_px": 0.010075549595057964
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0021280222572386265,
+            "gradient_vector_rmse_adu_per_px": 0.001878473092801869
+          }
+        },
+        "truth_gated": {
+          "image": {
+            "rmse_adu": 0.24049949351029556,
+            "gradient_vector_rmse_adu_per_px": 0.24034239582802838
+          },
+          "clean_image": {
+            "rmse_adu": 0.0014915024594473873,
+            "gradient_vector_rmse_adu_per_px": 0.0007600929137168228
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.07882747173984216,
+            "gradient_vector_rmse_adu_per_px": 0.07965773424118791
+          },
+          "field": {
+            "total_vector_rmse_px": 0.20989046956654897,
+            "mean_error_vector_rms_px": 0.0007503319307588813,
+            "temporal_error_vector_rms_px": 0.20988912839130314,
+            "estimated_mean_vector_rms_px": 0.0007503319307588859,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.18213773533569716,
+            "mean_error_vector_rms_px": 0.0007231641906939644,
+            "temporal_error_vector_rms_px": 0.18213629969550224,
+            "estimated_mean_vector_rms_px": 0.0007231641906939669,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010304335504770279,
+            "gradient_vector_rmse_adu_per_px": 0.010283348150551319
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0007519086939282715,
+            "gradient_vector_rmse_adu_per_px": 0.0007322007440961897
+          }
+        },
+        "truth_accepted_uniform": {
+          "image": {
+            "rmse_adu": 0.24049523978857382,
+            "gradient_vector_rmse_adu_per_px": 0.24033801171684654
+          },
+          "clean_image": {
+            "rmse_adu": 0.001489943426306666,
+            "gradient_vector_rmse_adu_per_px": 0.0007586718594905647
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.07882767838469279,
+            "gradient_vector_rmse_adu_per_px": 0.07965727882306071
+          },
+          "field": {
+            "total_vector_rmse_px": 0.20985841319970158,
+            "mean_error_vector_rms_px": 0.0007558052548020011,
+            "temporal_error_vector_rms_px": 0.20985705217865222,
+            "estimated_mean_vector_rms_px": 0.0007558052548020072,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.18212221769856393,
+            "mean_error_vector_rms_px": 0.0007286717847207366,
+            "temporal_error_vector_rms_px": 0.18212075998323946,
+            "estimated_mean_vector_rms_px": 0.0007286717847207406,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010303863324224949,
+            "gradient_vector_rmse_adu_per_px": 0.010282783769071102
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0007517900667153299,
+            "gradient_vector_rmse_adu_per_px": 0.0007319638971239328
+          }
+        },
+        "truth_all": {
+          "image": {
+            "rmse_adu": 0.24049927614437863,
+            "gradient_vector_rmse_adu_per_px": 0.24034143407268138
+          },
+          "clean_image": {
+            "rmse_adu": 0.001015950578224363,
+            "gradient_vector_rmse_adu_per_px": 0.0007044517482521353
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.07850939296554132,
+            "gradient_vector_rmse_adu_per_px": 0.07930946457499802
+          },
+          "field": {
+            "total_vector_rmse_px": 0.20833956146323998,
+            "mean_error_vector_rms_px": 4.0577776542475187e-16,
+            "temporal_error_vector_rms_px": 0.20833956146323998,
+            "estimated_mean_vector_rms_px": 3.144169693548128e-16,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.18070853242103632,
+            "mean_error_vector_rms_px": 3.741297046423713e-16,
+            "temporal_error_vector_rms_px": 0.18070853242103632,
+            "estimated_mean_vector_rms_px": 2.6335030212487265e-16,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010305794887244701,
+            "gradient_vector_rmse_adu_per_px": 0.010284505784511566
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0007475023157894611,
+            "gradient_vector_rmse_adu_per_px": 0.0007274460513144732
+          }
+        },
+        "truth_untapered": {
+          "image": {
+            "rmse_adu": 0.24050932480735104,
+            "gradient_vector_rmse_adu_per_px": 0.2403690063625591
+          },
+          "clean_image": {
+            "rmse_adu": 0.0010222717730603691,
+            "gradient_vector_rmse_adu_per_px": 0.0007047913772636882
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.07899441614372588,
+            "gradient_vector_rmse_adu_per_px": 0.07988794792060992
+          },
+          "field": {
+            "total_vector_rmse_px": 0.21059093192962153,
+            "mean_error_vector_rms_px": 4.0805171433364207e-16,
+            "temporal_error_vector_rms_px": 0.21059093192962156,
+            "estimated_mean_vector_rms_px": 3.17108949713569e-16,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.18070853242103632,
+            "mean_error_vector_rms_px": 3.741297046423713e-16,
+            "temporal_error_vector_rms_px": 0.18070853242103632,
+            "estimated_mean_vector_rms_px": 2.6335030212487265e-16,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 32
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01030489057302475,
+            "gradient_vector_rmse_adu_per_px": 0.010283632203936577
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0007492209551855922,
+            "gradient_vector_rmse_adu_per_px": 0.0007295403629541397
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.23690023321324877,
+            "gradient_vector_rmse_adu_per_px": 0.23650697245757624
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 3.0391126455937446e-16,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 3.0761995721199193e-16,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01024358719587326,
+            "gradient_vector_rmse_adu_per_px": 0.010241850279271603
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        }
+      },
+      "accepted_ap_counts": [
+        107,
+        107,
+        107,
+        106,
+        106,
+        106,
+        107,
+        105,
+        106,
+        100,
+        99,
+        99,
+        100,
+        97,
+        99,
+        99,
+        95,
+        95,
+        95,
+        96,
+        96,
+        95,
+        96,
+        96,
+        95,
+        101,
+        101,
+        101,
+        102,
+        102,
+        102,
+        102
+      ],
+      "observation_vector_rmse_px": {
+        "all": 0.19027354079668712,
+        "accepted": 0.18631464359442368,
+        "weighted": 0.18268192264106892
+      },
+      "stage_sha256": {
+        "measured": "908b54db2022614d2445967c931a9b474f4f63fbfe237735a3dc1edf43ea920b",
+        "truth_gated": "5ba33e9a6dea755d608cf7f26329c5ac87e54d986b8fca1924347ce40b9ca3e8",
+        "truth_accepted_uniform": "fe92da0f4f614b30796407b3f1486b94bde7ebca81b6c20d565dfb6e734be03c",
+        "truth_all": "a43c4ce28778b68acd3b9ab7e8707c0a7553fb2cac2ca6c515b0bc9e8dcaa2c3",
+        "truth_untapered": "9449bf45d92c7c451eb43da8d6733794645cd5d41b6c1dba2bd2f6229d150b55",
+        "oracle": "d0180ebca911d76fb54fbdc41499f4f1ef9e52ec04a3fb4416050208d4e8d067",
+        "target": "e63dedcfcb922addd4fdf42d6a042c8487937ddb2f8c456bf4e5aba2f97675c2"
+      }
+    },
+    "short_motion": {
+      "wavelengths": [
+        80.0,
+        120.0
+      ],
+      "raw_sha256": "1934bf13aeab82330774eb4fc190101277530ad481cff57ae37e7658f872c779",
+      "quadrature_endpoint_error_adu": 2.1331516109057702e-08,
+      "variants": {
+        "measured": {
+          "image": {
+            "rmse_adu": 0.3193110196588602,
+            "gradient_vector_rmse_adu_per_px": 0.23649718318535207
+          },
+          "clean_image": {
+            "rmse_adu": 0.21601869403216864,
+            "gradient_vector_rmse_adu_per_px": 0.022971768059605446
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.2847400143322923,
+            "gradient_vector_rmse_adu_per_px": 0.19311603024182092
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7882775051109902,
+            "mean_error_vector_rms_px": 0.1499900270266496,
+            "temporal_error_vector_rms_px": 0.7738762283831642,
+            "estimated_mean_vector_rms_px": 0.1499900270266496,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.7413627999660425,
+            "mean_error_vector_rms_px": 0.13437619303508838,
+            "temporal_error_vector_rms_px": 0.7290828758919612,
+            "estimated_mean_vector_rms_px": 0.13437619303508838,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010105359368026257,
+            "gradient_vector_rmse_adu_per_px": 0.010029759258031845
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.002973268972709775,
+            "gradient_vector_rmse_adu_per_px": 0.0028965496458113194
+          }
+        },
+        "truth_gated": {
+          "image": {
+            "rmse_adu": 0.23899067112051398,
+            "gradient_vector_rmse_adu_per_px": 0.2386683478033933
+          },
+          "clean_image": {
+            "rmse_adu": 0.00914743105979201,
+            "gradient_vector_rmse_adu_per_px": 0.005032063530004645
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.17268801814649834,
+            "gradient_vector_rmse_adu_per_px": 0.17881578870656994
+          },
+          "field": {
+            "total_vector_rmse_px": 0.719763448187286,
+            "mean_error_vector_rms_px": 0.004835010364682005,
+            "temporal_error_vector_rms_px": 0.7197472084150198,
+            "estimated_mean_vector_rms_px": 0.004835010364681996,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.6793609624010878,
+            "mean_error_vector_rms_px": 0.0044430242844998484,
+            "temporal_error_vector_rms_px": 0.6793464335445875,
+            "estimated_mean_vector_rms_px": 0.0044430242844998415,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010466935113072395,
+            "gradient_vector_rmse_adu_per_px": 0.010206453502178192
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.002723291516304016,
+            "gradient_vector_rmse_adu_per_px": 0.0024739105720072985
+          }
+        },
+        "truth_accepted_uniform": {
+          "image": {
+            "rmse_adu": 0.23898369565138963,
+            "gradient_vector_rmse_adu_per_px": 0.2386787913322492
+          },
+          "clean_image": {
+            "rmse_adu": 0.00905005260306174,
+            "gradient_vector_rmse_adu_per_px": 0.005006955720964166
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.1723698857848166,
+            "gradient_vector_rmse_adu_per_px": 0.17851472024852597
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7175709187961006,
+            "mean_error_vector_rms_px": 0.004777468559177283,
+            "temporal_error_vector_rms_px": 0.7175550148218994,
+            "estimated_mean_vector_rms_px": 0.004777468559177275,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.6772606600515921,
+            "mean_error_vector_rms_px": 0.00439188288478607,
+            "temporal_error_vector_rms_px": 0.6772464197160858,
+            "estimated_mean_vector_rms_px": 0.004391882884786062,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010466179810464382,
+            "gradient_vector_rmse_adu_per_px": 0.010205617174506187
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.002719821874052286,
+            "gradient_vector_rmse_adu_per_px": 0.0024697158951312304
+          }
+        },
+        "truth_all": {
+          "image": {
+            "rmse_adu": 0.23866785284721048,
+            "gradient_vector_rmse_adu_per_px": 0.23849397897694688
+          },
+          "clean_image": {
+            "rmse_adu": 0.007938504702141481,
+            "gradient_vector_rmse_adu_per_px": 0.004661804635352641
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.16970992996830728,
+            "gradient_vector_rmse_adu_per_px": 0.17583318171071433
+          },
+          "field": {
+            "total_vector_rmse_px": 0.70144224446365,
+            "mean_error_vector_rms_px": 4.3413849410348193e-16,
+            "temporal_error_vector_rms_px": 0.7014422444636499,
+            "estimated_mean_vector_rms_px": 3.3149083856599877e-16,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.6616766665435994,
+            "mean_error_vector_rms_px": 4.1940362191532796e-16,
+            "temporal_error_vector_rms_px": 0.6616766665435994,
+            "estimated_mean_vector_rms_px": 3.0803924278774033e-16,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010454582050442696,
+            "gradient_vector_rmse_adu_per_px": 0.010195501148700714
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.002677679294720292,
+            "gradient_vector_rmse_adu_per_px": 0.00242520309984684
+          }
+        },
+        "truth_untapered": {
+          "image": {
+            "rmse_adu": 0.23869097628383845,
+            "gradient_vector_rmse_adu_per_px": 0.23850990793719232
+          },
+          "clean_image": {
+            "rmse_adu": 0.007952894627104223,
+            "gradient_vector_rmse_adu_per_px": 0.004662448257421285
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.16975723543364798,
+            "gradient_vector_rmse_adu_per_px": 0.1758970079077899
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7023799940850531,
+            "mean_error_vector_rms_px": 4.351336861373736e-16,
+            "temporal_error_vector_rms_px": 0.7023799940850531,
+            "estimated_mean_vector_rms_px": 3.3195302674297693e-16,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.6616766665435994,
+            "mean_error_vector_rms_px": 4.1940362191532796e-16,
+            "temporal_error_vector_rms_px": 0.6616766665435994,
+            "estimated_mean_vector_rms_px": 3.0803924278774033e-16,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 32
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01045228447765112,
+            "gradient_vector_rmse_adu_per_px": 0.010193231515586376
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0026760015171021223,
+            "gradient_vector_rmse_adu_per_px": 0.002423639176413417
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.24130364441908558,
+            "gradient_vector_rmse_adu_per_px": 0.24176971517115028
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 3.076825850568692e-16,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 3.1260777423967143e-16,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.009856849908828735,
+            "gradient_vector_rmse_adu_per_px": 0.009865017607808113
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        }
+      },
+      "accepted_ap_counts": [
+        106,
+        106,
+        106,
+        106,
+        105,
+        105,
+        105,
+        105,
+        105,
+        100,
+        99,
+        99,
+        100,
+        97,
+        95,
+        95,
+        95,
+        95,
+        95,
+        96,
+        96,
+        95,
+        96,
+        95,
+        95,
+        101,
+        100,
+        101,
+        100,
+        102,
+        106,
+        106
+      ],
+      "observation_vector_rmse_px": {
+        "all": 0.20523566737803456,
+        "accepted": 0.1969660623360976,
+        "weighted": 0.19316321979341958
+      },
+      "stage_sha256": {
+        "measured": "1989b5eb8d5544c010c0c8e543d89c92ddd78b0ee97146fb6544ff0723afe5f7",
+        "truth_gated": "bc47272d71d5829096ab7d8d1e6257e8be62efd7ff1d2d37f86a54c6b57df11a",
+        "truth_accepted_uniform": "92846d1ca50802989536ec8eaede809d0299b60c1c151700b3d389bd13a62204",
+        "truth_all": "6cb853bd71af16ac3789468ddad690f69ba9fea8518e1b6674f52384b1fa1875",
+        "truth_untapered": "19300df584ebd0b2a7d1ca3bf5f987b6e7948f92b439e3ffac4a105d2a9d85ab",
+        "oracle": "47345a87138f9edf438c69ace667b9c6baba9249a0b24a810913a91c74cbb4f3",
+        "target": "19b776435ac3e48b9244737a493e36bef2c41843fa36f914e6cbd4109ea5d36d"
+      }
+    },
+    "short_offset": {
+      "wavelengths": [
+        80.0,
+        120.0
+      ],
+      "raw_sha256": "a2e28e10f27420c207ecc0d73c3db0b7e794873b305c14b4dcc70196538e1c6b",
+      "quadrature_endpoint_error_adu": 2.0975178927074012e-08,
+      "variants": {
+        "measured": {
+          "image": {
+            "rmse_adu": 0.4063030719747181,
+            "gradient_vector_rmse_adu_per_px": 0.2439240592471952
+          },
+          "clean_image": {
+            "rmse_adu": 0.3295605701058813,
+            "gradient_vector_rmse_adu_per_px": 0.05936551353392862
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.378629917024887,
+            "gradient_vector_rmse_adu_per_px": 0.20181017193128384
+          },
+          "field": {
+            "total_vector_rmse_px": 0.9568398610365924,
+            "mean_error_vector_rms_px": 0.5531800292965231,
+            "temporal_error_vector_rms_px": 0.7807268247319791,
+            "estimated_mean_vector_rms_px": 0.8122018863052445,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.9059619754328344,
+            "mean_error_vector_rms_px": 0.5289657147966751,
+            "temporal_error_vector_rms_px": 0.7355014435742786,
+            "estimated_mean_vector_rms_px": 0.8174771072850525,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01111650001257658,
+            "gradient_vector_rmse_adu_per_px": 0.010891105979681015
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.004220107104629278,
+            "gradient_vector_rmse_adu_per_px": 0.003912367857992649
+          }
+        },
+        "truth_gated": {
+          "image": {
+            "rmse_adu": 0.34828368042311175,
+            "gradient_vector_rmse_adu_per_px": 0.24279781033337242
+          },
+          "clean_image": {
+            "rmse_adu": 0.2526813122798919,
+            "gradient_vector_rmse_adu_per_px": 0.049067060514821195
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.3034670590011247,
+            "gradient_vector_rmse_adu_per_px": 0.1810896288539092
+          },
+          "field": {
+            "total_vector_rmse_px": 0.8923352097302446,
+            "mean_error_vector_rms_px": 0.525571686458406,
+            "temporal_error_vector_rms_px": 0.7211355828951834,
+            "estimated_mean_vector_rms_px": 0.8053381797994509,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.8447486343805406,
+            "mean_error_vector_rms_px": 0.5006064519620261,
+            "temporal_error_vector_rms_px": 0.6804362097520622,
+            "estimated_mean_vector_rms_px": 0.8077125784476223,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010991567745804787,
+            "gradient_vector_rmse_adu_per_px": 0.010839736089110374
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0036813924089074135,
+            "gradient_vector_rmse_adu_per_px": 0.003231747541576624
+          }
+        },
+        "truth_accepted_uniform": {
+          "image": {
+            "rmse_adu": 0.3482795700994488,
+            "gradient_vector_rmse_adu_per_px": 0.24280674275874162
+          },
+          "clean_image": {
+            "rmse_adu": 0.25266709826171696,
+            "gradient_vector_rmse_adu_per_px": 0.04897415009842315
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.3033008265819183,
+            "gradient_vector_rmse_adu_per_px": 0.18079401851864993
+          },
+          "field": {
+            "total_vector_rmse_px": 0.8894858336709809,
+            "mean_error_vector_rms_px": 0.523847261464446,
+            "temporal_error_vector_rms_px": 0.7188665348710851,
+            "estimated_mean_vector_rms_px": 0.8037745505598455,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.842018815963872,
+            "mean_error_vector_rms_px": 0.49893503262705075,
+            "temporal_error_vector_rms_px": 0.6782768753647817,
+            "estimated_mean_vector_rms_px": 0.8062244890992516,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010974321514368057,
+            "gradient_vector_rmse_adu_per_px": 0.01082992646843195
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0036928425543010235,
+            "gradient_vector_rmse_adu_per_px": 0.0032314839772880077
+          }
+        },
+        "truth_all": {
+          "image": {
+            "rmse_adu": 0.34311610438827295,
+            "gradient_vector_rmse_adu_per_px": 0.24298189747653173
+          },
+          "clean_image": {
+            "rmse_adu": 0.24535777723453694,
+            "gradient_vector_rmse_adu_per_px": 0.04835120148849325
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.29621056118899763,
+            "gradient_vector_rmse_adu_per_px": 0.17872514358582187
+          },
+          "field": {
+            "total_vector_rmse_px": 0.8689851858283467,
+            "mean_error_vector_rms_px": 0.5114257725717127,
+            "temporal_error_vector_rms_px": 0.7025517292972362,
+            "estimated_mean_vector_rms_px": 0.7945326518863841,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.8224074943960475,
+            "mean_error_vector_rms_px": 0.48705467670689356,
+            "temporal_error_vector_rms_px": 0.6626702262337764,
+            "estimated_mean_vector_rms_px": 0.7973450229289787,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010987660847604275,
+            "gradient_vector_rmse_adu_per_px": 0.010839861817657948
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0036679753102362156,
+            "gradient_vector_rmse_adu_per_px": 0.003208798123523593
+          }
+        },
+        "truth_untapered": {
+          "image": {
+            "rmse_adu": 0.342992209117376,
+            "gradient_vector_rmse_adu_per_px": 0.24291571712991897
+          },
+          "clean_image": {
+            "rmse_adu": 0.24519790423297652,
+            "gradient_vector_rmse_adu_per_px": 0.04835565348114181
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.29611251961026347,
+            "gradient_vector_rmse_adu_per_px": 0.17868148526242014
+          },
+          "field": {
+            "total_vector_rmse_px": 0.8700470089200385,
+            "mean_error_vector_rms_px": 0.5119486113685695,
+            "temporal_error_vector_rms_px": 0.7034844824503866,
+            "estimated_mean_vector_rms_px": 0.795371275684074,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.8224074943960475,
+            "mean_error_vector_rms_px": 0.48705467670689356,
+            "temporal_error_vector_rms_px": 0.6626702262337764,
+            "estimated_mean_vector_rms_px": 0.7973450229289787,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 32
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010996397584676743,
+            "gradient_vector_rmse_adu_per_px": 0.01084852684289217
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.003666532691568136,
+            "gradient_vector_rmse_adu_per_px": 0.00320838438346982
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.24328988839006316,
+            "gradient_vector_rmse_adu_per_px": 0.24365121819807165
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 0.6528192716487207,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.0,
+            "mean_error_vector_rms_px": 0.0,
+            "temporal_error_vector_rms_px": 0.0,
+            "estimated_mean_vector_rms_px": 0.65127120042113,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "fit_summary": {
+            "guard_rejections": 0,
+            "insufficient_points": 0,
+            "bypassed_taper_and_guard": 0
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.011992301791906357,
+            "gradient_vector_rmse_adu_per_px": 0.011328743770718575
+          },
+          "sharpened_versus_noisy_oracle": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          }
+        }
+      },
+      "accepted_ap_counts": [
+        107,
+        106,
+        105,
+        104,
+        106,
+        103,
+        105,
+        105,
+        106,
+        100,
+        98,
+        98,
+        98,
+        96,
+        95,
+        94,
+        95,
+        95,
+        95,
+        96,
+        96,
+        95,
+        96,
+        96,
+        96,
+        100,
+        101,
+        101,
+        102,
+        102,
+        107,
+        106
+      ],
+      "observation_vector_rmse_px": {
+        "all": 0.22242953718344105,
+        "accepted": 0.20834136691571054,
+        "weighted": 0.20389734075590604
+      },
+      "stage_sha256": {
+        "measured": "f15fd1af7cd4574161466121476635c0af7c75bddfcead6a8686b401edc0086c",
+        "truth_gated": "39e4d6e17192537bb4d9e3a3fb3127a78ab1f7fb51a44ad73e116dd3b37a22e2",
+        "truth_accepted_uniform": "44fb31f04e674d59f4c5aa0ae2df806449adeb0c12ea3b53f916a1e7102037fd",
+        "truth_all": "3029f832e721de4dbb46b8a55eead26084fd021c7b659ac2ee6b7cfaba8c9b3c",
+        "truth_untapered": "5adc53118fd6e827d7dd4e36a91895c973c0f25af632e85ac34667476e97b42c",
+        "oracle": "c8d886c75be36795530e1d73297b48655094198032007994b505a26c91aa03a0",
+        "target": "649ee6bb044ce6f8a6ae6703df458a95db6fbffba74b1bffc9c91869a8229fe5"
+      }
+    }
+  },
+  "geometry_sha256": "a791a23264b2d2d28f06d302cf61a9c84d6445df8feec53543c80a2a66773aac",
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "long_motion_measured": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_measured.png",
+        "source_sha256": "0b370cdb3c8f92cec61dc48c78b3ae3f2548cd8abd9bdf156ce5e4679b751df4",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_measured_sharpened.png",
+        "output_sha256": "2c73dcc902ff538f910a4e07f5fd8547a8cfea374c92a24d11bcf27e4b987a24"
+      },
+      "long_motion_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_oracle.png",
+        "source_sha256": "ad280fe2356dd0d5a2bb5cef2077dd194b974288b79a7524504e1ed0875c61e6",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_oracle_sharpened.png",
+        "output_sha256": "dfec288085123e50d746942aa3c07e722353a8a85b030713863541cb9c7bf6b7"
+      },
+      "long_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_target.png",
+        "source_sha256": "0f4a67d16dec0ea918a3954320e17c81c0e2ab0d456339f4dfa5aa6ba586d487",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_target_sharpened.png",
+        "output_sha256": "0b7c338d882be1761e39381b5ae968ef83e43f64dc8130f5c8876e9109fc2b76"
+      },
+      "long_motion_truth_accepted_uniform": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_truth_accepted_uniform.png",
+        "source_sha256": "2a4127054ee405e4e942810cfba77df1f1465ccc4f5dbc7cf9e4365d75a0d2f9",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_truth_accepted_uniform_sharpened.png",
+        "output_sha256": "1fcd17135f6f061d48ba9d675bd3253613f7056d0d2f88c208f5eaec9591563c"
+      },
+      "long_motion_truth_all": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_truth_all.png",
+        "source_sha256": "5d42cf5062e39bd8821e46b6d1208f8e7637925cf80c0bc73378ef516bb1ea53",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_truth_all_sharpened.png",
+        "output_sha256": "96f718af3b72542b542016b65c51e756e420122dfdc80b9669660790177667ff"
+      },
+      "long_motion_truth_gated": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_truth_gated.png",
+        "source_sha256": "700a6f0de6f397598fb0a8a7053b6bc2c80a29ea00268769b090701897584ab5",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_truth_gated_sharpened.png",
+        "output_sha256": "a9e577c925df9539db36e32d82cfd6548813f0f680fd8c90ac6e1fda9198d3e3"
+      },
+      "long_motion_truth_untapered": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/long_motion_truth_untapered.png",
+        "source_sha256": "a3f7aed62fb82e8d0d03de98588ca0108e3aa02042446cf8d7577f2df666d79e",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/long_motion_truth_untapered_sharpened.png",
+        "output_sha256": "6036115cf7c8c1baa26d3eed0024ecbace78d2210a30348d7d79a0c7d52af129"
+      },
+      "short_motion_measured": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_measured.png",
+        "source_sha256": "651967354d96b6acff801d4c94ba89969922e1e06e1005b9761073bfedabd0cd",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_measured_sharpened.png",
+        "output_sha256": "2788a7731d76e6621cfc1c1c117b9ca4b6dedeba358805d88560e3252a8d6687"
+      },
+      "short_motion_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_oracle.png",
+        "source_sha256": "7d75703548c84cc866a69a0457666045ef8c3bd68b1a11997161874ddb7662d7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_oracle_sharpened.png",
+        "output_sha256": "8ad40e3d30bb4f3cfe4e5c1be5ea14c1d0561fb3d014d71976ce915995888038"
+      },
+      "short_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_target.png",
+        "source_sha256": "83b23df22cff2c0107bfae9924d52c9d3dd31657ac12ca1a39cdbb77a71d3530",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_target_sharpened.png",
+        "output_sha256": "65c0986365782001386913909f09086d9100cbe6954a1dabe79951bd89ed9ade"
+      },
+      "short_motion_truth_accepted_uniform": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_truth_accepted_uniform.png",
+        "source_sha256": "1f6618d94f7ab893e31ecbbde00329e8c97505a142327875efa254bfb48f6930",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_truth_accepted_uniform_sharpened.png",
+        "output_sha256": "2e7fdb0b629a5241076b97808ba25560bb8c5fa9995efd6f77d4caddfe017930"
+      },
+      "short_motion_truth_all": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_truth_all.png",
+        "source_sha256": "3011fca3afc84ae60a5d32580f4d02fc3e7611f261aa93121af9002ddbfb1283",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_truth_all_sharpened.png",
+        "output_sha256": "427d31800fe2c6c3c311cf6035b7b12a764de33511fcb6de3b9d90c6dcf2d826"
+      },
+      "short_motion_truth_gated": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_truth_gated.png",
+        "source_sha256": "79ddab1b3b901765b590f44becfdcfd93d51bfaa7e81c29839906a2bead389fc",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_truth_gated_sharpened.png",
+        "output_sha256": "6d575966dc43990d1bc1ed87b73055280a600c05e4e52ed7e4805618c859a875"
+      },
+      "short_motion_truth_untapered": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_motion_truth_untapered.png",
+        "source_sha256": "e1a09e2fe4ce52fa096c1b71ad8cda08dd80488bd109b8e7d6c5c92ae079cdbc",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_motion_truth_untapered_sharpened.png",
+        "output_sha256": "ed80d0cca22b1fe23793e653ea440f35f32a839bd36cea609cf6ea371cd3f6b5"
+      },
+      "short_offset_measured": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_measured.png",
+        "source_sha256": "61b492300780025b2594f9fdf460ad237883f51995401f2881a2857dd3f72b85",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_measured_sharpened.png",
+        "output_sha256": "3d564e3b09fde6258bbec3f1259a31d32eb6650f07c0e8ed922d39c454e28a99"
+      },
+      "short_offset_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_oracle.png",
+        "source_sha256": "dc53322218e1a1c583988ea921219b83c34b115b833826189b0241c1021be7ad",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_oracle_sharpened.png",
+        "output_sha256": "764ee854aa63ae6c38d26a3106f62cbbd8a49e8560dd2e44c9ea02a456258c1b"
+      },
+      "short_offset_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_target.png",
+        "source_sha256": "4418e68d7722a16e693c916c3727b252e884acec1325639bc6e771069b747416",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_target_sharpened.png",
+        "output_sha256": "fe5175b98fcf9f2014389a7bd286f822aa0fdfb882ed577803df09d7340fcfd5"
+      },
+      "short_offset_truth_accepted_uniform": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_truth_accepted_uniform.png",
+        "source_sha256": "6e7286cb968e7c248aa3df644b5e2e6f71d45c849d7eb5d55bfaf4869c307e17",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_truth_accepted_uniform_sharpened.png",
+        "output_sha256": "e0ef5552d03cf7ac133cdee61246a6fa80a204ad5235eef9d6a691f07e9279ed"
+      },
+      "short_offset_truth_all": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_truth_all.png",
+        "source_sha256": "b917f92e3fb19783056fb2caf36199f8ded755a0f2e1f4151902d7c5ee00a5c8",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_truth_all_sharpened.png",
+        "output_sha256": "ef93f77809d9e8657b0fd100f4d8ae58af0e31f95bcffb71ba8948d785b3768d"
+      },
+      "short_offset_truth_gated": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_truth_gated.png",
+        "source_sha256": "6afa3b1c5493e53987dc66d608947c780eb45662248490bc9a72919a3494ab96",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_truth_gated_sharpened.png",
+        "output_sha256": "ca18ae1a66d20d86e56b0bca324c68b508cba874552d782e13a61ca52979132d"
+      },
+      "short_offset_truth_untapered": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/short_offset_truth_untapered.png",
+        "source_sha256": "213675eb399e0d75f54cac29086496b7410676cfd85761750e6928cc13a4e48f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/short_offset_truth_untapered_sharpened.png",
+        "output_sha256": "f625c93152f15a1acf379d28b05c3754369ffdbd2036c288d42790bc5df59254"
+      },
+      "stationary_measured": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_measured.png",
+        "source_sha256": "c7db09b948c1cd36ab0ff4c67787801c9c8fc7b925792aed3b287f61c818a15f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_measured_sharpened.png",
+        "output_sha256": "1c3190998902f8f5181d609e59af2fe9e9d8482d86be6e4c043949d79137089f"
+      },
+      "stationary_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_oracle.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_oracle_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      },
+      "stationary_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_target.png",
+        "source_sha256": "2840be5161665306b3894261dda9a6d02adb71a5dc05dc9c781731f589026a86",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_target_sharpened.png",
+        "output_sha256": "5f3f58b5dcb2b5438c1671e8df23bb854ab3f61852d7de7ed4a1e4889a50daa3"
+      },
+      "stationary_truth_accepted_uniform": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_truth_accepted_uniform.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_truth_accepted_uniform_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      },
+      "stationary_truth_all": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_truth_all.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_truth_all_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      },
+      "stationary_truth_gated": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_truth_gated.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_truth_gated_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      },
+      "stationary_truth_untapered": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/stationary_truth_untapered.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-oracle-observations/sharpened/stationary_truth_untapered_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "raw_report_sha256": "9867991d6a6dda663e57ad4844e529581c2321bbba66280f9a3738786903f761",
+  "analyzer_sha256": "ee56ee6e6965e173a21d6e75456a4dc43742c0570e9baa16bcf576510aec9784",
+  "limits": [
+    "Truth patch averages are exact for the fitter observation model, not necessarily the optimum translation of a deforming patch.",
+    "Measured AP errors include matching and multiscale composition; this intervention does not separate those two stages.",
+    "Truth-gated keeps the original frame-dependent confidence and selection; truth-all uses every configured AP with unit weight.",
+    "The untapered diagnostic bypasses both taper and geometric guard and is not a deployable algorithm.",
+    "Known fields are unavailable for Saturn; these controlled outcomes cannot be assigned as percentages of its noise gap.",
+    "The noiseless target is the same detector-integrated frames sampled with truth, not an ideal infinite-resolution scene.",
+    "Noisy-oracle comparisons retain identical noise realizations; they measure changes caused by alignment, not all image noise.",
+    "Four fixed smooth-shear cases and one continuous scene do not cover atmospheric motion or PSF variability.",
+    "No production changes, output filtering or brightness normalization."
+  ]
+}
