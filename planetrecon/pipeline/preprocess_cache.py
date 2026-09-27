@@ -197,6 +197,7 @@ def cache_report(selection, path=None, config=None, source=None):
             'digest': selection.digest, **exclusion_counts(selection),
             'best_reference_index': selection.best_reference_index,
             'quality_range': quality_range_counts(selection),
+            'execution': selection.summary.get('execution'),
             'timing': timing,
             'geometry_estimate': estimate}
 
@@ -270,7 +271,7 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
 
 
 def preprocess_source(source, config, *, calibration=None, cache_path=None,
-                      should_cancel=None, on_progress=None, validation=None):
+                      should_cancel=None, on_progress=None, validation=None, on_device=None):
     """Compute fresh screening + geometry, cache if file-backed, and return it.
 
     Callable independently of reconstruction, even when cache use is disabled.
@@ -293,9 +294,12 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
             raise ValueError('gain calibration cannot be applied to observations already in electrons')
         before = identity(source, config, calibration, should_cancel)
-        selection = screen_source(source, config, calibration, should_cancel=should_cancel, on_progress=on_progress)
+        selection = screen_source(source, config, calibration, should_cancel=should_cancel,
+                                  on_progress=on_progress, on_device=on_device)
         if selection.cancelled:
             raise InterruptedError('preprocessing cancelled')
+        if on_device:
+            on_device({'backend': 'cpu', 'reason': 'Geometry estimation', 'phase': 'geometry'})
         from planetrecon.geometry.pose import capture_timing
         selection.summary['timing'] = capture_timing(source, cadence_s=config.cadence_s)
         selection.summary['geometry_estimate'] = discover_geometry(source, config, selection, calibration, should_cancel)

@@ -39,6 +39,11 @@ def measure_frame(frame, color):
     """
     plane, scale = measurement_plane(frame, color)
     smooth = gaussian_filter(plane, 1.0, mode='nearest')
+    return measure_filtered(smooth, scale)
+
+
+def measure_filtered(smooth, scale, laplacian=None):
+    """Shared CPU silhouette decisions after CPU or CUDA filtering."""
     border = np.concatenate((smooth[0], smooth[-1], smooth[1:-1, 0], smooth[1:-1, -1]))
     sky = float(np.median(border))
     noise = 1.4826 * float(np.median(np.abs(border - sky)))
@@ -53,7 +58,7 @@ def measure_frame(frame, color):
     if sizes.max() < 9:
         return (np.nan, np.nan, np.nan, np.nan, 'no_target')
     yy, xx = np.nonzero(mask)
-    if xx.min() == 0 or yy.min() == 0 or xx.max() == plane.shape[1]-1 or yy.max() == plane.shape[0]-1:
+    if xx.min() == 0 or yy.min() == 0 or xx.max() == smooth.shape[1]-1 or yy.max() == smooth.shape[0]-1:
         return (np.nan, np.nan, np.nan, np.nan, 'clipped_target')
     points = np.column_stack((xx - xx.mean(), yy - yy.mean()))
     _, axes = np.linalg.eigh(points.T @ points / len(points))
@@ -68,7 +73,9 @@ def measure_frame(frame, color):
     support = binary_dilation(mask, iterations=2)
     support[[0, -1], :] = False
     support[:, [0, -1]] = False
-    quality = float(np.mean(laplace(smooth, mode='nearest')[support] ** 2))
+    if laplacian is None:
+        laplacian = laplace(smooth, mode='nearest')
+    quality = float(np.mean(laplacian[support] ** 2))
     return quality, float(width), float(height), angle, 'ok'
 
 
@@ -148,7 +155,87 @@ def _measurement_pool(source, config):
     yield None
 
 
-def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None):
+@contextmanager
+def _screening_backend(source, config, calibration):
+    """Optional CUDA filtering, with the same allocator policy as stacking."""
+    from contextlib import ExitStack
+    accelerator = None
+    report = {'backend': 'cpu', 'reason': 'explicit_cpu', 'precision': 'float64'}
+    with ExitStack() as resources:
+        if config.device != 'cpu':
+            try:
+                from planetrecon.backends.memory import cuda_allocation_limit
+                budget = resources.enter_context(cuda_allocation_limit(config.max_vram_bytes))
+                if budget['error']:
+                    raise RuntimeError(budget['error'])
+                from planetrecon.backends.base import probe_torch_cuda
+                probe = probe_torch_cuda()
+                if probe.selected != 'gpu':
+                    raise RuntimeError(probe.reason)
+                from planetrecon.backends.screening import CUDAScreening
+                accelerator = CUDAScreening(source.frame_shape(), source.color_mode(), calibration)
+                report.update(backend='cuda', reason='Batched CUDA filtering; CPU silhouette measurements')
+            except Exception as exc:
+                report.update(reason=f'CUDA preprocessing unavailable; using CPU: {type(exc).__name__}: {exc}')
+        try:
+            yield accelerator, report
+        finally:
+            if accelerator is not None:
+                accelerator.close()
+
+
+def _measurement_batches(source, config, calibration, accelerator, execution, should_cancel, on_device):
+    """Keep source I/O on the owner; prefetch only one CUDA batch."""
+    from concurrent.futures import ThreadPoolExecutor
+    from contextlib import nullcontext
+    bit_depth = None
+    pending = None
+
+    def resolve(entry):
+        nonlocal accelerator
+        indices, batch, measure, future, cuda_measure = entry
+        if future is not None:
+            try:
+                items = future.result()
+            except RuntimeError as exc:
+                accelerator.close()
+                accelerator = None
+                execution.update(backend='cpu', reason=f'CUDA preprocessing failed; using CPU: {exc}')
+                if on_device:
+                    on_device(dict(execution))
+            else:
+                return indices, items, cuda_measure, True
+        return indices, batch, measure, False
+
+    context = (ThreadPoolExecutor(max_workers=1, thread_name_prefix='planetrecon-screen-cuda')
+               if accelerator is not None else nullcontext(None))
+    with context as gpu_pool:
+        for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
+            if should_cancel is not None and should_cancel():
+                return
+            if config.reject_saturated and bit_depth is None and any(np.isfinite(raw).all() for raw in batch):
+                bit_depth = source.metadata().bit_depth
+            measure = partial(_measure_observation, color=source.color_mode(), bit_depth=bit_depth,
+                              reject_saturated=config.reject_saturated, calibration=calibration)
+            if gpu_pool is None:
+                yield indices, batch, measure, False
+                continue
+            # Resolve before launching another batch, so a failing accelerator
+            # is never reused. CPU measurement of the previous batch overlaps
+            # the next GPU job; no source handle is accessed by that job.
+            previous = resolve(pending) if pending is not None else None
+            future = (gpu_pool.submit(accelerator.prepare, batch, bit_depth,
+                                      config.reject_saturated, should_cancel)
+                      if accelerator is not None else None)
+            pending = (indices, batch, measure, future,
+                       accelerator.measure if accelerator is not None else None)
+            if previous is not None:
+                yield previous
+        if pending is not None and not (should_cancel and should_cancel()):
+            yield resolve(pending)
+
+
+def screen_source(source, config, calibration=None, *, should_cancel=None, on_progress=None, on_device=None):
     """Read serial bounded batches; measure independent frames in a bounded pool."""
 
     n = source.n_frames()
@@ -156,34 +243,37 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
     statuses = np.full(n, 'unmeasured', dtype='<U20')
     processed = 0
     stopped = False
-    bit_depth = None
-    with _measurement_pool(source, config) as pool:
-        for indices, batch in source.iter_batches(config.batch_frames, should_cancel=should_cancel):
-            if should_cancel is not None and should_cancel():
-                stopped = True
-                break
-            if config.reject_saturated and bit_depth is None and any(np.isfinite(raw).all() for raw in batch):
-                # Metadata can seek/read the SER trailer. Keep all source I/O
-                # on this thread and reuse its fixed bit depth for this pass.
-                bit_depth = source.metadata().bit_depth
-            measure = partial(_measure_observation, color=source.color_mode(), bit_depth=bit_depth,
-                              reject_saturated=config.reject_saturated, calibration=calibration)
-            results = pool.map(measure, batch) if pool is not None else map(measure, batch)
-            try:
-                for index in indices:
-                    if should_cancel is not None and should_cancel():
-                        stopped = True
-                        break
-                    values, status = next(results)
-                    metrics[index], statuses[index] = values, status
-                    processed += 1
-            finally:
-                if pool is not None:
-                    results.close()  # Cancel queued work on cancellation or an exception.
-            if on_progress is not None:
-                on_progress(processed, n)
-            if stopped:
-                break
+    cuda_frames = 0
+    with _measurement_pool(source, config) as pool, _screening_backend(source, config, calibration) as (accelerator, execution):
+        if on_device:
+            on_device(dict(execution))
+        batches = _measurement_batches(source, config, calibration, accelerator, execution, should_cancel, on_device)
+        try:
+            for indices, items, measure, used_cuda in batches:
+                if should_cancel is not None and should_cancel():
+                    stopped = True
+                    break
+                results = pool.map(measure, items) if pool is not None else map(measure, items)
+                try:
+                    for index in indices:
+                        if should_cancel is not None and should_cancel():
+                            stopped = True
+                            break
+                        values, status = next(results)
+                        metrics[index], statuses[index] = values, status
+                        processed += 1
+                        cuda_frames += int(used_cuda)
+                finally:
+                    if pool is not None:
+                        results.close()  # Cancel queued work on cancellation or an exception.
+                if on_progress is not None:
+                    on_progress(processed, n)
+                if stopped:
+                    break
+        except InterruptedError:
+            stopped = True
+        finally:
+            batches.close()  # Join the pending GPU job before releasing its tables/budget.
     stopped = stopped or processed < n or bool(should_cancel and should_cancel())
     accepted, cuts, stats = sigma_selection(metrics, statuses == 'ok')
     reasons = {name: np.flatnonzero(statuses == name).tolist()
@@ -199,6 +289,7 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
         'n_rejected': int(processed - accepted.sum()), 'complete': not stopped,
         'rejected_indices_by_reason': reasons,
         'axis_note': 'Apparent major/minor axes; phase and rings included, physical equator not inferred.',
+        'execution': {**execution, 'cuda_frames': cuda_frames},
     }
     return FrameSelection(accepted, metrics, summary, stopped)
 

@@ -11,6 +11,34 @@ per batch and the number of input frames. There is no separate four-worker or
 to the whole preprocessing job. Source reads remain serial, while independent
 frame measurements run concurrently with internal BLAS threading disabled.
 
+With **Device** set to **Auto** or **GPU**, preprocessing uses CUDA after a live
+device probe succeeds. Calibration, luminance/binning, Gaussian smoothing and
+Laplacian filtering run in float64 batches on the GPU. The CPU still identifies
+the largest connected silhouette and measures its shape and supported quality,
+using the same rejection rules as CPU preprocessing. This is a hybrid path;
+capture hashing, file reads and geometry estimation remain on the CPU.
+These filters measure quality only; they do not modify frames used for stacking.
+
+GPU batches are subdivided to fit device headroom and any configured CUDA tensor
+budget. One GPU batch is prepared ahead while CPU workers measure the previous
+batch; source reads stay on the owner thread and cancellation joins pending work.
+If CUDA is unavailable or a batch fails, that batch and remaining work
+use the CPU. Progress reports the active backend and fallback reason; cached
+metadata records how many frames used CUDA. Results agree to floating-point
+precision rather than requiring bitwise equality between devices. Existing
+preprocessing caches remain valid and are not regenerated just to change device.
+The CLI accepts `preprocess --device auto|cpu|gpu`, defaulting to Auto unless a
+configuration file specifies another device.
+
+The [local CUDA replay](../results/real-data/cuda-preprocessing.json) checks the
+27,689-frame R Saturn capture against 32 CPU workers. Full preprocessing took
+51.0 seconds on CPU and 40.5 seconds with CUDA in one paired run, including
+capture hashes and geometry. Screening masks, both selection modes at every
+percentage, reference choice and calculated geometry matched; quality scores
+differed by at most 3.6e-15. This is local timing evidence, not a universal speed
+guarantee. Replay without changing the capture's existing cache using
+`python -m tools.benchmark_cuda_preprocessing --path capture.ser --full --out report.json`.
+
 The **Use cached preprocessing (quality and shape)** checkbox independently
 controls whether later runs use those decisions. GUI **Run** validates the cache
 and automatically runs preprocessing when it is missing, stale or invalid,
@@ -295,8 +323,8 @@ processing use it before their first batch. Re-estimating geometry with this
 reference still leaves Jupiter's rotation unresolved; reference selection alone
 does not supply a reliable spin rate.
 
-Preprocessing runs on CPU using bounded source batches and four scalar
-measurements per frame; reconstruction still uses the requested backend. The
+Preprocessing uses bounded source batches and retains four scalar measurements
+per frame, using CPU or hybrid CUDA/CPU execution as described above. The
 GUI shows preprocessing progress without replacing an existing image with an
 empty preview. Cancellation raises `InterruptedError` in the Python API and
 does not replace a cache or accumulator checkpoint. Resuming reuses validated

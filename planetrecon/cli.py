@@ -226,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument('--path', type=Path, required=True)
     pp.add_argument('--cache', type=Path, help='cache output (default: capture filename plus .planetrecon-preprocess.npz)')
     pp.add_argument('--config', type=Path, help='optional ReconstructionConfig JSON for calibration and geometry settings')
+    pp.add_argument('--device', choices=['auto', 'cpu', 'gpu'], help='measurement backend (default: auto, or configured device)')
     pp.add_argument('--bayer', choices=['mono', 'RGGB', 'BGGR', 'GRBG', 'GBRG'])
     pp.add_argument('--cadence', type=float, help='seconds per frame when timestamps are absent')
 
@@ -386,8 +387,10 @@ def main(argv: list[str] | None = None) -> int:
         from planetrecon.reconstruction import ReconstructionConfig
         from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path
         cfg = (ReconstructionConfig.from_dict(json.loads(args.config.read_text())) if args.config
-               else ReconstructionConfig(device='cpu', threads=applied_threads))
+               else ReconstructionConfig(device='auto', threads=applied_threads))
         updates = {'threads': applied_threads}
+        if args.device is not None:
+            updates['device'] = args.device
         if args.bayer is not None:
             updates['bayer_override'] = args.bayer
         if args.cadence is not None:

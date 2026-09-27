@@ -183,10 +183,16 @@ def _worker_run(
         if preprocess_only:
             from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path, quality_plot_data
             emit('progress', {'stage': 'Preprocessing: validating capture', 'fraction': None, 'backend': 'cpu'})
+            preprocessing_device = {'backend': 'cpu'}
+            def preprocessing_backend(report):
+                preprocessing_device.update(report)
+                emit('progress', {'stage': 'Preprocessing: ' + report.get('phase', 'quality and shape'),
+                    'fraction': None, 'backend': report['backend'], 'device_report': report})
             selected = preprocess_source(source, config, should_cancel=cancel_event.is_set,
-                validation=cache_validation,
+                validation=cache_validation, on_device=preprocessing_backend,
                 on_progress=lambda done, total: emit('progress', {'stage': 'Preprocessing: quality and shape',
-                    'fraction': done/max(total, 1), 'backend': 'cpu'}))
+                    'fraction': done/max(total, 1), 'backend': preprocessing_device['backend'],
+                    'device_report': dict(preprocessing_device)}))
             report = cache_report(selected, default_cache_path(source))
             report['frame_quality'] = quality_plot_data(selected)
             # The final event owns the preview too: optional source events may
