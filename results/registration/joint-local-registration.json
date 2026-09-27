@@ -1,0 +1,4861 @@
+{
+  "model": {
+    "path": "tools/joint_registration.py",
+    "sha256": "69515611e6f4b47c43cc86cfee562f9e249d691cf2c6b0afb87e7ccf49d5307d"
+  },
+  "production_changed": false,
+  "brightness_normalization": false,
+  "output_filtering": false,
+  "cases": [
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.38741185759853075,
+            "gradient_vector_rmse_adu_per_px": 0.3321140127216738
+          },
+          "clean_image": {
+            "rmse_adu": 0.31418773633217584,
+            "gradient_vector_rmse_adu_per_px": 0.2406312707591509
+          },
+          "field_vector_rmse_px": 0.2930749350041013,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.09871393366153684,
+            "warped_noise_mse_adu2": 0.052431805520488685,
+            "twice_cross_term_adu2": -0.0010577917740812732,
+            "total_mse_adu2": 0.15008794740794426
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.026725612580776215,
+            "gradient_vector_rmse_linear_per_px": 0.023518268018960953
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.2717503089645149,
+            "gradient_vector_rmse_adu_per_px": 0.27167238871159266
+          },
+          "clean_image": {
+            "rmse_adu": 0.08452488425199733,
+            "gradient_vector_rmse_adu_per_px": 0.08396023914957314
+          },
+          "field_vector_rmse_px": 0.11071866949636278,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.007144456057813546,
+            "warped_noise_mse_adu2": 0.06720004301181991,
+            "twice_cross_term_adu2": -0.0004962686473241505,
+            "total_mse_adu2": 0.07384823042230931
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.019939707592129707,
+            "gradient_vector_rmse_linear_per_px": 0.019517656415700912
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.27359239691856607,
+            "gradient_vector_rmse_adu_per_px": 0.2734343358239685
+          },
+          "clean_image": {
+            "rmse_adu": 0.0600792252241219,
+            "gradient_vector_rmse_adu_per_px": 0.059343804169121835
+          },
+          "field_vector_rmse_px": 0.07573679212598997,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.003609513303530765,
+            "warped_noise_mse_adu2": 0.07142041031762911,
+            "twice_cross_term_adu2": -0.00017712396951367437,
+            "total_mse_adu2": 0.0748527996516462
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.019769763574004173,
+            "gradient_vector_rmse_linear_per_px": 0.019280103966593742
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2884029760000326,
+            "gradient_vector_rmse_adu_per_px": 0.28840061208631707
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567537,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567537
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02065448835492134,
+            "gradient_vector_rmse_linear_per_px": 0.019359849393367767
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.2884029760000326,
+            "gradient_vector_rmse_adu_per_px": 0.28840061208631707
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567537,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567537
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02065448835492134,
+            "gradient_vector_rmse_linear_per_px": 0.019359849393367767
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.2884029760000326,
+            "gradient_vector_rmse_adu_per_px": 0.28840061208631707
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567537,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567537
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02065448835492134,
+            "gradient_vector_rmse_linear_per_px": 0.019359849393367767
+          }
+        }
+      },
+      "oracle_sha256": "05d290516938a78bd345640d97ab03f778b3f26f40c75fffab27d7229fb0599c",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.13985882989573356,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.034315457186722,
+          "mean_global_heldout_loss": 4.006069783398811
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.16273335413243814,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.023679944659068,
+          "mean_global_heldout_loss": 4.006069783398811
+        }
+      },
+      "scene": "saturn",
+      "condition": "static_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-controls/analysis.json",
+        "sha256": "0538b86264941c5c886150ebb829bd9c5702f2a41ffad769f4c697e9efe95061"
+      },
+      "baseline_max_difference_adu": 1.399713678296166e-13
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.3264803812359359,
+            "gradient_vector_rmse_adu_per_px": 0.24899951720842822
+          },
+          "clean_image": {
+            "rmse_adu": 0.24221672640883918,
+            "gradient_vector_rmse_adu_per_px": 0.11735290285216346
+          },
+          "field_vector_rmse_px": 0.41752061162236503,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.05866894255221445,
+            "warped_noise_mse_adu2": 0.048648544830522236,
+            "twice_cross_term_adu2": -0.0007280480507746247,
+            "total_mse_adu2": 0.10658943933196208
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02882002480328083,
+            "gradient_vector_rmse_linear_per_px": 0.028846178203821182
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.2552189164608625,
+            "gradient_vector_rmse_adu_per_px": 0.25488410538763556
+          },
+          "clean_image": {
+            "rmse_adu": 0.04364740561829208,
+            "gradient_vector_rmse_adu_per_px": 0.04003601629099815
+          },
+          "field_vector_rmse_px": 0.17119455526264163,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0019050960172077146,
+            "warped_noise_mse_adu2": 0.06357062774873212,
+            "twice_cross_term_adu2": -0.0003390284464831386,
+            "total_mse_adu2": 0.06513669531945669
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.0316937230527401,
+            "gradient_vector_rmse_linear_per_px": 0.028151260688900948
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.26506224637200076,
+            "gradient_vector_rmse_adu_per_px": 0.2648712892927821
+          },
+          "clean_image": {
+            "rmse_adu": 0.030626832695403595,
+            "gradient_vector_rmse_adu_per_px": 0.027292683192621098
+          },
+          "field_vector_rmse_px": 0.09628445140716903,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0009380028809522426,
+            "warped_noise_mse_adu2": 0.06947642736778395,
+            "twice_cross_term_adu2": -0.0001564357969649356,
+            "total_mse_adu2": 0.07025799445177124
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03246193006634712,
+            "gradient_vector_rmse_linear_per_px": 0.029373977333307266
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2884029760000332,
+            "gradient_vector_rmse_adu_per_px": 0.2884006120863177
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567571,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567571
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.036096297204494476,
+            "gradient_vector_rmse_linear_per_px": 0.03126475214958191
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.2884029760000332,
+            "gradient_vector_rmse_adu_per_px": 0.2884006120863177
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567571,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567571
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.036096297204494476,
+            "gradient_vector_rmse_linear_per_px": 0.03126475214958191
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.2884029760000332,
+            "gradient_vector_rmse_adu_per_px": 0.2884006120863177
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08317627656567571,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08317627656567571
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.036096297204494476,
+            "gradient_vector_rmse_linear_per_px": 0.03126475214958191
+          }
+        }
+      },
+      "oracle_sha256": "0a23816b0dc11bc4c7fc6fd0e45a3d4d297721f60617ef5a7618daa7ee01df12",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.09955610278713009,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.032123890176391,
+          "mean_global_heldout_loss": 4.006250820553264
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.1118285035843174,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.0227133288836,
+          "mean_global_heldout_loss": 4.006250820553264
+        }
+      },
+      "scene": "saturn",
+      "condition": "static_blur_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-controls/analysis.json",
+        "sha256": "0538b86264941c5c886150ebb829bd9c5702f2a41ffad769f4c697e9efe95061"
+      },
+      "baseline_max_difference_adu": 1.399713678296166e-13
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.3104969491638423,
+            "gradient_vector_rmse_adu_per_px": 0.2078121019528175
+          },
+          "clean_image": {
+            "rmse_adu": 0.24192654352454215,
+            "gradient_vector_rmse_adu_per_px": 0.0707211427841573
+          },
+          "field_vector_rmse_px": 0.46772419379944663,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.05852845246173219,
+            "warped_noise_mse_adu2": 0.038566759474136444,
+            "twice_cross_term_adu2": -0.0006868564958149543,
+            "total_mse_adu2": 0.09640835544005366
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021594485267996788,
+            "gradient_vector_rmse_linear_per_px": 0.022098585963249207
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20153691617303607,
+            "gradient_vector_rmse_adu_per_px": 0.20065269776868613
+          },
+          "clean_image": {
+            "rmse_adu": 0.024650953867463087,
+            "gradient_vector_rmse_adu_per_px": 0.013586567409128515
+          },
+          "field_vector_rmse_px": 0.2350145831893033,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0006076695265757933,
+            "warped_noise_mse_adu2": 0.04040854991557422,
+            "twice_cross_term_adu2": -0.0003990908616126478,
+            "total_mse_adu2": 0.04061712858053737
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02244121953845024,
+            "gradient_vector_rmse_linear_per_px": 0.02085438184440136
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2019159204705792,
+            "gradient_vector_rmse_adu_per_px": 0.20105664512148474
+          },
+          "clean_image": {
+            "rmse_adu": 0.023372826851107607,
+            "gradient_vector_rmse_adu_per_px": 0.013928376390819818
+          },
+          "field_vector_rmse_px": 0.25134677929413163,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0005462890350118567,
+            "warped_noise_mse_adu2": 0.04049732511861084,
+            "twice_cross_term_adu2": -0.00027357521414143676,
+            "total_mse_adu2": 0.040770038939481265
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02182936854660511,
+            "gradient_vector_rmse_linear_per_px": 0.02185654081404209
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2019159204705792,
+            "gradient_vector_rmse_adu_per_px": 0.20105664512148474
+          },
+          "clean_image": {
+            "rmse_adu": 0.023372826851107607,
+            "gradient_vector_rmse_adu_per_px": 0.013928376390819818
+          },
+          "field_vector_rmse_px": 0.25134677929413163,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0005462890350118567,
+            "warped_noise_mse_adu2": 0.04049732511861084,
+            "twice_cross_term_adu2": -0.00027357521414143676,
+            "total_mse_adu2": 0.040770038939481265
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02182936854660511,
+            "gradient_vector_rmse_linear_per_px": 0.02185654081404209
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.33942410279042734,
+            "gradient_vector_rmse_adu_per_px": 0.3172136297696067
+          },
+          "clean_image": {
+            "rmse_adu": 0.2351157138254628,
+            "gradient_vector_rmse_adu_per_px": 0.20200783597103034
+          },
+          "field_vector_rmse_px": 0.9424586466600454,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.05527939888765692,
+            "warped_noise_mse_adu2": 0.05894797878294448,
+            "twice_cross_term_adu2": 0.0009813438844852112,
+            "total_mse_adu2": 0.1152087215550866
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03411697968840599,
+            "gradient_vector_rmse_linear_per_px": 0.03423481434583664
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19900643885112201,
+            "gradient_vector_rmse_adu_per_px": 0.19840572130579925
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.03960356270420537,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.03960356270420537
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.0215907022356987,
+            "gradient_vector_rmse_linear_per_px": 0.02202451229095459
+          }
+        }
+      },
+      "oracle_sha256": "3aaf0d6adaf72afe168196fb13084a06776c52011894acd4a5ee2f0a36fe8fc8",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.0977104039880253,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.037349458232562,
+          "mean_global_heldout_loss": 8.17128223684408
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.10420877769959262,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.032512563609323,
+          "mean_global_heldout_loss": 8.17128223684408
+        }
+      },
+      "scene": "saturn",
+      "condition": "motion_blur_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-controls/analysis.json",
+        "sha256": "0538b86264941c5c886150ebb829bd9c5702f2a41ffad769f4c697e9efe95061"
+      },
+      "baseline_max_difference_adu": 1.399713678296166e-13
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.32680254932911385,
+            "gradient_vector_rmse_adu_per_px": 0.21210906709905977
+          },
+          "clean_image": {
+            "rmse_adu": 0.2627088056080212,
+            "gradient_vector_rmse_adu_per_px": 0.08610977380952005
+          },
+          "field_vector_rmse_px": 0.4829968009998487,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.06901591654399307,
+            "warped_noise_mse_adu2": 0.037931844741923,
+            "twice_cross_term_adu2": -0.00014785503790817065,
+            "total_mse_adu2": 0.1067999062480079
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.022075915709137917,
+            "gradient_vector_rmse_linear_per_px": 0.022506684064865112
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.19960710135721257,
+            "gradient_vector_rmse_adu_per_px": 0.19797086713718937
+          },
+          "clean_image": {
+            "rmse_adu": 0.030361928698696573,
+            "gradient_vector_rmse_adu_per_px": 0.01596973123251453
+          },
+          "field_vector_rmse_px": 0.24546776814819038,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0009218467143047346,
+            "warped_noise_mse_adu2": 0.03922301871490172,
+            "twice_cross_term_adu2": -0.0003018705169779227,
+            "total_mse_adu2": 0.039842994912228535
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02198316715657711,
+            "gradient_vector_rmse_linear_per_px": 0.02023216523230076
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.20376017993025816,
+            "gradient_vector_rmse_adu_per_px": 0.199590063166603
+          },
+          "clean_image": {
+            "rmse_adu": 0.047414356059231506,
+            "gradient_vector_rmse_adu_per_px": 0.026744978050804554
+          },
+          "field_vector_rmse_px": 0.28244160675650193,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0022481211605115837,
+            "warped_noise_mse_adu2": 0.039431236092473475,
+            "twice_cross_term_adu2": -0.0001611463277738784,
+            "total_mse_adu2": 0.04151821092521118
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02124822698533535,
+            "gradient_vector_rmse_linear_per_px": 0.02095184288918972
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.20376017993025816,
+            "gradient_vector_rmse_adu_per_px": 0.199590063166603
+          },
+          "clean_image": {
+            "rmse_adu": 0.047414356059231506,
+            "gradient_vector_rmse_adu_per_px": 0.026744978050804554
+          },
+          "field_vector_rmse_px": 0.28244160675650193,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0022481211605115837,
+            "warped_noise_mse_adu2": 0.039431236092473475,
+            "twice_cross_term_adu2": -0.0001611463277738784,
+            "total_mse_adu2": 0.04151821092521118
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02124822698533535,
+            "gradient_vector_rmse_linear_per_px": 0.02095184288918972
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 1.1775136564272093,
+            "gradient_vector_rmse_adu_per_px": 0.4273392877010989
+          },
+          "clean_image": {
+            "rmse_adu": 1.1502250967527083,
+            "gradient_vector_rmse_adu_per_px": 0.35228517043381724
+          },
+          "field_vector_rmse_px": 1.1443516589941947,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 1.3230177731997772,
+            "warped_noise_mse_adu2": 0.0576444250943342,
+            "twice_cross_term_adu2": 0.0058762127784645285,
+            "total_mse_adu2": 1.386538411072576
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03258690983057022,
+            "gradient_vector_rmse_linear_per_px": 0.03271942585706711
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19315955795303671,
+            "gradient_vector_rmse_adu_per_px": 0.19256856432021263
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.037310614828612546,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.037310614828612546
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.020428944379091263,
+            "gradient_vector_rmse_linear_per_px": 0.02073029987514019
+          }
+        }
+      },
+      "oracle_sha256": "6c14f0f1a6ed24c6e13440ddca81c386d0a10b6f1b1ab0b47e50bf8882e26c7f",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.10539406263286012,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.037980378390775,
+          "mean_global_heldout_loss": 9.349810391658584
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.11204499201033458,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.0356253454481985,
+          "mean_global_heldout_loss": 9.349810391658584
+        }
+      },
+      "scene": "saturn",
+      "condition": "offset_motion_blur",
+      "source": {
+        "path": "out/joint-fit-saturn-controls/analysis.json",
+        "sha256": "0538b86264941c5c886150ebb829bd9c5702f2a41ffad769f4c697e9efe95061"
+      },
+      "baseline_max_difference_adu": 1.399713678296166e-13
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.2872710056345423,
+            "gradient_vector_rmse_adu_per_px": 0.28116708379323124
+          },
+          "clean_image": {
+            "rmse_adu": 0.07744095210586399,
+            "gradient_vector_rmse_adu_per_px": 0.044709030324984765
+          },
+          "field_vector_rmse_px": 0.0336828603762541,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.005997101063062721,
+            "warped_noise_mse_adu2": 0.07716972505734547,
+            "twice_cross_term_adu2": -0.0006421954421269643,
+            "total_mse_adu2": 0.08252463067828122
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014588195830583572,
+            "gradient_vector_rmse_linear_per_px": 0.014454073272645473
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.28040948906752183,
+            "gradient_vector_rmse_adu_per_px": 0.27963960440463753
+          },
+          "clean_image": {
+            "rmse_adu": 0.03786123153870851,
+            "gradient_vector_rmse_adu_per_px": 0.027462730523041955
+          },
+          "field_vector_rmse_px": 0.0310409386267831,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0014334728536276962,
+            "warped_noise_mse_adu2": 0.07754243341298343,
+            "twice_cross_term_adu2": -0.00034642470750248294,
+            "total_mse_adu2": 0.07862948155910865
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014580941759049892,
+            "gradient_vector_rmse_linear_per_px": 0.014475173316895962
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2814477354535963,
+            "gradient_vector_rmse_adu_per_px": 0.2809661937431529
+          },
+          "clean_image": {
+            "rmse_adu": 0.03131561277266451,
+            "gradient_vector_rmse_adu_per_px": 0.02265765544685972
+          },
+          "field_vector_rmse_px": 0.025104597175768028,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0009806676033274685,
+            "warped_noise_mse_adu2": 0.07849740758545273,
+            "twice_cross_term_adu2": -0.0002652473968226873,
+            "total_mse_adu2": 0.07921282779195753
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014663859270513058,
+            "gradient_vector_rmse_linear_per_px": 0.014547346159815788
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.2881159995947554
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08297394010790342,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08297394010790342
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015067537315189838,
+            "gradient_vector_rmse_linear_per_px": 0.014905668795108795
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.2881159995947554
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08297394010790342,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08297394010790342
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015067537315189838,
+            "gradient_vector_rmse_linear_per_px": 0.014905668795108795
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.2881159995947554
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08297394010790342,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08297394010790342
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015067537315189838,
+            "gradient_vector_rmse_linear_per_px": 0.014905668795108795
+          }
+        }
+      },
+      "oracle_sha256": "e3bd0db9657e5d6ca469240c3bad4d14ca53d096256c83e501f1d58ef60f2a39",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.1622193301634449,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.030126728844398,
+          "mean_global_heldout_loss": 3.9998956345834933
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.16258718541511058,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.020850542172403,
+          "mean_global_heldout_loss": 3.9998956345834933
+        }
+      },
+      "scene": "texture",
+      "condition": "static_noise",
+      "source": {
+        "path": "out/joint-fit-texture-controls/analysis.json",
+        "sha256": "c1cc800c8605865aa4d07dea90717d17c605ea64d3403acabfcc3e60d4301b9b"
+      },
+      "baseline_max_difference_adu": 7.105427357601002e-14
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.2883212485388956,
+            "gradient_vector_rmse_adu_per_px": 0.27808058040807826
+          },
+          "clean_image": {
+            "rmse_adu": 0.09146774978661393,
+            "gradient_vector_rmse_adu_per_px": 0.04682962736398898
+          },
+          "field_vector_rmse_px": 0.04738497444920517,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.008366349251026611,
+            "warped_noise_mse_adu2": 0.07524833928334698,
+            "twice_cross_term_adu2": -0.00048554617534596627,
+            "total_mse_adu2": 0.08312914235902763
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021506115794181824,
+            "gradient_vector_rmse_linear_per_px": 0.01953594759106636
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.27857764824237835,
+            "gradient_vector_rmse_adu_per_px": 0.27788085826051656
+          },
+          "clean_image": {
+            "rmse_adu": 0.03451442923631111,
+            "gradient_vector_rmse_adu_per_px": 0.023149715038420778
+          },
+          "field_vector_rmse_px": 0.03607516600183123,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0011912458255083271,
+            "warped_noise_mse_adu2": 0.07677063175338421,
+            "twice_cross_term_adu2": -0.0003563714786382391,
+            "total_mse_adu2": 0.07760550610025428
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021551812067627907,
+            "gradient_vector_rmse_linear_per_px": 0.01967288926243782
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2801493738022308,
+            "gradient_vector_rmse_adu_per_px": 0.2797436538743589
+          },
+          "clean_image": {
+            "rmse_adu": 0.02814423768513536,
+            "gradient_vector_rmse_adu_per_px": 0.018845699146768712
+          },
+          "field_vector_rmse_px": 0.02849790421782801,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0007920981148773935,
+            "warped_noise_mse_adu2": 0.07796027242130545,
+            "twice_cross_term_adu2": -0.0002686988944007817,
+            "total_mse_adu2": 0.07848367164178206
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021713530644774437,
+            "gradient_vector_rmse_linear_per_px": 0.019796650856733322
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.28811599959475526
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0829739401079034,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0829739401079034
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02239750139415264,
+            "gradient_vector_rmse_linear_per_px": 0.020314643159508705
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.28811599959475526
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0829739401079034,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0829739401079034
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02239750139415264,
+            "gradient_vector_rmse_linear_per_px": 0.020314643159508705
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.28805197466412796,
+            "gradient_vector_rmse_adu_per_px": 0.28811599959475526
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0829739401079034,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0829739401079034
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02239750139415264,
+            "gradient_vector_rmse_linear_per_px": 0.020314643159508705
+          }
+        }
+      },
+      "oracle_sha256": "f52af0c74ddf96a3881a545bd7b1fe5940477a438746dc05076290550baaff8f",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.08554290458147176,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.0293138969988895,
+          "mean_global_heldout_loss": 4.000044474476206
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.08551719500588073,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.01988935966376,
+          "mean_global_heldout_loss": 4.000044474476206
+        }
+      },
+      "scene": "texture",
+      "condition": "static_blur_noise",
+      "source": {
+        "path": "out/joint-fit-texture-controls/analysis.json",
+        "sha256": "c1cc800c8605865aa4d07dea90717d17c605ea64d3403acabfcc3e60d4301b9b"
+      },
+      "baseline_max_difference_adu": 7.105427357601002e-14
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.21990533040020868,
+            "gradient_vector_rmse_adu_per_px": 0.20338526216831723
+          },
+          "clean_image": {
+            "rmse_adu": 0.09588818060845287,
+            "gradient_vector_rmse_adu_per_px": 0.04578848842073082
+          },
+          "field_vector_rmse_px": 0.05399277444149173,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.009194543180399278,
+            "warped_noise_mse_adu2": 0.03958579708208535,
+            "twice_cross_term_adu2": -0.0004219859240596846,
+            "total_mse_adu2": 0.04835835433842494
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01642569713294506,
+            "gradient_vector_rmse_linear_per_px": 0.014468967914581299
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20477101676991596,
+            "gradient_vector_rmse_adu_per_px": 0.20358667007419126
+          },
+          "clean_image": {
+            "rmse_adu": 0.02754531682259686,
+            "gradient_vector_rmse_adu_per_px": 0.016090018077233165
+          },
+          "field_vector_rmse_px": 0.05716159611941726,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0007587444788572375,
+            "warped_noise_mse_adu2": 0.04152843115184273,
+            "twice_cross_term_adu2": -0.000356006321714767,
+            "total_mse_adu2": 0.0419311693089852
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.017440691590309143,
+            "gradient_vector_rmse_linear_per_px": 0.014890952035784721
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2045333725815001,
+            "gradient_vector_rmse_adu_per_px": 0.20351292424748493
+          },
+          "clean_image": {
+            "rmse_adu": 0.02340891877591751,
+            "gradient_vector_rmse_adu_per_px": 0.01403326792550747
+          },
+          "field_vector_rmse_px": 0.05431497757412761,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0005479774782575034,
+            "warped_noise_mse_adu2": 0.04152687815469789,
+            "twice_cross_term_adu2": -0.00024095513339265142,
+            "total_mse_adu2": 0.04183390049956273
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01731928437948227,
+            "gradient_vector_rmse_linear_per_px": 0.014868190512061119
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2045333725815001,
+            "gradient_vector_rmse_adu_per_px": 0.20351292424748493
+          },
+          "clean_image": {
+            "rmse_adu": 0.02340891877591751,
+            "gradient_vector_rmse_adu_per_px": 0.01403326792550747
+          },
+          "field_vector_rmse_px": 0.05431497757412761,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0005479774782575034,
+            "warped_noise_mse_adu2": 0.04152687815469789,
+            "twice_cross_term_adu2": -0.00024095513339265142,
+            "total_mse_adu2": 0.04183390049956273
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01731928437948227,
+            "gradient_vector_rmse_linear_per_px": 0.014868190512061119
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.7324488539151607,
+            "gradient_vector_rmse_adu_per_px": 0.5482946385204579
+          },
+          "clean_image": {
+            "rmse_adu": 0.6840952381862244,
+            "gradient_vector_rmse_adu_per_px": 0.4820871320903942
+          },
+          "field_vector_rmse_px": 0.9575999987758944,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.4679862949090671,
+            "warped_noise_mse_adu2": 0.06829995170038189,
+            "twice_cross_term_adu2": 0.0001950769921833864,
+            "total_mse_adu2": 0.5364813236016324
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.027286799624562263,
+            "gradient_vector_rmse_linear_per_px": 0.02600305899977684
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19995405490401616,
+            "gradient_vector_rmse_adu_per_px": 0.1993695619818625
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.039981624072558314,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.039981624072558314
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.016536889597773552,
+            "gradient_vector_rmse_linear_per_px": 0.014521410688757896
+          }
+        }
+      },
+      "oracle_sha256": "6166924435814906bf951ed95aeab25e59eb02f53ceaeafe97b8d87e0fcbbfda",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.12609096829921848,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.044358225707209,
+          "mean_global_heldout_loss": 18.24513013400227
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.1263452530730648,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.040850625245896,
+          "mean_global_heldout_loss": 18.24513013400227
+        }
+      },
+      "scene": "texture",
+      "condition": "motion_blur_noise",
+      "source": {
+        "path": "out/joint-fit-texture-controls/analysis.json",
+        "sha256": "c1cc800c8605865aa4d07dea90717d17c605ea64d3403acabfcc3e60d4301b9b"
+      },
+      "baseline_max_difference_adu": 7.105427357601002e-14
+    },
+    {
+      "seed": 9017,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.22183657500811774,
+            "gradient_vector_rmse_adu_per_px": 0.20113744440098952
+          },
+          "clean_image": {
+            "rmse_adu": 0.10902679194538917,
+            "gradient_vector_rmse_adu_per_px": 0.053510955706066024
+          },
+          "field_vector_rmse_px": 0.057330161596066305,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.011886841361903176,
+            "warped_noise_mse_adu2": 0.037843312844418754,
+            "twice_cross_term_adu2": -0.0005186881949896879,
+            "total_mse_adu2": 0.04921146601133225
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014125239104032516,
+            "gradient_vector_rmse_linear_per_px": 0.014090041629970074
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20234864129329747,
+            "gradient_vector_rmse_adu_per_px": 0.19967942983728576
+          },
+          "clean_image": {
+            "rmse_adu": 0.04121957135888032,
+            "gradient_vector_rmse_adu_per_px": 0.02257851085233022
+          },
+          "field_vector_rmse_px": 0.05865210722490806,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0016990530630098266,
+            "warped_noise_mse_adu2": 0.03961800347141706,
+            "twice_cross_term_adu2": -0.0003720839011833157,
+            "total_mse_adu2": 0.04094497263324357
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014757095836102962,
+            "gradient_vector_rmse_linear_per_px": 0.014395910315215588
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2076789560681122,
+            "gradient_vector_rmse_adu_per_px": 0.20132729196542942
+          },
+          "clean_image": {
+            "rmse_adu": 0.061017982509001,
+            "gradient_vector_rmse_adu_per_px": 0.034135687162904826
+          },
+          "field_vector_rmse_px": 0.059845345577381796,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0037231941894687523,
+            "warped_noise_mse_adu2": 0.03952274578249154,
+            "twice_cross_term_adu2": -0.00011539117841940813,
+            "total_mse_adu2": 0.043130548793540884
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01469441968947649,
+            "gradient_vector_rmse_linear_per_px": 0.014388702809810638
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2076789560681122,
+            "gradient_vector_rmse_adu_per_px": 0.20132729196542942
+          },
+          "clean_image": {
+            "rmse_adu": 0.061017982509001,
+            "gradient_vector_rmse_adu_per_px": 0.034135687162904826
+          },
+          "field_vector_rmse_px": 0.059845345577381796,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0037231941894687523,
+            "warped_noise_mse_adu2": 0.03952274578249154,
+            "twice_cross_term_adu2": -0.00011539117841940813,
+            "total_mse_adu2": 0.043130548793540884
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01469441968947649,
+            "gradient_vector_rmse_linear_per_px": 0.014388702809810638
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 2.7338092317854867,
+            "gradient_vector_rmse_adu_per_px": 1.3342209722990144
+          },
+          "clean_image": {
+            "rmse_adu": 2.720700301376162,
+            "gradient_vector_rmse_adu_per_px": 1.3088102747893775
+          },
+          "field_vector_rmse_px": 1.1663420678900616,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 7.402210129908339,
+            "warped_noise_mse_adu2": 0.06700532859577805,
+            "twice_cross_term_adu2": 0.004497457291435291,
+            "total_mse_adu2": 7.473712915795554
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.04221361503005028,
+            "gradient_vector_rmse_linear_per_px": 0.037998128682374954
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19498495439504246,
+            "gradient_vector_rmse_adu_per_px": 0.19452574256829275
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.03801913244043679,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.03801913244043679
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014076286926865578,
+            "gradient_vector_rmse_linear_per_px": 0.014101837761700153
+          }
+        }
+      },
+      "oracle_sha256": "548bac3e7585d917742aa1ec7a45194444177a486d79620162080203ef2e4955",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.12268282346779669,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.043341547993965,
+          "mean_global_heldout_loss": 24.538610119369775
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.12301402200184205,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.043528977105704,
+          "mean_global_heldout_loss": 24.538610119369775
+        }
+      },
+      "scene": "texture",
+      "condition": "offset_motion_blur",
+      "source": {
+        "path": "out/joint-fit-texture-controls/analysis.json",
+        "sha256": "c1cc800c8605865aa4d07dea90717d17c605ea64d3403acabfcc3e60d4301b9b"
+      },
+      "baseline_max_difference_adu": 7.105427357601002e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.4070859492239795,
+            "gradient_vector_rmse_adu_per_px": 0.3366697167147255
+          },
+          "clean_image": {
+            "rmse_adu": 0.3376724269838714,
+            "gradient_vector_rmse_adu_per_px": 0.25016484753332363
+          },
+          "field_vector_rmse_px": 0.30146781365194736,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.11402266794517797,
+            "warped_noise_mse_adu2": 0.05168957587326187,
+            "twice_cross_term_adu2": 6.726237148579842e-06,
+            "total_mse_adu2": 0.16571897005558842
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03951748088002205,
+            "gradient_vector_rmse_linear_per_px": 0.025450628250837326
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.2703875227847195,
+            "gradient_vector_rmse_adu_per_px": 0.27068515114259684
+          },
+          "clean_image": {
+            "rmse_adu": 0.08420017574416043,
+            "gradient_vector_rmse_adu_per_px": 0.08386610655066078
+          },
+          "field_vector_rmse_px": 0.11058359946099061,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.007089669595347502,
+            "warped_noise_mse_adu2": 0.06690121891187703,
+            "twice_cross_term_adu2": -0.0008814760295673314,
+            "total_mse_adu2": 0.0731094124776572
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.019788172096014023,
+            "gradient_vector_rmse_linear_per_px": 0.01943451724946499
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.27228987076867295,
+            "gradient_vector_rmse_adu_per_px": 0.2727910828253226
+          },
+          "clean_image": {
+            "rmse_adu": 0.06035938971034461,
+            "gradient_vector_rmse_adu_per_px": 0.05991992163063956
+          },
+          "field_vector_rmse_px": 0.07652131528846245,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.003643255926205255,
+            "warped_noise_mse_adu2": 0.07092530055232836,
+            "twice_cross_term_adu2": -0.00042678275531301846,
+            "total_mse_adu2": 0.0741417737232206
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01999044604599476,
+            "gradient_vector_rmse_linear_per_px": 0.019728107377886772
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2873444032649018,
+            "gradient_vector_rmse_adu_per_px": 0.28823417473071417
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766251,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766251
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.020007014274597168,
+            "gradient_vector_rmse_linear_per_px": 0.020053328946232796
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.2873444032649018,
+            "gradient_vector_rmse_adu_per_px": 0.28823417473071417
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766251,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766251
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.020007014274597168,
+            "gradient_vector_rmse_linear_per_px": 0.020053328946232796
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.2873444032649018,
+            "gradient_vector_rmse_adu_per_px": 0.28823417473071417
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766251,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766251
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.020007014274597168,
+            "gradient_vector_rmse_linear_per_px": 0.020053328946232796
+          }
+        }
+      },
+      "oracle_sha256": "05d290516938a78bd345640d97ab03f778b3f26f40c75fffab27d7229fb0599c",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.10695737207759848,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.0234248718784436,
+          "mean_global_heldout_loss": 3.9962135364285967
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.1487623356487829,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.013003205747192,
+          "mean_global_heldout_loss": 3.9962135364285967
+        }
+      },
+      "scene": "saturn",
+      "condition": "static_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-repeat/analysis.json",
+        "sha256": "02f9ff4dce48b7b2be81dd22466b0ac1e38c84beff64b136dcee2a50f2272c7d"
+      },
+      "baseline_max_difference_adu": 6.150635556423367e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.3486943714412202,
+            "gradient_vector_rmse_adu_per_px": 0.25608505068599874
+          },
+          "clean_image": {
+            "rmse_adu": 0.26977787205147463,
+            "gradient_vector_rmse_adu_per_px": 0.13242262111931682
+          },
+          "field_vector_rmse_px": 0.42961031596758165,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.07278010024862182,
+            "warped_noise_mse_adu2": 0.048405536862820855,
+            "twice_cross_term_adu2": 0.00040212756334493576,
+            "total_mse_adu2": 0.12158776467478762
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02950943633913994,
+            "gradient_vector_rmse_linear_per_px": 0.029591824859380722
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.25474824043016087,
+            "gradient_vector_rmse_adu_per_px": 0.2551831230156943
+          },
+          "clean_image": {
+            "rmse_adu": 0.0433946151426301,
+            "gradient_vector_rmse_adu_per_px": 0.04096055572453082
+          },
+          "field_vector_rmse_px": 0.15777785922996823,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0018830926233769814,
+            "warped_noise_mse_adu2": 0.06341221857878743,
+            "twice_cross_term_adu2": -0.00039864519990135685,
+            "total_mse_adu2": 0.06489666600226306
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.029552899301052094,
+            "gradient_vector_rmse_linear_per_px": 0.029297586530447006
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.26452588420947637,
+            "gradient_vector_rmse_adu_per_px": 0.2651597946616556
+          },
+          "clean_image": {
+            "rmse_adu": 0.030269505614614056,
+            "gradient_vector_rmse_adu_per_px": 0.028176352537654725
+          },
+          "field_vector_rmse_px": 0.09205072042890604,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0009162429701531519,
+            "warped_noise_mse_adu2": 0.06925858149949111,
+            "twice_cross_term_adu2": -0.00020088105283897853,
+            "total_mse_adu2": 0.0699739434168053
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03100230172276497,
+            "gradient_vector_rmse_linear_per_px": 0.03069325163960457
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.28734440326490146,
+            "gradient_vector_rmse_adu_per_px": 0.2882341747307137
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766231,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766231
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03434477001428604,
+            "gradient_vector_rmse_linear_per_px": 0.03305250406265259
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.28734440326490146,
+            "gradient_vector_rmse_adu_per_px": 0.2882341747307137
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766231,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766231
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03434477001428604,
+            "gradient_vector_rmse_linear_per_px": 0.03305250406265259
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.28734440326490146,
+            "gradient_vector_rmse_adu_per_px": 0.2882341747307137
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08256680608766231,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08256680608766231
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.03434477001428604,
+            "gradient_vector_rmse_linear_per_px": 0.03305250406265259
+          }
+        }
+      },
+      "oracle_sha256": "0a23816b0dc11bc4c7fc6fd0e45a3d4d297721f60617ef5a7618daa7ee01df12",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.08931855254378447,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.021343567827786,
+          "mean_global_heldout_loss": 3.9962943293123523
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.07813272760414881,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.011757182363279,
+          "mean_global_heldout_loss": 3.9962943293123523
+        }
+      },
+      "scene": "saturn",
+      "condition": "static_blur_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-repeat/analysis.json",
+        "sha256": "02f9ff4dce48b7b2be81dd22466b0ac1e38c84beff64b136dcee2a50f2272c7d"
+      },
+      "baseline_max_difference_adu": 6.150635556423367e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.32134399517208867,
+            "gradient_vector_rmse_adu_per_px": 0.21248932870279752
+          },
+          "clean_image": {
+            "rmse_adu": 0.2533222023326279,
+            "gradient_vector_rmse_adu_per_px": 0.0805468480171856
+          },
+          "field_vector_rmse_px": 0.4685109893986683,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.06417213819465288,
+            "warped_noise_mse_adu2": 0.038963895901332354,
+            "twice_cross_term_adu2": 0.00012592913717410415,
+            "total_mse_adu2": 0.10326196323315935
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02168516255915165,
+            "gradient_vector_rmse_linear_per_px": 0.022195890545845032
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20208674123264195,
+            "gradient_vector_rmse_adu_per_px": 0.20157142522227847
+          },
+          "clean_image": {
+            "rmse_adu": 0.021818994540180773,
+            "gradient_vector_rmse_adu_per_px": 0.012337255378071621
+          },
+          "field_vector_rmse_px": 0.22296626888538873,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.00047606852274443835,
+            "warped_noise_mse_adu2": 0.040548853720925156,
+            "twice_cross_term_adu2": -0.00018587126164081025,
+            "total_mse_adu2": 0.040839050982028786
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.0216234028339386,
+            "gradient_vector_rmse_linear_per_px": 0.022149870172142982
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.20292337973607696,
+            "gradient_vector_rmse_adu_per_px": 0.20242436008743028
+          },
+          "clean_image": {
+            "rmse_adu": 0.019538968785635,
+            "gradient_vector_rmse_adu_per_px": 0.012062380230337054
+          },
+          "field_vector_rmse_px": 0.24448350429390167,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.00038177130120601883,
+            "warped_noise_mse_adu2": 0.0409122382388267,
+            "twice_cross_term_adu2": -0.00011611149652061397,
+            "total_mse_adu2": 0.041177898043512094
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021973468363285065,
+            "gradient_vector_rmse_linear_per_px": 0.022469671443104744
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.20292337973607696,
+            "gradient_vector_rmse_adu_per_px": 0.20242436008743028
+          },
+          "clean_image": {
+            "rmse_adu": 0.019538968785635,
+            "gradient_vector_rmse_adu_per_px": 0.012062380230337054
+          },
+          "field_vector_rmse_px": 0.24448350429390167,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.00038177130120601883,
+            "warped_noise_mse_adu2": 0.0409122382388267,
+            "twice_cross_term_adu2": -0.00011611149652061397,
+            "total_mse_adu2": 0.041177898043512094
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021973468363285065,
+            "gradient_vector_rmse_linear_per_px": 0.022469671443104744
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.33609201320189536,
+            "gradient_vector_rmse_adu_per_px": 0.3139565345612548
+          },
+          "clean_image": {
+            "rmse_adu": 0.2351157138254628,
+            "gradient_vector_rmse_adu_per_px": 0.20200783597103034
+          },
+          "field_vector_rmse_px": 0.9424586466600454,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.05527939888765692,
+            "warped_noise_mse_adu2": 0.05847060452906185,
+            "twice_cross_term_adu2": -0.0007921620786157515,
+            "total_mse_adu2": 0.11295784133810301
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.033958859741687775,
+            "gradient_vector_rmse_linear_per_px": 0.034356534481048584
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.1999857387777836,
+            "gradient_vector_rmse_adu_per_px": 0.1998337790851854
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0399942957144959,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0399942957144959
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02147241309285164,
+            "gradient_vector_rmse_linear_per_px": 0.022005580365657806
+          }
+        }
+      },
+      "oracle_sha256": "3aaf0d6adaf72afe168196fb13084a06776c52011894acd4a5ee2f0a36fe8fc8",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.0818966065906435,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.02561813940349,
+          "mean_global_heldout_loss": 8.166522089261683
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.0890391968501739,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.021365022114497,
+          "mean_global_heldout_loss": 8.166522089261683
+        }
+      },
+      "scene": "saturn",
+      "condition": "motion_blur_noise",
+      "source": {
+        "path": "out/joint-fit-saturn-repeat/analysis.json",
+        "sha256": "02f9ff4dce48b7b2be81dd22466b0ac1e38c84beff64b136dcee2a50f2272c7d"
+      },
+      "baseline_max_difference_adu": 6.150635556423367e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.35266067767484377,
+            "gradient_vector_rmse_adu_per_px": 0.22139002734467875
+          },
+          "clean_image": {
+            "rmse_adu": 0.2949397552077331,
+            "gradient_vector_rmse_adu_per_px": 0.10613840192213723
+          },
+          "field_vector_rmse_px": 0.5438610801359314,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.08698945920199751,
+            "warped_noise_mse_adu2": 0.03814847713566114,
+            "twice_cross_term_adu2": -0.0007683827595785753,
+            "total_mse_adu2": 0.12436955357808006
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02223731391131878,
+            "gradient_vector_rmse_linear_per_px": 0.0227116160094738
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.19908782308280576,
+            "gradient_vector_rmse_adu_per_px": 0.19861921380260844
+          },
+          "clean_image": {
+            "rmse_adu": 0.02895491020190923,
+            "gradient_vector_rmse_adu_per_px": 0.015791660722649172
+          },
+          "field_vector_rmse_px": 0.23926864658014432,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0008383868248006271,
+            "warped_noise_mse_adu2": 0.039137497842710325,
+            "twice_cross_term_adu2": -0.00033992336766038695,
+            "total_mse_adu2": 0.039635961299850565
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021028580144047737,
+            "gradient_vector_rmse_linear_per_px": 0.02166965790092945
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2030308038851895,
+            "gradient_vector_rmse_adu_per_px": 0.1998652733621883
+          },
+          "clean_image": {
+            "rmse_adu": 0.045197259519832715,
+            "gradient_vector_rmse_adu_per_px": 0.026326321674581054
+          },
+          "field_vector_rmse_px": 0.2770702123481464,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.002042792268103109,
+            "warped_noise_mse_adu2": 0.03926732353025661,
+            "twice_cross_term_adu2": -8.860847209344365e-05,
+            "total_mse_adu2": 0.041221507326266275
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021192219108343124,
+            "gradient_vector_rmse_linear_per_px": 0.021783946081995964
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2030308038851895,
+            "gradient_vector_rmse_adu_per_px": 0.1998652733621883
+          },
+          "clean_image": {
+            "rmse_adu": 0.045197259519832715,
+            "gradient_vector_rmse_adu_per_px": 0.026326321674581054
+          },
+          "field_vector_rmse_px": 0.2770702123481464,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.002042792268103109,
+            "warped_noise_mse_adu2": 0.03926732353025661,
+            "twice_cross_term_adu2": -8.860847209344365e-05,
+            "total_mse_adu2": 0.041221507326266275
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021192219108343124,
+            "gradient_vector_rmse_linear_per_px": 0.021783946081995964
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 1.1744327825003278,
+            "gradient_vector_rmse_adu_per_px": 0.42467550781618285
+          },
+          "clean_image": {
+            "rmse_adu": 1.1502250967527083,
+            "gradient_vector_rmse_adu_per_px": 0.35228517043381724
+          },
+          "field_vector_rmse_px": 1.1443516589941947,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 1.3230177731997772,
+            "warped_noise_mse_adu2": 0.057162560562122336,
+            "twice_cross_term_adu2": -0.0008879731504374504,
+            "total_mse_adu2": 1.379292360611462
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.032589253038167953,
+            "gradient_vector_rmse_linear_per_px": 0.03360104188323021
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19496936010812238,
+            "gradient_vector_rmse_adu_per_px": 0.194967159445032
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0380130513809707,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0380130513809707
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02077193558216095,
+            "gradient_vector_rmse_linear_per_px": 0.021366342902183533
+          }
+        }
+      },
+      "oracle_sha256": "6c14f0f1a6ed24c6e13440ddca81c386d0a10b6f1b1ab0b47e50bf8882e26c7f",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.09422903574292399,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.02672377797185,
+          "mean_global_heldout_loss": 9.34157808069382
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.09662358405275098,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.02409667380076,
+          "mean_global_heldout_loss": 9.34157808069382
+        }
+      },
+      "scene": "saturn",
+      "condition": "offset_motion_blur",
+      "source": {
+        "path": "out/joint-fit-saturn-repeat/analysis.json",
+        "sha256": "02f9ff4dce48b7b2be81dd22466b0ac1e38c84beff64b136dcee2a50f2272c7d"
+      },
+      "baseline_max_difference_adu": 6.150635556423367e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.28713538214777734,
+            "gradient_vector_rmse_adu_per_px": 0.2810831511481608
+          },
+          "clean_image": {
+            "rmse_adu": 0.07660916162672793,
+            "gradient_vector_rmse_adu_per_px": 0.044009330096315115
+          },
+          "field_vector_rmse_px": 0.03346503198377968,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.005868963645150123,
+            "warped_noise_mse_adu2": 0.07706168811371808,
+            "twice_cross_term_adu2": -0.0004839240777180494,
+            "total_mse_adu2": 0.08244672768115013
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.01457073912024498,
+            "gradient_vector_rmse_linear_per_px": 0.014569749124348164
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.28027254387283573,
+            "gradient_vector_rmse_adu_per_px": 0.2797844687877772
+          },
+          "clean_image": {
+            "rmse_adu": 0.03703972500066952,
+            "gradient_vector_rmse_adu_per_px": 0.027090114546502213
+          },
+          "field_vector_rmse_px": 0.030887845743067785,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.001371941228125223,
+            "warped_noise_mse_adu2": 0.07749048324883456,
+            "twice_cross_term_adu2": -0.0003097256280091417,
+            "total_mse_adu2": 0.07855269884895064
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014501133933663368,
+            "gradient_vector_rmse_linear_per_px": 0.014478360302746296
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.2812835696604497,
+            "gradient_vector_rmse_adu_per_px": 0.2810805984155269
+          },
+          "clean_image": {
+            "rmse_adu": 0.030654377766263296,
+            "gradient_vector_rmse_adu_per_px": 0.02236128164578606
+          },
+          "field_vector_rmse_px": 0.02503126516150491,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0009396908762367776,
+            "warped_noise_mse_adu2": 0.07840243854736227,
+            "twice_cross_term_adu2": -0.0002216828626739825,
+            "total_mse_adu2": 0.07912044656092507
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014565103687345982,
+            "gradient_vector_rmse_linear_per_px": 0.014530093409121037
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.2877506510916031,
+            "gradient_vector_rmse_adu_per_px": 0.2881569692861144
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0828004372036415,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0828004372036415
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014932642690837383,
+            "gradient_vector_rmse_linear_per_px": 0.014796528033912182
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.2877506510916031,
+            "gradient_vector_rmse_adu_per_px": 0.2881569692861144
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0828004372036415,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0828004372036415
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014932642690837383,
+            "gradient_vector_rmse_linear_per_px": 0.014796528033912182
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.2877506510916031,
+            "gradient_vector_rmse_adu_per_px": 0.2881569692861144
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.0828004372036415,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.0828004372036415
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014932642690837383,
+            "gradient_vector_rmse_linear_per_px": 0.014796528033912182
+          }
+        }
+      },
+      "oracle_sha256": "e3bd0db9657e5d6ca469240c3bad4d14ca53d096256c83e501f1d58ef60f2a39",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.179006998569169,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.026766850459468,
+          "mean_global_heldout_loss": 3.996291934896009
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.17880730886754706,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.017624583219213,
+          "mean_global_heldout_loss": 3.996291934896009
+        }
+      },
+      "scene": "texture",
+      "condition": "static_noise",
+      "source": {
+        "path": "out/joint-fit-texture-repeat/analysis.json",
+        "sha256": "caf33e616e216b865542a523ad56d73dceaebe3c5546f0941e923ff10f143aad"
+      },
+      "baseline_max_difference_adu": 8.526512829121202e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.28808262160282205,
+            "gradient_vector_rmse_adu_per_px": 0.27788067684870077
+          },
+          "clean_image": {
+            "rmse_adu": 0.09138680823829318,
+            "gradient_vector_rmse_adu_per_px": 0.04641448855266985
+          },
+          "field_vector_rmse_px": 0.047479866210791796,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.008351548719982569,
+            "warped_noise_mse_adu2": 0.07508560800409658,
+            "twice_cross_term_adu2": -0.0004455598545244,
+            "total_mse_adu2": 0.08299159686955475
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.02067471481859684,
+            "gradient_vector_rmse_linear_per_px": 0.020624566823244095
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.2785044918836889,
+            "gradient_vector_rmse_adu_per_px": 0.27807160058362107
+          },
+          "clean_image": {
+            "rmse_adu": 0.033444869325273234,
+            "gradient_vector_rmse_adu_per_px": 0.02255891560986012
+          },
+          "field_vector_rmse_px": 0.035926959811462815,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0011185592841846024,
+            "warped_noise_mse_adu2": 0.07672812379693363,
+            "twice_cross_term_adu2": -0.0002819310817264667,
+            "total_mse_adu2": 0.07756475199939175
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.020976781845092773,
+            "gradient_vector_rmse_linear_per_px": 0.0209026075899601
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.27999234819420077,
+            "gradient_vector_rmse_adu_per_px": 0.2798441122519779
+          },
+          "clean_image": {
+            "rmse_adu": 0.0273114746558658,
+            "gradient_vector_rmse_adu_per_px": 0.018373486047424364
+          },
+          "field_vector_rmse_px": 0.02849168375014433,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.000745916647878,
+            "warped_noise_mse_adu2": 0.07784824543597042,
+            "twice_cross_term_adu2": -0.0001984470365458735,
+            "total_mse_adu2": 0.07839571504730256
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021009786054491997,
+            "gradient_vector_rmse_linear_per_px": 0.020962633192539215
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.287750651091603,
+            "gradient_vector_rmse_adu_per_px": 0.28815696928611434
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08280043720364146,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08280043720364146
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021413618698716164,
+            "gradient_vector_rmse_linear_per_px": 0.021402640268206596
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.287750651091603,
+            "gradient_vector_rmse_adu_per_px": 0.28815696928611434
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08280043720364146,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08280043720364146
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021413618698716164,
+            "gradient_vector_rmse_linear_per_px": 0.021402640268206596
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.287750651091603,
+            "gradient_vector_rmse_adu_per_px": 0.28815696928611434
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.08280043720364146,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.08280043720364146
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.021413618698716164,
+            "gradient_vector_rmse_linear_per_px": 0.021402640268206596
+          }
+        }
+      },
+      "oracle_sha256": "f52af0c74ddf96a3881a545bd7b1fe5940477a438746dc05076290550baaff8f",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.08891149264549962,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.025694130526039,
+          "mean_global_heldout_loss": 3.996348836526289
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.0888901635084207,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 0,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.016423327266701,
+          "mean_global_heldout_loss": 3.996348836526289
+        }
+      },
+      "scene": "texture",
+      "condition": "static_blur_noise",
+      "source": {
+        "path": "out/joint-fit-texture-repeat/analysis.json",
+        "sha256": "caf33e616e216b865542a523ad56d73dceaebe3c5546f0941e923ff10f143aad"
+      },
+      "baseline_max_difference_adu": 8.526512829121202e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.21955904968164014,
+            "gradient_vector_rmse_adu_per_px": 0.20276236022162036
+          },
+          "clean_image": {
+            "rmse_adu": 0.09637094809182553,
+            "gradient_vector_rmse_adu_per_px": 0.04539480140759508
+          },
+          "field_vector_rmse_px": 0.054564416956589014,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.009287359636117331,
+            "warped_noise_mse_adu2": 0.03926003766947853,
+            "twice_cross_term_adu2": -0.0003412210084909432,
+            "total_mse_adu2": 0.04820617629710492
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014199971221387386,
+            "gradient_vector_rmse_linear_per_px": 0.014481842517852783
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20393298087213063,
+            "gradient_vector_rmse_adu_per_px": 0.20319898605323838
+          },
+          "clean_image": {
+            "rmse_adu": 0.02573865849521108,
+            "gradient_vector_rmse_adu_per_px": 0.015456658626031353
+          },
+          "field_vector_rmse_px": 0.05653998659229513,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0006624785411331015,
+            "warped_noise_mse_adu2": 0.04121895264429343,
+            "twice_cross_term_adu2": -0.0002927704980337304,
+            "total_mse_adu2": 0.0415886606873928
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014600874856114388,
+            "gradient_vector_rmse_linear_per_px": 0.014802487567067146
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.20362830906223317,
+            "gradient_vector_rmse_adu_per_px": 0.2030727382521115
+          },
+          "clean_image": {
+            "rmse_adu": 0.022314161470746625,
+            "gradient_vector_rmse_adu_per_px": 0.013684862140472893
+          },
+          "field_vector_rmse_px": 0.05379641707574321,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0004979218021425532,
+            "warped_noise_mse_adu2": 0.04117233478990131,
+            "twice_cross_term_adu2": -0.00020576834049952013,
+            "total_mse_adu2": 0.04146448825154435
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014584029093384743,
+            "gradient_vector_rmse_linear_per_px": 0.014753119088709354
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.20362830906223317,
+            "gradient_vector_rmse_adu_per_px": 0.2030727382521115
+          },
+          "clean_image": {
+            "rmse_adu": 0.022314161470746625,
+            "gradient_vector_rmse_adu_per_px": 0.013684862140472893
+          },
+          "field_vector_rmse_px": 0.05379641707574321,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0004979218021425532,
+            "warped_noise_mse_adu2": 0.04117233478990131,
+            "twice_cross_term_adu2": -0.00020576834049952013,
+            "total_mse_adu2": 0.04146448825154435
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014584029093384743,
+            "gradient_vector_rmse_linear_per_px": 0.014753119088709354
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 0.7326077714091189,
+            "gradient_vector_rmse_adu_per_px": 0.5480882883735768
+          },
+          "clean_image": {
+            "rmse_adu": 0.6840952381862244,
+            "gradient_vector_rmse_adu_per_px": 0.4820871320903942
+          },
+          "field_vector_rmse_px": 0.9575999987758944,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.4679862949090671,
+            "warped_noise_mse_adu2": 0.06810180574854036,
+            "twice_cross_term_adu2": 0.0006260460714283714,
+            "total_mse_adu2": 0.5367141467290358
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.032906241714954376,
+            "gradient_vector_rmse_linear_per_px": 0.02797727845609188
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19916500473265988,
+            "gradient_vector_rmse_adu_per_px": 0.19903349994751116
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.039666699110160436,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.039666699110160436
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.014219379052519798,
+            "gradient_vector_rmse_linear_per_px": 0.014463563449680805
+          }
+        }
+      },
+      "oracle_sha256": "6166924435814906bf951ed95aeab25e59eb02f53ceaeafe97b8d87e0fcbbfda",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.12718873021962143,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.040928147886704,
+          "mean_global_heldout_loss": 18.24894555568947
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.1276559244241703,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.037542554693638,
+          "mean_global_heldout_loss": 18.24894555568947
+        }
+      },
+      "scene": "texture",
+      "condition": "motion_blur_noise",
+      "source": {
+        "path": "out/joint-fit-texture-repeat/analysis.json",
+        "sha256": "caf33e616e216b865542a523ad56d73dceaebe3c5546f0941e923ff10f143aad"
+      },
+      "baseline_max_difference_adu": 8.526512829121202e-14
+    },
+    {
+      "seed": 9018,
+      "frames": 48,
+      "variants": {
+        "coherent": {
+          "image": {
+            "rmse_adu": 0.2216240925800063,
+            "gradient_vector_rmse_adu_per_px": 0.20081302001792342
+          },
+          "clean_image": {
+            "rmse_adu": 0.10856694511189423,
+            "gradient_vector_rmse_adu_per_px": 0.05320510892523616
+          },
+          "field_vector_rmse_px": 0.05744641719406855,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.011786781570929054,
+            "warped_noise_mse_adu2": 0.037732062731866654,
+            "twice_cross_term_adu2": -0.0004016058908845077,
+            "total_mse_adu2": 0.0491172384119112
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015253748744726181,
+            "gradient_vector_rmse_linear_per_px": 0.01404885295778513
+          }
+        },
+        "joint": {
+          "image": {
+            "rmse_adu": 0.20184669955260126,
+            "gradient_vector_rmse_adu_per_px": 0.19945793623986235
+          },
+          "clean_image": {
+            "rmse_adu": 0.04110192566916773,
+            "gradient_vector_rmse_adu_per_px": 0.022697290345551673
+          },
+          "field_vector_rmse_px": 0.05842089619475106,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.001689368293713789,
+            "warped_noise_mse_adu2": 0.03943957321821616,
+            "twice_cross_term_adu2": -0.000386851391651859,
+            "total_mse_adu2": 0.04074209012027808
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015623917803168297,
+            "gradient_vector_rmse_linear_per_px": 0.014346332289278507
+          }
+        },
+        "joint_strong": {
+          "image": {
+            "rmse_adu": 0.20614941861073766,
+            "gradient_vector_rmse_adu_per_px": 0.20081445341236126
+          },
+          "clean_image": {
+            "rmse_adu": 0.0597045337493358,
+            "gradient_vector_rmse_adu_per_px": 0.03402869973158529
+          },
+          "field_vector_rmse_px": 0.05932692940559075,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0035646313502255777,
+            "warped_noise_mse_adu2": 0.03932286164395332,
+            "twice_cross_term_adu2": -0.0003899102006337561,
+            "total_mse_adu2": 0.04249758279354515
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015613222494721413,
+            "gradient_vector_rmse_linear_per_px": 0.014332327991724014
+          }
+        },
+        "joint_validated": {
+          "image": {
+            "rmse_adu": 0.20614941861073766,
+            "gradient_vector_rmse_adu_per_px": 0.20081445341236126
+          },
+          "clean_image": {
+            "rmse_adu": 0.0597045337493358,
+            "gradient_vector_rmse_adu_per_px": 0.03402869973158529
+          },
+          "field_vector_rmse_px": 0.05932692940559075,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0035646313502255777,
+            "warped_noise_mse_adu2": 0.03932286164395332,
+            "twice_cross_term_adu2": -0.0003899102006337561,
+            "total_mse_adu2": 0.04249758279354515
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015613222494721413,
+            "gradient_vector_rmse_linear_per_px": 0.014332327991724014
+          }
+        },
+        "global": {
+          "image": {
+            "rmse_adu": 2.733020028953045,
+            "gradient_vector_rmse_adu_per_px": 1.3340243372002125
+          },
+          "clean_image": {
+            "rmse_adu": 2.720700301376162,
+            "gradient_vector_rmse_adu_per_px": 1.3088102747893775
+          },
+          "field_vector_rmse_px": 1.1663420678900616,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 7.402210129908339,
+            "warped_noise_mse_adu2": 0.06684229867497711,
+            "twice_cross_term_adu2": 0.0003460500751859562,
+            "total_mse_adu2": 7.469398478658503
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.04331260919570923,
+            "gradient_vector_rmse_linear_per_px": 0.03843369334936142
+          }
+        },
+        "oracle": {
+          "image": {
+            "rmse_adu": 0.19458440731223814,
+            "gradient_vector_rmse_adu_per_px": 0.1944731698717723
+          },
+          "clean_image": {
+            "rmse_adu": 0.0,
+            "gradient_vector_rmse_adu_per_px": 0.0
+          },
+          "field_vector_rmse_px": 0.0,
+          "raw_error_decomposition": {
+            "clean_geometry_mse_adu2": 0.0,
+            "warped_noise_mse_adu2": 0.037863091569055,
+            "twice_cross_term_adu2": 0.0,
+            "total_mse_adu2": 0.037863091569055
+          },
+          "sharpened": {
+            "rmse_linear_0_1": 0.015204248949885368,
+            "gradient_vector_rmse_linear_per_px": 0.014031252823770046
+          }
+        }
+      },
+      "oracle_sha256": "548bac3e7585d917742aa1ec7a45194444177a486d79620162080203ef2e4955",
+      "joint_diagnostics": {
+        "joint": {
+          "rmse_sigma_px": 0.12396741565918616,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.040061564947312,
+          "mean_global_heldout_loss": 24.530345723208573
+        },
+        "joint_strong": {
+          "rmse_sigma_px": 0.12489618155618584,
+          "optimizer_successes": 0,
+          "optimizer_messages": {
+            "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT": 48
+          },
+          "heldout_improvements": 48,
+          "geometric_fallbacks": 0,
+          "mean_iterations": 100.0,
+          "mean_heldout_loss": 4.039798766649707,
+          "mean_global_heldout_loss": 24.530345723208573
+        }
+      },
+      "scene": "texture",
+      "condition": "offset_motion_blur",
+      "source": {
+        "path": "out/joint-fit-texture-repeat/analysis.json",
+        "sha256": "caf33e616e216b865542a523ad56d73dceaebe3c5546f0941e923ff10f143aad"
+      },
+      "baseline_max_difference_adu": 8.526512829121202e-14
+    }
+  ],
+  "real_capture_replay": false,
+  "decision": "Resolve interpolation-model false motion before a full captured-data replay or production integration.",
+  "config": {
+    "iterations": 100,
+    "spacing": 32.0,
+    "stiffness": [
+      0.03,
+      0.3
+    ],
+    "fit_stride": 2
+  },
+  "sharpening": {
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "synthetic_frames": 768,
+  "convergence_source": {
+    "path": "out/joint-convergence-v2.json",
+    "sha256": "3289df2519865f45a374a644d6f5ebc28ae25091d0d06df262230779056e9985"
+  },
+  "convergence": {
+    "model_sha256": "69515611e6f4b47c43cc86cfee562f9e249d691cf2c6b0afb87e7ccf49d5307d",
+    "frames": [
+      {
+        "scene": "saturn",
+        "case": "stationary",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 1.1982318729860708,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 105,
+              "objective": 3.9148421940110683,
+              "gradient_inf": 0.00018628644342177946,
+              "sigma": 1.5169392996495845,
+              "initial_sigma": 1.5162355259988176,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.527356677454253e-16,
+              "minimum_jacobian": 0.9901857211111376,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.044977271878323,
+              "global_heldout_loss": 4.035480444301919,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.08926968496026963,
+              "gradient_vector_rmse_adu_per_px": 0.02403149908428214
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.1361308390041813,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 313,
+              "objective": 3.9146241258517116,
+              "gradient_inf": 0.0002171383014710677,
+              "sigma": 1.5167486130043555,
+              "initial_sigma": 1.5162355259988176,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.264329320467944e-16,
+              "minimum_jacobian": 0.9884630492496824,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.045216538813532,
+              "global_heldout_loss": 4.035480444301919,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.090076306722401,
+              "gradient_vector_rmse_adu_per_px": 0.02431722651318649
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 5.363996814994607,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 754,
+              "evaluations": 784,
+              "objective": 3.9144997451579506,
+              "gradient_inf": 9.647173689157022e-06,
+              "sigma": 1.5164407877833965,
+              "initial_sigma": 1.5162355259988176,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.963764299573124e-16,
+              "minimum_jacobian": 0.9881721992352939,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.0453312868640054,
+              "global_heldout_loss": 4.035480444301919,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.09002474005043608,
+              "gradient_vector_rmse_adu_per_px": 0.024348609350547508
+            }
+          }
+        ]
+      },
+      {
+        "scene": "saturn",
+        "case": "motion",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 0.7638584010419436,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 104,
+              "objective": 3.965939393401619,
+              "gradient_inf": 0.0009888801667693285,
+              "sigma": 1.0473370799547272,
+              "initial_sigma": 1.215527940603389,
+              "stiffness": 0.3,
+              "inverse_error_px": 5.028663855320259e-15,
+              "minimum_jacobian": 0.9298175084025185,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.059513862102513,
+              "global_heldout_loss": 7.748488956624204,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.180513004087171,
+              "gradient_vector_rmse_adu_per_px": 0.0609361960515248
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.18253866804298,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 309,
+              "objective": 3.96247367661872,
+              "gradient_inf": 0.0002827296807807055,
+              "sigma": 1.047872945856755,
+              "initial_sigma": 1.215527940603389,
+              "stiffness": 0.3,
+              "inverse_error_px": 4.289830510009564e-15,
+              "minimum_jacobian": 0.9258662397261219,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.059682777091928,
+              "global_heldout_loss": 7.748488956624204,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.18264547521571928,
+              "gradient_vector_rmse_adu_per_px": 0.06183428133750999
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 5.9751492369687185,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 800,
+              "evaluations": 829,
+              "objective": 3.9617026268820523,
+              "gradient_inf": 8.852219228254075e-05,
+              "sigma": 1.0486036473457319,
+              "initial_sigma": 1.215527940603389,
+              "stiffness": 0.3,
+              "inverse_error_px": 4.496060575246782e-15,
+              "minimum_jacobian": 0.9261373321498844,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.059842520257345,
+              "global_heldout_loss": 7.748488956624204,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.18156689950813654,
+              "gradient_vector_rmse_adu_per_px": 0.062271643543077154
+            }
+          }
+        ]
+      },
+      {
+        "scene": "saturn",
+        "case": "offset",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 0.8445330190006644,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 112,
+              "objective": 4.039102563913347,
+              "gradient_inf": 0.0071371361379482055,
+              "sigma": 0.3818334872609462,
+              "initial_sigma": 0.75,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.048996431427631e-15,
+              "minimum_jacobian": 0.9137828315826274,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.092642663205203,
+              "global_heldout_loss": 8.597532116105395,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.18378996905335357,
+              "gradient_vector_rmse_adu_per_px": 0.12363761410842955
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.407776443986222,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 334,
+              "objective": 4.030875440825157,
+              "gradient_inf": 0.0016526067996326063,
+              "sigma": 0.3829847923488954,
+              "initial_sigma": 0.75,
+              "stiffness": 0.3,
+              "inverse_error_px": 8.110709212174108e-15,
+              "minimum_jacobian": 0.9116456684872228,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.09047410101421,
+              "global_heldout_loss": 8.597532116105395,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.18046418996011987,
+              "gradient_vector_rmse_adu_per_px": 0.12018195831877351
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 7.359721712942701,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 800,
+              "evaluations": 881,
+              "objective": 4.028830768927036,
+              "gradient_inf": 0.0004008744776736977,
+              "sigma": 0.3835745408809629,
+              "initial_sigma": 0.75,
+              "stiffness": 0.3,
+              "inverse_error_px": 8.14331749627517e-15,
+              "minimum_jacobian": 0.9107741777164781,
+              "train_pixels": 11618,
+              "heldout_pixels": 34827,
+              "heldout_loss": 4.091443897693702,
+              "global_heldout_loss": 8.597532116105395,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.18151440314582692,
+              "gradient_vector_rmse_adu_per_px": 0.12179473202459659
+            }
+          }
+        ]
+      },
+      {
+        "scene": "texture",
+        "case": "stationary",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 0.9736598880263045,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 108,
+              "objective": 3.9626473624368406,
+              "gradient_inf": 0.00011860210660280283,
+              "sigma": 1.4997447225224927,
+              "initial_sigma": 1.4994689675446802,
+              "stiffness": 0.3,
+              "inverse_error_px": 4.536359934548582e-16,
+              "minimum_jacobian": 0.9939704974851126,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.036080157436948,
+              "global_heldout_loss": 4.016165566898639,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.0982381881698447,
+              "gradient_vector_rmse_adu_per_px": 0.045361610269177934
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.89970234001521,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 323,
+              "objective": 3.962604858483895,
+              "gradient_inf": 0.00015564293386114122,
+              "sigma": 1.4997243769013409,
+              "initial_sigma": 1.4994689675446802,
+              "stiffness": 0.3,
+              "inverse_error_px": 4.857940091992788e-16,
+              "minimum_jacobian": 0.9937479438898148,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.036124384445984,
+              "global_heldout_loss": 4.016165566898639,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.09831870396023679,
+              "gradient_vector_rmse_adu_per_px": 0.04539170228316294
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 7.1969093549996614,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "iterations": 769,
+              "evaluations": 829,
+              "objective": 3.9625737607948355,
+              "gradient_inf": 0.00019876670651442952,
+              "sigma": 1.4997163329093197,
+              "initial_sigma": 1.4994689675446802,
+              "stiffness": 0.3,
+              "inverse_error_px": 5.356111483890447e-16,
+              "minimum_jacobian": 0.9933849109626559,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.0361832471860195,
+              "global_heldout_loss": 4.016165566898639,
+              "heldout_improves": false
+            },
+            "clean_image": {
+              "rmse_adu": 0.09843662621865244,
+              "gradient_vector_rmse_adu_per_px": 0.045451560415223344
+            }
+          }
+        ]
+      },
+      {
+        "scene": "texture",
+        "case": "motion",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 1.0608668909990229,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 110,
+              "objective": 4.108627001204977,
+              "gradient_inf": 0.0018492580505621735,
+              "sigma": 1.0275637376159605,
+              "initial_sigma": 1.2844089707914588,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.852032228899707e-15,
+              "minimum_jacobian": 0.9262121918268812,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.065967931240939,
+              "global_heldout_loss": 23.729051177494867,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.2003483208459821,
+              "gradient_vector_rmse_adu_per_px": 0.10332969711502954
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.9262126779649407,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 328,
+              "objective": 4.102091354493464,
+              "gradient_inf": 0.0013820477659554384,
+              "sigma": 1.0281069076728384,
+              "initial_sigma": 1.2844089707914588,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.949731792148746e-15,
+              "minimum_jacobian": 0.9255767612639713,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.066867331572194,
+              "global_heldout_loss": 23.729051177494867,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.20114450386997682,
+              "gradient_vector_rmse_adu_per_px": 0.10400069438391026
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 7.848043575009797,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 800,
+              "evaluations": 870,
+              "objective": 4.10102338439677,
+              "gradient_inf": 0.0009620959162161669,
+              "sigma": 1.028058045511248,
+              "initial_sigma": 1.2844089707914588,
+              "stiffness": 0.3,
+              "inverse_error_px": 8.13195736403482e-15,
+              "minimum_jacobian": 0.9242887362235029,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.066888251275653,
+              "global_heldout_loss": 23.729051177494867,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.20121921237565754,
+              "gradient_vector_rmse_adu_per_px": 0.10407869267067517
+            }
+          }
+        ]
+      },
+      {
+        "scene": "texture",
+        "case": "offset",
+        "results": [
+          {
+            "budget": 100,
+            "seconds": 1.0140953640220687,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 109,
+              "objective": 4.282774273873977,
+              "gradient_inf": 0.04705565410822194,
+              "sigma": 0.43124010392299506,
+              "initial_sigma": 1.115233560742879,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.1633295167240258e-14,
+              "minimum_jacobian": 0.9058237386026461,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.078659425845177,
+              "global_heldout_loss": 41.85345605941979,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.2231649620833167,
+              "gradient_vector_rmse_adu_per_px": 0.1297181822805128
+            }
+          },
+          {
+            "budget": 300,
+            "seconds": 2.94424992101267,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 300,
+              "evaluations": 334,
+              "objective": 4.266802341004121,
+              "gradient_inf": 0.0005251431796495324,
+              "sigma": 0.42491850569377915,
+              "initial_sigma": 1.115233560742879,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.1784881438590297e-14,
+              "minimum_jacobian": 0.9049875078951916,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.078911999188881,
+              "global_heldout_loss": 41.85345605941979,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.2214152727070046,
+              "gradient_vector_rmse_adu_per_px": 0.12881900992844464
+            }
+          },
+          {
+            "budget": 800,
+            "seconds": 7.359675719984807,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 800,
+              "evaluations": 884,
+              "objective": 4.265206205990304,
+              "gradient_inf": 0.001985679511527412,
+              "sigma": 0.4252644694823971,
+              "initial_sigma": 1.115233560742879,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.1344393378044576e-14,
+              "minimum_jacobian": 0.9048736354297413,
+              "train_pixels": 22839,
+              "heldout_pixels": 68521,
+              "heldout_loss": 4.078641233657587,
+              "global_heldout_loss": 41.85345605941979,
+              "heldout_improves": true
+            },
+            "clean_image": {
+              "rmse_adu": 0.22160231516946904,
+              "gradient_vector_rmse_adu_per_px": 0.12889636189909248
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "translation_probes": {
+    "joint-translation-probe": {
+      "source": {
+        "path": "out/joint-translation-probe.json",
+        "sha256": "b8943df7ca7895f847c7cabf2f5f45fadd19b59a78a2236d97ead8badef7b76b"
+      },
+      "results": {
+        "model_sha256": "69515611e6f4b47c43cc86cfee562f9e249d691cf2c6b0afb87e7ccf49d5307d",
+        "frames": [
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 112,
+              "objective": 0.0049064502531584375,
+              "gradient_inf": 4.1252591460739656e-05,
+              "sigma": 0.27321483364669974,
+              "initial_sigma": 0.26780004815466585,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.582812753581314e-17,
+              "minimum_jacobian": 0.997622244791925,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 0.004888985891644849,
+              "global_heldout_loss": 0.008654204350405263,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.18717401183765606,
+                  "gradient_vector_rmse_adu_per_px": 0.0833191272436604
+                },
+                "false_motion_rms_px": 0.08623389065894461
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.06778904057586199,
+                  "gradient_vector_rmse_adu_per_px": 0.017864947052041377
+                },
+                "false_motion_rms_px": 0.0229808411263047
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 105,
+              "objective": 3.9783775025780828,
+              "gradient_inf": 0.00016661524262279192,
+              "sigma": 0.0,
+              "initial_sigma": 0.2558537314996087,
+              "stiffness": 0.3,
+              "inverse_error_px": 8.368202481890594e-16,
+              "minimum_jacobian": 0.980718735025023,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 4.0154609968642445,
+              "global_heldout_loss": 4.0024797713693845,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.4158438750327201,
+                  "gradient_vector_rmse_adu_per_px": 0.22055977795068793
+                },
+                "false_motion_rms_px": 0.3026471883601711
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.16273146406891745,
+                  "gradient_vector_rmse_adu_per_px": 0.07544635792150133
+                },
+                "false_motion_rms_px": 0.0988585340183212
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 61,
+              "evaluations": 64,
+              "objective": 0.00015505875568372005,
+              "gradient_inf": 5.2145023097555335e-06,
+              "sigma": 1.048337278764834,
+              "initial_sigma": 1.0490380742137715,
+              "stiffness": 0.3,
+              "inverse_error_px": 5.721958498152797e-17,
+              "minimum_jacobian": 0.9980392021835227,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 0.00015510332715761873,
+              "global_heldout_loss": 0.004188429451230321,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.34252087584374874,
+                  "gradient_vector_rmse_adu_per_px": 0.07892674798057142
+                },
+                "false_motion_rms_px": 0.23085244782952957
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.07109400986462322,
+                  "gradient_vector_rmse_adu_per_px": 0.011725602970107806
+                },
+                "false_motion_rms_px": 0.04136113379894924
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 103,
+              "objective": 3.9755683366278443,
+              "gradient_inf": 0.00020238876500996828,
+              "sigma": 1.041894741139672,
+              "initial_sigma": 1.0537558879883344,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.782036707127746e-16,
+              "minimum_jacobian": 0.9803080789966903,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 4.006037935804725,
+              "global_heldout_loss": 3.9954744723011695,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.500397612082791,
+                  "gradient_vector_rmse_adu_per_px": 0.11519553344085728
+                },
+                "false_motion_rms_px": 0.4681460283939943
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.15735532879518008,
+                  "gradient_vector_rmse_adu_per_px": 0.0487279394009042
+                },
+                "false_motion_rms_px": 0.15844676606681277
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 74,
+              "evaluations": 85,
+              "objective": 0.005182903742567195,
+              "gradient_inf": 9.179836865185858e-06,
+              "sigma": 0.2643986548532621,
+              "initial_sigma": 0.26044364781776785,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.0305191936093545e-16,
+              "minimum_jacobian": 0.9974199769226633,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 0.005051433557699946,
+              "global_heldout_loss": 0.010203691241844729,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.18680066655656632,
+                  "gradient_vector_rmse_adu_per_px": 0.08169860431021375
+                },
+                "false_motion_rms_px": 0.08695373638033596
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.08785597854687899,
+                  "gradient_vector_rmse_adu_per_px": 0.028871148674050082
+                },
+                "false_motion_rms_px": 0.023294173344343114
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 106,
+              "objective": 3.9628401080997997,
+              "gradient_inf": 6.459933605816706e-05,
+              "sigma": 0.051591369585582525,
+              "initial_sigma": 0.2598206343487514,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.989019832173984e-16,
+              "minimum_jacobian": 0.981822793067154,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 4.017427691770894,
+              "global_heldout_loss": 4.0051200849493105,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.5070177107028274,
+                  "gradient_vector_rmse_adu_per_px": 0.23607925262924645
+                },
+                "false_motion_rms_px": 0.3133291271515514
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.19716875385549215,
+                  "gradient_vector_rmse_adu_per_px": 0.08203381249029847
+                },
+                "false_motion_rms_px": 0.09708880075158541
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 67,
+              "evaluations": 70,
+              "objective": 0.0001298801221327858,
+              "gradient_inf": 9.876584369157364e-06,
+              "sigma": 1.044657650736095,
+              "initial_sigma": 1.0473342149584326,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.0104671182572174e-16,
+              "minimum_jacobian": 0.9979459504573014,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 0.00012748103067744302,
+              "global_heldout_loss": 0.005382112531933592,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.3864154407895549,
+                  "gradient_vector_rmse_adu_per_px": 0.08045900152086277
+                },
+                "false_motion_rms_px": 0.23275861330314046
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.09402462644378846,
+                  "gradient_vector_rmse_adu_per_px": 0.024273653390617874
+                },
+                "false_motion_rms_px": 0.038269289782694095
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 108,
+              "objective": 3.9632895577165774,
+              "gradient_inf": 8.702071953667345e-05,
+              "sigma": 1.0382853772706595,
+              "initial_sigma": 1.0541214560620014,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.390492082589766e-16,
+              "minimum_jacobian": 0.980539750254897,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 4.008066944887055,
+              "global_heldout_loss": 3.9986733167315314,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.46507912233711635,
+                  "gradient_vector_rmse_adu_per_px": 0.10549495826225726
+                },
+                "false_motion_rms_px": 0.39708311773025484
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.19595525995289523,
+                  "gradient_vector_rmse_adu_per_px": 0.05421741451535536
+                },
+                "false_motion_rms_px": 0.15891048112445613
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 115,
+              "objective": 0.004974537780642323,
+              "gradient_inf": 5.884795360148644e-05,
+              "sigma": 0.2686693962941367,
+              "initial_sigma": 0.25864349906239936,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.270499915245787e-16,
+              "minimum_jacobian": 0.9963835447470264,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 0.004914461504246742,
+              "global_heldout_loss": 0.01638993305820152,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.18644002696187298,
+                  "gradient_vector_rmse_adu_per_px": 0.08276400480667628
+                },
+                "false_motion_rms_px": 0.08448047248739722
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.12309751607410675,
+                  "gradient_vector_rmse_adu_per_px": 0.04122986083355887
+                },
+                "false_motion_rms_px": 0.033633355347340486
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 111,
+              "objective": 3.9691453583085576,
+              "gradient_inf": 0.00015325964424531095,
+              "sigma": 0.26257889310941,
+              "initial_sigma": 0.2679469763017958,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.23728986632994e-16,
+              "minimum_jacobian": 0.9855369282310202,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 4.017393526427395,
+              "global_heldout_loss": 4.015197056766802,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.43822242998265487,
+                  "gradient_vector_rmse_adu_per_px": 0.21182894912422956
+                },
+                "false_motion_rms_px": 0.26119318614958914
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.15918265113014898,
+                  "gradient_vector_rmse_adu_per_px": 0.06940645060290271
+                },
+                "false_motion_rms_px": 0.07672208431078265
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 107,
+              "objective": 0.0001420807468955133,
+              "gradient_inf": 1.0896100641271372e-05,
+              "sigma": 1.0376865294708426,
+              "initial_sigma": 1.042434964883342,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.1295700899707568e-16,
+              "minimum_jacobian": 0.9970648439662191,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 0.00013785672884151205,
+              "global_heldout_loss": 0.01185261938710053,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.3400295882996732,
+                  "gradient_vector_rmse_adu_per_px": 0.07807327057933376
+                },
+                "false_motion_rms_px": 0.22714973551661327
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.1305916484419746,
+                  "gradient_vector_rmse_adu_per_px": 0.033315517567813466
+                },
+                "false_motion_rms_px": 0.05543857560987374
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 104,
+              "objective": 3.9642691186494634,
+              "gradient_inf": 0.00012553283836465914,
+              "sigma": 1.0356636695045602,
+              "initial_sigma": 1.0494115039168226,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.938893903907228e-16,
+              "minimum_jacobian": 0.9830288379206579,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 4.008997147871015,
+              "global_heldout_loss": 4.009115783316368,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.4997971245574808,
+                  "gradient_vector_rmse_adu_per_px": 0.10478835566640195
+                },
+                "false_motion_rms_px": 0.4362921521457147
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.17419347298799492,
+                  "gradient_vector_rmse_adu_per_px": 0.055622165895274356
+                },
+                "false_motion_rms_px": 0.155732627187863
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 116,
+              "objective": 0.003006942652835505,
+              "gradient_inf": 0.0003177968105011629,
+              "sigma": 0.3459803256910427,
+              "initial_sigma": 0.3536277150217943,
+              "stiffness": 0.3,
+              "inverse_error_px": 6.844227486010979e-17,
+              "minimum_jacobian": 0.9979593110966607,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 0.0029712219019449844,
+              "global_heldout_loss": 0.03473174323895307,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.06797868417447536,
+                  "gradient_vector_rmse_adu_per_px": 0.03579410440508418
+                },
+                "false_motion_rms_px": 0.016148098124887527
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.18432026889767228,
+                  "gradient_vector_rmse_adu_per_px": 0.10494652416339403
+                },
+                "false_motion_rms_px": 0.040726998256399034
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 117,
+              "objective": 3.945132744361048,
+              "gradient_inf": 0.0009318184588857081,
+              "sigma": 0.3513989979355621,
+              "initial_sigma": 0.35824540377766395,
+              "stiffness": 0.3,
+              "inverse_error_px": 5.405215745588179e-16,
+              "minimum_jacobian": 0.9935264450979757,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 4.029833790145439,
+              "global_heldout_loss": 4.04402661300816,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.13449510798550657,
+                  "gradient_vector_rmse_adu_per_px": 0.07460889431503555
+                },
+                "false_motion_rms_px": 0.03133784100345855
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.22111727661534583,
+                  "gradient_vector_rmse_adu_per_px": 0.12508188900583067
+                },
+                "false_motion_rms_px": 0.04987818576881269
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 113,
+              "objective": 0.0010661917603510174,
+              "gradient_inf": 2.0834502066468482e-05,
+              "sigma": 1.0367579804460847,
+              "initial_sigma": 1.040270486512102,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.0091633612717039e-16,
+              "minimum_jacobian": 0.9979115375138802,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 0.0010573705264450754,
+              "global_heldout_loss": 0.02530520648779678,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.11733096683835292,
+                  "gradient_vector_rmse_adu_per_px": 0.05856508796041432
+                },
+                "false_motion_rms_px": 0.0316225600041749
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.1610625726440423,
+                  "gradient_vector_rmse_adu_per_px": 0.08015364490497194
+                },
+                "false_motion_rms_px": 0.04208922633269439
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 111,
+              "objective": 3.9456320485718455,
+              "gradient_inf": 0.0020926098273028357,
+              "sigma": 1.0372102073325264,
+              "initial_sigma": 1.0400967528684768,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.023038222575547e-16,
+              "minimum_jacobian": 0.9932341727137974,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 4.025957358066163,
+              "global_heldout_loss": 4.034218858696769,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.1603254169882054,
+                  "gradient_vector_rmse_adu_per_px": 0.08080750723972852
+                },
+                "false_motion_rms_px": 0.044172602514437234
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.20097703200400494,
+                  "gradient_vector_rmse_adu_per_px": 0.10030213050558422
+                },
+                "false_motion_rms_px": 0.05402683292416971
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 115,
+              "objective": 0.0023371767370966154,
+              "gradient_inf": 0.0001494705342809189,
+              "sigma": 0.36432822330595444,
+              "initial_sigma": 0.3689491258114046,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.9681276891118697e-16,
+              "minimum_jacobian": 0.9979168016022789,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0024361110058037545,
+              "global_heldout_loss": 0.020928161650178242,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.06802471892858811,
+                  "gradient_vector_rmse_adu_per_px": 0.03575659641952681
+                },
+                "false_motion_rms_px": 0.015798762936491382
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.16655253886546895,
+                  "gradient_vector_rmse_adu_per_px": 0.09058541897397598
+                },
+                "false_motion_rms_px": 0.035535402780349945
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 114,
+              "objective": 3.9433099031342924,
+              "gradient_inf": 0.00026623317956206427,
+              "sigma": 0.36150065465841325,
+              "initial_sigma": 0.36741738683526187,
+              "stiffness": 0.3,
+              "inverse_error_px": 8.204091285219771e-16,
+              "minimum_jacobian": 0.9931473178822365,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 4.02572302705925,
+              "global_heldout_loss": 4.033681743187628,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.137099429279671,
+                  "gradient_vector_rmse_adu_per_px": 0.0762047140279928
+                },
+                "false_motion_rms_px": 0.031913322420673476
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.22895564076677977,
+                  "gradient_vector_rmse_adu_per_px": 0.12584343143614288
+                },
+                "false_motion_rms_px": 0.050168331436603666
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 110,
+              "objective": 0.0005037104851894055,
+              "gradient_inf": 9.500630769770475e-05,
+              "sigma": 1.044512431555486,
+              "initial_sigma": 1.0467953584747187,
+              "stiffness": 0.3,
+              "inverse_error_px": 1.6438736123006356e-16,
+              "minimum_jacobian": 0.9978489831789417,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0004993318430201451,
+              "global_heldout_loss": 0.0151954263339536,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.11985291558176023,
+                  "gradient_vector_rmse_adu_per_px": 0.059420516700863825
+                },
+                "false_motion_rms_px": 0.032271688878816235
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.14960379020295528,
+                  "gradient_vector_rmse_adu_per_px": 0.06977275046455995
+                },
+                "false_motion_rms_px": 0.037141813568774336
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 113,
+              "objective": 3.9430383897534624,
+              "gradient_inf": 0.001418449711843341,
+              "sigma": 1.0415589232559819,
+              "initial_sigma": 1.044823269801972,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.618700315009879e-16,
+              "minimum_jacobian": 0.9929151092835554,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 4.023567941454843,
+              "global_heldout_loss": 4.028974255640174,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.16363141792523178,
+                  "gradient_vector_rmse_adu_per_px": 0.08245423591021407
+                },
+                "false_motion_rms_px": 0.04521987421475793
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.21287866810412723,
+                  "gradient_vector_rmse_adu_per_px": 0.10056986663280554
+                },
+                "false_motion_rms_px": 0.05457058291007996
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 117,
+              "objective": 0.002559281174727582,
+              "gradient_inf": 7.058556204340215e-05,
+              "sigma": 0.3418706980293708,
+              "initial_sigma": 0.3528256108630989,
+              "stiffness": 0.3,
+              "inverse_error_px": 9.996884940843768e-17,
+              "minimum_jacobian": 0.9970562821364662,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0025395948007204787,
+              "global_heldout_loss": 0.04858007584612655,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.06904605604489247,
+                  "gradient_vector_rmse_adu_per_px": 0.0363032327298264
+                },
+                "false_motion_rms_px": 0.01638213720076303
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.2430254275553738,
+                  "gradient_vector_rmse_adu_per_px": 0.13350463202740784
+                },
+                "false_motion_rms_px": 0.052117561916391886
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 117,
+              "objective": 3.9378862402534622,
+              "gradient_inf": 0.0012710133428526782,
+              "sigma": 0.3479190274564745,
+              "initial_sigma": 0.35855218752965967,
+              "stiffness": 0.3,
+              "inverse_error_px": 3.227891107075167e-16,
+              "minimum_jacobian": 0.9925184619428884,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 4.028191638892046,
+              "global_heldout_loss": 4.05984143326624,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.1337708735278175,
+                  "gradient_vector_rmse_adu_per_px": 0.07445922692077639
+                },
+                "false_motion_rms_px": 0.03129153845370885
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.2709734311900703,
+                  "gradient_vector_rmse_adu_per_px": 0.15228364865742355
+                },
+                "false_motion_rms_px": 0.05984769036171919
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 111,
+              "objective": 0.0006889997329149583,
+              "gradient_inf": 0.00032692220850275017,
+              "sigma": 1.0346526694669251,
+              "initial_sigma": 1.0398131338862895,
+              "stiffness": 0.3,
+              "inverse_error_px": 7.911556306605241e-17,
+              "minimum_jacobian": 0.996941374674385,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0006784642887552152,
+              "global_heldout_loss": 0.03705106401922042,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.11800670478868842,
+                  "gradient_vector_rmse_adu_per_px": 0.05884034220324355
+                },
+                "false_motion_rms_px": 0.03186178315449535
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.2167998980146532,
+                  "gradient_vector_rmse_adu_per_px": 0.10234171003517677
+                },
+                "false_motion_rms_px": 0.054278856723960496
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 2.0,
+            "stats": {
+              "fallback": false,
+              "success": false,
+              "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+              "iterations": 100,
+              "evaluations": 114,
+              "objective": 3.9398773387755983,
+              "gradient_inf": 0.00027135101925565563,
+              "sigma": 1.0356724409832476,
+              "initial_sigma": 1.0407025911354624,
+              "stiffness": 0.3,
+              "inverse_error_px": 4.376456705707376e-16,
+              "minimum_jacobian": 0.9932693930449563,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 4.02538845043449,
+              "global_heldout_loss": 4.047310465587805,
+              "heldout_improves": true
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.16022065912496003,
+                  "gradient_vector_rmse_adu_per_px": 0.08080273086330819
+                },
+                "false_motion_rms_px": 0.044226850363887425
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.243016158474695,
+                  "gradient_vector_rmse_adu_per_px": 0.1199573527334348
+                },
+                "false_motion_rms_px": 0.064076754052178
+              }
+            }
+          }
+        ]
+      }
+    },
+    "joint-translation-model-probe": {
+      "source": {
+        "path": "out/joint-translation-model-probe.json",
+        "sha256": "16184d0951784898614eb8eda4411f46a72dee18d490c5f22215a2a719478a1c"
+      },
+      "results": {
+        "model_sha256": "69515611e6f4b47c43cc86cfee562f9e249d691cf2c6b0afb87e7ccf49d5307d",
+        "generator": "model",
+        "frames": [
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 0.0,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.20823829501678792,
+                  "gradient_vector_rmse_adu_per_px": 0.08909864289226663
+                },
+                "false_motion_rms_px": 0.0881553939873258
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 1.0414631956012275e-23,
+              "gradient_inf": 3.1186815683173996e-12,
+              "sigma": 0.9999999999966607,
+              "initial_sigma": 0.9999999999966607,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11535,
+              "heldout_pixels": 34619,
+              "heldout_loss": 1.0508587501962886e-23,
+              "global_heldout_loss": 1.05078523186911e-23,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.3749758540074705,
+                  "gradient_vector_rmse_adu_per_px": 0.0786800423821087
+                },
+                "false_motion_rms_px": 0.22348157044011405
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 1.2156417513196225e-28,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.17789655440539412,
+                  "gradient_vector_rmse_adu_per_px": 0.07749186433843515
+                },
+                "false_motion_rms_px": 0.08305828795924257
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 1.0,
+              "initial_sigma": 1.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11607,
+              "heldout_pixels": 34836,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 3.7302447843501757e-28,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.31979500127028465,
+                  "gradient_vector_rmse_adu_per_px": 0.07526268132987941
+                },
+                "false_motion_rms_px": 0.22592588962457472
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 3.747754357016768e-28,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.25865211834855467,
+                  "gradient_vector_rmse_adu_per_px": 0.11063833867634737
+                },
+                "false_motion_rms_px": 0.09916397301807463
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "saturn",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 1.0,
+              "initial_sigma": 1.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 11608,
+              "heldout_pixels": 34837,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 0.0,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.39645904586967773,
+                  "gradient_vector_rmse_adu_per_px": 0.08349654587896015
+                },
+                "false_motion_rms_px": 0.22595383526348245
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 1.8213512720427453e-27,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.21012994825523437,
+                  "gradient_vector_rmse_adu_per_px": 0.12177126452792557
+                },
+                "false_motion_rms_px": 0.04729937388381514
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.25,
+              0.5
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 1.0,
+              "initial_sigma": 1.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22797,
+              "heldout_pixels": 68369,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 3.5902704117391104e-28,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.19722545998077928,
+                  "gradient_vector_rmse_adu_per_px": 0.10202864140997264
+                },
+                "false_motion_rms_px": 0.052954857261409846
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 1.2297142471160677e-27,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.16565605953506238,
+                  "gradient_vector_rmse_adu_per_px": 0.09317040856075011
+                },
+                "false_motion_rms_px": 0.03618306843202459
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              0.6,
+              -0.4
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 1.0,
+              "initial_sigma": 1.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 8.077935669463161e-28,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.17318986605574885,
+                  "gradient_vector_rmse_adu_per_px": 0.08565096308916281
+                },
+                "false_motion_rms_px": 0.04546583808665868
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 0.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 0.0,
+              "gradient_inf": 0.0,
+              "sigma": 0.0,
+              "initial_sigma": 0.0,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 0.0,
+              "global_heldout_loss": 1.3388002470052711e-27,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.24952732955757245,
+                  "gradient_vector_rmse_adu_per_px": 0.13884391602380047
+                },
+                "false_motion_rms_px": 0.054238096743715006
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          },
+          {
+            "scene": "texture",
+            "shift_xy": [
+              -0.7,
+              0.35
+            ],
+            "blur": 1.0,
+            "noise": 0.0,
+            "stats": {
+              "fallback": false,
+              "success": true,
+              "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+              "iterations": 0,
+              "evaluations": 1,
+              "objective": 1.2284594180849632e-25,
+              "gradient_inf": 1.0493161377082567e-12,
+              "sigma": 0.9999999999998833,
+              "initial_sigma": 0.9999999999998833,
+              "stiffness": 0.3,
+              "inverse_error_px": 0.0,
+              "minimum_jacobian": 1.0,
+              "train_pixels": 22834,
+              "heldout_pixels": 68525,
+              "heldout_loss": 1.227724223627957e-25,
+              "global_heldout_loss": 1.229947125330798e-25,
+              "heldout_improves": false
+            },
+            "variants": {
+              "coherent": {
+                "clean_image": {
+                  "rmse_adu": 0.23141591337923115,
+                  "gradient_vector_rmse_adu_per_px": 0.11291534668514244
+                },
+                "false_motion_rms_px": 0.05902208382204984
+              },
+              "joint_strong": {
+                "clean_image": {
+                  "rmse_adu": 0.0,
+                  "gradient_vector_rmse_adu_per_px": 0.0
+                },
+                "false_motion_rms_px": 0.0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "limits": [
+    "The 100-iteration estimator is not generally converged; a six-frame budget probe is only a sensitivity check.",
+    "Only one quarter of detector samples train the field; remaining samples validate predictions.",
+    "The smoothness penalty expresses a motion prior, not calibrated posterior uncertainty.",
+    "Independent validation accepts false motion caused by a shared interpolation-model mismatch.",
+    "Isotropic additional Gaussian blur is a limited seeing model; the synthetic family partly matches it by construction.",
+    "No output smoothing or normalization is added; sharper geometry need not imply lower residual noise."
+  ]
+}
