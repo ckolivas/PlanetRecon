@@ -14,6 +14,17 @@ parameters that remain unresolved still prevent stacking. Manual overrides are
 preserved. Cancelling during preparation prevents stacking from starting.
 Checkpoint resumes retain their existing settings and cache.
 
+Opening a cached capture performs one full pixel validation. The desktop passes
+the successful check between its inspection, preprocessing and stacking workers,
+so pressing **Stack** does not scan the unchanged capture again. Reuse is limited
+to the running session and concrete SER, AVI and HDF5 adapters. Each use still
+checks the cache contents/digest, capture and cache file identity, size, modification
+and change times, input interpretation, and actual calibration contents. A change
+forces full validation; geometry applicability is refreshed on every use. Fresh
+preprocessing can hand its completed validation directly to stacking. CLI/library
+calls without a session validation object retain full pixel checks, and resumable
+accumulator checkpoints retain their separate input validation.
+
 New GUI and CLI runs default to local patch alignment and the upper 50% quality
 range. CLI callers still run `preprocess` explicitly before stacking. With local alignment disabled and
 100% selected, runs without a cache apply only their existing validity, saturation
@@ -178,8 +189,9 @@ The GUI capture line, SER metadata and preprocessing report expose this timing.
 Cache identity hashes **all observed pixels**, frame layout/colour, bit depth,
 timestamps and actual calibration tables/settings. It distinguishes indexed
 subsets of the same source. Thread count, device, batch size and reconstruction
-geometry can change without invalidating quality/shape decisions. Checking a
-cache reads the observations but does not repeat quality or shape estimation.
+geometry can change without invalidating quality/shape decisions. Full validation
+reads the observations but does not repeat quality or shape estimation; unchanged
+desktop inputs reuse the session check described above.
 Geometry suggestions with incompatible new timing/viewing settings are labelled
 outdated independently of the still-valid frame selection.
 

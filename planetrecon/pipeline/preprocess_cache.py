@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 import tempfile
+from dataclasses import dataclass
 from zipfile import BadZipFile
 
 import numpy as np
@@ -17,6 +18,54 @@ SCHEMA = 'planetrecon-preprocessing-1'
 GEOMETRY_KEYS = ('cadence_s', 'exposure_s', 'field_angle0_rad', 'field_rate_rad_s',
                  'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad', 'rotation_planet',
                  'motion_reference', 'reference_index')
+
+
+def _file_stamp(path):
+    try:
+        path = Path(path).resolve()
+        stat = path.stat()
+        return (str(path), stat.st_dev, stat.st_ino, stat.st_size,
+                stat.st_mtime_ns, stat.st_ctime_ns)
+    except OSError:
+        return None
+
+
+def _validation_key(source, config, calibration):
+    # Only concrete file adapters qualify. Array/indexed/custom sources can
+    # change independently of the path in their metadata and must be hashed.
+    from planetrecon.io.ser import SERSource
+    from planetrecon.io.avi import AVISource
+    from planetrecon.io.hdf5_source import HDF5ObservedSource
+    if type(source) not in (SERSource, AVISource, HDF5ObservedSource):
+        return None
+    stamp = _file_stamp(source.metadata().path)
+    if stamp is None:
+        return None
+    return (stamp, json.dumps({
+        'adapter': type(source).__name__, 'metadata': source.metadata().as_dict(),
+        'reject_saturated': config.reject_saturated,
+        'calibration': capture_provenance(source, config, calibration)['calibration'],
+    }, sort_keys=True))
+
+
+@dataclass
+class CacheValidation:
+    """Session-only proof of a full check, passed between desktop workers.
+
+    Never store this in settings, preprocessing files or result provenance.
+    Both the cache digest and file stamps are still checked on every use.
+    """
+    source_key: object = None
+    cache_stamp: object = None
+    digest: str | None = None
+
+    def clear(self):
+        self.source_key = self.cache_stamp = self.digest = None
+
+    def remember(self, key, path, selection):
+        self.source_key = key
+        self.cache_stamp = _file_stamp(path) if path is not None else None
+        self.digest = selection.digest
 
 
 def default_cache_path(source):
@@ -180,13 +229,21 @@ def save_cache(path, selection, source, config):
         Path(tmp).unlink(missing_ok=True)
 
 
-def load_cache(source, config, calibration=None, *, path=None, should_cancel=None, on_progress=None):
+def load_cache(source, config, calibration=None, *, path=None, should_cancel=None, on_progress=None,
+               validation=None):
+    previous = (validation.source_key, validation.cache_stamp, validation.digest) if validation else None
+    if validation is not None:
+        validation.clear()
     path = Path(path) if path is not None else default_cache_path(source)
     if path is None or not path.is_file():
         return None, {'status': 'missing', 'reason': 'No preprocessing cache; run Preprocess to measure exclusions.'}
+    if should_cancel and should_cancel():
+        raise InterruptedError('preprocessing cache verification cancelled')
     if calibration is None:
         calibration = calibration_for(source, config)
     try:
+        key = _validation_key(source, config, calibration) if validation is not None else None
+        stamp = _file_stamp(path)
         with np.load(path, allow_pickle=False) as data:
             meta = json.loads(str(data['metadata']))
             if meta['schema'] != SCHEMA:
@@ -200,15 +257,20 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
                 or not np.isfinite(selection.measurements[selection.accepted]).all()
                 or selection_digest(selection) != selection.digest):
             raise ValueError('invalid or incomplete cache measurements')
-        if selection.identity != identity(source, config, calibration, should_cancel, on_progress):
+        reused = key is not None and previous == (key, stamp, selection.digest)
+        if not reused and selection.identity != identity(source, config, calibration, should_cancel, on_progress):
             return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
+        if validation is not None and key is not None:
+            if key != _validation_key(source, config, calibration) or stamp != _file_stamp(path):
+                raise ValueError('capture or cache changed during validation; retry')
+            validation.remember(key, path, selection)
         return selection, cache_report(selection, path, config, source)
     except (ValueError, OSError, KeyError, TypeError, BadZipFile) as exc:
         return None, {'status': 'invalid', 'reason': f'Preprocessing cache unavailable: {exc}'}
 
 
 def preprocess_source(source, config, *, calibration=None, cache_path=None,
-                      should_cancel=None, on_progress=None):
+                      should_cancel=None, on_progress=None, validation=None):
     """Compute fresh screening + geometry, cache if file-backed, and return it.
 
     Callable independently of reconstruction, even when cache use is disabled.
@@ -218,6 +280,8 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
     from planetrecon.geometry.discovery import discover_geometry
     from planetrecon.memory import cpu_memory_limit
     from planetrecon.runtime import apply_thread_limits
+    if validation is not None:
+        validation.clear()
     apply_thread_limits(config.threads)
     with cpu_memory_limit(config.max_ram_bytes):
         if source.n_frames() < 1 or min(source.frame_shape()[:2]) < 5:
@@ -225,6 +289,7 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
         if source.color_mode() not in ('mono', 'RGB', 'BGR', 'RGGB', 'BGGR', 'GRBG', 'GBRG'):
             raise ValueError('unsupported preprocessing color mode')
         calibration = calibration_for(source, config, calibration)
+        key = _validation_key(source, config, calibration) if validation is not None else None
         if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
             raise ValueError('gain calibration cannot be applied to observations already in electrons')
         before = identity(source, config, calibration, should_cancel)
@@ -245,4 +310,6 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
             raise InterruptedError('preprocessing cancelled')
         if path is not None:
             save_cache(path, selection, source, config)
+            if validation is not None and key is not None and key == _validation_key(source, config, calibration):
+                validation.remember(key, path, selection)
         return selection

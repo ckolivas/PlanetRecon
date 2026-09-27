@@ -66,6 +66,7 @@ def stack_source(
     state_checkpoint=None,
     preprocessing=None,
     preprocessing_cache=None,
+    cache_validation=None,
 ) -> ReconstructionResult:
     from contextlib import nullcontext
     from planetrecon.backends.memory import cuda_allocation_limit
@@ -82,7 +83,8 @@ def stack_source(
         result = _stack_source(source, config, calibration=calibration, on_event=event if on_event else None,
                              should_cancel=should_cancel, resume_from=resume_from,
                              state_checkpoint=state_checkpoint, memory_report=memory_report,
-                             preprocessing=preprocessing, preprocessing_cache=preprocessing_cache)
+                             preprocessing=preprocessing, preprocessing_cache=preprocessing_cache,
+                             cache_validation=cache_validation)
         if cpu_report is not None:
             result.provenance['cpu_memory_budget'] = cpu_report
         return result
@@ -99,6 +101,7 @@ def _stack_source(
     state_checkpoint=None,
     preprocessing=None,
     preprocessing_cache=None,
+    cache_validation=None,
     memory_report=None,
 ) -> ReconstructionResult:
     if resume_from is not None or state_checkpoint is not None:
@@ -136,7 +139,7 @@ def _stack_source(
             cache_status = cache_report(selection, config=config, source=source)
         else:
             selection, cache_status = load_cache(source, config, calibration, path=preprocessing_cache,
-                                                should_cancel=should_cancel)
+                                                should_cancel=should_cancel, validation=cache_validation)
             if cache_status['status'] in ('stale', 'invalid'):
                 raise ValueError(cache_status['reason'] + ' Run Preprocess again or disable cached preprocessing.')
         if config.local_alignment and selection is None:

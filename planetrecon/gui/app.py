@@ -182,6 +182,7 @@ class MainWindow:
         self.source_label.setWordWrap(True)
         layout.addWidget(self.source_label)
         self.preprocessing_info = {}
+        self.cache_validation = None
         self.preprocessing_label = QLabel('No preprocessing measurements loaded.')
         self.preprocessing_label.setWordWrap(True)
         layout.addWidget(self.preprocessing_label)
@@ -585,7 +586,8 @@ class MainWindow:
         if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
             return
         # Resume must use exactly the saved configuration/cache. A fresh run
-        # validates the on-disk cache rather than trusting stale UI metadata.
+        # refreshes cache/geometry metadata; unchanged inputs reuse the session's
+        # full validation instead of scanning the capture again.
         self.run_stage = 'stack' if self.resume_check.isChecked() else 'inspect'
         self._start(inspect_only=self.run_stage == 'inspect')
 
@@ -646,11 +648,14 @@ class MainWindow:
                         checkpoint_options['resume_from'] = Path(path)
             if preprocess_only:
                 handle = start_stack_job(self.path, cfg, preprocess_only=True,
+                    cache_validation=self.cache_validation,
                     auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch())
             else:
                 handle = (start_stack_job(self.path, cfg, inspect_only=True,
+                    cache_validation=self.cache_validation,
                     auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch()) if inspect_only
-                          else start_stack_job(self.path, cfg, emit_previews=False, **checkpoint_options))
+                          else start_stack_job(self.path, cfg, emit_previews=False,
+                              cache_validation=self.cache_validation, **checkpoint_options))
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             self.run_stage = None
@@ -961,6 +966,7 @@ class MainWindow:
         kind = event.kind
         try:
             if kind == 'completed':
+                self.cache_validation = event.payload.get('cache_validation')
                 if 'source_metadata' in event.payload:
                     self._set_input(event.payload)
                     ready = self.preprocessing_info.get('status') == 'ready'

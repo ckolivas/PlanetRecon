@@ -466,7 +466,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
         max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
         endian_convention='spec', recover_complete_frames=True, reject_saturated=False, frame_preselection=True,
-        quality_weighting=False,
+        quality_weighting=False, motion_reference='best',
         stack_percent=25, frame_selection_mode='frame_count', local_alignment=False, local_patch_size=33, reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
         alignment_method='square', sampling_multiplier=7., alignment_wavelength_nm=450.,
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
@@ -497,7 +497,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     second = calls[-1][1]
     assert second == replace(first, **expected)
     assert first.device == 'auto' and first.geometry_mode == 'none'
-    assert calls[-1][2] == dict(state_checkpoint=tmp_path/'new-state.npz', resume_from=tmp_path/'new-state.npz', emit_previews=False)
+    assert calls[-1][2] == dict(state_checkpoint=tmp_path/'new-state.npz', resume_from=tmp_path/'new-state.npz', emit_previews=False, cache_validation=None)
     win._finish_job()
     # Clearing optional fields must not resurrect values from an earlier run.
     for key in ('bias_path','dark_path','flat_path','max_vram_bytes','gain_e_per_adu'):
@@ -508,7 +508,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     win.checkpoint_path.clear();win.resume_check.setChecked(False)
     win._run()
     assert calls[-1][1] == replace(second, **expected)
-    assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False}
+    assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False, 'cache_validation': None}
     win._finish_job()
     win.device.setCurrentText('gpu')
     win.controls.fields['geometry_mode'].setCurrentText('none')
@@ -722,17 +722,17 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
     assert 'sub_obs_lat_rad' not in win.error.text()
     # Discovery and inspection remain usable with incomplete physical geometry.
     win._preprocess()
-    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
+    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True, 'cache_validation': None}
     win._finish_job()
     win._start(inspect_only=True)
-    assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True}
+    assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True, 'cache_validation': None}
     win._finish_job()
     for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',
                        'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60',
                        'surface_rate_rad_s': '0'}.items():
         fields[key].setText(value)
     win._start(inspect_only=False)
-    assert calls[-1][1] == {'emit_previews': False} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
+    assert calls[-1][1] == {'emit_previews': False, 'cache_validation': None} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
     win._finish_job()
     # Ordinary Saturn stacking never needs these physical parameters.
     fields['geometry_mode'].setCurrentText('none')
@@ -759,9 +759,9 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     assert 'Surface rotation rate' in win.error.text()
     assert win.controls.currentIndex() == 2
     win._preprocess()
-    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True}
+    assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True, 'cache_validation': None}
     win._finish_job()
     fields['surface_rate_rad_s'].setText('0')
     win._start(inspect_only=False)
-    assert calls[-1][1] == {'emit_previews': False} and calls[-1][0].surface_rate_rad_s == 0.
+    assert calls[-1][1] == {'emit_previews': False, 'cache_validation': None} and calls[-1][0].surface_rate_rad_s == 0.
     win._finish_job()

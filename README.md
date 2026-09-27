@@ -348,9 +348,10 @@ directory (`~/.config/PlanetRecon/settings.json` on Linux). Values restore on
 startup, including inactive controls and the distinction between manual and
 estimated geometry. Checkpoint paths and Resume are not restored automatically.
 Set `PLANETRECON_SETTINGS_PATH` to use a different preferences file.
-Startup and **Open capture** stay idle: they only select the capture and report
-whether a cache file exists. **Inspect input** explicitly loads a preview and
-validates an existing cache, without creating preprocessing measurements.
+Startup does not reopen the previous capture. **Open capture** (or an explicit
+`--path`) automatically loads the preview and validates existing preprocessing.
+Within the desktop session, **Run** and **Stack** reuse that full validation while
+the capture, interpretation, calibration and cache remain unchanged.
 
 **Run** validates the capture's preprocessing cache and automatically preprocesses
 if it is missing, stale or unusable, then stacks with the resulting prefills.

@@ -123,6 +123,7 @@ def _worker_run(
     auto_output_epoch: bool = False,
     emit_previews: bool = True,
     preview_frame: int | None = None,
+    cache_validation=None,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -130,6 +131,8 @@ def _worker_run(
     from planetrecon.io.source import open_source
     from planetrecon.pipeline.baseline import stack_source
 
+    from planetrecon.pipeline.preprocess_cache import CacheValidation
+    cache_validation = CacheValidation(**(cache_validation or {}))
     seq = 0
     source = None
 
@@ -166,12 +169,14 @@ def _worker_run(
             if inspect_only:
                 from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for, quality_plot_data
                 selected, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
+                    validation=cache_validation,
                     should_cancel=cancel_event.is_set,
                     on_progress=lambda done, total: emit('progress', {
                         'stage': f'Validating cached preprocessing: {done:,}/{total:,} frames',
                         'fraction': done / max(total, 1), 'backend': 'cpu'}))
                 if selected is not None:
                     payload['preprocessing_cache']['frame_quality'] = quality_plot_data(selected)
+                payload['cache_validation'] = vars(cache_validation).copy()
             emit("completed" if inspect_only else "source", payload)
             if inspect_only:
                 return
@@ -179,13 +184,14 @@ def _worker_run(
             from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path, quality_plot_data
             emit('progress', {'stage': 'Preprocessing: validating capture', 'fraction': None, 'backend': 'cpu'})
             selected = preprocess_source(source, config, should_cancel=cancel_event.is_set,
+                validation=cache_validation,
                 on_progress=lambda done, total: emit('progress', {'stage': 'Preprocessing: quality and shape',
                     'fraction': done/max(total, 1), 'backend': 'cpu'}))
             report = cache_report(selected, default_cache_path(source))
             report['frame_quality'] = quality_plot_data(selected)
             # The final event owns the preview too: optional source events may
             # have been dropped. No second worker or full cache re-read is needed.
-            emit('completed', {**payload, 'preprocessing_cache': report})
+            emit('completed', {**payload, 'preprocessing_cache': report, 'cache_validation': vars(cache_validation).copy()})
             return
         if config.geometry_mode != "none":
             emit("progress", {"stage": "pose estimation", "fraction": None, "backend": "cpu",
@@ -250,13 +256,14 @@ def _worker_run(
             should_cancel=cancel_event.is_set,
             resume_from=resume_from,
             state_checkpoint=state_checkpoint,
+            cache_validation=cache_validation,
         )
         source.close()
         source = None
         if cancel_event.is_set():
             emit("cancelled", {"n_used": result.n_used})
             return
-        emit("completed", result_payload(result))
+        emit("completed", {**result_payload(result), 'cache_validation': vars(cache_validation).copy()})
 
     except InterruptedError:
         emit('cancelled', {'n_used': 0})
@@ -432,6 +439,7 @@ def start_stack_job(
     auto_output_epoch: bool = False,
     emit_previews: bool = True,
     preview_frame: int | None = None,
+    cache_validation=None,
 ) -> JobHandle:
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
@@ -473,6 +481,7 @@ def start_stack_job(
             auto_output_epoch,
             emit_previews,
             preview_frame,
+            cache_validation,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,
