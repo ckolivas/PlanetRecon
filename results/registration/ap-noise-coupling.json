@@ -1,0 +1,1727 @@
+{
+  "hashes": {
+    "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+    "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+    "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+    "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+    "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+    "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+    "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+    "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+    "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+    "tools/ap_oracle_observations.py": "2ab251f327ad9f83bf8ade3f0ba6bb45fa190f5b2577e5ee8072869ec249c02b",
+    "tools/ap_stability_validation.py": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+    "tools/validate_local_warp_centring.py": "0fb343aecddf1594b787c6a624e38311dd5014c44e468ac0360f73df86d151eb",
+    "tools/ap_noise_coupling.py": "3aedae5cd153ee72a76f2e011afc257d86cf7cb01ae1dce367b6e0d682b4a7e6"
+  },
+  "prior_report_sha256": "9867991d6a6dda663e57ad4844e529581c2321bbba66280f9a3738786903f761",
+  "geometry_sha256": "a791a23264b2d2d28f06d302cf61a9c84d6445df8feec53543c80a2a66773aac",
+  "count": 32,
+  "seeds": [
+    9033,
+    19033
+  ],
+  "noise_sigma_adu": 2.0,
+  "device": "cuda:0",
+  "cases": {
+    "stationary": {
+      "prior_raw_sha256": "dc2ac8da5e7e1aa6c42ecb527619038e84057e9a7811676d5208c18529806d0f",
+      "raw_sha256": "00293d07862c1d2bdf1ed1dc59741b64c2b7cc9381807b805c9be34a9c7b5293",
+      "matching": {
+        "clean": {
+          "field": {
+            "total_vector_rmse_px": 0.05651998675252895,
+            "mean_error_vector_rms_px": 0.05313633867385452,
+            "temporal_error_vector_rms_px": 0.01926235745809827,
+            "estimated_mean_vector_rms_px": 0.05313633867385451,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.052364174815973434,
+            "mean_error_vector_rms_px": 0.049340024843907725,
+            "temporal_error_vector_rms_px": 0.017537638169391082,
+            "estimated_mean_vector_rms_px": 0.04934002484390772,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "clean_stack": {
+            "rmse_adu": 0.078365379318399,
+            "gradient_vector_rmse_adu_per_px": 0.013703939291945385
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.040951349489935174,
+            "accepted": 0.04183910948522583,
+            "common": 0.041342333176302704
+          },
+          "accepted_ap_counts": [
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            100,
+            100,
+            100,
+            100,
+            100,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            102,
+            102,
+            102,
+            102,
+            102,
+            107,
+            107
+          ]
+        },
+        "a": {
+          "field": {
+            "total_vector_rmse_px": 0.242968288486044,
+            "mean_error_vector_rms_px": 0.1586545279696814,
+            "temporal_error_vector_rms_px": 0.1840172001867076,
+            "estimated_mean_vector_rms_px": 0.15865452796968138,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.22228890182210714,
+            "mean_error_vector_rms_px": 0.141181503808654,
+            "temporal_error_vector_rms_px": 0.1716978126115927,
+            "estimated_mean_vector_rms_px": 0.14118150380865396,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "clean_stack": {
+            "rmse_adu": 0.22487761601580983,
+            "gradient_vector_rmse_adu_per_px": 0.023776189745909188
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.18138407669719522,
+            "accepted": 0.1760339000933541,
+            "common": 0.1711836052352418
+          },
+          "accepted_ap_counts": [
+            107,
+            105,
+            107,
+            106,
+            107,
+            106,
+            106,
+            105,
+            106,
+            100,
+            99,
+            99,
+            100,
+            97,
+            94,
+            94,
+            95,
+            95,
+            95,
+            96,
+            96,
+            94,
+            96,
+            96,
+            96,
+            100,
+            101,
+            101,
+            102,
+            102,
+            107,
+            107
+          ]
+        },
+        "b": {
+          "field": {
+            "total_vector_rmse_px": 0.27050169362884885,
+            "mean_error_vector_rms_px": 0.18897483108940807,
+            "temporal_error_vector_rms_px": 0.19354503215222965,
+            "estimated_mean_vector_rms_px": 0.18897483108940813,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.24868046679859868,
+            "mean_error_vector_rms_px": 0.17041914101361486,
+            "temporal_error_vector_rms_px": 0.181105745196975,
+            "estimated_mean_vector_rms_px": 0.17041914101361488,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "clean_stack": {
+            "rmse_adu": 0.2775233152764534,
+            "gradient_vector_rmse_adu_per_px": 0.029707232488990327
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.1888456904944745,
+            "accepted": 0.18348832446881985,
+            "common": 0.17750459253982018
+          },
+          "accepted_ap_counts": [
+            107,
+            106,
+            106,
+            106,
+            107,
+            107,
+            106,
+            107,
+            106,
+            98,
+            99,
+            100,
+            99,
+            99,
+            95,
+            96,
+            95,
+            96,
+            96,
+            95,
+            95,
+            95,
+            94,
+            93,
+            96,
+            102,
+            102,
+            102,
+            101,
+            99,
+            107,
+            107
+          ]
+        }
+      },
+      "common_accepted_ap_counts": [
+        107,
+        105,
+        106,
+        105,
+        107,
+        106,
+        105,
+        105,
+        105,
+        98,
+        99,
+        99,
+        99,
+        97,
+        93,
+        94,
+        94,
+        95,
+        95,
+        95,
+        95,
+        93,
+        94,
+        93,
+        96,
+        100,
+        101,
+        101,
+        101,
+        99,
+        107,
+        107
+      ],
+      "image_errors": {
+        "no_noise_match": {
+          "rmse_adu": 0.24443971176026855,
+          "gradient_vector_rmse_adu_per_px": 0.2306947797773265
+        },
+        "noisy_match": {
+          "rmse_adu": 0.32287112450662997,
+          "gradient_vector_rmse_adu_per_px": 0.23248553403442065
+        },
+        "independent_match": {
+          "rmse_adu": 0.3604349723270646,
+          "gradient_vector_rmse_adu_per_px": 0.23113285200287703
+        },
+        "oracle": {
+          "rmse_adu": 0.23120032949259636,
+          "gradient_vector_rmse_adu_per_px": 0.23057139263420962
+        },
+        "paired_same": {
+          "rmse_adu": 0.29747037470970455,
+          "gradient_vector_rmse_adu_per_px": 0.1658482963666976
+        },
+        "paired_cross": {
+          "rmse_adu": 0.2969767183692522,
+          "gradient_vector_rmse_adu_per_px": 0.16568060998831297
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.1832568508176347,
+          "gradient_vector_rmse_adu_per_px": 0.16437102233559925
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.16407609197315168,
+          "gradient_vector_rmse_adu_per_px": 0.16382576135655647
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "paired_same_minus_cross": {
+        "rmse_adu": 0.06764384785968112,
+        "gradient_vector_rmse_adu_per_px": 0.0684747762405582
+      },
+      "prior_noisy_stack_max_difference_adu": 0.0,
+      "paired_clean_max_difference_adu": 0.0,
+      "stage_sha256": {
+        "no_noise_match": "a33f55533a65f41d2963473de7808ab8c6927d89da28d9ba1796ad38e2a9d80a",
+        "noisy_match": "0a9404d5104309f1a17159d5d3a1ba79bf5538de6abcc158e951d2a3cdb34b85",
+        "independent_match": "6515d9df12462a2aabe7c4b87da76fae51d826eff392df6c31f1000a811abebc",
+        "oracle": "d12476fa0ede1890cd1ab36e779be26356e1ecdab93a8bd65c8038efbcd0d076",
+        "paired_same": "19cc627dda1adc177c6da00844e85bec92f9917ae2a4075a4d673ef98b447d80",
+        "paired_cross": "772e5adaa27e9a7a779ac78b11c2a180001471ffebd258d9b5ea2c64ab32d6f5",
+        "paired_no_noise_match": "4456dd8c03cb1ce2ce3ee63db7b327e5b665b4a0260ebe1886893f71add9ae7e",
+        "paired_oracle": "6ba627ff375f0d4796327b6c48d3dd3562f387c6164179f74d42c870d7253cea",
+        "target": "6713381b94524bb1b3e5cc221694b075e6f004166430d079c68810fe1d8772ef"
+      },
+      "sharpened_error_linear_0_1": {
+        "no_noise_match": {
+          "rmse_adu": 0.008762242272496223,
+          "gradient_vector_rmse_adu_per_px": 0.009007209911942482
+        },
+        "noisy_match": {
+          "rmse_adu": 0.008825421333312988,
+          "gradient_vector_rmse_adu_per_px": 0.009066294878721237
+        },
+        "independent_match": {
+          "rmse_adu": 0.00872887670993805,
+          "gradient_vector_rmse_adu_per_px": 0.008917462080717087
+        },
+        "oracle": {
+          "rmse_adu": 0.008780859410762787,
+          "gradient_vector_rmse_adu_per_px": 0.009012644179165363
+        },
+        "paired_same": {
+          "rmse_adu": 0.007154399529099464,
+          "gradient_vector_rmse_adu_per_px": 0.006983510684221983
+        },
+        "paired_cross": {
+          "rmse_adu": 0.006662284955382347,
+          "gradient_vector_rmse_adu_per_px": 0.0067422338761389256
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.00689895311370492,
+          "gradient_vector_rmse_adu_per_px": 0.006878855638206005
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.006714048329740763,
+          "gradient_vector_rmse_adu_per_px": 0.006792345549911261
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "sharpened_same_minus_cross": {
+        "rmse_adu": 0.0017736336449161172,
+        "gradient_vector_rmse_adu_per_px": 0.0014871873427182436
+      },
+      "sharpened_vs_same_source_oracle": {
+        "no_noise_match": {
+          "rmse_adu": 0.0006665806868113577,
+          "gradient_vector_rmse_adu_per_px": 0.0005900104879401624
+        },
+        "noisy_match": {
+          "rmse_adu": 0.0017262366600334644,
+          "gradient_vector_rmse_adu_per_px": 0.001609852653928101
+        },
+        "independent_match": {
+          "rmse_adu": 0.0017926819855347276,
+          "gradient_vector_rmse_adu_per_px": 0.001708551892079413
+        },
+        "oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        },
+        "paired_same": {
+          "rmse_adu": 0.0016531851142644882,
+          "gradient_vector_rmse_adu_per_px": 0.0013546714326366782
+        },
+        "paired_cross": {
+          "rmse_adu": 0.0013042689533904195,
+          "gradient_vector_rmse_adu_per_px": 0.001263952348381281
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.0007435537991113961,
+          "gradient_vector_rmse_adu_per_px": 0.0005911911721341312
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "fit_summary": {
+        "clean": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        },
+        "b": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        }
+      }
+    },
+    "long_motion": {
+      "prior_raw_sha256": "f1bfed0a8b726479c915052f286f82d194a93c90f4cddaa306f2068d09f18324",
+      "raw_sha256": "e31450ed5f6069854b2c889a84b8f56b49e1a467725a4bfd0560aca001983338",
+      "matching": {
+        "clean": {
+          "field": {
+            "total_vector_rmse_px": 0.211325108561413,
+            "mean_error_vector_rms_px": 0.0511297310572333,
+            "temporal_error_vector_rms_px": 0.20504646329675696,
+            "estimated_mean_vector_rms_px": 0.051129731057233285,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.1842965246921617,
+            "mean_error_vector_rms_px": 0.04743155312964953,
+            "temporal_error_vector_rms_px": 0.17808833982413813,
+            "estimated_mean_vector_rms_px": 0.04743155312964951,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.07446098682378763,
+            "gradient_vector_rmse_adu_per_px": 0.014201341928799092
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.06479001519616019,
+            "accepted": 0.06332512902446577,
+            "common": 0.06304910823425905
+          },
+          "accepted_ap_counts": [
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            102,
+            102,
+            102,
+            102,
+            102,
+            102,
+            102
+          ]
+        },
+        "a": {
+          "field": {
+            "total_vector_rmse_px": 0.3112427349604695,
+            "mean_error_vector_rms_px": 0.16334883782154114,
+            "temporal_error_vector_rms_px": 0.2649324390255466,
+            "estimated_mean_vector_rms_px": 0.16334883782154117,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.27928977815518696,
+            "mean_error_vector_rms_px": 0.1457436725160803,
+            "temporal_error_vector_rms_px": 0.23824685119325206,
+            "estimated_mean_vector_rms_px": 0.1457436725160803,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.23555090168248613,
+            "gradient_vector_rmse_adu_per_px": 0.024962555725197125
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.19027354079668712,
+            "accepted": 0.18631464359442368,
+            "common": 0.1817535514686485
+          },
+          "accepted_ap_counts": [
+            107,
+            107,
+            107,
+            106,
+            106,
+            106,
+            107,
+            105,
+            106,
+            100,
+            99,
+            99,
+            100,
+            97,
+            99,
+            99,
+            95,
+            95,
+            95,
+            96,
+            96,
+            95,
+            96,
+            96,
+            95,
+            101,
+            101,
+            101,
+            102,
+            102,
+            102,
+            102
+          ]
+        },
+        "b": {
+          "field": {
+            "total_vector_rmse_px": 0.3464290027799758,
+            "mean_error_vector_rms_px": 0.1872659488783708,
+            "temporal_error_vector_rms_px": 0.29145242897909024,
+            "estimated_mean_vector_rms_px": 0.18726594887837086,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.3109160081094891,
+            "mean_error_vector_rms_px": 0.16951176622551828,
+            "temporal_error_vector_rms_px": 0.26064252379426595,
+            "estimated_mean_vector_rms_px": 0.16951176622551828,
+            "true_mean_vector_rms_px": 3.0761995721199193e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.2798544058335252,
+            "gradient_vector_rmse_adu_per_px": 0.03017279162569394
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.19492969992843678,
+            "accepted": 0.18937828891725678,
+            "common": 0.18564207643956468
+          },
+          "accepted_ap_counts": [
+            107,
+            106,
+            104,
+            107,
+            106,
+            107,
+            107,
+            107,
+            107,
+            98,
+            99,
+            100,
+            99,
+            98,
+            98,
+            100,
+            95,
+            96,
+            96,
+            96,
+            96,
+            95,
+            94,
+            95,
+            95,
+            102,
+            102,
+            102,
+            100,
+            99,
+            102,
+            101
+          ]
+        }
+      },
+      "common_accepted_ap_counts": [
+        107,
+        106,
+        104,
+        106,
+        105,
+        106,
+        107,
+        105,
+        106,
+        98,
+        99,
+        99,
+        99,
+        96,
+        97,
+        99,
+        94,
+        95,
+        95,
+        96,
+        96,
+        94,
+        94,
+        95,
+        95,
+        101,
+        101,
+        101,
+        100,
+        99,
+        102,
+        101
+      ],
+      "image_errors": {
+        "no_noise_match": {
+          "rmse_adu": 0.25169074669641495,
+          "gradient_vector_rmse_adu_per_px": 0.23976554440582076
+        },
+        "noisy_match": {
+          "rmse_adu": 0.3357540458632354,
+          "gradient_vector_rmse_adu_per_px": 0.24020266559999356
+        },
+        "independent_match": {
+          "rmse_adu": 0.36831899366430765,
+          "gradient_vector_rmse_adu_per_px": 0.240861012603299
+        },
+        "oracle": {
+          "rmse_adu": 0.23690023321324877,
+          "gradient_vector_rmse_adu_per_px": 0.23650697245757624
+        },
+        "paired_same": {
+          "rmse_adu": 0.305564509073446,
+          "gradient_vector_rmse_adu_per_px": 0.17082142625712915
+        },
+        "paired_cross": {
+          "rmse_adu": 0.30511874398354477,
+          "gradient_vector_rmse_adu_per_px": 0.1703278844735253
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.18641085477679536,
+          "gradient_vector_rmse_adu_per_px": 0.16967121105344043
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.16793073875624187,
+          "gradient_vector_rmse_adu_per_px": 0.16754586876824068
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "paired_same_minus_cross": {
+        "rmse_adu": 0.0673283179686554,
+        "gradient_vector_rmse_adu_per_px": 0.06741608774066911
+      },
+      "prior_noisy_stack_max_difference_adu": 0.0,
+      "paired_clean_max_difference_adu": 0.0,
+      "stage_sha256": {
+        "no_noise_match": "f956a2fd47214e2ff2b98b1a2d3232d144f1d9671efcb5f6537ec4c3d18eb0e9",
+        "noisy_match": "908b54db2022614d2445967c931a9b474f4f63fbfe237735a3dc1edf43ea920b",
+        "independent_match": "6a25cc79ea84485d28db939b4d7ee1ac6c47245c91300a69462be4273c43809e",
+        "oracle": "d0180ebca911d76fb54fbdc41499f4f1ef9e52ec04a3fb4416050208d4e8d067",
+        "paired_same": "60d632de284a0e7f9875acfcbcae9c9fd44b7ff61d1eaa7af0b321dfbdd2d359",
+        "paired_cross": "f87f39a0ca98fd5f8f04eccb1c8fe2c01acf22a57f731360132b24ee3dc5bfaf",
+        "paired_no_noise_match": "b4bf83d5d0037962e1d5f5edf7d2cc07d964e921302aca872830d652701d6dc3",
+        "paired_oracle": "b08d307e0d55917863f475a4562c2f8f61357f27e9e059e33e030dfded6d2e50",
+        "target": "e63dedcfcb922addd4fdf42d6a042c8487937ddb2f8c456bf4e5aba2f97675c2"
+      },
+      "sharpened_error_linear_0_1": {
+        "no_noise_match": {
+          "rmse_adu": 0.010249597951769829,
+          "gradient_vector_rmse_adu_per_px": 0.010248452425003052
+        },
+        "noisy_match": {
+          "rmse_adu": 0.009966552257537842,
+          "gradient_vector_rmse_adu_per_px": 0.010075549595057964
+        },
+        "independent_match": {
+          "rmse_adu": 0.010629589669406414,
+          "gradient_vector_rmse_adu_per_px": 0.010495134629309177
+        },
+        "oracle": {
+          "rmse_adu": 0.01024358719587326,
+          "gradient_vector_rmse_adu_per_px": 0.010241850279271603
+        },
+        "paired_same": {
+          "rmse_adu": 0.006971457973122597,
+          "gradient_vector_rmse_adu_per_px": 0.007019193843007088
+        },
+        "paired_cross": {
+          "rmse_adu": 0.00703740818426013,
+          "gradient_vector_rmse_adu_per_px": 0.007118942216038704
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.0069830757565796375,
+          "gradient_vector_rmse_adu_per_px": 0.007057979702949524
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.006970053073018789,
+          "gradient_vector_rmse_adu_per_px": 0.007058623246848583
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "sharpened_same_minus_cross": {
+        "rmse_adu": 0.0014817507471889257,
+        "gradient_vector_rmse_adu_per_px": 0.0013478192267939448
+      },
+      "sharpened_vs_same_source_oracle": {
+        "no_noise_match": {
+          "rmse_adu": 0.0010229522595182061,
+          "gradient_vector_rmse_adu_per_px": 0.000988900545053184
+        },
+        "noisy_match": {
+          "rmse_adu": 0.0021280222572386265,
+          "gradient_vector_rmse_adu_per_px": 0.001878473092801869
+        },
+        "independent_match": {
+          "rmse_adu": 0.002129521919414401,
+          "gradient_vector_rmse_adu_per_px": 0.001982485642656684
+        },
+        "oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        },
+        "paired_same": {
+          "rmse_adu": 0.001469149487093091,
+          "gradient_vector_rmse_adu_per_px": 0.0013382125180214643
+        },
+        "paired_cross": {
+          "rmse_adu": 0.0013528460403904319,
+          "gradient_vector_rmse_adu_per_px": 0.0013035748852416873
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.0007755992119200528,
+          "gradient_vector_rmse_adu_per_px": 0.0007287263870239258
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "fit_summary": {
+        "clean": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        },
+        "b": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        }
+      }
+    },
+    "short_motion": {
+      "prior_raw_sha256": "1934bf13aeab82330774eb4fc190101277530ad481cff57ae37e7658f872c779",
+      "raw_sha256": "3a6fe09dd17d316fd06c9691206eed7f19174f829d69dc093e606066381f286d",
+      "matching": {
+        "clean": {
+          "field": {
+            "total_vector_rmse_px": 0.7513125216697089,
+            "mean_error_vector_rms_px": 0.04737276657500641,
+            "temporal_error_vector_rms_px": 0.7498175286059648,
+            "estimated_mean_vector_rms_px": 0.04737276657500639,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.7071726960310456,
+            "mean_error_vector_rms_px": 0.043987051399685693,
+            "temporal_error_vector_rms_px": 0.7058033446513239,
+            "estimated_mean_vector_rms_px": 0.04398705139968569,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.06850913273695458,
+            "gradient_vector_rmse_adu_per_px": 0.015271964665725961
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.0997063730157654,
+            "accepted": 0.0960572839688947,
+            "common": 0.09381878518894084
+          },
+          "accepted_ap_counts": [
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            107,
+            100,
+            100,
+            100,
+            100,
+            100,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            102,
+            102,
+            102,
+            102,
+            102,
+            107,
+            107
+          ]
+        },
+        "a": {
+          "field": {
+            "total_vector_rmse_px": 0.7882775051109902,
+            "mean_error_vector_rms_px": 0.1499900270266496,
+            "temporal_error_vector_rms_px": 0.7738762283831642,
+            "estimated_mean_vector_rms_px": 0.1499900270266496,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.7413627999660425,
+            "mean_error_vector_rms_px": 0.13437619303508838,
+            "temporal_error_vector_rms_px": 0.7290828758919612,
+            "estimated_mean_vector_rms_px": 0.13437619303508838,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.21601869403216864,
+            "gradient_vector_rmse_adu_per_px": 0.022971768059605446
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.20523566737803456,
+            "accepted": 0.1969660623360976,
+            "common": 0.19011216911576556
+          },
+          "accepted_ap_counts": [
+            106,
+            106,
+            106,
+            106,
+            105,
+            105,
+            105,
+            105,
+            105,
+            100,
+            99,
+            99,
+            100,
+            97,
+            95,
+            95,
+            95,
+            95,
+            95,
+            96,
+            96,
+            95,
+            96,
+            95,
+            95,
+            101,
+            100,
+            101,
+            100,
+            102,
+            106,
+            106
+          ]
+        },
+        "b": {
+          "field": {
+            "total_vector_rmse_px": 0.815613329261466,
+            "mean_error_vector_rms_px": 0.18007137068824774,
+            "temporal_error_vector_rms_px": 0.7954868976466029,
+            "estimated_mean_vector_rms_px": 0.18007137068824777,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.7666002827531155,
+            "mean_error_vector_rms_px": 0.1638314539796022,
+            "temporal_error_vector_rms_px": 0.7488893430968846,
+            "estimated_mean_vector_rms_px": 0.1638314539796022,
+            "true_mean_vector_rms_px": 3.1260777423967143e-16
+          },
+          "clean_stack": {
+            "rmse_adu": 0.26999817208934584,
+            "gradient_vector_rmse_adu_per_px": 0.02895354660069828
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.21048117447251985,
+            "accepted": 0.20020252532201668,
+            "common": 0.19423391554171476
+          },
+          "accepted_ap_counts": [
+            107,
+            106,
+            103,
+            106,
+            106,
+            107,
+            107,
+            104,
+            107,
+            96,
+            99,
+            99,
+            99,
+            98,
+            95,
+            96,
+            95,
+            96,
+            96,
+            96,
+            95,
+            94,
+            95,
+            93,
+            95,
+            102,
+            101,
+            101,
+            100,
+            99,
+            107,
+            105
+          ]
+        }
+      },
+      "common_accepted_ap_counts": [
+        106,
+        105,
+        102,
+        105,
+        104,
+        105,
+        105,
+        103,
+        105,
+        96,
+        99,
+        98,
+        99,
+        96,
+        94,
+        95,
+        94,
+        95,
+        95,
+        96,
+        95,
+        93,
+        95,
+        92,
+        95,
+        101,
+        100,
+        100,
+        99,
+        99,
+        106,
+        104
+      ],
+      "image_errors": {
+        "no_noise_match": {
+          "rmse_adu": 0.247686447758725,
+          "gradient_vector_rmse_adu_per_px": 0.2378124871082717
+        },
+        "noisy_match": {
+          "rmse_adu": 0.3193110196588602,
+          "gradient_vector_rmse_adu_per_px": 0.23649718318535207
+        },
+        "independent_match": {
+          "rmse_adu": 0.35872484221865036,
+          "gradient_vector_rmse_adu_per_px": 0.23756536381489024
+        },
+        "oracle": {
+          "rmse_adu": 0.24130364441908558,
+          "gradient_vector_rmse_adu_per_px": 0.24176971517115028
+        },
+        "paired_same": {
+          "rmse_adu": 0.2915619430837196,
+          "gradient_vector_rmse_adu_per_px": 0.16894928746072604
+        },
+        "paired_cross": {
+          "rmse_adu": 0.29160619570106333,
+          "gradient_vector_rmse_adu_per_px": 0.16940419252687158
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.18300434520745576,
+          "gradient_vector_rmse_adu_per_px": 0.1696132049584551
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.17004562083927816,
+          "gradient_vector_rmse_adu_per_px": 0.1698196207769119
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "paired_same_minus_cross": {
+        "rmse_adu": 0.0674856507177386,
+        "gradient_vector_rmse_adu_per_px": 0.06854009708111741
+      },
+      "prior_noisy_stack_max_difference_adu": 0.0,
+      "paired_clean_max_difference_adu": 0.0,
+      "stage_sha256": {
+        "no_noise_match": "d8c8a8849f618c5f50639ea24f074ddff0de5056805e2406741f52bad486920e",
+        "noisy_match": "1989b5eb8d5544c010c0c8e543d89c92ddd78b0ee97146fb6544ff0723afe5f7",
+        "independent_match": "338aba16824c011869f6e355fb55a7356ec59c525a689fd2c4bfdb365570a1bc",
+        "oracle": "47345a87138f9edf438c69ace667b9c6baba9249a0b24a810913a91c74cbb4f3",
+        "paired_same": "165114e8196d7306925590b262bd5eda2434a8b3624064fb70d0735f08d68344",
+        "paired_cross": "20bba26ed07ee27a618f8e2fc52ba873089a20b5ee1ec5e51198bb191b433ef1",
+        "paired_no_noise_match": "118517d4b9e548a20f30cfabbe4fbb7ed75f3d1c8fb7a3b6dc3f6941a687982e",
+        "paired_oracle": "999612db2f193028533cfef8992ce60d933135e10a4218430ded17dd3c610e58",
+        "target": "19b776435ac3e48b9244737a493e36bef2c41843fa36f914e6cbd4109ea5d36d"
+      },
+      "sharpened_error_linear_0_1": {
+        "no_noise_match": {
+          "rmse_adu": 0.010352489538490772,
+          "gradient_vector_rmse_adu_per_px": 0.010151959955692291
+        },
+        "noisy_match": {
+          "rmse_adu": 0.010105359368026257,
+          "gradient_vector_rmse_adu_per_px": 0.010029759258031845
+        },
+        "independent_match": {
+          "rmse_adu": 0.010811976157128811,
+          "gradient_vector_rmse_adu_per_px": 0.01040307804942131
+        },
+        "oracle": {
+          "rmse_adu": 0.009856849908828735,
+          "gradient_vector_rmse_adu_per_px": 0.009865017607808113
+        },
+        "paired_same": {
+          "rmse_adu": 0.006659030914306641,
+          "gradient_vector_rmse_adu_per_px": 0.006762977223843336
+        },
+        "paired_cross": {
+          "rmse_adu": 0.006740772631019354,
+          "gradient_vector_rmse_adu_per_px": 0.006807116791605949
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.006746004801243544,
+          "gradient_vector_rmse_adu_per_px": 0.00682832533493638
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.006777371745556593,
+          "gradient_vector_rmse_adu_per_px": 0.0068014622665941715
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "sharpened_same_minus_cross": {
+        "rmse_adu": 0.001429484342224896,
+        "gradient_vector_rmse_adu_per_px": 0.0013627391308546066
+      },
+      "sharpened_vs_same_source_oracle": {
+        "no_noise_match": {
+          "rmse_adu": 0.00287519465200603,
+          "gradient_vector_rmse_adu_per_px": 0.002707221545279026
+        },
+        "noisy_match": {
+          "rmse_adu": 0.002973268972709775,
+          "gradient_vector_rmse_adu_per_px": 0.0028965496458113194
+        },
+        "independent_match": {
+          "rmse_adu": 0.00369434617459774,
+          "gradient_vector_rmse_adu_per_px": 0.003281614976003766
+        },
+        "oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        },
+        "paired_same": {
+          "rmse_adu": 0.0021870217751711607,
+          "gradient_vector_rmse_adu_per_px": 0.0021048998460173607
+        },
+        "paired_cross": {
+          "rmse_adu": 0.0021172857377678156,
+          "gradient_vector_rmse_adu_per_px": 0.002089565619826317
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.0018419241532683372,
+          "gradient_vector_rmse_adu_per_px": 0.0018106893403455615
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "fit_summary": {
+        "clean": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        },
+        "b": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        }
+      }
+    },
+    "short_offset": {
+      "prior_raw_sha256": "a2e28e10f27420c207ecc0d73c3db0b7e794873b305c14b4dcc70196538e1c6b",
+      "raw_sha256": "82bfea41f8b81979c67b223750d2797553cfe61fbed0ff46631a604c35120473",
+      "matching": {
+        "clean": {
+          "field": {
+            "total_vector_rmse_px": 0.9277311672964331,
+            "mean_error_vector_rms_px": 0.5374914048811692,
+            "temporal_error_vector_rms_px": 0.7561667200109251,
+            "estimated_mean_vector_rms_px": 0.8002774375637521,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.8786137868015831,
+            "mean_error_vector_rms_px": 0.5145957448980413,
+            "temporal_error_vector_rms_px": 0.7121470393750481,
+            "estimated_mean_vector_rms_px": 0.8054594286352558,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "clean_stack": {
+            "rmse_adu": 0.2650785160976497,
+            "gradient_vector_rmse_adu_per_px": 0.058268278101120397
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.11518489374384894,
+            "accepted": 0.11274734428553695,
+            "common": 0.10996669855592901
+          },
+          "accepted_ap_counts": [
+            107,
+            107,
+            107,
+            106,
+            106,
+            106,
+            106,
+            106,
+            106,
+            99,
+            99,
+            99,
+            99,
+            99,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            96,
+            102,
+            102,
+            102,
+            102,
+            102,
+            107,
+            107
+          ]
+        },
+        "a": {
+          "field": {
+            "total_vector_rmse_px": 0.9568398610365924,
+            "mean_error_vector_rms_px": 0.5531800292965231,
+            "temporal_error_vector_rms_px": 0.7807268247319791,
+            "estimated_mean_vector_rms_px": 0.8122018863052445,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.9059619754328344,
+            "mean_error_vector_rms_px": 0.5289657147966751,
+            "temporal_error_vector_rms_px": 0.7355014435742786,
+            "estimated_mean_vector_rms_px": 0.8174771072850525,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "clean_stack": {
+            "rmse_adu": 0.3295605701058813,
+            "gradient_vector_rmse_adu_per_px": 0.05936551353392862
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.22242953718344105,
+            "accepted": 0.20834136691571054,
+            "common": 0.1988310670223749
+          },
+          "accepted_ap_counts": [
+            107,
+            106,
+            105,
+            104,
+            106,
+            103,
+            105,
+            105,
+            106,
+            100,
+            98,
+            98,
+            98,
+            96,
+            95,
+            94,
+            95,
+            95,
+            95,
+            96,
+            96,
+            95,
+            96,
+            96,
+            96,
+            100,
+            101,
+            101,
+            102,
+            102,
+            107,
+            106
+          ]
+        },
+        "b": {
+          "field": {
+            "total_vector_rmse_px": 0.9713055477767251,
+            "mean_error_vector_rms_px": 0.5492159799220985,
+            "temporal_error_vector_rms_px": 0.8011218849464059,
+            "estimated_mean_vector_rms_px": 0.811149553648893,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "inner_field": {
+            "total_vector_rmse_px": 0.9185978738126829,
+            "mean_error_vector_rms_px": 0.5242840771596399,
+            "temporal_error_vector_rms_px": 0.7542865902361485,
+            "estimated_mean_vector_rms_px": 0.8150787744986594,
+            "true_mean_vector_rms_px": 0.65127120042113
+          },
+          "clean_stack": {
+            "rmse_adu": 0.37234997545428156,
+            "gradient_vector_rmse_adu_per_px": 0.06258492602522593
+          },
+          "observation_vector_rmse_px": {
+            "all": 0.21999273242977888,
+            "accepted": 0.21068557663251242,
+            "common": 0.20519647100853614
+          },
+          "accepted_ap_counts": [
+            107,
+            105,
+            104,
+            104,
+            104,
+            105,
+            106,
+            104,
+            106,
+            97,
+            97,
+            99,
+            99,
+            98,
+            94,
+            96,
+            95,
+            95,
+            96,
+            96,
+            96,
+            95,
+            95,
+            95,
+            96,
+            102,
+            102,
+            102,
+            100,
+            99,
+            106,
+            105
+          ]
+        }
+      },
+      "common_accepted_ap_counts": [
+        107,
+        105,
+        102,
+        103,
+        104,
+        102,
+        104,
+        102,
+        104,
+        96,
+        95,
+        96,
+        97,
+        95,
+        93,
+        94,
+        94,
+        94,
+        95,
+        96,
+        96,
+        94,
+        95,
+        95,
+        96,
+        100,
+        101,
+        101,
+        100,
+        99,
+        106,
+        104
+      ],
+      "image_errors": {
+        "no_noise_match": {
+          "rmse_adu": 0.3569970083972289,
+          "gradient_vector_rmse_adu_per_px": 0.24443189618103647
+        },
+        "noisy_match": {
+          "rmse_adu": 0.4063030719747181,
+          "gradient_vector_rmse_adu_per_px": 0.2439240592471952
+        },
+        "independent_match": {
+          "rmse_adu": 0.4415776769670696,
+          "gradient_vector_rmse_adu_per_px": 0.24434990655252356
+        },
+        "oracle": {
+          "rmse_adu": 0.24328988839006316,
+          "gradient_vector_rmse_adu_per_px": 0.24365121819807165
+        },
+        "paired_same": {
+          "rmse_adu": 0.3848325837223895,
+          "gradient_vector_rmse_adu_per_px": 0.17777289891252662
+        },
+        "paired_cross": {
+          "rmse_adu": 0.38437210679305317,
+          "gradient_vector_rmse_adu_per_px": 0.17752275624070513
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.3132941757073986,
+          "gradient_vector_rmse_adu_per_px": 0.17794804909623102
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.17109422376207686,
+          "gradient_vector_rmse_adu_per_px": 0.1703718182667392
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "paired_same_minus_cross": {
+        "rmse_adu": 0.06557882877829989,
+        "gradient_vector_rmse_adu_per_px": 0.06609793293799124
+      },
+      "prior_noisy_stack_max_difference_adu": 0.0,
+      "paired_clean_max_difference_adu": 0.0,
+      "stage_sha256": {
+        "no_noise_match": "5a7d639ec6f757752cf57bb0888d3d161603955e2f2e3885cdbd73f22b9d855b",
+        "noisy_match": "f15fd1af7cd4574161466121476635c0af7c75bddfcead6a8686b401edc0086c",
+        "independent_match": "b64bc05843f61f44f7632a097bd633cdb3c26dfc9b15eec405887b58c7057ce2",
+        "oracle": "c8d886c75be36795530e1d73297b48655094198032007994b505a26c91aa03a0",
+        "paired_same": "5d2d6c289b9500ac143a0f382f0f78edc934ad8d1cc4742ebfcbe994185ff7c8",
+        "paired_cross": "4381478492d3fb950a00c13093c4278a9cef346722c4e7747a39c66ae9ad44f6",
+        "paired_no_noise_match": "82e2147da8a4307f6ee2ef0204903e262ada2139ad753de2411b43e605e8820f",
+        "paired_oracle": "f6d7938977f01bbd1caeb698d2c9ad8cf67554e7bc87778ccb2e6eb62ce51b22",
+        "target": "649ee6bb044ce6f8a6ae6703df458a95db6fbffba74b1bffc9c91869a8229fe5"
+      },
+      "sharpened_error_linear_0_1": {
+        "no_noise_match": {
+          "rmse_adu": 0.01077469065785408,
+          "gradient_vector_rmse_adu_per_px": 0.010722305625677109
+        },
+        "noisy_match": {
+          "rmse_adu": 0.01111650001257658,
+          "gradient_vector_rmse_adu_per_px": 0.010891105979681015
+        },
+        "independent_match": {
+          "rmse_adu": 0.011332260444760323,
+          "gradient_vector_rmse_adu_per_px": 0.011015602387487888
+        },
+        "oracle": {
+          "rmse_adu": 0.011992301791906357,
+          "gradient_vector_rmse_adu_per_px": 0.011328743770718575
+        },
+        "paired_same": {
+          "rmse_adu": 0.007213029079139233,
+          "gradient_vector_rmse_adu_per_px": 0.007241867948323488
+        },
+        "paired_cross": {
+          "rmse_adu": 0.007154502905905247,
+          "gradient_vector_rmse_adu_per_px": 0.0072004892863333225
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.006972509436309338,
+          "gradient_vector_rmse_adu_per_px": 0.007099810056388378
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.007165056653320789,
+          "gradient_vector_rmse_adu_per_px": 0.007152058184146881
+        },
+        "target": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "sharpened_same_minus_cross": {
+        "rmse_adu": 0.0013621123507618904,
+        "gradient_vector_rmse_adu_per_px": 0.001325241755694151
+      },
+      "sharpened_vs_same_source_oracle": {
+        "no_noise_match": {
+          "rmse_adu": 0.004336298443377018,
+          "gradient_vector_rmse_adu_per_px": 0.00374866952188313
+        },
+        "noisy_match": {
+          "rmse_adu": 0.004220107104629278,
+          "gradient_vector_rmse_adu_per_px": 0.003912367857992649
+        },
+        "independent_match": {
+          "rmse_adu": 0.004321012180298567,
+          "gradient_vector_rmse_adu_per_px": 0.004064775537699461
+        },
+        "oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        },
+        "paired_same": {
+          "rmse_adu": 0.002967388601973653,
+          "gradient_vector_rmse_adu_per_px": 0.0028655421920120716
+        },
+        "paired_cross": {
+          "rmse_adu": 0.002992459340021014,
+          "gradient_vector_rmse_adu_per_px": 0.0028815248515456915
+        },
+        "paired_no_noise_match": {
+          "rmse_adu": 0.0029670994263142347,
+          "gradient_vector_rmse_adu_per_px": 0.002711383393034339
+        },
+        "paired_oracle": {
+          "rmse_adu": 0.0,
+          "gradient_vector_rmse_adu_per_px": 0.0
+        }
+      },
+      "fit_summary": {
+        "clean": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        },
+        "b": {
+          "guard_rejections": 0,
+          "insufficient_points": 0
+        }
+      }
+    }
+  },
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "long_motion_independent_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_independent_match.png",
+        "source_sha256": "73003c65ca131b0b5e5f50305c19505d318154bfb3050a851f722bfe2284c71f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_independent_match_sharpened.png",
+        "output_sha256": "0754904f3caa66915ff77004de4cdb9a8ce7a38379aa7539cf2ed3bcb714a4d1"
+      },
+      "long_motion_noisy_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_noisy_match.png",
+        "source_sha256": "0b370cdb3c8f92cec61dc48c78b3ae3f2548cd8abd9bdf156ce5e4679b751df4",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_noisy_match_sharpened.png",
+        "output_sha256": "2c73dcc902ff538f910a4e07f5fd8547a8cfea374c92a24d11bcf27e4b987a24"
+      },
+      "long_motion_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_no_noise_match.png",
+        "source_sha256": "753eceee4a5e6e09482dd0d903cd2c41c3d900011c28ffc690bc0556ccf8839b",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_no_noise_match_sharpened.png",
+        "output_sha256": "a5b9703970b7c5331acb8660672a2118a0fb65dab1daaddee0b824d47de45e5a"
+      },
+      "long_motion_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_oracle.png",
+        "source_sha256": "ad280fe2356dd0d5a2bb5cef2077dd194b974288b79a7524504e1ed0875c61e6",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_oracle_sharpened.png",
+        "output_sha256": "dfec288085123e50d746942aa3c07e722353a8a85b030713863541cb9c7bf6b7"
+      },
+      "long_motion_paired_cross": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_paired_cross.png",
+        "source_sha256": "06fc38f672a1b2f6f620336590cf999373bd5e6ccbe27e7bca745bd180408285",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_paired_cross_sharpened.png",
+        "output_sha256": "f44d122781568dbef633226137ee9225c81d306bb0e131a331dc92c962ec1382"
+      },
+      "long_motion_paired_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_paired_no_noise_match.png",
+        "source_sha256": "3e8d1addfed69cc6bdd0c476a3e6603b73549fdf23b5925c80b5b7c817a0b2c9",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_paired_no_noise_match_sharpened.png",
+        "output_sha256": "4c161127e9f34f85d1dea9ce00a08ce56fa926433b03fb0213060aa36b51855b"
+      },
+      "long_motion_paired_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_paired_oracle.png",
+        "source_sha256": "97352bd6072053824ba809a01698361fb81851e549ebcf927c61c0d862e37315",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_paired_oracle_sharpened.png",
+        "output_sha256": "f84f0f5ce190a46ef271b008345f867e84628efdf695f85bce1f04840b06e515"
+      },
+      "long_motion_paired_same": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_paired_same.png",
+        "source_sha256": "932fd02935379cd859fa0c06921ab10175708c4f7f19baf05419d188f3b86295",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_paired_same_sharpened.png",
+        "output_sha256": "cab83dd2d123d5e9c496839c96e6950c58cd12a5f13f7229300d3c7d074d0ad2"
+      },
+      "long_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/long_motion_target.png",
+        "source_sha256": "0f4a67d16dec0ea918a3954320e17c81c0e2ab0d456339f4dfa5aa6ba586d487",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/long_motion_target_sharpened.png",
+        "output_sha256": "0b7c338d882be1761e39381b5ae968ef83e43f64dc8130f5c8876e9109fc2b76"
+      },
+      "short_motion_independent_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_independent_match.png",
+        "source_sha256": "9275f0f01fb14414e4f43b0c6d26aaaa524504d43a1e40a88afca03280207e41",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_independent_match_sharpened.png",
+        "output_sha256": "e5823068270639db702ba6e1fe88aa2d114c3d55c42c4d4bbe92a81533fcf134"
+      },
+      "short_motion_noisy_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_noisy_match.png",
+        "source_sha256": "651967354d96b6acff801d4c94ba89969922e1e06e1005b9761073bfedabd0cd",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_noisy_match_sharpened.png",
+        "output_sha256": "2788a7731d76e6621cfc1c1c117b9ca4b6dedeba358805d88560e3252a8d6687"
+      },
+      "short_motion_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_no_noise_match.png",
+        "source_sha256": "3e26e4dab49e11def9b20c68251da4b30f403b2a5735bd56c8b3d82fedbe317a",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_no_noise_match_sharpened.png",
+        "output_sha256": "f2c1b8495cd5bb7e99c8dac52d6c937a423373e242c44b21a93cd9f5e7735f02"
+      },
+      "short_motion_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_oracle.png",
+        "source_sha256": "7d75703548c84cc866a69a0457666045ef8c3bd68b1a11997161874ddb7662d7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_oracle_sharpened.png",
+        "output_sha256": "8ad40e3d30bb4f3cfe4e5c1be5ea14c1d0561fb3d014d71976ce915995888038"
+      },
+      "short_motion_paired_cross": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_paired_cross.png",
+        "source_sha256": "b6036b71078cd1c197eb3e817fff0e87de4195428a780b853b579cd17ca59bba",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_paired_cross_sharpened.png",
+        "output_sha256": "5a3f7790c1c733c52d0f1cbeebc7a4e80c7419dfce726ac3db914736a2e727ce"
+      },
+      "short_motion_paired_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_paired_no_noise_match.png",
+        "source_sha256": "890d1a582d5ed87c437649f5d5f6f255ab33fe37716870a0a9ec170a4c484431",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_paired_no_noise_match_sharpened.png",
+        "output_sha256": "6f6505008c23ed66a48912b0f212d6be04e71cc26e510ced43f2711d2b9a989e"
+      },
+      "short_motion_paired_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_paired_oracle.png",
+        "source_sha256": "60c7032a6f00f6efbbfedd4558d437ca6433c7cac410126de5027fd0a4adfe10",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_paired_oracle_sharpened.png",
+        "output_sha256": "17186941f3705fd5479989fef9cfb9cf15ac40f0d6a9790f94c0ce1cdd5a9b37"
+      },
+      "short_motion_paired_same": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_paired_same.png",
+        "source_sha256": "472b9d0c8f9102ef825bf40cc680e600a2d1db560d6e7a1f360c931b343fc591",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_paired_same_sharpened.png",
+        "output_sha256": "dcd0630f7e117f2d6f220ea4b6207fcf8a33b05a0b9fac2c1cd70a1a7cf11149"
+      },
+      "short_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_motion_target.png",
+        "source_sha256": "83b23df22cff2c0107bfae9924d52c9d3dd31657ac12ca1a39cdbb77a71d3530",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_motion_target_sharpened.png",
+        "output_sha256": "65c0986365782001386913909f09086d9100cbe6954a1dabe79951bd89ed9ade"
+      },
+      "short_offset_independent_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_independent_match.png",
+        "source_sha256": "a0fcde7468951b91d4943dc2ad755f705b4e488cbcffcfebd485146a1241fdb3",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_independent_match_sharpened.png",
+        "output_sha256": "a4dd208b41b7bab6b6601a8b84218aa12a27f7b774aec3ee426c8c6e2ceded53"
+      },
+      "short_offset_noisy_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_noisy_match.png",
+        "source_sha256": "61b492300780025b2594f9fdf460ad237883f51995401f2881a2857dd3f72b85",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_noisy_match_sharpened.png",
+        "output_sha256": "3d564e3b09fde6258bbec3f1259a31d32eb6650f07c0e8ed922d39c454e28a99"
+      },
+      "short_offset_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_no_noise_match.png",
+        "source_sha256": "7b0c50b743e1d4228e27afe91fe09bcb5f2783225df616bfa81f3eb8f65b4cc5",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_no_noise_match_sharpened.png",
+        "output_sha256": "e394608090c6a21e259bef5eab626298d9ce276a35577300a1dcb1aec94535b5"
+      },
+      "short_offset_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_oracle.png",
+        "source_sha256": "dc53322218e1a1c583988ea921219b83c34b115b833826189b0241c1021be7ad",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_oracle_sharpened.png",
+        "output_sha256": "764ee854aa63ae6c38d26a3106f62cbbd8a49e8560dd2e44c9ea02a456258c1b"
+      },
+      "short_offset_paired_cross": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_paired_cross.png",
+        "source_sha256": "99e5117f6edd842e806bd41e37606cd7bba1fb3dd94b83a075ca33fa2d35015a",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_paired_cross_sharpened.png",
+        "output_sha256": "7deabd13c822bd35f61784c48a99b430db6126463bc58b5c0be87be79e7f201c"
+      },
+      "short_offset_paired_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_paired_no_noise_match.png",
+        "source_sha256": "bfd29151beac8ed5af378990f5fdcff4d6c2702cdb0b8f5b078a2b8866c6853c",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_paired_no_noise_match_sharpened.png",
+        "output_sha256": "78d6121f8bf40f877884fc2eb003267557db1b153345c5b676205586c8e6a317"
+      },
+      "short_offset_paired_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_paired_oracle.png",
+        "source_sha256": "fd2862963f1d74d04146164ce957cec52520405fbb026684c0ed35318c203580",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_paired_oracle_sharpened.png",
+        "output_sha256": "c613fbcd00f74a61bea58a0dd2d95efe5aa9ddd843a8bd5c2f28edd0bf4fd776"
+      },
+      "short_offset_paired_same": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_paired_same.png",
+        "source_sha256": "14ae7bd8cf65669e5c68b70b1cf68d76f988281929151a9e7b5e333de7f74e91",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_paired_same_sharpened.png",
+        "output_sha256": "ee9b550c63eb6f481003f3f97a4ee5dd185c6627672eb5884c3e3a07523e3ef1"
+      },
+      "short_offset_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/short_offset_target.png",
+        "source_sha256": "4418e68d7722a16e693c916c3727b252e884acec1325639bc6e771069b747416",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/short_offset_target_sharpened.png",
+        "output_sha256": "fe5175b98fcf9f2014389a7bd286f822aa0fdfb882ed577803df09d7340fcfd5"
+      },
+      "stationary_independent_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_independent_match.png",
+        "source_sha256": "3a45ff91851b15be2c88a4ca824690180706ef7c3a13a201f3a754b04e90232b",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_independent_match_sharpened.png",
+        "output_sha256": "fc88252639c626e8abf260c3259455b7c596283bd04117f02843889c195f569d"
+      },
+      "stationary_noisy_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_noisy_match.png",
+        "source_sha256": "c7db09b948c1cd36ab0ff4c67787801c9c8fc7b925792aed3b287f61c818a15f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_noisy_match_sharpened.png",
+        "output_sha256": "1c3190998902f8f5181d609e59af2fe9e9d8482d86be6e4c043949d79137089f"
+      },
+      "stationary_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_no_noise_match.png",
+        "source_sha256": "b4008869d2bc71a4e37a42dc17c0ce93f2c13b11069ce6a5e32e739e2370ea35",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_no_noise_match_sharpened.png",
+        "output_sha256": "75f93f592f25bac0540b687b4b3a1010bb7b154521a89d5062b6e39cc67abd5a"
+      },
+      "stationary_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_oracle.png",
+        "source_sha256": "e1bb32a953d6ac683e4076af1e81806db6c5064e8ed0428bac1d759ee3868fd7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_oracle_sharpened.png",
+        "output_sha256": "ac509f222aa7df3f30ac8919e7f47c7fee6dc3f920af8058114ad085c7e52b11"
+      },
+      "stationary_paired_cross": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_paired_cross.png",
+        "source_sha256": "4fd7961a5b868db83c3ca875a82e88203fbf834b73e6d83ef12194981ac2c31f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_paired_cross_sharpened.png",
+        "output_sha256": "025aac2af18fa5ce452392684768d7c86d8683efe0e06f623352073bcdc7c899"
+      },
+      "stationary_paired_no_noise_match": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_paired_no_noise_match.png",
+        "source_sha256": "770998eb3df213d401ffb1dfa049c5a89f11864093e8a44b07b6cf69f338ffa2",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_paired_no_noise_match_sharpened.png",
+        "output_sha256": "02c3e765e225bb97460a07d89390aed0d6f044c832874c998c5ebe4ccf0f7e2a"
+      },
+      "stationary_paired_oracle": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_paired_oracle.png",
+        "source_sha256": "28465592ec3e077b966177237386634536005a1fe868469c73cceb8bcf0174d5",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_paired_oracle_sharpened.png",
+        "output_sha256": "3428321aec2ec09cc2d745a7d4aa4bab264fb01bdd67e0ec574b3098d258258c"
+      },
+      "stationary_paired_same": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_paired_same.png",
+        "source_sha256": "cd54207c1d40c187a850c36e90767e6d3ad12a2be482d6f28137c4415292ba50",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_paired_same_sharpened.png",
+        "output_sha256": "cdf33bb40a340694e4a22dec2d702d82ebf0a852e417555ec06f559c98acbab5"
+      },
+      "stationary_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/stationary_target.png",
+        "source_sha256": "2840be5161665306b3894261dda9a6d02adb71a5dc05dc9c781731f589026a86",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-noise-coupling/sharpened/stationary_target_sharpened.png",
+        "output_sha256": "5f3f58b5dcb2b5438c1671e8df23bb854ab3f61852d7de7ed4a1e4889a50daa3"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "raw_report_sha256": "439ea9b66dd937396218dc2b370d5fc230b2d5958182f6cd81fb3d1de5b1e002",
+  "analyzer_sha256": "bcc1cbe07bd60f3c3867b7d27034ad30c38c7483421db9130ac4936b2d83a709",
+  "limits": [
+    "Zero-noise matching still includes detector integration, fractional translation, interpolation, proxy conversion and multiscale composition.",
+    "AP truth is the fixed patch-average model; disagreement is not uniquely attributable to the correlation peak estimator.",
+    "Noise level 2 ADU is a controlled intervention, not a measurement of Saturn sensor noise.",
+    "Paired same/cross have 32 poses times two noise realizations; compare them to paired controls with the same samples.",
+    "The raw pair difference cancels clean-signal geometry exactly, but separate nonlinear sharpening does not preserve that additive decomposition.",
+    "A nonzero coupling establishes noise-dependent selection effects, not necessarily increased RMSE or the cause of real-capture grain.",
+    "One fixed scene and two noise realizations per pose are exploratory; no population confidence interval is claimed.",
+    "Production, output filtering and brightness normalization remain unchanged."
+  ]
+}
