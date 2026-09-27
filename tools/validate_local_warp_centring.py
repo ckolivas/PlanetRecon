@@ -193,6 +193,8 @@ def main():
     parser.add_argument('--coherent-stiffness', type=float, default=.1)
     parser.add_argument('--patch-average', action='store_true')
     parser.add_argument('--validate-pixels',action='store_true',help='Experimental independent-pixel motion validation')
+    parser.add_argument('--refit-policy', choices=['full_any','full_scaled'],
+                        help='Diagnostic full-data refit after independent-pixel motion gating')
     parser.add_argument('--motion-wavelengths', type=float, nargs=2, default=(160., 240.), metavar=('Y', 'X'))
     args = parser.parse_args()
     if args.frames < 8:
@@ -208,6 +210,8 @@ def main():
         parser.error('--validate-pixels requires --coherent-spacing and cannot use known blur')
     if args.validate_pixels:
         args.patch_average = True
+    if args.refit_policy and not args.validate_pixels:
+        parser.error('--refit-policy requires --validate-pixels')
     args.out.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(4)
     reference = np.load(args.reference)
@@ -218,6 +222,7 @@ def main():
               'coherent_spacing_px': args.coherent_spacing,
               'coherent_stiffness': args.coherent_stiffness, 'patch_average': args.patch_average,
               'independent_pixel_validation':args.validate_pixels,
+              'refit_policy': args.refit_policy,
               'export_black_white_adu': [0., 255.], 'scenes': {}, 'limits': [
                   'Synthetic composed shears are not a full atmospheric or planetary rotation model.',
                   'Reference is fixed; Saturn source contains its existing reference texture and noise.',
@@ -237,8 +242,13 @@ def main():
         matcher = CircularMultiscaleRegistration(scene)
         if args.validate_pixels:
             from tools.validated_registration import ValidatedRegistration
-            engine=ValidatedRegistration(scene,matcher,device=args.device,spacing=args.coherent_spacing,
-                                         stiffness=args.coherent_stiffness)
+            if args.refit_policy:
+                from tools.refit_registration import RefitRegistration
+                engine=RefitRegistration(scene,matcher,device=args.device,spacing=args.coherent_spacing,
+                                         stiffness=args.coherent_stiffness,policy=args.refit_policy)
+            else:
+                engine=ValidatedRegistration(scene,matcher,device=args.device,spacing=args.coherent_spacing,
+                                             stiffness=args.coherent_stiffness)
         elif args.coherent_spacing is None:
             engine = TorchCircularRegistration(matcher, device=args.device)
         else:

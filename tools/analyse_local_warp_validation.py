@@ -53,6 +53,8 @@ def main():
         local_title = 'Experimental coherent alignment'
     if report.get('independent_pixel_validation'):
         local_title = 'Independent-pixel validated alignment'
+    if report.get('refit_policy'):
+        local_title = 'Gated full-data refit: '+report['refit_policy']
     for row, (case, label) in enumerate(rows):
         for col, (variant, title) in enumerate([
                 ('local', local_title), ('centred', 'Subtract mean warp'),
