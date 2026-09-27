@@ -534,11 +534,15 @@ class ConfigControls(QTabWidget):
         defaults = ReconstructionConfig()
         self.calculated_geometry.clear()
         self._update_calculated_button()
-        for key, text in self.geometry_auto.items():
+        # setText emits synchronous signals: rotation updates can discard
+        # dependent automatic values. Detach the old bookkeeping first so
+        # those callbacks cannot mutate the reset's iteration or its intent.
+        automatic = self.geometry_auto.copy()
+        self.geometry_auto.clear()
+        for key, text in automatic.items():
             if key not in self.geometry_manual and self.fields[key].text() == text:
                 value = getattr(defaults, key)
                 self.fields[key].setText('' if value is None else str(math.degrees(value) if key in self.angular else value))
-        self.geometry_auto.clear()
         self._set_geometry_help('Preprocess applies calculated geometry. Manual edits apply until the next Preprocess or Use calculated values.')
 
     def _set_geometry_help(self, text):

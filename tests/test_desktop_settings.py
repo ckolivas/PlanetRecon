@@ -11,6 +11,50 @@ from planetrecon.gui import settings
 from planetrecon.reconstruction import ReconstructionConfig
 
 
+@pytest.mark.parametrize('startup', [False, True])
+@pytest.mark.parametrize('mode', ['none', 'saturn'])
+def test_clearing_saved_saturn_geometry_is_safe_during_field_signals(tmp_path, startup, mode):
+    from planetrecon.gui.controls import ConfigControls
+    app = create_app([])
+    controls = ConfigControls(ReconstructionConfig(device='cpu', rotation_planet='saturn', geometry_mode=mode))
+    state = controls.settings_state()
+    automatic = {'reference_epoch_s': '53.5955', 'field_center_x': '400',
+                 'field_center_y': '270', 'equatorial_radius_px': '97',
+                 'pole_pa_rad': '179', 'flattening': '0.12',
+                 'ring_inner_radius_px': '146', 'ring_outer_radius_px': '218',
+                 'sub_obs_lat_rad': ''}
+    state['fields'].update(automatic)
+    state['fields']['pole_pa_rad'] = '173'
+    state['geometry_auto'] = automatic
+    state['geometry_manual'] = ['pole_pa_rad']
+    window = None
+    try:
+        if startup:
+            path = tmp_path/'preferences.json'
+            settings.save(path, {'controls': state, 'capture': str(tmp_path/'Sat.ser')})
+            window = MainWindow(settings_path=path)
+            active = window.controls
+            assert window.path is None and window.job is None
+        else:
+            controls.restore_settings(state)
+            controls.clear_geometry_estimate()
+            active = controls
+        assert not active.geometry_auto and not active.calculated_geometry
+        assert active.geometry_manual == {'pole_pa_rad'}
+        assert active.fields['pole_pa_rad'].text() == '173'
+        for key in ('field_center_x', 'field_center_y', 'equatorial_radius_px',
+                    'ring_inner_radius_px', 'ring_outer_radius_px', 'sub_obs_lat_rad'):
+            assert active.fields[key].text() == ''
+        assert float(active.fields['reference_epoch_s'].text()) == 0
+        assert not active.calculated_values_button.isEnabled()
+        assert 'Set or measure the globe radius' in active.rotation_label.text()
+    finally:
+        controls.close()
+        if window is not None:
+            window.window.close()
+        app.processEvents()
+
+
 def test_settings_roundtrip_and_new_capture(tmp_path):
     app = create_app([])
     path = tmp_path / 'preferences.json'
