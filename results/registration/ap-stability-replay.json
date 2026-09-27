@@ -1,0 +1,1036 @@
+{
+  "n_used": 5738,
+  "hashes": {
+    "reference": "3ffcb6cf01e740482a627d474a35a5bfce4bb99b7064622ed58410b880d3403c",
+    "indices": "01f4ad5258de473b6852f116ea952952a0862b0727de1934c70e554cb444d8ef",
+    "quality": "aac214c4f9f33b2d770b93b391d2e5b4b75b4061a829c6ecd46d9bb3153895f2",
+    "global_shifts": "427e7022edd4e77cad5a0bf204388453764c0bf74535a7291a43821f925d0726",
+    "model_code": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+    "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+    "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+    "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+    "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+    "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+    "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+    "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+    "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+    "tools/regularized_ap_replay.py": "2d98853599687a2b866a98c7deeb563cad994517669650b3a05248164ff81b01",
+    "screen_report": "9067a7446897bfe90792e0f1e28324a49033433205edcf30efc4bacd5184e69d",
+    "capture": "cdf0a1158f6798106daa96f59f13b52228dcf4ecb00719f960406fc2f2089930"
+  },
+  "config": {
+    "names": [
+      "baseline",
+      "anchor_01"
+    ],
+    "policies": {
+      "baseline": [
+        16.0,
+        0.01,
+        1e-06
+      ],
+      "anchor_01": [
+        16.0,
+        0.1,
+        0.01
+      ]
+    },
+    "shard_size": 128,
+    "half_split": "selection_position_modulo_two"
+  },
+  "halves_sha256": "aacd12f97e002e23d8cd92774de40bc7df109abf3d9e16bfd08d6d7e27913910",
+  "baseline_max_difference_adu": 1.9895196601282805e-13,
+  "output_filtering": false,
+  "normalization": false,
+  "production_changed": false,
+  "raw_report_sha256": "9882e87bb000f3378180554575419a7485baa43e0e65350b7caea1a991dd73a3",
+  "analyzer_sha256": "8b64d0e5304e5ee4aef9fa86fa2a283e6973cd8de3d548e6f3651fc0941650df",
+  "fit_summary": {
+    "baseline": {
+      "count": 5738,
+      "reasons": {
+        "none": 5738
+      },
+      "guard_rejections": 254,
+      "insufficient_points": 0,
+      "minimum_jacobian_min_p25_median_p75_max": [
+        0.41809106339133695,
+        0.7800996653728587,
+        0.821388907892471,
+        0.8549316076174869,
+        0.9456873397318565
+      ],
+      "maximum_residual_px_min_p25_median_p75_max": [
+        1.3798488074791146,
+        3.090012062471898,
+        3.7056615079103272,
+        4.448227541216319,
+        11.053772922531026
+      ]
+    },
+    "anchor_01": {
+      "count": 5738,
+      "reasons": {
+        "none": 5738
+      },
+      "guard_rejections": 0,
+      "insufficient_points": 0,
+      "minimum_jacobian_min_p25_median_p75_max": [
+        0.867321689533989,
+        0.9414252526661805,
+        0.9522624848836343,
+        0.961088552951274,
+        0.9831700345048922
+      ],
+      "maximum_residual_px_min_p25_median_p75_max": [
+        0.4902993465141571,
+        1.1476023664943031,
+        1.382634233991743,
+        1.683186849141299,
+        3.238916301553717
+      ]
+    }
+  },
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "anchor_01_half0": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/anchor_01_half0.png",
+        "source_sha256": "581661574b20cfa06f706e4225383f84efc7306ce686cdb7df322a3a45d192c0",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/anchor_01_half0_sharpened.png",
+        "output_sha256": "2c21521e42b63f80b06c6e5fc3da22d22caa9482e6d74cc4762cea43ae53ab44"
+      },
+      "anchor_01_half1": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/anchor_01_half1.png",
+        "source_sha256": "899665a35a12e445f593be642d59b388d3ac6cc859856883091de2ce5f3545fd",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/anchor_01_half1_sharpened.png",
+        "output_sha256": "b2c069c0e0ba0614efeeda36d33ef0ffd8fb6c68fb0088985d8297c06bd3d02b"
+      },
+      "anchor_01": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/anchor_01.png",
+        "source_sha256": "f70e340ee12ab9510c6f3f14ccb584539e1da452db59c9fe73557bd53d6b5901",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/anchor_01_sharpened.png",
+        "output_sha256": "41751c774cec2434686e8c01f395d731d86f0a5b701663474ca06ddf2c375cb2"
+      },
+      "baseline_half0": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/baseline_half0.png",
+        "source_sha256": "d934eda4999992de9a87bb11040838fc8255efe9fe29b806d26305036ed3fdb3",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/baseline_half0_sharpened.png",
+        "output_sha256": "89ef89c1825f14ff0448c522fc94e1d94f6f4642a4faf6f1159fc314e84ffa67"
+      },
+      "baseline_half1": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/baseline_half1.png",
+        "source_sha256": "80f1c99c9b2cd15d186a2feca4f3e2f01b01b116c12d390306e5955669f9b517",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/baseline_half1_sharpened.png",
+        "output_sha256": "e72355ca8c1e4c9927b9196ef94bfc7936d99856e61908cf14e43a732d948fa8"
+      },
+      "baseline": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/baseline.png",
+        "source_sha256": "933eb71a5e1f5fed40e78a9560a3738fb668222a8c9cd6ba4f48fe5e5e1a88e1",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-regularized-ap/sharpened/baseline_sharpened.png",
+        "output_sha256": "cd2476b325e959e77e57b7942299be69761bea286f506f25c2caffdae4d1515c"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "sharpened_baseline_pixel_parity": true,
+  "comparison": {
+    "baseline": {
+      "path": "out/saturn-regularized-ap/sharpened/baseline_sharpened.png",
+      "sha256": "cd2476b325e959e77e57b7942299be69761bea286f506f25c2caffdae4d1515c",
+      "variation": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.6267173431644615,
+          "laplacian_percent": 2.5673839709566657
+        },
+        "lower": {
+          "median": 33431.0,
+          "highpass_percent": 2.7375047928767606,
+          "laplacian_percent": 2.703245457587472
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.3957435913006755,
+          "profile": [
+            234.6,
+            262.2,
+            303.6,
+            303.6,
+            345.03333333333336,
+            365.76666666666665,
+            372.73333333333335,
+            421.1,
+            525.0,
+            538.8,
+            594.3,
+            698.2666666666667,
+            718.9333333333333,
+            885.0333333333333,
+            1009.4,
+            781.4333333333333,
+            490.8,
+            228.03333333333333,
+            2004.0,
+            6192.466666666666,
+            11048.466666666667,
+            13995.2,
+            16074.2,
+            17621.3,
+            18763.433333333334,
+            19616.066666666666,
+            20043.1,
+            20674.033333333333,
+            21517.1,
+            22002.666666666668,
+            21649.4
+          ],
+          "crossings": [
+            18.116546628042084,
+            25.51229021934276
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.0474676900200635,
+          "profile": [
+            289.8,
+            338.1666666666667,
+            324.3,
+            386.46666666666664,
+            414.1333333333333,
+            428.0,
+            518.0,
+            518.0333333333333,
+            635.8666666666667,
+            649.7666666666667,
+            705.2,
+            808.8333333333334,
+            954.4666666666667,
+            802.0333333333333,
+            338.8,
+            48.333333333333336,
+            978.5666666666667,
+            5785.8,
+            12154.8,
+            16521.7,
+            18087.733333333334,
+            18351.166666666668,
+            19167.433333333334,
+            19706.6,
+            20227.9,
+            20433.366666666665,
+            20650.8,
+            20753.933333333334,
+            20995.766666666666,
+            21341.266666666666,
+            21471.633333333335
+          ],
+          "crossings": [
+            16.318034628372523,
+            22.365502318392586
+          ]
+        }
+      }
+    },
+    "anchor_01": {
+      "path": "out/saturn-regularized-ap/sharpened/anchor_01_sharpened.png",
+      "sha256": "41751c774cec2434686e8c01f395d731d86f0a5b701663474ca06ddf2c375cb2",
+      "variation": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.993048718036932,
+          "laplacian_percent": 2.7481497999312032
+        },
+        "lower": {
+          "median": 33396.0,
+          "highpass_percent": 2.9808254001885097,
+          "laplacian_percent": 2.942339247969721
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.4569913727136665,
+          "profile": [
+            262.2,
+            276.0,
+            310.5,
+            289.8,
+            365.73333333333335,
+            365.76666666666665,
+            414.1333333333333,
+            476.46666666666664,
+            518.1,
+            566.5333333333333,
+            642.8,
+            691.3333333333334,
+            774.2666666666667,
+            1023.4,
+            1099.4333333333334,
+            774.3666666666667,
+            407.93333333333334,
+            406.8333333333333,
+            3017.4,
+            7588.966666666666,
+            11953.5,
+            14548.366666666667,
+            16219.066666666668,
+            17784.833333333332,
+            18891.233333333334,
+            19523.3,
+            20097.6,
+            20662.5,
+            21645.233333333334,
+            21816.7,
+            21663.0
+          ],
+          "crossings": [
+            17.796433086047728,
+            25.253424458761394
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.250436313641099,
+          "profile": [
+            282.9,
+            345.0,
+            338.1333333333333,
+            393.3333333333333,
+            407.1666666666667,
+            462.6333333333333,
+            511.1333333333333,
+            573.5,
+            642.8,
+            677.4666666666667,
+            705.2,
+            898.8,
+            1002.6,
+            808.8666666666667,
+            318.0,
+            62.1,
+            1367.8666666666666,
+            6705.0,
+            12939.2,
+            16976.833333333332,
+            18041.1,
+            18379.0,
+            19073.3,
+            19588.3,
+            20225.433333333334,
+            20438.9,
+            20580.9,
+            20712.133333333335,
+            20833.166666666668,
+            21361.666666666668,
+            21412.933333333334
+          ],
+          "crossings": [
+            16.21240834655308,
+            22.46284466019418
+          ]
+        }
+      }
+    },
+    "production": {
+      "path": "2024-09-27-1154_3-CK-R-SatPs.png",
+      "sha256": "2fe87dd59a9b7db3910752febad4c34b993e34c2023ea22cbe2a5d74c08b0748",
+      "variation": {
+        "upper": {
+          "median": 32553.0,
+          "highpass_percent": 2.9667615072988363,
+          "laplacian_percent": 2.8067077445285884
+        },
+        "lower": {
+          "median": 33379.0,
+          "highpass_percent": 2.975063436365586,
+          "laplacian_percent": 2.7566200339258264
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 8.14171220710594,
+          "profile": [
+            234.6,
+            303.6,
+            276.0,
+            338.1,
+            372.6666666666667,
+            400.3,
+            421.0,
+            490.3,
+            538.8666666666667,
+            580.4,
+            677.4666666666667,
+            726.0,
+            857.4,
+            1023.3333333333334,
+            995.7,
+            622.1333333333333,
+            366.1666666666667,
+            1175.6666666666667,
+            4577.366666666667,
+            9204.433333333332,
+            12783.3,
+            14245.466666666667,
+            16067.2,
+            18034.6,
+            19104.8,
+            19329.266666666666,
+            19899.266666666666,
+            20632.7,
+            21421.4,
+            21773.266666666666,
+            21730.966666666667
+          ],
+          "crossings": [
+            17.38848369932681,
+            25.53019590643275
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.364346272785884,
+          "profile": [
+            289.8,
+            317.4,
+            386.46666666666664,
+            393.3666666666667,
+            400.3,
+            476.43333333333334,
+            518.0333333333333,
+            559.6333333333333,
+            684.4,
+            684.4333333333333,
+            712.1333333333333,
+            864.4,
+            982.0666666666667,
+            726.0333333333333,
+            304.1666666666667,
+            131.16666666666666,
+            1707.4333333333334,
+            6861.533333333334,
+            12660.766666666666,
+            16632.933333333334,
+            18029.866666666665,
+            18849.033333333333,
+            18879.2,
+            19733.1,
+            20269.6,
+            20606.433333333334,
+            20541.1,
+            20601.266666666666,
+            21098.3,
+            21424.3,
+            21238.533333333333
+          ],
+          "crossings": [
+            16.153692529571927,
+            22.51803880235781
+          ]
+        }
+      }
+    },
+    "AS_manual64": {
+      "path": "out/saturn-matched-transfer/sharpened/as_manual64_sharpened.png",
+      "sha256": "0b91d876a16fb728b4a1e699ba37759eb5312a234dcca99b60f6894bb241a1a5",
+      "variation": {
+        "upper": {
+          "median": 32745.0,
+          "highpass_percent": 0.5732090820395705,
+          "laplacian_percent": 0.2232402997553159
+        },
+        "lower": {
+          "median": 33817.0,
+          "highpass_percent": 0.6418716335434476,
+          "laplacian_percent": 0.26665075917319786
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.2753987193204495,
+          "profile": [
+            234.6,
+            276.0,
+            296.7,
+            338.1,
+            365.7,
+            407.1,
+            420.93333333333334,
+            476.4,
+            524.9333333333333,
+            559.6,
+            656.6666666666666,
+            698.2666666666667,
+            816.1333333333333,
+            933.8,
+            899.3333333333334,
+            733.0,
+            545.8666666666667,
+            875.6666666666666,
+            3040.633333333333,
+            6939.233333333334,
+            11182.2,
+            14353.733333333334,
+            16290.1,
+            17705.133333333335,
+            18850.3,
+            19597.0,
+            20174.0,
+            20812.866666666665,
+            21386.666666666668,
+            21714.266666666666,
+            21749.333333333332
+          ],
+          "crossings": [
+            17.746421038045234,
+            25.021819757365684
+          ]
+        },
+        "right": {
+          "width_10_90_px": 5.650876790804805,
+          "profile": [
+            303.6,
+            345.0,
+            365.7,
+            400.2,
+            407.1,
+            462.53333333333336,
+            497.2,
+            573.4666666666667,
+            601.2,
+            684.4,
+            726.0,
+            809.2,
+            878.5333333333333,
+            705.3,
+            393.8666666666667,
+            193.23333333333332,
+            995.3,
+            4525.833333333333,
+            9984.966666666667,
+            15075.866666666667,
+            17819.966666666667,
+            18717.2,
+            19128.5,
+            19529.533333333333,
+            19994.3,
+            20421.9,
+            20641.266666666666,
+            20755.033333333333,
+            20908.766666666666,
+            21120.066666666666,
+            21241.8
+          ],
+          "crossings": [
+            16.42264577589788,
+            22.073522566702685
+          ]
+        }
+      }
+    }
+  },
+  "raw_halves": {
+    "baseline": {
+      "full_mean": {
+        "upper": {
+          "median": 107.30646094044135,
+          "highpass_percent": 0.16024568540409365,
+          "laplacian_percent": 0.06930959356043999
+        },
+        "lower": {
+          "median": 109.57966220960553,
+          "highpass_percent": 0.13912962773837598,
+          "laplacian_percent": 0.06964198025497155
+        }
+      },
+      "half_difference_over_two": {
+        "upper": {
+          "median": 107.30646094044135,
+          "highpass_percent": 0.07477620763041735,
+          "laplacian_percent": 0.06584722216673182
+        },
+        "lower": {
+          "median": 109.57966220960553,
+          "highpass_percent": 0.0810127250029802,
+          "laplacian_percent": 0.06765621346350896
+        }
+      }
+    },
+    "anchor_01": {
+      "full_mean": {
+        "upper": {
+          "median": 107.31850800493021,
+          "highpass_percent": 0.17454516612302248,
+          "laplacian_percent": 0.07359888673247623
+        },
+        "lower": {
+          "median": 109.62895315775859,
+          "highpass_percent": 0.1444686573761304,
+          "laplacian_percent": 0.07134328329729955
+        }
+      },
+      "half_difference_over_two": {
+        "upper": {
+          "median": 107.31850800493021,
+          "highpass_percent": 0.081469932163251,
+          "laplacian_percent": 0.06923331628057008
+        },
+        "lower": {
+          "median": 109.62895315775859,
+          "highpass_percent": 0.07649567733861082,
+          "laplacian_percent": 0.06718908346173015
+        }
+      }
+    }
+  },
+  "half_quality_weights": {
+    "fraction": [
+      0.49972762044687286,
+      0.5002723795531271
+    ],
+    "full_effective_frame_count": 5694.338156155175
+  },
+  "paired_edges_vs_baseline": {
+    "left": {
+      "paired_windows": 75,
+      "candidate_minus_baseline_width_px_min_median_max": [
+        0.0693400078556401,
+        0.2040581151240417,
+        0.3558886563778074
+      ],
+      "fraction_candidate_wider": 1.0
+    },
+    "right": {
+      "paired_windows": 75,
+      "candidate_minus_baseline_width_px_min_median_max": [
+        -0.004134432264390142,
+        0.06751502751616556,
+        0.37365267918294975
+      ],
+      "fraction_candidate_wider": 0.8933333333333333
+    }
+  },
+  "validation": {
+    "selected": "anchor_01",
+    "hashes": {
+      "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+      "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+      "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+      "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+      "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+      "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+      "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+      "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+      "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+      "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4"
+    },
+    "source_sha256": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+    "screen_report_sha256": "9067a7446897bfe90792e0f1e28324a49033433205edcf30efc4bacd5184e69d",
+    "frames": 32,
+    "seed": 9033,
+    "device": "cpu",
+    "cases": {
+      "long_motion": {
+        "wavelengths": [
+          160.0,
+          240.0
+        ],
+        "quadrature_max_error_adu": 1.9949155216636427e-08,
+        "variants": {
+          "baseline": {
+            "image": {
+              "rmse_adu": 0.3357540458632361,
+              "gradient_vector_rmse_adu_per_px": 0.24020266559999365
+            },
+            "clean_image": {
+              "rmse_adu": 0.23555090168248694,
+              "gradient_vector_rmse_adu_per_px": 0.02496255572519716
+            },
+            "field_rmse_px": 0.31124273496046995,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.8772180580917431,
+                0.9066534357862467,
+                0.9184171641224212,
+                0.9347688100602063,
+                0.9591513453249406
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                1.6082113536534692,
+                1.8939440947718147,
+                2.180680272024281,
+                2.517507799647428,
+                3.0625709047660514
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.009966552257537842,
+              "gradient_vector_rmse_adu_per_px": 0.010075549595057964
+            }
+          },
+          "anchor_01": {
+            "image": {
+              "rmse_adu": 0.2615806504706561,
+              "gradient_vector_rmse_adu_per_px": 0.2414721956907251
+            },
+            "clean_image": {
+              "rmse_adu": 0.10135809978023132,
+              "gradient_vector_rmse_adu_per_px": 0.019732119505220132
+            },
+            "field_rmse_px": 0.24895875339136744,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.9356340175699265,
+                0.9464017029127552,
+                0.9553962946854586,
+                0.9623135145013866,
+                0.969909988983316
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                1.0157231333179935,
+                1.1486205528858084,
+                1.246950391384102,
+                1.5765338500831971,
+                1.8238044469071382
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.010586819611489773,
+              "gradient_vector_rmse_adu_per_px": 0.010456294752657413
+            }
+          }
+        },
+        "raw_sha256": "01f4a064f60f888573efaf24a11f7fbf7e9a34074da078a800a2f619bc0a2537",
+        "stage_sha256": {
+          "oracle": "e63dedcfcb922addd4fdf42d6a042c8487937ddb2f8c456bf4e5aba2f97675c2",
+          "baseline": "908b54db2022614d2445967c931a9b474f4f63fbfe237735a3dc1edf43ea920b",
+          "anchor_01": "6aacab5cf9732d989f54322b36b8a7c53599f4732d5f6b56fa0850119ceef192"
+        }
+      },
+      "short_motion": {
+        "wavelengths": [
+          80.0,
+          120.0
+        ],
+        "quadrature_max_error_adu": 2.2187009562912863e-08,
+        "variants": {
+          "baseline": {
+            "image": {
+              "rmse_adu": 0.31931101965885966,
+              "gradient_vector_rmse_adu_per_px": 0.2364971831853521
+            },
+            "clean_image": {
+              "rmse_adu": 0.21601869403216795,
+              "gradient_vector_rmse_adu_per_px": 0.02297176805960551
+            },
+            "field_rmse_px": 0.7882775051109955,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.8650134515878267,
+                0.8847523370695507,
+                0.9038391628081396,
+                0.9376114121490419,
+                0.9516082957468711
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                1.4545966783166404,
+                1.9532862869220666,
+                2.4646653473845284,
+                2.964760716508354,
+                3.3550527967193102
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.010105359368026257,
+              "gradient_vector_rmse_adu_per_px": 0.010029759258031845
+            }
+          },
+          "anchor_01": {
+            "image": {
+              "rmse_adu": 0.2526071857086219,
+              "gradient_vector_rmse_adu_per_px": 0.24012957611779653
+            },
+            "clean_image": {
+              "rmse_adu": 0.08183761169683494,
+              "gradient_vector_rmse_adu_per_px": 0.02222783836968692
+            },
+            "field_rmse_px": 0.8775708154833058,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.9081942225809498,
+                0.9247721403448141,
+                0.9384868431661673,
+                0.9520222205483218,
+                0.9640032470489823
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                1.2907583839075967,
+                1.4242244934310946,
+                1.8092503589161253,
+                2.3323847171091576,
+                2.6433263924955424
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.011762051843106747,
+              "gradient_vector_rmse_adu_per_px": 0.010964012704789639
+            }
+          }
+        },
+        "raw_sha256": "e4033df6515a40fb22c7d9db33433db2461d9c361edf6221f72415ebf9ac0907",
+        "stage_sha256": {
+          "oracle": "19b776435ac3e48b9244737a493e36bef2c41843fa36f914e6cbd4109ea5d36d",
+          "baseline": "1989b5eb8d5544c010c0c8e543d89c92ddd78b0ee97146fb6544ff0723afe5f7",
+          "anchor_01": "39226ec7c178a8ee9c5d0692f4b2b4757ade6ca075f11d6d206a1ba290280614"
+        }
+      },
+      "short_offset": {
+        "wavelengths": [
+          80.0,
+          120.0
+        ],
+        "quadrature_max_error_adu": 2.1420987650344614e-08,
+        "variants": {
+          "baseline": {
+            "image": {
+              "rmse_adu": 0.40630307197471793,
+              "gradient_vector_rmse_adu_per_px": 0.24392405924719512
+            },
+            "clean_image": {
+              "rmse_adu": 0.32956057010588125,
+              "gradient_vector_rmse_adu_per_px": 0.05936551353392871
+            },
+            "field_rmse_px": 0.9568398610366026,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.8159690248755493,
+                0.8560372606911282,
+                0.9067508446955607,
+                0.947483948172117,
+                0.971319772807543
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                1.0274372401959464,
+                1.6278235003915205,
+                2.3863879068970966,
+                4.2255746533201695,
+                5.081617280362905
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.01111650001257658,
+              "gradient_vector_rmse_adu_per_px": 0.010891105979681015
+            }
+          },
+          "anchor_01": {
+            "image": {
+              "rmse_adu": 0.5102293843269328,
+              "gradient_vector_rmse_adu_per_px": 0.27141792781615465
+            },
+            "clean_image": {
+              "rmse_adu": 0.4480333157826972,
+              "gradient_vector_rmse_adu_per_px": 0.1311598904146982
+            },
+            "field_rmse_px": 1.1108770109220045,
+            "fit_summary": {
+              "count": 32,
+              "reasons": {
+                "none": 32
+              },
+              "guard_rejections": 0,
+              "insufficient_points": 0,
+              "minimum_jacobian_min_p25_median_p75_max": [
+                0.8786444521068252,
+                0.9080497978348474,
+                0.934844371407355,
+                0.9542692606275719,
+                0.9821390425860437
+              ],
+              "maximum_residual_px_min_p25_median_p75_max": [
+                0.5875013192232608,
+                1.1488555165371936,
+                1.992006814687025,
+                3.1268098510900852,
+                4.086078821163102
+              ]
+            },
+            "sharpened_error_linear_0_1": {
+              "rmse_adu": 0.012242375873029232,
+              "gradient_vector_rmse_adu_per_px": 0.011758148670196533
+            }
+          }
+        },
+        "raw_sha256": "84e40ea2461771a89e9b59a6c9deab88ef1b251ba5c5a0f71a2b59f8d57f0ce2",
+        "stage_sha256": {
+          "oracle": "649ee6bb044ce6f8a6ae6703df458a95db6fbffba74b1bffc9c91869a8229fe5",
+          "baseline": "f15fd1af7cd4574161466121476635c0af7c75bddfcead6a8686b401edc0086c",
+          "anchor_01": "bcf6e7a8e9f0de5764705af73b1d423b6502d02262433bced0f90d6ed56b75b1"
+        }
+      }
+    },
+    "sharpening": {
+      "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+      "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+      "wavelet": {
+        "fine": 27.0,
+        "medium": 0.0,
+        "coarse": 0.0,
+        "chunky": 0.0,
+        "luminance": false,
+        "auto": false,
+        "target_noise": 3.0,
+        "target_contrast": 15.0,
+        "clamp": true,
+        "clamp_low": false
+      },
+      "deconvolution": {
+        "amount": 15.6,
+        "adaptive": true,
+        "luminance": true,
+        "auto": false,
+        "target_noise": 3.5,
+        "target_contrast": 15.0,
+        "clamp": true,
+        "clamp_low": false
+      },
+      "images": {
+        "long_motion_anchor_01": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/long_motion_anchor_01.png",
+          "source_sha256": "2684eda23026acd2f9c8127a43af7001d1bb0724ff3267e330871fff2bf85d0d",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/long_motion_anchor_01_sharpened.png",
+          "output_sha256": "0ded715cb864376795e50cab7adf5b33ae46a8c0b972603c4442e1f3a749c193"
+        },
+        "long_motion_baseline": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/long_motion_baseline.png",
+          "source_sha256": "0b370cdb3c8f92cec61dc48c78b3ae3f2548cd8abd9bdf156ce5e4679b751df4",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/long_motion_baseline_sharpened.png",
+          "output_sha256": "2c73dcc902ff538f910a4e07f5fd8547a8cfea374c92a24d11bcf27e4b987a24"
+        },
+        "long_motion_oracle": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/long_motion_oracle.png",
+          "source_sha256": "0f4a67d16dec0ea918a3954320e17c81c0e2ab0d456339f4dfa5aa6ba586d487",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/long_motion_oracle_sharpened.png",
+          "output_sha256": "0b7c338d882be1761e39381b5ae968ef83e43f64dc8130f5c8876e9109fc2b76"
+        },
+        "short_motion_anchor_01": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_motion_anchor_01.png",
+          "source_sha256": "7921d8031b2f51b26309a8e690dbbb201119995c16a3645634e4350ae42bbd8f",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_motion_anchor_01_sharpened.png",
+          "output_sha256": "02506d53dd7e2482d6c9258f3e52fe7ebff2140992677184e71758a4f65979fe"
+        },
+        "short_motion_baseline": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_motion_baseline.png",
+          "source_sha256": "651967354d96b6acff801d4c94ba89969922e1e06e1005b9761073bfedabd0cd",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_motion_baseline_sharpened.png",
+          "output_sha256": "2788a7731d76e6621cfc1c1c117b9ca4b6dedeba358805d88560e3252a8d6687"
+        },
+        "short_motion_oracle": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_motion_oracle.png",
+          "source_sha256": "83b23df22cff2c0107bfae9924d52c9d3dd31657ac12ca1a39cdbb77a71d3530",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_motion_oracle_sharpened.png",
+          "output_sha256": "65c0986365782001386913909f09086d9100cbe6954a1dabe79951bd89ed9ade"
+        },
+        "short_offset_anchor_01": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_offset_anchor_01.png",
+          "source_sha256": "a892e37539cfcdfc6979f6881a4b037463b869df68d32ca96357cdae2f84d5c6",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_offset_anchor_01_sharpened.png",
+          "output_sha256": "d837a83f2dd9b621f228af7abac2765eb1d8bd027f89bbfe591bb251689a353f"
+        },
+        "short_offset_baseline": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_offset_baseline.png",
+          "source_sha256": "61b492300780025b2594f9fdf460ad237883f51995401f2881a2857dd3f72b85",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_offset_baseline_sharpened.png",
+          "output_sha256": "3d564e3b09fde6258bbec3f1259a31d32eb6650f07c0e8ed922d39c454e28a99"
+        },
+        "short_offset_oracle": {
+          "source": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/short_offset_oracle.png",
+          "source_sha256": "4418e68d7722a16e693c916c3727b252e884acec1325639bc6e771069b747416",
+          "output": "/home/conman/Code/PlanetRecon/out/ap-stability-validation/sharpened/short_offset_oracle_sharpened.png",
+          "output_sha256": "fe5175b98fcf9f2014389a7bd286f822aa0fdfb882ed577803df09d7340fcfd5"
+        }
+      },
+      "implementation_sha256": {
+        "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+        "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+        "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+        "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+        "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+        "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+        "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+        "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+      }
+    }
+  },
+  "limits": [
+    "The two replay variants share every frame, weight, reference, AP observation, global shift and final sampler.",
+    "More stable fields can suppress genuine short-scale motion; synthetic validation measures that tradeoff.",
+    "Fine variation includes detail and artifacts; ring widths are descriptive, not calibrated resolution.",
+    "Half-difference/2 cancels shared reference and estimator biases and is not a measure of total noise.",
+    "Separately sharpened halves are review artifacts, not linear estimates of full-stack noise.",
+    "AS uses its own selection and reference and serves only as context.",
+    "No output filtering, brightness normalization or production changes were introduced."
+  ]
+}
