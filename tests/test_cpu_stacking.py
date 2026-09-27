@@ -117,7 +117,8 @@ def test_cancel_during_active_frames_resumes_exactly(tmp_path, monkeypatch):
         np.testing.assert_array_equal(resumed.coverage, whole.coverage)
 
 
-def test_pool_bounds_reordering_errors_and_cleanup():
+def test_pool_bounds_reordering_errors_and_cleanup(monkeypatch):
+    monkeypatch.setattr('planetrecon.memory.total_ram_bytes', lambda: 4*1024**3)
     cfg = ReconstructionConfig(threads=4, batch_frames=8)
     gate = threading.Event()
     started = []
@@ -148,6 +149,34 @@ def test_pool_bounds_reordering_errors_and_cleanup():
     assert not any(t.name.startswith('planetrecon-stack') for t in threading.enumerate())
     assert CPUFramePool(cfg, (4000, 4000, 3), 20, enabled=True).workers == 1
     assert CPUFramePool(replace(cfg, batch_frames=2), (96, 112), 20, enabled=True).workers == 2
+
+
+@pytest.mark.parametrize('total_gib,cap_gib,expected', [
+    (96, None, 32),  # A large-memory machine can use every requested worker.
+    (4, None, 2),    # Low total RAM still limits concurrent scratch.
+    (96, 16, 5),    # The explicit cap uses remaining address space, not RAM size.
+    (4, 128, 2),    # A high explicit cap cannot override physical capacity.
+    (96, 8, 1),     # No remaining address space cannot enable parallel workers.
+    (0, None, 1),
+    (None, None, 1),
+])
+def test_pool_sizes_large_frames_from_total_memory(monkeypatch, total_gib, cap_gib, expected):
+    gib = 1024**3
+    total = None if total_gib is None else total_gib*gib
+    monkeypatch.setattr('planetrecon.memory.total_ram_bytes', lambda: total)
+    monkeypatch.setattr('planetrecon.memory.virtual_bytes', lambda: 8*gib)
+    cfg = ReconstructionConfig(device='cpu', threads=32, batch_frames=32,
+                               max_ram_bytes=None if cap_gib is None else cap_gib*gib)
+    # Size the pool without allocating these large frames.
+    pool = CPUFramePool(cfg, (2048, 2048), 64, enabled=True)
+    assert pool.workers == expected
+    assert CPUFramePool(replace(cfg, threads=1), (2048, 2048), 64, enabled=True).workers == 1
+    assert CPUFramePool(cfg, (2048, 2048), 64, enabled=False).workers == 1
+    assert CPUFramePool(cfg, (2048, 2048), 3, enabled=True).workers == min(expected, 3)
+    assert CPUFramePool(replace(cfg, batch_frames=2), (2048, 2048), 64, enabled=True).workers == min(expected, 2)
+    if total_gib == 96 and cap_gib is None:
+        assert pool.scratch_budget_bytes == 48*gib
+        assert pool.estimated_frame_bytes == 776*1024**2
 
 
 def test_completion_racing_poll_timeout_is_not_a_worker_failure():

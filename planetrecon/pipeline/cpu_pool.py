@@ -35,19 +35,24 @@ class CPUFramePool:
         import numpy as np
         pixels = int(np.prod(shape))
         # Includes working proxies, fields and queued projected colour planes.
-        # Keep the raw source batch separate and never queue the whole capture.
-        budget = 2*1024**3
+        # Allow half the total RAM for scratch, leaving the rest for source batches
+        # and other uses. This sizes concurrency; it does not reserve memory.
+        from planetrecon.memory import total_ram_bytes, virtual_bytes
+        total = total_ram_bytes()
+        budget = 0 if total is None else total//2
         if config.max_ram_bytes is not None:
-            from planetrecon.memory import virtual_bytes
             budget = min(budget, max(0, config.max_ram_bytes-virtual_bytes())//2)
         per_frame = 192*pixels + 8*1024**2
+        self.scratch_budget_bytes = budget
+        self.estimated_frame_bytes = per_frame
         self.workers = max(1, min(config.threads, MAX_CPU_THREADS, config.batch_frames,
                                   n_frames, budget//max(1, per_frame))) if enabled else 1
         self.should_cancel = should_cancel
         self.stop = threading.Event()
         self.resources = ExitStack()
         self.executor = None
-        self.reason = 'bounded by threads, batch size, remaining frames and scratch memory'
+        self.reason = ('bounded by threads, batch size, remaining frames and half total RAM; '
+                       'also half remaining process allowance when configured')
 
     def __enter__(self):
         if self.workers > 1:

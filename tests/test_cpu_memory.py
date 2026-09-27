@@ -9,6 +9,35 @@ import pytest
 pytestmark=pytest.mark.skipif(sys.platform!='linux',reason='Linux RLIMIT_AS qualification')
 
 
+@pytest.mark.parametrize('total_kib', [0, 96*1024**2])
+def test_total_ram_uses_memtotal_independently_of_caches(monkeypatch, total_kib):
+    from planetrecon import memory
+    monkeypatch.setattr(memory.Path, 'read_text', lambda self:
+                        f'MemTotal: {total_kib} kB\nMemFree: 1024 kB\nMemAvailable: 2048 kB\nCached: 1048576 kB\n')
+    def unexpected_sysconf(_):
+        raise AssertionError('MemTotal should take precedence over the fallback')
+    monkeypatch.setattr(memory.os, 'sysconf', unexpected_sysconf)
+    assert memory.total_ram_bytes() == total_kib*1024
+
+
+@pytest.mark.parametrize('contents', ['', 'MemTotal: bad kB', 'MemTotal: -1 kB'])
+def test_total_ram_falls_back_to_physical_pages(monkeypatch, contents):
+    from planetrecon import memory
+    monkeypatch.setattr(memory.Path, 'read_text', lambda self: contents)
+    monkeypatch.setattr(memory.os, 'sysconf',
+                        lambda key: {'SC_PHYS_PAGES': 1000, 'SC_PAGE_SIZE': 4096}[key])
+    assert memory.total_ram_bytes() == 4096000
+
+
+def test_total_ram_unknown_is_not_an_unlimited_budget(monkeypatch):
+    from planetrecon import memory
+    def unavailable(*args):
+        raise OSError('unavailable')
+    monkeypatch.setattr(memory.Path, 'read_text', unavailable)
+    monkeypatch.setattr(memory.os, 'sysconf', unavailable)
+    assert memory.total_ram_bytes() is None
+
+
 def test_kernel_denies_allocation_and_restores_limit_in_isolated_process():
     # Do not lower the test runner's address-space limit or allocate large RAM.
     script=textwrap.dedent('''

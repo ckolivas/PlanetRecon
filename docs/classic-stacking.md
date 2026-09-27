@@ -80,8 +80,15 @@ independent frames concurrently, up to **CPU threads** in the Capture tab. Fresh
 GUI settings detect available logical CPUs at startup (respecting CPU affinity,
 up to the application limit of 32); saved manual choices are retained. The run
 status shows the actual frame-worker count. Frames per batch, remaining frames
-and a conservative scratch-memory allowance can reduce concurrency. A batch size
-below the requested thread count cannot keep all workers occupied.
+and a scratch-memory allowance can reduce concurrency. The allowance is half the
+total physical RAM, independent of current usage and filesystem caches. An
+explicit CPU process cap further limits it to half the remaining
+address-space allowance. There is no fixed 2 GiB ceiling and memory is not
+reserved upfront. The other half provides headroom for source batches, other
+allocations and desktop use. The chosen budget and estimated scratch per frame
+are recorded in result metadata. If total RAM cannot be determined, frame
+processing remains serial. A batch size below the requested thread count cannot
+keep all workers occupied.
 Quality-rejected frames do not occupy work slots: selected frames are collected
 across consecutive input batches, so strict quality cuts can still fill a worker
 batch without loading the whole capture.

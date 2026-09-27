@@ -485,6 +485,8 @@ def _stack_source(
         if backend.name == 'cpu':
             report.frame_workers = pool.workers
         snapshot_provenance['cpu_frame_workers'] = {'workers': pool.workers, 'limit': pool.reason,
+            'scratch_budget_bytes': pool.scratch_budget_bytes,
+            'estimated_frame_bytes': pool.estimated_frame_bytes,
             'accumulation': 'capture order; float64; no frame brightness normalisation'}
         if local_matcher is not None and config.alignment_method == 'circular_multiscale' and pool.workers > 1:
             # Only the owner polls the caller; workers observe a thread-safe flag.
