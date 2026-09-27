@@ -72,10 +72,15 @@ def main():
     parser.add_argument('--spacing', type=float, default=16.)
     parser.add_argument('--stiffness', type=float, default=.01)
     parser.add_argument('--patch-average', action='store_true')
+    parser.add_argument('--validate-pixels', action='store_true',
+                        help='Validate area-aware coherent motion against disjoint detector samples')
     parser.add_argument('--combine', action='store_true')
     args = parser.parse_args()
     root, indices, quality, shifts, reference, hashes = inputs()
     config = {'spacing':args.spacing,'stiffness':args.stiffness,'patch_average':args.patch_average}
+    if args.validate_pixels:
+        config.update(patch_average=True, independent_pixel_validation=True)
+        hashes['validation_code'] = hashlib.sha256(Path('tools/validated_registration.py').read_bytes()).hexdigest()
     if args.combine:
         paths = sorted(args.out.glob('shard_*.npz'))
         total,support,stats = combine_shards(paths,len(indices),reference.shape,hashes,config)
@@ -98,6 +103,8 @@ def main():
                   'shards':[str(p) for p in paths], 'rejected_fields':sum(not s['field_guard_accepted'] for s in stats),
                   'insufficient_points':sum(s['fallback'] for s in stats),
                   'median_points':float(np.median([s['points'] for s in stats]))}
+        if args.validate_pixels:
+            report['accepted_half_counts'] = {str(n):sum(s['accepted_halves']==n for s in stats) for n in range(3)}
         (args.out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         print(report,flush=True)
         return
@@ -108,8 +115,13 @@ def main():
     if path.exists():
         raise FileExistsError(path)
     torch.set_num_threads(4)
-    engine = CoherentRegistration(CircularMultiscaleRegistration(reference),spacing=args.spacing,
-                                  stiffness=args.stiffness,patch_average=args.patch_average)
+    matcher = CircularMultiscaleRegistration(reference)
+    if args.validate_pixels:
+        from tools.validated_registration import ValidatedRegistration
+        engine = ValidatedRegistration(reference,matcher,spacing=args.spacing,stiffness=args.stiffness)
+    else:
+        engine = CoherentRegistration(matcher,spacing=args.spacing,
+                                      stiffness=args.stiffness,patch_average=args.patch_average)
     backend = TorchBackend()
     total = np.zeros_like(reference)
     support = np.zeros_like(reference)
@@ -118,7 +130,10 @@ def main():
     with SERSource('2024-09-27-1154_3-CK-R-Sat.ser') as source:
         for j,position in enumerate(positions):
             frame = source.read_raw(int(indices[position]))
-            field = engine.displacement(LocalRegistration.proxy(frame),shifts[position],lambda:None)
+            if args.validate_pixels:
+                field = engine.displacement_raw(frame,shifts[position],lambda:None)
+            else:
+                field = engine.displacement(LocalRegistration.proxy(frame),shifts[position],lambda:None)
             signal,weight,*_ = backend.backproject(frame,field,'mono')
             scalar = max(float(quality[position]),1e-12)
             total += scalar*signal

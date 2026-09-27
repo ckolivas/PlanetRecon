@@ -126,7 +126,10 @@ def run_case(engine, reference, parameters, n, seed, mask, out, name, match_know
                 blur_engines[key] = TorchCircularRegistration(
                     CircularMultiscaleRegistration(blurred), device=engine.device)
             matching_engine = blur_engines[key]
-        estimated = matching_engine.displacement(LocalRegistration.proxy(frame), shift, lambda: None)
+        if hasattr(matching_engine,'displacement_raw'):
+            estimated = matching_engine.displacement_raw(frame,shift,lambda:None)
+        else:
+            estimated = matching_engine.displacement(LocalRegistration.proxy(frame), shift, lambda: None)
         frames.append(frame)
         clean_frames.append(clean)
         truths.append(truth)
@@ -189,6 +192,7 @@ def main():
     parser.add_argument('--coherent-spacing', type=float, help='Experimental shared spline motion grid spacing')
     parser.add_argument('--coherent-stiffness', type=float, default=.1)
     parser.add_argument('--patch-average', action='store_true')
+    parser.add_argument('--validate-pixels',action='store_true',help='Experimental independent-pixel motion validation')
     parser.add_argument('--motion-wavelengths', type=float, nargs=2, default=(160., 240.), metavar=('Y', 'X'))
     args = parser.parse_args()
     if args.frames < 8:
@@ -200,6 +204,10 @@ def main():
         parser.error('--coherent-spacing must be finite and >= 4; cannot combine with --match-known-blur')
     if not np.isfinite(args.coherent_stiffness) or args.coherent_stiffness <= 0:
         parser.error('--coherent-stiffness must be positive and finite')
+    if args.validate_pixels and (args.coherent_spacing is None or args.match_known_blur):
+        parser.error('--validate-pixels requires --coherent-spacing and cannot use known blur')
+    if args.validate_pixels:
+        args.patch_average = True
     args.out.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(4)
     reference = np.load(args.reference)
@@ -209,6 +217,7 @@ def main():
               'matching_template_uses_known_blur': args.match_known_blur,
               'coherent_spacing_px': args.coherent_spacing,
               'coherent_stiffness': args.coherent_stiffness, 'patch_average': args.patch_average,
+              'independent_pixel_validation':args.validate_pixels,
               'export_black_white_adu': [0., 255.], 'scenes': {}, 'limits': [
                   'Synthetic composed shears are not a full atmospheric or planetary rotation model.',
                   'Reference is fixed; Saturn source contains its existing reference texture and noise.',
@@ -226,7 +235,11 @@ def main():
         mask[:8] = mask[-8:] = False
         mask[:, :8] = mask[:, -8:] = False
         matcher = CircularMultiscaleRegistration(scene)
-        if args.coherent_spacing is None:
+        if args.validate_pixels:
+            from tools.validated_registration import ValidatedRegistration
+            engine=ValidatedRegistration(scene,matcher,device=args.device,spacing=args.coherent_spacing,
+                                         stiffness=args.coherent_stiffness)
+        elif args.coherent_spacing is None:
             engine = TorchCircularRegistration(matcher, device=args.device)
         else:
             from tools.coherent_registration import CoherentRegistration

@@ -25,6 +25,10 @@ def main():
         'coherent_matched':out/'sharpened/coherent_as_transfer_sharpened.png',
         'global_matched':Path('out/saturn-refined-registration/sharpened/existing_bilinear_as_transfer_sharpened.png'),
         'AS':Path('out/saturn-matched-transfer/sharpened/as_manual64_sharpened.png')}
+    validated = report['config'].get('independent_pixel_validation',False)
+    if validated:
+        paths.update(previous_coherent_raw=Path('out/saturn-coherent-field/sharpened/coherent_sharpened.png'),
+                     previous_coherent_matched=Path('out/saturn-coherent-field/sharpened/coherent_as_transfer_sharpened.png'))
     arrays={name:read_png(path)[0] for name,path in paths.items()}
     centres={name:np.asarray(center_of_mass(np.maximum(a-a.max()*.02,0))) for name,a in arrays.items()}
     report['comparison']={}
@@ -34,7 +38,7 @@ def main():
         print(name,'variation',*[round(v['highpass_percent'],5) for v in report['comparison'][name]['variation'].values()],
               'ring widths',*[round(v['width_10_90_px'],5) for v in report['comparison'][name]['ring_edges'].values()],flush=True)
     report['edge_sensitivity']={}
-    for name in ('production_matched','coherent_matched'):
+    for name in (['production_matched','coherent_matched'] + (['previous_coherent_matched'] if validated else [])):
         images={'production_local':arrays[name],'existing_bilinear':arrays['global_matched'],'AS_manual64':arrays['AS']}
         common={'production_local':np.rint(centres['global_matched']).astype(int),
                 'existing_bilinear':np.rint(centres['global_matched']).astype(int),
@@ -55,8 +59,12 @@ def main():
     labels=['Current PR, unfiltered','Experimental coherent field, unfiltered',
             'Current PR + measured AS response','Coherent field + measured AS response',
             'Global alignment + measured AS response','Supplied AutoStakkert, manual 64-frame reference']
+    if validated:
+        labels[1]='Independent-pixel validated field, unfiltered'
+        labels[3]='Validated field + measured AS response'
+        labels.extend(['Previous coherent field, unfiltered','Previous coherent field + measured AS response'])
     app=QGuiApplication.instance() or QGuiApplication([])
-    canvas=QImage(2000,1530,QImage.Format.Format_RGB32);canvas.fill(QColor('black'))
+    canvas=QImage(2000,510*((len(paths)+1)//2),QImage.Format.Format_RGB32);canvas.fill(QColor('black'))
     painter=QPainter(canvas);painter.setPen(QColor('white'));painter.setFont(QFont('Sans',18))
     for i,((name,path),label) in enumerate(zip(paths.items(),labels)):
         cy,cx=np.rint(centres[name]).astype(int)
