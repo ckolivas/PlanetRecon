@@ -58,6 +58,7 @@ def main():
     parser.add_argument('--cached-full-refit', action='store_true',
                         help='Reuse verified validation decisions and compute only full-data fits')
     parser.add_argument('--regional',action='store_true',help='Diagnostic spatial motion validation')
+    parser.add_argument('--blur-matched',action='store_true',help='Diagnostic inferred reference blur')
     args = parser.parse_args()
     root, indices, quality, shifts, reference, hashes = inputs()
     if not 2 <= args.sample_count <= len(indices):
@@ -66,12 +67,15 @@ def main():
     hashes['sample_positions'] = hashlib.sha256(selected.tobytes()).hexdigest()
     for name in ('validated_registration','refit_registration'):
         hashes[name] = hashlib.sha256(Path(f'tools/{name}.py').read_bytes()).hexdigest()
-    if args.regional and args.cached_full_refit:
-        parser.error('regional checks cannot reuse whole-frame-only validation decisions')
+    if sum((args.regional, args.cached_full_refit, args.blur_matched)) > 1:
+        parser.error('regional, cached full refit and blur matching are separate experiments')
     policies = ['coherent','full_any','full_scaled'] if args.cached_full_refit else POLICIES
     if args.regional:
         policies = ['coherent','full_any','regional_any','regional_both']
         hashes['regional_registration'] = hashlib.sha256(Path('tools/regional_registration.py').read_bytes()).hexdigest()
+    if args.blur_matched:
+        policies = ['coherent','matched_global','matched_local']
+        hashes['blur_matched_registration'] = hashlib.sha256(Path('tools/blur_matched_registration.py').read_bytes()).hexdigest()
     cached = None
     if args.cached_full_refit:
         cached = cached_validation(Path('out/saturn-validated-field'),hashes,len(indices))
@@ -96,8 +100,12 @@ def main():
             export_result(result,args.out/f'{name}.png',export)
         report = dict(n_used=len(selected),sample_positions=selected.tolist(),
             frame_indices=indices[selected].tolist(),hashes=hashes,config=config,production_changed=False,
-            brightness_normalization=False,output_filtering=False,
-            accepted_half_counts={str(n):sum(s['accepted_halves']==n for s in stats) for n in range(3)})
+            brightness_normalization=False,output_filtering=False)
+        if args.blur_matched:
+            report['selected_blur_counts'] = {pose:{str(sigma):int(sum(s[pose+'_sigma']==sigma for s in stats))
+                for sigma in np.arange(0.,2.01,.25)} for pose in ('global','local')}
+        else:
+            report['accepted_half_counts'] = {str(n):sum(s['accepted_halves']==n for s in stats) for n in range(3)}
         if args.regional:
             report['regional_guard_rejections'] = {key:sum(not s[key+'_guard_accepted'] for s in stats)
                                                   for key in ('regional_any','regional_both')}
@@ -113,7 +121,10 @@ def main():
     positions = np.arange(args.start,min(args.start+args.count,len(selected)))
     torch.set_num_threads(4)
     matcher = CircularMultiscaleRegistration(reference)
-    if args.regional:
+    if args.blur_matched:
+        from tools.blur_matched_registration import BlurMatchedRegistration
+        engine = BlurMatchedRegistration(reference,matcher)
+    elif args.regional:
         from tools.regional_registration import RegionalRegistration
         engine = RegionalRegistration(reference,matcher)
     else:

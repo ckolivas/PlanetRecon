@@ -65,7 +65,8 @@ def main():
         'Overlapping edge windows are a sensitivity check, not independent replicates.']
     (root/'analysis.json').write_text(json.dumps(report,indent=2)+'\n')
     app = QGuiApplication.instance() or QGuiApplication([])
-    canvas = QImage(2000,1530,QImage.Format.Format_RGB32)
+    footer_y = ((len(policies)+1)//2)*510
+    canvas = QImage(2000,footer_y+170,QImage.Format.Format_RGB32)
     canvas.fill(QColor('black'))
     painter = QPainter(canvas)
     painter.setPen(QColor('white'));painter.setFont(QFont('Sans',18))
@@ -73,7 +74,9 @@ def main():
               validated='Previous independent-pixel gated average',full_any='Motion gate, then full-frame refit',
               full_scaled='Full-frame fit scaled by accepted-half count',
               previous_validated='Previous independent-pixel gated average',
-              regional_any='Regional gate: either half accepts',regional_both='Regional gate: both halves accept')
+              regional_any='Regional gate: either half accepts',regional_both='Regional gate: both halves accept',
+              matched_global='Reference blur estimated at global pose',
+              matched_local='Reference blur estimated at local pose')
     cy,cx = centre
     for i,name in enumerate(policies):
         label = labels[name]
@@ -82,9 +85,9 @@ def main():
         crop = crop.scaled(1000,460,Qt.AspectRatioMode.IgnoreAspectRatio,Qt.TransformationMode.FastTransformation)
         x,y = (i%2)*1000,(i//2)*510
         painter.drawText(x+12,y+32,label);painter.drawImage(x,y+45,crop)
-    painter.drawText(1012,1100,f'Identical {report["n_used"]} frames and weights')
-    painter.drawText(1012,1140,'Wavelet 27/0/0/0; adaptive deconvolution 15.6')
-    painter.drawText(1012,1180,'No added output filtering or normalization')
+    painter.drawText(12,footer_y+40,f'Identical {report["n_used"]} frames and weights')
+    painter.drawText(12,footer_y+80,'Wavelet 27/0/0/0; adaptive deconvolution 15.6')
+    painter.drawText(12,footer_y+120,'No added output filtering or normalization')
     painter.end()
     if not canvas.save(str(root/'comparison.png')):
         raise OSError('comparison.png')
