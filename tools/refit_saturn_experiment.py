@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--combine', action='store_true')
     parser.add_argument('--cached-full-refit', action='store_true',
                         help='Reuse verified validation decisions and compute only full-data fits')
+    parser.add_argument('--regional',action='store_true',help='Diagnostic spatial motion validation')
     args = parser.parse_args()
     root, indices, quality, shifts, reference, hashes = inputs()
     if not 2 <= args.sample_count <= len(indices):
@@ -65,7 +66,12 @@ def main():
     hashes['sample_positions'] = hashlib.sha256(selected.tobytes()).hexdigest()
     for name in ('validated_registration','refit_registration'):
         hashes[name] = hashlib.sha256(Path(f'tools/{name}.py').read_bytes()).hexdigest()
+    if args.regional and args.cached_full_refit:
+        parser.error('regional checks cannot reuse whole-frame-only validation decisions')
     policies = ['coherent','full_any','full_scaled'] if args.cached_full_refit else POLICIES
+    if args.regional:
+        policies = ['coherent','full_any','regional_any','regional_both']
+        hashes['regional_registration'] = hashlib.sha256(Path('tools/regional_registration.py').read_bytes()).hexdigest()
     cached = None
     if args.cached_full_refit:
         cached = cached_validation(Path('out/saturn-validated-field'),hashes,len(indices))
@@ -92,6 +98,9 @@ def main():
             frame_indices=indices[selected].tolist(),hashes=hashes,config=config,production_changed=False,
             brightness_normalization=False,output_filtering=False,
             accepted_half_counts={str(n):sum(s['accepted_halves']==n for s in stats) for n in range(3)})
+        if args.regional:
+            report['regional_guard_rejections'] = {key:sum(not s[key+'_guard_accepted'] for s in stats)
+                                                  for key in ('regional_any','regional_both')}
         (args.out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         print('Combined',len(selected),'frames across',len(policies),'policies')
         return
@@ -104,8 +113,12 @@ def main():
     positions = np.arange(args.start,min(args.start+args.count,len(selected)))
     torch.set_num_threads(4)
     matcher = CircularMultiscaleRegistration(reference)
-    engine = (CoherentRegistration(matcher,spacing=16.,stiffness=.01,patch_average=True)
-              if cached is not None else RefitRegistration(reference,matcher))
+    if args.regional:
+        from tools.regional_registration import RegionalRegistration
+        engine = RegionalRegistration(reference,matcher)
+    else:
+        engine = (CoherentRegistration(matcher,spacing=16.,stiffness=.01,patch_average=True)
+                  if cached is not None else RefitRegistration(reference,matcher))
     backend = TorchBackend()
     total,support = np.zeros(shape),np.zeros(shape)
     started = time.perf_counter()

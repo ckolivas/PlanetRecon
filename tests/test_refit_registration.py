@@ -27,7 +27,8 @@ def test_ablation_preserves_baseline_and_refits_moving_scene(device):
     engine = RefitRegistration(ref,CircularMultiscaleRegistration(ref),device=device)
     expected = baseline.displacement_raw(frame,(.1,-.1),lambda:None)
     variants = engine.variants(frame,(.1,-.1),lambda:None)
-    torch.testing.assert_close(variants['validated'],expected,rtol=0,atol=0)
+    # CUDA reductions may differ by a few float64 ULPs between instances.
+    torch.testing.assert_close(variants['validated'],expected,rtol=0,atol=1e-12)
     assert engine.stats[-1]['accepted_halves'] == 2
     torch.testing.assert_close(variants['full_any'],variants['coherent'],rtol=0,atol=0)
     torch.testing.assert_close(variants['full_scaled'],variants['coherent'],rtol=0,atol=0)

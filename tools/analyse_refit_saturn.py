@@ -72,7 +72,8 @@ def main():
     labels = dict(coherent='Full-frame coherent fit',half_average='Half-frame fits averaged, no extra gate',
               validated='Previous independent-pixel gated average',full_any='Motion gate, then full-frame refit',
               full_scaled='Full-frame fit scaled by accepted-half count',
-              previous_validated='Previous independent-pixel gated average')
+              previous_validated='Previous independent-pixel gated average',
+              regional_any='Regional gate: either half accepts',regional_both='Regional gate: both halves accept')
     cy,cx = centre
     for i,name in enumerate(policies):
         label = labels[name]
