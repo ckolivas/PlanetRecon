@@ -5,6 +5,12 @@ fresh measurements are needed. It measures quality, shape and geometry without
 reconstructing or replacing the displayed result. The measurements are cached
 beside the capture as `<capture filename>.planetrecon-preprocess.npz`.
 
+Frame measurements use the configured CPU thread count, limited by the frames
+per batch and the number of input frames. There is no separate four-worker or
+128 MiB scratch cap. The configured CPU process memory ceiling still applies
+to the whole preprocessing job. Source reads remain serial, while independent
+frame measurements run concurrently with internal BLAS threading disabled.
+
 The **Use cached preprocessing (quality and shape)** checkbox independently
 controls whether later runs use those decisions. GUI **Run** validates the cache
 and automatically runs preprocessing when it is missing, stale or invalid,

@@ -123,8 +123,12 @@ See results/real-data/prepared-demosaic-speedups.json.
 
 ## Bounded parallel screening
 
-Independent frame measurements now use at most four threads, bounded further by
-the requested threads, batch count and a conservative 128 MiB scratch estimate.
+Independent frame measurements originally used at most four threads, bounded
+further by the requested threads, batch count and a 128 MiB scratch estimate.
+The four-worker and scratch caps have since been removed: screening honours the
+configured thread count, limited by batch size and available input frames. The
+configured process memory ceiling still applies. The timings below describe
+the original four-worker implementation, not a benchmark of higher concurrency.
 BLAS stays single-threaded inside this pool and is restored afterward. Without
 optional threadpoolctl, screening remains serial. Source I/O and result ordering
 remain on the calling thread; cancellation closes queued work and joins workers.

@@ -14,8 +14,9 @@ from test_preprocessing import planet
 
 
 class OwnedSource(ArraySource):
-    def __init__(self):
-        super().__init__(np.stack([planet(blur=.7+i*.03)+i for i in range(16)]))
+    def __init__(self, count=16, repeat=1):
+        super().__init__(np.stack([np.tile(planet(blur=.7+i*.03)+i, (repeat, repeat))
+                                  for i in range(count)]))
         self.owner = threading.get_ident()
         self.reads = []
 
@@ -60,6 +61,35 @@ def test_parallel_measurement_preserves_calibrated_results_and_thread_limits(mon
     assert 2 <= len(workers) <= 4 and all(not t.is_alive() for t in workers)
     after = {i['filepath']: i['num_threads'] for i in ctl.threadpool_info()}
     assert before == after
+
+
+@pytest.mark.parametrize('threads,batch_frames,count', [
+    (8, 16, 16), (32, 32, 32), (32, 8, 16), (32, 32, 8),
+])
+def test_requested_concurrency_preserves_results(monkeypatch, threads, batch_frames, count):
+    pytest.importorskip('threadpoolctl')
+    cfg = ReconstructionConfig(device='cpu', threads=threads, batch_frames=batch_frames)
+    # Large enough that the former 128 MiB scratch allowance also restricted
+    # concurrency, independently of the former four-worker cap.
+    source = OwnedSource(count=count, repeat=3)
+    expected = module.screen_source(source, replace(cfg, threads=1))
+    source.reads.clear()
+    concurrency = min(threads, batch_frames, count)
+    barrier = threading.Barrier(concurrency, timeout=15)
+    workers = set()
+    original = module.measure_frame
+
+    def measure(*args):
+        workers.add(threading.current_thread())
+        barrier.wait()
+        return original(*args)
+
+    monkeypatch.setattr(module, 'measure_frame', measure)
+    actual = module.screen_source(source, cfg)
+    same(actual, expected)
+    assert source.reads == list(range(count))
+    assert len(workers) == concurrency
+    assert all(not worker.is_alive() for worker in workers)
 
 
 def test_cancel_keeps_a_measured_prefix_and_allows_immediate_rerun():

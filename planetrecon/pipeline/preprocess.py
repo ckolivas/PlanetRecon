@@ -131,11 +131,10 @@ def _measure_observation(raw, *, color, bit_depth, reject_saturated, calibration
 
 @contextmanager
 def _measurement_pool(source, config):
-    # At most four active frames, bounded by both the requested thread count
-    # and a conservative 128 MiB estimate for concurrent measurement scratch.
-    pixels = max(1, int(np.prod(source.frame_shape())))
-    workers = max(1, min(4, config.threads, config.batch_frames, source.n_frames(),
-                         (128*1024**2)//(128*pixels)))
+    # Honour the requested concurrency without a separate screening cap.
+    # The batch bounds active frames; preprocess_source applies the configured
+    # process memory ceiling to the whole job, including measurement scratch.
+    workers = max(1, min(config.threads, config.batch_frames, source.n_frames()))
     if workers > 1:
         try:
             from threadpoolctl import threadpool_limits
