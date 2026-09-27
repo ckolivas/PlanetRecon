@@ -12,6 +12,7 @@ import torch
 from planetrecon.backends.torch_circular import sample
 from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
 from tools.joint_registration import JointRegistration
+from tools.spline_joint_registration import SplineJointRegistration
 from tools.validate_local_warp_centring import cases,make_frame,texture_scene,image_errors,save_png
 
 
@@ -25,6 +26,7 @@ def main():
     parser.add_argument('--seed',type=int,default=9017)
     parser.add_argument('--device',default='cuda:0')
     parser.add_argument('--iterations',type=int,default=100)
+    parser.add_argument('--sampler',choices=['bicubic','spline'],default='bicubic')
     args=parser.parse_args()
     if args.frames<8 or args.iterations<1:parser.error('at least eight frames and positive iteration count required')
     args.out.mkdir(parents=True,exist_ok=False)
@@ -34,10 +36,14 @@ def main():
                 model_sha256=hashlib.sha256(Path('tools/joint_registration.py').read_bytes()).hexdigest(),
                 production_changed=False,normalization=False,output_filtering=False,
                 config=dict(iterations=args.iterations,spacing=32.,stiffness=[.03,.3],fit_stride=2),scenes={})
+    report['config']['sampler'] = args.sampler
+    if args.sampler == 'spline':
+        report['sampler_sha256'] = hashlib.sha256(Path('tools/spline_joint_registration.py').read_bytes()).hexdigest()
+    estimator = SplineJointRegistration if args.sampler == 'spline' else JointRegistration
     started=time.perf_counter()
     for scene_name,scene in [('saturn',reference),('texture',texture_scene(reference.shape))]:
         if scene_name not in args.scenes:continue
-        engine=JointRegistration(scene,CircularMultiscaleRegistration(scene),device=args.device,maxiter=args.iterations)
+        engine=estimator(scene,CircularMultiscaleRegistration(scene),device=args.device,maxiter=args.iterations)
         mask=binary_erosion(scene>.08*scene.max(),iterations=3)
         mask[:8]=mask[-8:]=False;mask[:,:8]=mask[:,-8:]=False
         report['scenes'][scene_name]={}

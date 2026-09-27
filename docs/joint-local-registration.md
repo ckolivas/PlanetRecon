@@ -1,5 +1,9 @@
 # Joint blur and motion: controlled evaluation
 
+The subsequent [forward-sampling correction](spline-forward-sampling.md)
+retains this model for comparison and tests a corrected spline predictor
+against both these controls and independently integrated continuous scenes.
+
 The preceding sequential blur-matching experiment improved several synthetic
 geometry tests but worsened the full Saturn stack. This experiment fits blur
 and motion in one raw-pixel forward model. It is diagnostic code; production

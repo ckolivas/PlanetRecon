@@ -12,6 +12,7 @@ from planetrecon.backends.torch_circular import sample
 from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
 from planetrecon.pipeline.local_align import LocalRegistration
 from tools.joint_registration import JointRegistration
+from tools.spline_joint_registration import SplineJointRegistration
 from tools.validate_local_warp_centring import texture_scene, image_errors
 
 
@@ -20,13 +21,17 @@ def main():
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--generator',choices=['scipy_spline','model'],default='scipy_spline')
     p.add_argument('--noise',type=float,nargs='+',default=[0.,2.])
+    p.add_argument('--sampler', choices=['bicubic', 'spline'], default='bicubic')
     args=p.parse_args()
     torch.set_num_threads(4)
     reference=np.load('out/saturn-controlled-alignment/reference.npy')
     report=dict(model_sha256=hashlib.sha256(Path('tools/joint_registration.py').read_bytes()).hexdigest(),
-                generator=args.generator,frames=[])
+                sampler=args.sampler, generator=args.generator,frames=[])
+    if args.sampler == 'spline':
+        report['sampler_sha256'] = hashlib.sha256(Path('tools/spline_joint_registration.py').read_bytes()).hexdigest()
+    estimator = SplineJointRegistration if args.sampler == 'spline' else JointRegistration
     for name,scene in [('saturn',reference),('texture',texture_scene(reference.shape))]:
-        engine=JointRegistration(scene,CircularMultiscaleRegistration(scene))
+        engine=estimator(scene,CircularMultiscaleRegistration(scene))
         mask=binary_erosion(scene>.08*scene.max(),iterations=3)
         mask[:8]=mask[-8:]=False;mask[:,:8]=mask[:,-8:]=False
         for shift in ((.25,.5),(.6,-.4),(-.7,.35)):
