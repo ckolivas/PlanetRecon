@@ -1,0 +1,5434 @@
+{
+  "hashes": {
+    "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+    "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+    "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+    "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+    "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+    "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+    "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+    "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+    "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+    "tools/ap_oracle_observations.py": "2ab251f327ad9f83bf8ade3f0ba6bb45fa190f5b2577e5ee8072869ec249c02b",
+    "tools/ap_stability_validation.py": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+    "tools/validate_local_warp_centring.py": "0fb343aecddf1594b787c6a624e38311dd5014c44e468ac0360f73df86d151eb",
+    "tools/ap_noise_coupling.py": "3aedae5cd153ee72a76f2e011afc257d86cf7cb01ae1dce367b6e0d682b4a7e6",
+    "tools/fractional_ap_trace.py": "51b7722fe57cd5cb7594da7f9a05dc569fbde798fa8eb684cc7953db7ced9c2f",
+    "tools/ap_fractional_phase.py": "f1ad23c2d5638b746a42af491e4d1d4d419301326a689177069d64347a54c9c7"
+  },
+  "source_sha256": "a219550e222993af99f6ca0b969d2cc5969d13e50eedadbba24f6e565effe226",
+  "selected": "cubic_refined",
+  "phase_report_sha256": "ecfab554429d1d2b4c2fe60a3bdf7fa3a3a136f58c223d07b1b3767adc68d736",
+  "prior_report_sha256": "439ea9b66dd937396218dc2b370d5fc230b2d5958182f6cd81fb3d1de5b1e002",
+  "count": 32,
+  "cases": {
+    "stationary": {
+      "raw_sha256": "e1e9d8ca915d1d3ac17f9e43e344bd986d69f2e68d09089c1ad082f148b8d97a",
+      "variants": {
+        "baseline_noise0": {
+          "image": {
+            "rmse_adu": 0.078365379318399,
+            "gradient_vector_rmse_adu_per_px": 0.013703939291945385
+          },
+          "clean": {
+            "rmse_adu": 0.078365379318399,
+            "gradient_vector_rmse_adu_per_px": 0.013703939291945385
+          },
+          "field": {
+            "total_vector_rmse_px": 0.05651998675252895,
+            "mean_error_vector_rms_px": 0.05313633867385452,
+            "temporal_error_vector_rms_px": 0.01926235745809827,
+            "estimated_mean_vector_rms_px": 0.05313633867385451,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.0004758790018968284,
+            "gradient_vector_rmse_adu_per_px": 0.0004241041897330433
+          }
+        },
+        "baseline_noise2": {
+          "image": {
+            "rmse_adu": 0.32287112450662997,
+            "gradient_vector_rmse_adu_per_px": 0.23248553403442065
+          },
+          "clean": {
+            "rmse_adu": 0.22487761601580983,
+            "gradient_vector_rmse_adu_per_px": 0.023776189745909188
+          },
+          "field": {
+            "total_vector_rmse_px": 0.242968288486044,
+            "mean_error_vector_rms_px": 0.1586545279696814,
+            "temporal_error_vector_rms_px": 0.1840172001867076,
+            "estimated_mean_vector_rms_px": 0.15865452796968138,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008825421333312988,
+            "gradient_vector_rmse_adu_per_px": 0.009066294878721237
+          }
+        },
+        "cubic_refined_noise0": {
+          "image": {
+            "rmse_adu": 0.003122933559472343,
+            "gradient_vector_rmse_adu_per_px": 0.0006747603241589263
+          },
+          "clean": {
+            "rmse_adu": 0.003122933559472343,
+            "gradient_vector_rmse_adu_per_px": 0.0006747603241589263
+          },
+          "field": {
+            "total_vector_rmse_px": 0.004123884377490354,
+            "mean_error_vector_rms_px": 0.0019803505960447033,
+            "temporal_error_vector_rms_px": 0.0036172688420484512,
+            "estimated_mean_vector_rms_px": 0.0019803505960447024,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 8.515546505805105e-05,
+            "gradient_vector_rmse_adu_per_px": 7.076610927470028e-05
+          }
+        },
+        "cubic_refined_noise2": {
+          "image": {
+            "rmse_adu": 0.36407023940588784,
+            "gradient_vector_rmse_adu_per_px": 0.2349822836661313
+          },
+          "clean": {
+            "rmse_adu": 0.2794485272926202,
+            "gradient_vector_rmse_adu_per_px": 0.029455709236236038
+          },
+          "field": {
+            "total_vector_rmse_px": 0.26785638568107173,
+            "mean_error_vector_rms_px": 0.19106691935886097,
+            "temporal_error_vector_rms_px": 0.18772446744322221,
+            "estimated_mean_vector_rms_px": 0.19106691935886097,
+            "true_mean_vector_rms_px": 4.423544863740858e-17
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.008852267637848854,
+            "gradient_vector_rmse_adu_per_px": 0.009091809391975403
+          }
+        }
+      },
+      "stage_sha256": {
+        "baseline_noise0": "651439adf7385c247a4fcf64dea13c1fe3e3bedf01591b8905136f75ceba3c02",
+        "baseline_noise2": "0a9404d5104309f1a17159d5d3a1ba79bf5538de6abcc158e951d2a3cdb34b85",
+        "cubic_refined_noise0": "a1482ad35575baf813c2c8a4ac3fadaf98e794bb173e337c6b2798f5709b98b2",
+        "cubic_refined_noise2": "6da815fcbdf9aa4e199072207978a6a20c514813ef8d66c88ca554bc0ef777e0",
+        "target": "6713381b94524bb1b3e5cc221694b075e6f004166430d079c68810fe1d8772ef"
+      }
+    },
+    "long_motion": {
+      "raw_sha256": "f5cbb8f40a449d8841ef73c62e390eee8e88f60d06efff12d6566c23ef546e13",
+      "variants": {
+        "baseline_noise0": {
+          "image": {
+            "rmse_adu": 0.07446098682378763,
+            "gradient_vector_rmse_adu_per_px": 0.014201341928799092
+          },
+          "clean": {
+            "rmse_adu": 0.07446098682378763,
+            "gradient_vector_rmse_adu_per_px": 0.014201341928799092
+          },
+          "field": {
+            "total_vector_rmse_px": 0.211325108561413,
+            "mean_error_vector_rms_px": 0.0511297310572333,
+            "temporal_error_vector_rms_px": 0.20504646329675696,
+            "estimated_mean_vector_rms_px": 0.051129731057233285,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.00045590929221361876,
+            "gradient_vector_rmse_adu_per_px": 0.00041992313344962895
+          }
+        },
+        "baseline_noise2": {
+          "image": {
+            "rmse_adu": 0.3357540458632354,
+            "gradient_vector_rmse_adu_per_px": 0.24020266559999356
+          },
+          "clean": {
+            "rmse_adu": 0.23555090168248613,
+            "gradient_vector_rmse_adu_per_px": 0.024962555725197125
+          },
+          "field": {
+            "total_vector_rmse_px": 0.3112427349604695,
+            "mean_error_vector_rms_px": 0.16334883782154114,
+            "temporal_error_vector_rms_px": 0.2649324390255466,
+            "estimated_mean_vector_rms_px": 0.16334883782154117,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.009966552257537842,
+            "gradient_vector_rmse_adu_per_px": 0.010075549595057964
+          }
+        },
+        "cubic_refined_noise0": {
+          "image": {
+            "rmse_adu": 0.015034144727655546,
+            "gradient_vector_rmse_adu_per_px": 0.004409066898462366
+          },
+          "clean": {
+            "rmse_adu": 0.015034144727655546,
+            "gradient_vector_rmse_adu_per_px": 0.004409066898462366
+          },
+          "field": {
+            "total_vector_rmse_px": 0.20641266761507127,
+            "mean_error_vector_rms_px": 0.015675229410535417,
+            "temporal_error_vector_rms_px": 0.20581660898697468,
+            "estimated_mean_vector_rms_px": 0.015675229410535417,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.0001475405297242105,
+            "gradient_vector_rmse_adu_per_px": 0.00014417621423490345
+          }
+        },
+        "cubic_refined_noise2": {
+          "image": {
+            "rmse_adu": 0.3675235465744464,
+            "gradient_vector_rmse_adu_per_px": 0.24093807223931551
+          },
+          "clean": {
+            "rmse_adu": 0.2789273596812979,
+            "gradient_vector_rmse_adu_per_px": 0.029270821570363814
+          },
+          "field": {
+            "total_vector_rmse_px": 0.32520331535564584,
+            "mean_error_vector_rms_px": 0.18789496969210726,
+            "temporal_error_vector_rms_px": 0.2654292310253478,
+            "estimated_mean_vector_rms_px": 0.18789496969210726,
+            "true_mean_vector_rms_px": 3.0391126455937446e-16
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01001452375203371,
+            "gradient_vector_rmse_adu_per_px": 0.010112660005688667
+          }
+        }
+      },
+      "stage_sha256": {
+        "baseline_noise0": "480a70a3dbe12fe8e376b003015073331288f0309e24ec5ad87c4c59895737cb",
+        "baseline_noise2": "908b54db2022614d2445967c931a9b474f4f63fbfe237735a3dc1edf43ea920b",
+        "cubic_refined_noise0": "7d2745b18f18fe3a0130186eaf04a7301f3e84580db5baf8894daac14b6a4864",
+        "cubic_refined_noise2": "9d3c5ce7ba0366c86e8a4815d3e1253f3355094c7a74b8e4f6731244ddf30321",
+        "target": "e63dedcfcb922addd4fdf42d6a042c8487937ddb2f8c456bf4e5aba2f97675c2"
+      }
+    },
+    "short_motion": {
+      "raw_sha256": "27d63decdee19b1a4dee575ba2ffaec9454267abe0d916f7a70460ebdffc2e25",
+      "variants": {
+        "baseline_noise0": {
+          "image": {
+            "rmse_adu": 0.06850913273695458,
+            "gradient_vector_rmse_adu_per_px": 0.015271964665725961
+          },
+          "clean": {
+            "rmse_adu": 0.06850913273695458,
+            "gradient_vector_rmse_adu_per_px": 0.015271964665725961
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7513125216697089,
+            "mean_error_vector_rms_px": 0.04737276657500641,
+            "temporal_error_vector_rms_px": 0.7498175286059648,
+            "estimated_mean_vector_rms_px": 0.04737276657500639,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.0005456032231450081,
+            "gradient_vector_rmse_adu_per_px": 0.0005082291318103671
+          }
+        },
+        "baseline_noise2": {
+          "image": {
+            "rmse_adu": 0.3193110196588602,
+            "gradient_vector_rmse_adu_per_px": 0.23649718318535207
+          },
+          "clean": {
+            "rmse_adu": 0.21601869403216864,
+            "gradient_vector_rmse_adu_per_px": 0.022971768059605446
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7882775051109902,
+            "mean_error_vector_rms_px": 0.1499900270266496,
+            "temporal_error_vector_rms_px": 0.7738762283831642,
+            "estimated_mean_vector_rms_px": 0.1499900270266496,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010105359368026257,
+            "gradient_vector_rmse_adu_per_px": 0.010029759258031845
+          }
+        },
+        "cubic_refined_noise0": {
+          "image": {
+            "rmse_adu": 0.021678856785973994,
+            "gradient_vector_rmse_adu_per_px": 0.008086473447135308
+          },
+          "clean": {
+            "rmse_adu": 0.021678856785973994,
+            "gradient_vector_rmse_adu_per_px": 0.008086473447135308
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7483395341393391,
+            "mean_error_vector_rms_px": 0.021584731725444787,
+            "temporal_error_vector_rms_px": 0.748028179758118,
+            "estimated_mean_vector_rms_px": 0.021584731725444787,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.0003585692320484668,
+            "gradient_vector_rmse_adu_per_px": 0.0003255574847571552
+          }
+        },
+        "cubic_refined_noise2": {
+          "image": {
+            "rmse_adu": 0.3553981975064139,
+            "gradient_vector_rmse_adu_per_px": 0.23746842976937618
+          },
+          "clean": {
+            "rmse_adu": 0.26641851246064524,
+            "gradient_vector_rmse_adu_per_px": 0.02749141014642866
+          },
+          "field": {
+            "total_vector_rmse_px": 0.7924605149343112,
+            "mean_error_vector_rms_px": 0.1786126790563756,
+            "temporal_error_vector_rms_px": 0.7720694130777765,
+            "estimated_mean_vector_rms_px": 0.17861267905637562,
+            "true_mean_vector_rms_px": 3.076825850568692e-16
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.010138869285583496,
+            "gradient_vector_rmse_adu_per_px": 0.010041074827313423
+          }
+        }
+      },
+      "stage_sha256": {
+        "baseline_noise0": "f3d2e1e9d746a048ab7f49e03292a7094fef38e32c237a3d756b5c6f6886ed7b",
+        "baseline_noise2": "1989b5eb8d5544c010c0c8e543d89c92ddd78b0ee97146fb6544ff0723afe5f7",
+        "cubic_refined_noise0": "9be9f51b236da0009a79561fa30a4416ddb31ccf471cc157a978a0d5882729af",
+        "cubic_refined_noise2": "62fc9ec30767d4302b640161f7d9639ebc8b7cdbb29484123903566c1d3beba7",
+        "target": "19b776435ac3e48b9244737a493e36bef2c41843fa36f914e6cbd4109ea5d36d"
+      }
+    },
+    "short_offset": {
+      "raw_sha256": "671418ef0bcb75dbd2f8d39d3b6c265201e92149308e959fcf0551cd0f048080",
+      "variants": {
+        "baseline_noise0": {
+          "image": {
+            "rmse_adu": 0.2650785160976497,
+            "gradient_vector_rmse_adu_per_px": 0.058268278101120397
+          },
+          "clean": {
+            "rmse_adu": 0.2650785160976497,
+            "gradient_vector_rmse_adu_per_px": 0.058268278101120397
+          },
+          "field": {
+            "total_vector_rmse_px": 0.9277311672964331,
+            "mean_error_vector_rms_px": 0.5374914048811692,
+            "temporal_error_vector_rms_px": 0.7561667200109251,
+            "estimated_mean_vector_rms_px": 0.8002774375637521,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.001772406161762774,
+            "gradient_vector_rmse_adu_per_px": 0.0016074958257377148
+          }
+        },
+        "baseline_noise2": {
+          "image": {
+            "rmse_adu": 0.4063030719747181,
+            "gradient_vector_rmse_adu_per_px": 0.2439240592471952
+          },
+          "clean": {
+            "rmse_adu": 0.3295605701058813,
+            "gradient_vector_rmse_adu_per_px": 0.05936551353392862
+          },
+          "field": {
+            "total_vector_rmse_px": 0.9568398610365924,
+            "mean_error_vector_rms_px": 0.5531800292965231,
+            "temporal_error_vector_rms_px": 0.7807268247319791,
+            "estimated_mean_vector_rms_px": 0.8122018863052445,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.01111650001257658,
+            "gradient_vector_rmse_adu_per_px": 0.010891105979681015
+          }
+        },
+        "cubic_refined_noise0": {
+          "image": {
+            "rmse_adu": 0.2634671326981999,
+            "gradient_vector_rmse_adu_per_px": 0.05586108231684409
+          },
+          "clean": {
+            "rmse_adu": 0.2634671326981999,
+            "gradient_vector_rmse_adu_per_px": 0.05586108231684409
+          },
+          "field": {
+            "total_vector_rmse_px": 0.9258604753358481,
+            "mean_error_vector_rms_px": 0.5378436798193809,
+            "temporal_error_vector_rms_px": 0.7536191318348562,
+            "estimated_mean_vector_rms_px": 0.8028362082794857,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.0016635939246043563,
+            "gradient_vector_rmse_adu_per_px": 0.001510645030066371
+          }
+        },
+        "cubic_refined_noise2": {
+          "image": {
+            "rmse_adu": 0.42957302009559917,
+            "gradient_vector_rmse_adu_per_px": 0.24432753630627843
+          },
+          "clean": {
+            "rmse_adu": 0.35764548672395063,
+            "gradient_vector_rmse_adu_per_px": 0.059526513919135764
+          },
+          "field": {
+            "total_vector_rmse_px": 0.9575873761659861,
+            "mean_error_vector_rms_px": 0.5591497695719205,
+            "temporal_error_vector_rms_px": 0.7773835077875413,
+            "estimated_mean_vector_rms_px": 0.8189399002272829,
+            "true_mean_vector_rms_px": 0.6528192716487207
+          },
+          "guard_rejections": 0,
+          "insufficient_points": 0,
+          "sharpened_error_linear_0_1": {
+            "rmse_adu": 0.011257858946919441,
+            "gradient_vector_rmse_adu_per_px": 0.0109541155397892
+          }
+        }
+      },
+      "stage_sha256": {
+        "baseline_noise0": "3d01b70092ade975c9f1973711275de073eb9ccc2b970d96957fc540d924b7c5",
+        "baseline_noise2": "f15fd1af7cd4574161466121476635c0af7c75bddfcead6a8686b401edc0086c",
+        "cubic_refined_noise0": "81a77eb3f8db218e21a8ccaa88ce7d1bf1a214e18dec45bd325c1970f3c94258",
+        "cubic_refined_noise2": "047c3d87f47c6d2a61d6309a495c790f1174ff9a7b0b855caff5339732b3c65f",
+        "target": "649ee6bb044ce6f8a6ae6703df458a95db6fbffba74b1bffc9c91869a8229fe5"
+      }
+    }
+  },
+  "nonzero_residual": [
+    {
+      "true_shift": [
+        0.3,
+        -0.4
+      ],
+      "supplied_shift": [
+        0.0,
+        0.0
+      ],
+      "variants": {
+        "baseline": {
+          "field_vector_rmse_px": 0.0671860391415353,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9767208955965784,
+            "maximum_residual_px": 0.5997410366562087
+          },
+          "stage_field_rmse_px": [
+            0.28482251661728664,
+            0.2714495004201122,
+            0.249079421486052,
+            0.24960181167040543
+          ],
+          "stage_measurement_rmse_px": [
+            0.4993833124202949,
+            0.03820821964094413,
+            0.06997204086515943,
+            0.048789766469607615
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "cubic_refined": {
+          "field_vector_rmse_px": 0.03956305364091579,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9770078657200041,
+            "maximum_residual_px": 0.5453605103434399
+          },
+          "stage_field_rmse_px": [
+            0.284538280042906,
+            0.2674199514883045,
+            0.24005019422258886,
+            0.23914476206890126
+          ],
+          "stage_measurement_rmse_px": [
+            0.5031096970384927,
+            0.03762550359530566,
+            0.06624344422210264,
+            0.017406976233877214
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      }
+    },
+    {
+      "true_shift": [
+        -0.45,
+        0.2
+      ],
+      "supplied_shift": [
+        0.0,
+        0.0
+      ],
+      "variants": {
+        "baseline": {
+          "field_vector_rmse_px": 0.06864608315652532,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9710986311480315,
+            "maximum_residual_px": 0.6317589421296428
+          },
+          "stage_field_rmse_px": [
+            0.2805430231586318,
+            0.26112408612055904,
+            0.2325930429203763,
+            0.23359656856396743
+          ],
+          "stage_measurement_rmse_px": [
+            0.49149495242088825,
+            0.046157066662434965,
+            0.07861055641765137,
+            0.04744271798996664
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "cubic_refined": {
+          "field_vector_rmse_px": 0.04131173905878353,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9753613084498355,
+            "maximum_residual_px": 0.5401601357392416
+          },
+          "stage_field_rmse_px": [
+            0.280300675619027,
+            0.2620640497031304,
+            0.23387932121528207,
+            0.23313008387111375
+          ],
+          "stage_measurement_rmse_px": [
+            0.49456842989357436,
+            0.040275107692227946,
+            0.06491009786774529,
+            0.01723041874907785
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      }
+    },
+    {
+      "true_shift": [
+        0.7,
+        0.65
+      ],
+      "supplied_shift": [
+        0.0,
+        0.0
+      ],
+      "variants": {
+        "baseline": {
+          "field_vector_rmse_px": 0.12027511039921988,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9420712730449261,
+            "maximum_residual_px": 1.2114266872223258
+          },
+          "stage_field_rmse_px": [
+            0.5439505447428282,
+            0.49963854498171073,
+            0.4416985513750536,
+            0.44018029985381896
+          ],
+          "stage_measurement_rmse_px": [
+            0.9560740158793586,
+            0.09482957638199639,
+            0.14373222845403477,
+            0.061692966323026954
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "cubic_refined": {
+          "field_vector_rmse_px": 0.08561406336056294,
+          "accepted_aps": 107,
+          "fit": {
+            "points": 107,
+            "fallback": false,
+            "downweighted_points": 0,
+            "field_guard_accepted": true,
+            "minimum_jacobian": 0.9439488951601974,
+            "maximum_residual_px": 1.1783501077763958
+          },
+          "stage_field_rmse_px": [
+            0.5442908199806116,
+            0.500770667317237,
+            0.4426259686040248,
+            0.4399833357100425
+          ],
+          "stage_measurement_rmse_px": [
+            0.9515111780436392,
+            0.08824096852891607,
+            0.13367475766507625,
+            0.04675037315824105
+          ],
+          "stage_accepted": [
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      }
+    }
+  ],
+  "phase_screen": {
+    "hashes": {
+      "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+      "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+      "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+      "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+      "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+      "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+      "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+      "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+      "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+      "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+      "tools/ap_oracle_observations.py": "2ab251f327ad9f83bf8ade3f0ba6bb45fa190f5b2577e5ee8072869ec249c02b",
+      "tools/ap_stability_validation.py": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+      "tools/validate_local_warp_centring.py": "0fb343aecddf1594b787c6a624e38311dd5014c44e468ac0360f73df86d151eb",
+      "tools/ap_noise_coupling.py": "3aedae5cd153ee72a76f2e011afc257d86cf7cb01ae1dce367b6e0d682b4a7e6",
+      "tools/fractional_ap_trace.py": "51b7722fe57cd5cb7594da7f9a05dc569fbde798fa8eb684cc7953db7ced9c2f",
+      "tools/ap_fractional_phase.py": "f1ad23c2d5638b746a42af491e4d1d4d419301326a689177069d64347a54c9c7"
+    },
+    "policies": {
+      "baseline": [
+        false,
+        false
+      ],
+      "cubic": [
+        true,
+        false
+      ],
+      "refined": [
+        false,
+        true
+      ],
+      "cubic_refined": [
+        true,
+        true
+      ]
+    },
+    "shifts": [
+      [
+        -0.5,
+        -0.5
+      ],
+      [
+        -0.25,
+        -0.5
+      ],
+      [
+        0.0,
+        -0.5
+      ],
+      [
+        0.25,
+        -0.5
+      ],
+      [
+        0.5,
+        -0.5
+      ],
+      [
+        -0.5,
+        -0.25
+      ],
+      [
+        -0.25,
+        -0.25
+      ],
+      [
+        0.0,
+        -0.25
+      ],
+      [
+        0.25,
+        -0.25
+      ],
+      [
+        0.5,
+        -0.25
+      ],
+      [
+        -0.5,
+        0.0
+      ],
+      [
+        -0.25,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.25,
+        0.0
+      ],
+      [
+        0.5,
+        0.0
+      ],
+      [
+        -0.5,
+        0.25
+      ],
+      [
+        -0.25,
+        0.25
+      ],
+      [
+        0.0,
+        0.25
+      ],
+      [
+        0.25,
+        0.25
+      ],
+      [
+        0.5,
+        0.25
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.25,
+        0.5
+      ],
+      [
+        0.0,
+        0.5
+      ],
+      [
+        0.25,
+        0.5
+      ],
+      [
+        0.5,
+        0.5
+      ],
+      [
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0
+      ],
+      [
+        -1.0,
+        -1.0
+      ]
+    ],
+    "rows": [
+      {
+        "shift": [
+          -0.5,
+          -0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06813800052823271,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9883926987666561,
+              "maximum_residual_px": 0.2174969715548918
+            },
+            "stage_field_rmse_px": [
+              0.0017589403581982055,
+              0.014645410917258782,
+              0.035903201157006716,
+              0.04685570016865363
+            ],
+            "stage_measurement_rmse_px": [
+              0.01091295638516116,
+              0.024743673958815212,
+              0.042350009694173685,
+              0.046879585819086786
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.037240457497581377,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9939833008712669,
+              "maximum_residual_px": 0.11387119673394862
+            },
+            "stage_field_rmse_px": [
+              0.0019282769158616177,
+              0.008048205906037208,
+              0.02599267078833876,
+              0.03369628040664806
+            ],
+            "stage_measurement_rmse_px": [
+              0.005038877199975613,
+              0.01347753775109605,
+              0.035197502678725984,
+              0.03978147011118498
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.06331909712551675,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9926147151417798,
+              "maximum_residual_px": 0.15283818828190343
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.00936146172937004,
+              0.02722190889506575,
+              0.0372034515708154
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.023053748935531443,
+              0.03080205437859583,
+              0.03039339561939898
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0033284807783158293,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995887885280811,
+              "maximum_residual_px": 0.007845304303666846
+            },
+            "stage_field_rmse_px": [
+              3.224851822603264e-05,
+              0.0007321895325688307,
+              0.0015386536557804886,
+              0.00215136292343841
+            ],
+            "stage_measurement_rmse_px": [
+              0.0008434517390859608,
+              0.0020432688386727593,
+              0.0015120609805644599,
+              0.0020809718197304953
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.25,
+          -0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06487996461737802,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.989040172276727,
+              "maximum_residual_px": 0.20525320342922915
+            },
+            "stage_field_rmse_px": [
+              0.0026932120247720524,
+              0.014449842408246137,
+              0.03534746162251649,
+              0.04582795791150182
+            ],
+            "stage_measurement_rmse_px": [
+              0.011482587513485113,
+              0.023785859725878877,
+              0.04124548546320809,
+              0.04556071639285225
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03789804571725371,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9940238565178457,
+              "maximum_residual_px": 0.11318869049688035
+            },
+            "stage_field_rmse_px": [
+              0.002703066975505998,
+              0.007980370309656403,
+              0.026135421686430984,
+              0.03405069693413575
+            ],
+            "stage_measurement_rmse_px": [
+              0.005964489712183417,
+              0.013382617695114911,
+              0.03512900089785811,
+              0.039565387634101425
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.05753361738263445,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9927951398220194,
+              "maximum_residual_px": 0.13996584890962507
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.008251269965376078,
+              0.025620035232085614,
+              0.0346455323265655
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02118471982237275,
+              0.02885398891358892,
+              0.027626346896641053
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004019646201308954,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9994986423239652,
+              "maximum_residual_px": 0.00926100181807452
+            },
+            "stage_field_rmse_px": [
+              0.0015439555375287323,
+              0.0021025699403847253,
+              0.0026920741562823005,
+              0.0030279005836644393
+            ],
+            "stage_measurement_rmse_px": [
+              0.003528325922958975,
+              0.003157166745977413,
+              0.0018500179228592068,
+              0.0019878980336736777
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          -0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06504451416161389,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9898879584558011,
+              "maximum_residual_px": 0.1833009209018459
+            },
+            "stage_field_rmse_px": [
+              0.0021896788251263124,
+              0.015918615021454266,
+              0.037009172006750746,
+              0.04651438496343657
+            ],
+            "stage_measurement_rmse_px": [
+              0.010173057967372452,
+              0.022217220326806484,
+              0.041717387937072775,
+              0.04390322457199684
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03676723764572293,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9943095103319648,
+              "maximum_residual_px": 0.1071895769252474
+            },
+            "stage_field_rmse_px": [
+              0.0018265091161397465,
+              0.008702725179649396,
+              0.02631873817387432,
+              0.03403203383075115
+            ],
+            "stage_measurement_rmse_px": [
+              0.0050675955487067955,
+              0.01339350408406844,
+              0.035411760649496825,
+              0.03959088285741611
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0468529952857444,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9929770385175856,
+              "maximum_residual_px": 0.13534797868608908
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.010630833503642242,
+              0.02310490788336067,
+              0.03021854301349022
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.01893152507129178,
+              0.021130417257650393,
+              0.022386690821272388
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0028540878123031834,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995922390289202,
+              "maximum_residual_px": 0.008043406951231336
+            },
+            "stage_field_rmse_px": [
+              6.763970477435073e-05,
+              0.0008239936688369715,
+              0.00143094079207816,
+              0.0017846886473650131
+            ],
+            "stage_measurement_rmse_px": [
+              0.0006937101995436385,
+              0.0017767924253713919,
+              0.0011905684752740939,
+              0.0013315628725562904
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.25,
+          -0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0636534760902345,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9893224983038617,
+              "maximum_residual_px": 0.19974493976130417
+            },
+            "stage_field_rmse_px": [
+              0.002079624408613382,
+              0.01654368588745175,
+              0.03629943428149189,
+              0.04621584292451147
+            ],
+            "stage_measurement_rmse_px": [
+              0.010381585519653451,
+              0.023338800824148968,
+              0.040749802069072576,
+              0.04537122524680199
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03604454494624522,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.994285524257612,
+              "maximum_residual_px": 0.107914017548921
+            },
+            "stage_field_rmse_px": [
+              0.002214664771942975,
+              0.009242267318006184,
+              0.02633232516815499,
+              0.03379276570771007
+            ],
+            "stage_measurement_rmse_px": [
+              0.005968878285275254,
+              0.0134195473057111,
+              0.035370604879417976,
+              0.0398587194996976
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.05856771978621963,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9924893210800281,
+              "maximum_residual_px": 0.14411756197157982
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.011863745312366433,
+              0.02749681329213782,
+              0.0360444389788416
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02095990498964301,
+              0.027740887439279525,
+              0.02747186805972331
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.00412111155383468,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996443539992117,
+              "maximum_residual_px": 0.006971239088709256
+            },
+            "stage_field_rmse_px": [
+              0.0018491734542197828,
+              0.002162498486544441,
+              0.002665370633983377,
+              0.003150151824359095
+            ],
+            "stage_measurement_rmse_px": [
+              0.0032925994294265267,
+              0.0022631924694189284,
+              0.0017064604220195356,
+              0.001973053772722448
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.5,
+          -0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06818817315128865,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9885171976844678,
+              "maximum_residual_px": 0.21521307438611736
+            },
+            "stage_field_rmse_px": [
+              0.00257729037330587,
+              0.017396646275558997,
+              0.03763028607995199,
+              0.04815643313367997
+            ],
+            "stage_measurement_rmse_px": [
+              0.010900946091750971,
+              0.024459963599406193,
+              0.042011535384792104,
+              0.04680861600681295
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03591222227612587,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9942063733565262,
+              "maximum_residual_px": 0.10976001740583674
+            },
+            "stage_field_rmse_px": [
+              0.0018552966732578767,
+              0.00856727108060335,
+              0.026058230285750328,
+              0.03375353883819031
+            ],
+            "stage_measurement_rmse_px": [
+              0.0050318076179569305,
+              0.013329233258266985,
+              0.03511454459568057,
+              0.03975560703880457
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.06649088942731424,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.992468511191774,
+              "maximum_residual_px": 0.15506559993293137
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.014703452589597099,
+              0.030361861729790395,
+              0.03946228644136805
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.023427170699431274,
+              0.03046279186983448,
+              0.02967368989983775
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.003833257148384377,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995501807861518,
+              "maximum_residual_px": 0.0086467804936576
+            },
+            "stage_field_rmse_px": [
+              0.00017496085188069052,
+              0.0013175167238743503,
+              0.0019206057955485202,
+              0.0024166607859931947
+            ],
+            "stage_measurement_rmse_px": [
+              0.0008194204954042905,
+              0.0020767655029050097,
+              0.001630064038692023,
+              0.0020677164710407084
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.5,
+          -0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06128043710575765,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9890120826081984,
+              "maximum_residual_px": 0.20586568721555373
+            },
+            "stage_field_rmse_px": [
+              0.0015292127441203242,
+              0.012600615845240797,
+              0.032721498299702376,
+              0.04316350536257493
+            ],
+            "stage_measurement_rmse_px": [
+              0.011032288318119882,
+              0.02189609500559385,
+              0.04018103617648093,
+              0.04490539799184786
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03665979871700617,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9940876840008083,
+              "maximum_residual_px": 0.11216122228849444
+            },
+            "stage_field_rmse_px": [
+              0.0015475207428137991,
+              0.008223337486101396,
+              0.02573187488806766,
+              0.033646872012232126
+            ],
+            "stage_measurement_rmse_px": [
+              0.006296438064844994,
+              0.013388554584716834,
+              0.03467006691551009,
+              0.039595604552956326
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.05892194312365473,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9930420331693465,
+              "maximum_residual_px": 0.1571134058380436
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.00630505456880672,
+              0.025429917885456864,
+              0.0336624362366737
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.019920582922852852,
+              0.030814295584175092,
+              0.025851071226772215
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004126898868831453,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996192156035268,
+              "maximum_residual_px": 0.01072519417573837
+            },
+            "stage_field_rmse_px": [
+              0.0016546062050469188,
+              0.002020173892416989,
+              0.0026748892650042596,
+              0.003207068553009286
+            ],
+            "stage_measurement_rmse_px": [
+              0.0035875004518379134,
+              0.002770923572343203,
+              0.0022414946141158004,
+              0.002404337228023065
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.25,
+          -0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0571677486236173,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9898280066554336,
+              "maximum_residual_px": 0.19122843996162192
+            },
+            "stage_field_rmse_px": [
+              0.002535832306270428,
+              0.012394793836202189,
+              0.031970055776789415,
+              0.0419012208078719
+            ],
+            "stage_measurement_rmse_px": [
+              0.011612512185924377,
+              0.02079272648037705,
+              0.0388448656029169,
+              0.04351157844905911
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.037337100882302805,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9941333561194183,
+              "maximum_residual_px": 0.11145119383190243
+            },
+            "stage_field_rmse_px": [
+              0.0025128645884107733,
+              0.008203106654691537,
+              0.025878001172370362,
+              0.034003001157455075
+            ],
+            "stage_measurement_rmse_px": [
+              0.007071096058732094,
+              0.013257067906403727,
+              0.03458722990893935,
+              0.039373311831281774
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.04967257742767693,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9941520124505828,
+              "maximum_residual_px": 0.12075720672829966
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.006237888771030017,
+              0.0219393902216984,
+              0.029239527499079532
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.018189206194714112,
+              0.02606892299996691,
+              0.023338559511917198
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004789070711794663,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995804276972942,
+              "maximum_residual_px": 0.008939440947882054
+            },
+            "stage_field_rmse_px": [
+              0.0023498415973465113,
+              0.002962766366368309,
+              0.003466569542107338,
+              0.0038417946589205674
+            ],
+            "stage_measurement_rmse_px": [
+              0.004981013729139488,
+              0.003523529366018161,
+              0.0022229556266378254,
+              0.002182065038003578
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          -0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.055626023721453935,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9910510312096512,
+              "maximum_residual_px": 0.16034696768648943
+            },
+            "stage_field_rmse_px": [
+              0.002265283039719288,
+              0.013901741917777849,
+              0.033253414316120604,
+              0.042102301996591505
+            ],
+            "stage_measurement_rmse_px": [
+              0.010275524534250562,
+              0.01901346523985088,
+              0.039088644403499094,
+              0.041829626037705965
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03610573444110724,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9944375978009681,
+              "maximum_residual_px": 0.10503342767560221
+            },
+            "stage_field_rmse_px": [
+              0.002022358468617522,
+              0.009130195020339545,
+              0.026084856613164568,
+              0.03398776674073577
+            ],
+            "stage_measurement_rmse_px": [
+              0.006308731057114144,
+              0.013124828900395465,
+              0.03489186962585861,
+              0.0394102422804218
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.03541967876615109,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9946165535233413,
+              "maximum_residual_px": 0.10310165956742733
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.006989897999312987,
+              0.01739696993574349,
+              0.023175736987289246
+            ],
+            "stage_measurement_rmse_px": [
+              0.005298314439110713,
+              0.014679115422607601,
+              0.017295685195669756,
+              0.017945123692486388
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.003541656300080371,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996357007483053,
+              "maximum_residual_px": 0.0067937309118921855
+            },
+            "stage_field_rmse_px": [
+              0.0020972050848652637,
+              0.0022693613633832173,
+              0.0026469415592368806,
+              0.0029450992355068155
+            ],
+            "stage_measurement_rmse_px": [
+              0.0035342426370085583,
+              0.0018756766755083894,
+              0.0015861677021689832,
+              0.0015773929428026159
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.25,
+          -0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.05553359890478337,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9900899517014525,
+              "maximum_residual_px": 0.18571951147490848
+            },
+            "stage_field_rmse_px": [
+              0.002336216426574393,
+              0.01461277509604688,
+              0.03291078445598374,
+              0.042225198883021696
+            ],
+            "stage_measurement_rmse_px": [
+              0.010472378177625181,
+              0.020309651012001582,
+              0.038483141673362274,
+              0.04337043110844531
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03536546964782897,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.994406047320846,
+              "maximum_residual_px": 0.10583770474139258
+            },
+            "stage_field_rmse_px": [
+              0.0022871517753146903,
+              0.0096193275154447,
+              0.026100855945027906,
+              0.03374895910497786
+            ],
+            "stage_measurement_rmse_px": [
+              0.0070311343753209675,
+              0.013173587977506078,
+              0.034860490564589175,
+              0.03968380004170587
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.049714342233483776,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9943603543935274,
+              "maximum_residual_px": 0.12415771003325594
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.010262051776166738,
+              0.024065371109374945,
+              0.030276416154121213
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.01803490607315894,
+              0.025034618863768055,
+              0.02211496556319753
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0045086139043983,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996135355648136,
+              "maximum_residual_px": 0.00833421510662826
+            },
+            "stage_field_rmse_px": [
+              0.0027022580400264127,
+              0.002935508086389654,
+              0.003511640664793406,
+              0.003950537803875759
+            ],
+            "stage_measurement_rmse_px": [
+              0.00474250301406806,
+              0.0024682969491188617,
+              0.0022447962985528416,
+              0.00228134425545303
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.5,
+          -0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0612059568328742,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9891175546085201,
+              "maximum_residual_px": 0.20389274940737012
+            },
+            "stage_field_rmse_px": [
+              0.0030203827593082875,
+              0.01558950925800817,
+              0.034505305682547144,
+              0.04447904073259851
+            ],
+            "stage_measurement_rmse_px": [
+              0.011015040557617692,
+              0.021553625747784282,
+              0.039911481314850325,
+              0.044851588970076975
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.035258146270691335,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9943273868724515,
+              "maximum_residual_px": 0.10774403018732814
+            },
+            "stage_field_rmse_px": [
+              0.002063253676669524,
+              0.008973471920304737,
+              0.025828192541283667,
+              0.033718098712190746
+            ],
+            "stage_measurement_rmse_px": [
+              0.0062695246307553545,
+              0.013051030680541064,
+              0.03460683280443798,
+              0.039582112145849904
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.06124274389349047,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9925917839468051,
+              "maximum_residual_px": 0.1589393892258467
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.012578678475571864,
+              0.02829212333617267,
+              0.035839504531113564
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.020401381190043845,
+              0.030089042733572314,
+              0.025459909756553996
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004515315652111719,
+            "accepted_aps": 100,
+            "fit": {
+              "points": 100,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995308378241319,
+              "maximum_residual_px": 0.011968784497656593
+            },
+            "stage_field_rmse_px": [
+              0.0021199752059615205,
+              0.0023801098957222954,
+              0.003043719645745345,
+              0.0035087501855931447
+            ],
+            "stage_measurement_rmse_px": [
+              0.0035399321822086587,
+              0.0021139381225097173,
+              0.002329109415349934,
+              0.0023812469433437656
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.5,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.05020776493489048,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9896520381935451,
+              "maximum_residual_px": 0.19017110440708634
+            },
+            "stage_field_rmse_px": [
+              0.0030231915786890174,
+              0.009924277659731404,
+              0.027680818984838047,
+              0.03711535464610185
+            ],
+            "stage_measurement_rmse_px": [
+              0.006213962617381372,
+              0.01769707920092739,
+              0.03805548434540139,
+              0.042103645567105434
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03551661980564869,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9946265527803211,
+              "maximum_residual_px": 0.1021418104427222
+            },
+            "stage_field_rmse_px": [
+              0.0030657137533239634,
+              0.008508075096230815,
+              0.02579795122881024,
+              0.03333212541546586
+            ],
+            "stage_measurement_rmse_px": [
+              0.004652032906400106,
+              0.013735765053765229,
+              0.03493575083619488,
+              0.03947628602187328
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.050945211199517663,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9934492152375489,
+              "maximum_residual_px": 0.1583476970199366
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.005286405975889356,
+              0.022525742061628683,
+              0.028084382480902205
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.013262155973707425,
+              0.02743917420834953,
+              0.019425225384614893
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.002974076421789579,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996129046355514,
+              "maximum_residual_px": 0.008364390275303151
+            },
+            "stage_field_rmse_px": [
+              4.2572143960073874e-05,
+              0.0004041057600577505,
+              0.0012771886096290127,
+              0.001811689418920007
+            ],
+            "stage_measurement_rmse_px": [
+              0.00041654968796615827,
+              0.000952850143857811,
+              0.0015869175249367937,
+              0.0017049573924482991
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.25,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.04344109362290605,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9909870991130441,
+              "maximum_residual_px": 0.16392147284085734
+            },
+            "stage_field_rmse_px": [
+              0.003727002539646315,
+              0.009247702068230517,
+              0.026215949075187345,
+              0.035089501680406185
+            ],
+            "stage_measurement_rmse_px": [
+              0.007239739357805992,
+              0.016243061490974386,
+              0.03581354797659583,
+              0.04074084471370348
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03610275678438124,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9947175030047853,
+              "maximum_residual_px": 0.10080316518266945
+            },
+            "stage_field_rmse_px": [
+              0.0037812545444690726,
+              0.008617581436374583,
+              0.02596796940914377,
+              0.03367277956721457
+            ],
+            "stage_measurement_rmse_px": [
+              0.005650646699595097,
+              0.013532707936857655,
+              0.03451210791533646,
+              0.03928444639451252
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.039705747204431985,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.994751917347177,
+              "maximum_residual_px": 0.11757966633994486
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.003908790125027343,
+              0.017361375792441867,
+              0.021457879631334654
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.011225485686159867,
+              0.021264261850084138,
+              0.015046031479302916
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0036733493112592656,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.99970182296036,
+              "maximum_residual_px": 0.006855813790505168
+            },
+            "stage_field_rmse_px": [
+              0.0020493263704508447,
+              0.0023710145076495733,
+              0.0026704555169653195,
+              0.0028749709529089437
+            ],
+            "stage_measurement_rmse_px": [
+              0.003470776868228649,
+              0.0017867684963835595,
+              0.0015259902622952633,
+              0.001421316428712406
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.25,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.040525902948637386,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9912737796116877,
+              "maximum_residual_px": 0.15752792328832133
+            },
+            "stage_field_rmse_px": [
+              0.0033219444844409516,
+              0.011013705385776895,
+              0.02705372693715851,
+              0.035197276430021525
+            ],
+            "stage_measurement_rmse_px": [
+              0.005132377819377626,
+              0.015329296777567062,
+              0.03601022218603487,
+              0.04065208256051543
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03408159671004264,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9950400316351449,
+              "maximum_residual_px": 0.10255149047020817
+            },
+            "stage_field_rmse_px": [
+              0.0038039041719618878,
+              0.00967862353709515,
+              0.02597306460228983,
+              0.033329066886888706
+            ],
+            "stage_measurement_rmse_px": [
+              0.005643718531393081,
+              0.013511088625739496,
+              0.03548133132328717,
+              0.03954260214856938
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.04092313706329929,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9949707630178338,
+              "maximum_residual_px": 0.1263279516063552
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.008575215092108188,
+              0.01915889918795515,
+              0.023355698582031455
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.010580970174827906,
+              0.020369577063479485,
+              0.01596781760858555
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.00332754920756629,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996940412112829,
+              "maximum_residual_px": 0.006529658543657457
+            },
+            "stage_field_rmse_px": [
+              0.002454080429167421,
+              0.0024302120120082865,
+              0.00259735257902201,
+              0.0028976264607096297
+            ],
+            "stage_measurement_rmse_px": [
+              0.0032038689856104816,
+              0.0010653909401242855,
+              0.0016114478961154026,
+              0.0014872600204769134
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.5,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.04963382111699659,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9898519879114089,
+              "maximum_residual_px": 0.1873386297638837
+            },
+            "stage_field_rmse_px": [
+              0.004216567495636594,
+              0.013032217903167897,
+              0.02996343714054547,
+              0.03876712192100143
+            ],
+            "stage_measurement_rmse_px": [
+              0.0062479216704891824,
+              0.017027781742946054,
+              0.03734478837702053,
+              0.042052881953321866
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.033923418779707074,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9949541409588684,
+              "maximum_residual_px": 0.09653848500734442
+            },
+            "stage_field_rmse_px": [
+              0.00291909237454485,
+              0.008906340723666759,
+              0.025805911682879656,
+              0.03335056034070155
+            ],
+            "stage_measurement_rmse_px": [
+              0.004651293492913065,
+              0.013502082513158422,
+              0.03482670063736949,
+              0.03946785759921625
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.05309884795613903,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9933206753613552,
+              "maximum_residual_px": 0.1601123316957529
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.01185247271985381,
+              0.025276424133821192,
+              0.030403290673064725
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.01427255407116062,
+              0.02677394964526902,
+              0.019349609680225602
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0036448165772854204,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995635033243999,
+              "maximum_residual_px": 0.01054215992321894
+            },
+            "stage_field_rmse_px": [
+              0.0003136505862421948,
+              0.0013208449735203672,
+              0.0018487027258895622,
+              0.0022274288913148735
+            ],
+            "stage_measurement_rmse_px": [
+              0.0004569090912247448,
+              0.00132681862072807,
+              0.001528261464075397,
+              0.0016752039801482658
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.5,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.061137006121285066,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9893725664629405,
+              "maximum_residual_px": 0.19899314773584295
+            },
+            "stage_field_rmse_px": [
+              0.0050101330277860364,
+              0.014667185577942771,
+              0.033707597632672254,
+              0.043631256657339135
+            ],
+            "stage_measurement_rmse_px": [
+              0.008591158824167723,
+              0.020461919748817153,
+              0.04080803088644733,
+              0.04486127864001311
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.036433976022770036,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9945304783924899,
+              "maximum_residual_px": 0.10383708757134719
+            },
+            "stage_field_rmse_px": [
+              0.0031747691918558394,
+              0.009020078546436123,
+              0.026236719336397773,
+              0.033552268008129243
+            ],
+            "stage_measurement_rmse_px": [
+              0.005180981159952382,
+              0.013668469279374523,
+              0.03547185334154559,
+              0.03965441680576744
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0577525262979838,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9929662426934369,
+              "maximum_residual_px": 0.14942539774204147
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.01189849022518954,
+              0.026691039864309415,
+              0.0340511875598012
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.019571112703869513,
+              0.027981284713343997,
+              0.025263599647566803
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004073680968696683,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995346467972239,
+              "maximum_residual_px": 0.009781730988596323
+            },
+            "stage_field_rmse_px": [
+              0.0019010453282130837,
+              0.002240864207459755,
+              0.002587152379831015,
+              0.002921314296061208
+            ],
+            "stage_measurement_rmse_px": [
+              0.0031531812958960183,
+              0.0020834084845263614,
+              0.0016556565808865458,
+              0.0019228000571262587
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.25,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.057082572940617075,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9902739406983114,
+              "maximum_residual_px": 0.1835146668627734
+            },
+            "stage_field_rmse_px": [
+              0.005441330835539822,
+              0.014210768327043542,
+              0.03294195186720151,
+              0.04233875314381885
+            ],
+            "stage_measurement_rmse_px": [
+              0.009313158087579114,
+              0.01914331487765664,
+              0.039220978722431354,
+              0.04359258687080922
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03698886150528335,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9946147660422223,
+              "maximum_residual_px": 0.1025529922188441
+            },
+            "stage_field_rmse_px": [
+              0.003853919967425778,
+              0.009066490422974765,
+              0.02639565360217742,
+              0.03388551088231304
+            ],
+            "stage_measurement_rmse_px": [
+              0.006077959063619137,
+              0.013462348297606251,
+              0.03506985220494264,
+              0.039468359339762935
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.050548734049823435,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9940352038999619,
+              "maximum_residual_px": 0.11690071322862708
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.011380636114359006,
+              0.023933219981387095,
+              0.030765736265764464
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.018251956973600332,
+              0.02391833294463639,
+              0.022952572785755104
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004447405552633,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996715442758186,
+              "maximum_residual_px": 0.00815348631289303
+            },
+            "stage_field_rmse_px": [
+              0.002766158338809985,
+              0.0030530190287393418,
+              0.0034486533546182366,
+              0.003648061113989653
+            ],
+            "stage_measurement_rmse_px": [
+              0.004645029064161433,
+              0.00257635838697241,
+              0.001998047376665746,
+              0.0018598187205123155
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.05562464456293803,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9917220767153531,
+              "maximum_residual_px": 0.14883066731814604
+            },
+            "stage_field_rmse_px": [
+              0.005011915778100387,
+              0.014629566949664217,
+              0.034278470779932006,
+              0.04261506025149061
+            ],
+            "stage_measurement_rmse_px": [
+              0.007626173074111831,
+              0.016604313749836053,
+              0.039518433875362635,
+              0.04216365482395732
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03571907238750389,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9950273937987565,
+              "maximum_residual_px": 0.10756594464801489
+            },
+            "stage_field_rmse_px": [
+              0.0033751790409070797,
+              0.009391093886592204,
+              0.026405586184397898,
+              0.03377650258982657
+            ],
+            "stage_measurement_rmse_px": [
+              0.005227274961847688,
+              0.013381971951309172,
+              0.03570235930473799,
+              0.039481954443194425
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.039028016156444856,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9941066600177829,
+              "maximum_residual_px": 0.116863966367143
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.014400016616232234,
+              0.02087352222037786,
+              0.025509657313256964
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.017046146670576308,
+              0.012585170555196604,
+              0.01689538106551867
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0032256384326085964,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.999776398363685,
+              "maximum_residual_px": 0.007303471434755022
+            },
+            "stage_field_rmse_px": [
+              0.0024226908009189934,
+              0.0023995733700835167,
+              0.002531989032138404,
+              0.002645144757461415
+            ],
+            "stage_measurement_rmse_px": [
+              0.0031515820006989223,
+              0.000960270029722676,
+              0.0015465462305755014,
+              0.0012652473568020473
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.25,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.05539791070659184,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9906099589306735,
+              "maximum_residual_px": 0.17672863703647151
+            },
+            "stage_field_rmse_px": [
+              0.005232819247604905,
+              0.01582057221958773,
+              0.03374952743384612,
+              0.04259937713581629
+            ],
+            "stage_measurement_rmse_px": [
+              0.007920557651923643,
+              0.01837729489973879,
+              0.039230618402714613,
+              0.043426244331839454
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03509003627078638,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9949504308497568,
+              "maximum_residual_px": 0.10488522315200383
+            },
+            "stage_field_rmse_px": [
+              0.004161691307694767,
+              0.010039171467525108,
+              0.026314165439913755,
+              0.033488501184402164
+            ],
+            "stage_measurement_rmse_px": [
+              0.00612596255266182,
+              0.013398393273392524,
+              0.03605703614519095,
+              0.039710558574347195
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.053281182118916255,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9934510160001057,
+              "maximum_residual_px": 0.12529099470490465
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.01463976141912383,
+              0.02626218838413294,
+              0.032580141531991964
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.017966197198734202,
+              0.023493347283156236,
+              0.022864343893359628
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0047142805742885424,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996270955370328,
+              "maximum_residual_px": 0.009011487222818757
+            },
+            "stage_field_rmse_px": [
+              0.0034755958911253516,
+              0.0035386818839805998,
+              0.003669609364033763,
+              0.003945964225210663
+            ],
+            "stage_measurement_rmse_px": [
+              0.0045385481329494985,
+              0.0015624099250115386,
+              0.0018678276216501366,
+              0.0017788091691950903
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.5,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06083092755049004,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9895414515801203,
+              "maximum_residual_px": 0.19512097990234414
+            },
+            "stage_field_rmse_px": [
+              0.005772228298655524,
+              0.017218835588509427,
+              0.03570282621277143,
+              0.04515198135020962
+            ],
+            "stage_measurement_rmse_px": [
+              0.008605967637042867,
+              0.019890599413738486,
+              0.040177311175201645,
+              0.044807845881754994
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03489541867415387,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9948656282935872,
+              "maximum_residual_px": 0.09880265845713124
+            },
+            "stage_field_rmse_px": [
+              0.003358286063241597,
+              0.009295740868727257,
+              0.02614057857070453,
+              0.03349811202011232
+            ],
+            "stage_measurement_rmse_px": [
+              0.005206209060884203,
+              0.013387486481148217,
+              0.03540892698806012,
+              0.03963355417807693
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.05934185543818536,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9928202707402929,
+              "maximum_residual_px": 0.1518311962338311
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.016292880686017544,
+              0.02955788181287872,
+              0.03584928456985846
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02014027182684415,
+              0.027579761846117906,
+              0.024584404741288833
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004587605260068194,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995071147700206,
+              "maximum_residual_px": 0.01152795098996732
+            },
+            "stage_field_rmse_px": [
+              0.0024561241607726986,
+              0.0028854487189245302,
+              0.003089248824165603,
+              0.003335891588957179
+            ],
+            "stage_measurement_rmse_px": [
+              0.0032060386433213238,
+              0.0017469365447974456,
+              0.0017088755135913675,
+              0.0019066284248489278
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.5,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06750321056839272,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.988794533665828,
+              "maximum_residual_px": 0.21120178104461496
+            },
+            "stage_field_rmse_px": [
+              0.006665633027325746,
+              0.017697132981053826,
+              0.03723111524560122,
+              0.04774925301722521
+            ],
+            "stage_measurement_rmse_px": [
+              0.010657713021803591,
+              0.022684535408795118,
+              0.042171351395619026,
+              0.046677269368613244
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03647971437908221,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9944896008670803,
+              "maximum_residual_px": 0.104781721943452
+            },
+            "stage_field_rmse_px": [
+              0.0032036047920708122,
+              0.00865330251568945,
+              0.026086102266976757,
+              0.03366307792818365
+            ],
+            "stage_measurement_rmse_px": [
+              0.004827977119312131,
+              0.013872886149228134,
+              0.03521016662092709,
+              0.03963837181865084
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0629734148844727,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9925810482182594,
+              "maximum_residual_px": 0.1502600133007196
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.017196341033373592,
+              0.03086490912999478,
+              0.03956927628384628
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02470687351644325,
+              0.028548831303022618,
+              0.03023573166880349
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.003464372014388797,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995891246318154,
+              "maximum_residual_px": 0.007903571338911276
+            },
+            "stage_field_rmse_px": [
+              0.0002622395554088054,
+              0.0011381926374821123,
+              0.0018020116419212564,
+              0.0023206287801038274
+            ],
+            "stage_measurement_rmse_px": [
+              0.0006208547513540632,
+              0.0017377544694010605,
+              0.0014338106237383444,
+              0.002081453973755337
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -0.25,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06429129307989978,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9894320233742376,
+              "maximum_residual_px": 0.1989661790995888
+            },
+            "stage_field_rmse_px": [
+              0.006963881360862299,
+              0.017332431089171256,
+              0.036661577719224264,
+              0.04668103484247685
+            ],
+            "stage_measurement_rmse_px": [
+              0.011240178592165112,
+              0.021495352249391784,
+              0.040794702646817574,
+              0.0454364982703969
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03704236841145281,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9945602040681891,
+              "maximum_residual_px": 0.10363746007737974
+            },
+            "stage_field_rmse_px": [
+              0.0038905565727248826,
+              0.008716901118608466,
+              0.026251484272454894,
+              0.0339993944591436
+            ],
+            "stage_measurement_rmse_px": [
+              0.005786821206214268,
+              0.013657646286093996,
+              0.034802696484677924,
+              0.03944868487740427
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.056093597647392655,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9928003745405153,
+              "maximum_residual_px": 0.1398079613916734
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.014047648150329542,
+              0.027852228262423128,
+              0.0361007427494067
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02115770895673659,
+              0.02722723870253395,
+              0.027303326048328216
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004055633422496223,
+            "accepted_aps": 102,
+            "fit": {
+              "points": 102,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.999510870617475,
+              "maximum_residual_px": 0.008768415679423892
+            },
+            "stage_field_rmse_px": [
+              0.002054305093038628,
+              0.002429247909398887,
+              0.002960576704108908,
+              0.003237764445424364
+            ],
+            "stage_measurement_rmse_px": [
+              0.003478080731248494,
+              0.0022185213796135903,
+              0.0017212741323762778,
+              0.0019231889508602264
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06452856691377487,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9903560617104746,
+              "maximum_residual_px": 0.17592175495187018
+            },
+            "stage_field_rmse_px": [
+              0.006851849737745257,
+              0.018458574648312593,
+              0.038823276333220406,
+              0.04777781687862149
+            ],
+            "stage_measurement_rmse_px": [
+              0.009902171189169832,
+              0.01944532868914082,
+              0.04125852314912343,
+              0.04394802801818719
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03584779988665295,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9949291200899442,
+              "maximum_residual_px": 0.10673490852376853
+            },
+            "stage_field_rmse_px": [
+              0.0030967731006017857,
+              0.009257559257181695,
+              0.026399781327798386,
+              0.03399360861180405
+            ],
+            "stage_measurement_rmse_px": [
+              0.00486113085115917,
+              0.01364072285962428,
+              0.03539617466714274,
+              0.03948004916371157
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.04670356252483865,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9929256129163029,
+              "maximum_residual_px": 0.13644964374719554
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.01713371512743462,
+              0.025837069944568608,
+              0.03220781131858086
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02059066115649117,
+              0.017022861985595404,
+              0.022329926624929917
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0029751000574472428,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996118750486542,
+              "maximum_residual_px": 0.007914850125871249
+            },
+            "stage_field_rmse_px": [
+              0.00030485707767718696,
+              0.0011455473442767102,
+              0.0017088954746400052,
+              0.001989923877339157
+            ],
+            "stage_measurement_rmse_px": [
+              0.00044073558455551027,
+              0.0012733006927175097,
+              0.0012093764043417576,
+              0.0013487505295805267
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.25,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06298672745260875,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9897664624991344,
+              "maximum_residual_px": 0.19265013466067898
+            },
+            "stage_field_rmse_px": [
+              0.0070167019577043665,
+              0.01930320506894985,
+              0.037940124753826035,
+              0.047382964918995046
+            ],
+            "stage_measurement_rmse_px": [
+              0.010116555292847114,
+              0.020985175712965844,
+              0.04065514635165925,
+              0.04525537866254225
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.035206770815854084,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9948683809797899,
+              "maximum_residual_px": 0.10404117872549092
+            },
+            "stage_field_rmse_px": [
+              0.003925480020659433,
+              0.009910811091306053,
+              0.026300192578728197,
+              0.03369850273579458
+            ],
+            "stage_measurement_rmse_px": [
+              0.00579568875449965,
+              0.013635568205397186,
+              0.03575285205514672,
+              0.03971118694510284
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.059401218248609534,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9923965151042216,
+              "maximum_residual_px": 0.14532522918362292
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.019005355025194997,
+              0.030725809775103242,
+              0.038280469936407005
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.02314031939117057,
+              0.02487515300966412,
+              0.02681716269710763
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004310681087516859,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996277437949492,
+              "maximum_residual_px": 0.007303063371327065
+            },
+            "stage_field_rmse_px": [
+              0.002486237578088027,
+              0.00282873504030172,
+              0.003057256230221644,
+              0.003433083452291329
+            ],
+            "stage_measurement_rmse_px": [
+              0.003253606220382387,
+              0.0015754170236460658,
+              0.0016482749728446795,
+              0.0019237895568354282
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.5,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06731816149418449,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9889962615729455,
+              "maximum_residual_px": 0.2073514269167997
+            },
+            "stage_field_rmse_px": [
+              0.007418328113181694,
+              0.020400623034739964,
+              0.039549962422086006,
+              0.04954890589985403
+            ],
+            "stage_measurement_rmse_px": [
+              0.010646973637907278,
+              0.022334892982360056,
+              0.04149498409511323,
+              0.04663212219749707
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03498399782587114,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9947867626342927,
+              "maximum_residual_px": 0.09927004074884843
+            },
+            "stage_field_rmse_px": [
+              0.003066716851010207,
+              0.009099550958390077,
+              0.026113169879755663,
+              0.03369818128638124
+            ],
+            "stage_measurement_rmse_px": [
+              0.004822508687644073,
+              0.01362187682786197,
+              0.0351024757208151,
+              0.039635775827108914
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0657818429824921,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9924227749378524,
+              "maximum_residual_px": 0.15258333332479046
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.020606502378832606,
+              0.03358770882008709,
+              0.041626538039950804
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.025053778913810835,
+              0.028209855274480774,
+              0.0295106372174335
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.003947919997226668,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995513115911201,
+              "maximum_residual_px": 0.008713517931770713
+            },
+            "stage_field_rmse_px": [
+              0.0004191189054761693,
+              0.0016303900900883246,
+              0.0021928326807812855,
+              0.002613857698565687
+            ],
+            "stage_measurement_rmse_px": [
+              0.0006041528956294575,
+              0.0017423097948216742,
+              0.0015427703296253322,
+              0.002068371158410527
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          1.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.034480571000387594,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9950492539546653,
+              "maximum_residual_px": 0.10044474286328293
+            },
+            "stage_field_rmse_px": [
+              0.000716084241728393,
+              0.00803923911761368,
+              0.02555818487594961,
+              0.03329691180258436
+            ],
+            "stage_measurement_rmse_px": [
+              0.0011493606623304556,
+              0.011233393721039825,
+              0.035263195045408244,
+              0.03943623440681629
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03469819550457994,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9951164611713844,
+              "maximum_residual_px": 0.10436314223232579
+            },
+            "stage_field_rmse_px": [
+              0.000716084241728393,
+              0.008043212557419778,
+              0.025620645445833767,
+              0.033340744982028575
+            ],
+            "stage_measurement_rmse_px": [
+              0.0011493606623304556,
+              0.011235776246210626,
+              0.03532647012254449,
+              0.03939451987772445
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0008697401881290132,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.99984889640478,
+              "maximum_residual_px": 0.0038577184333055754
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0006638657410595323,
+              0.0006638657410595323,
+              0.0006638657410595323
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0007805354984085867,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0009989306647173416,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9998576203795067,
+              "maximum_residual_px": 0.0033503420697998856
+            },
+            "stage_field_rmse_px": [
+              6.56981913059751e-05,
+              0.0010081165280587947,
+              0.0010240717071897285,
+              0.0009862677422643926
+            ],
+            "stage_measurement_rmse_px": [
+              0.00010440472855480336,
+              0.0011582271668756428,
+              0.0008052068812835035,
+              0.00023252337641615613
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          0.0,
+          1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.03457156060093362,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9950968433403367,
+              "maximum_residual_px": 0.10155078567636373
+            },
+            "stage_field_rmse_px": [
+              0.0025421126873676515,
+              0.00911275655135815,
+              0.025955512081266903,
+              0.03351484409376386
+            ],
+            "stage_measurement_rmse_px": [
+              0.003736057967680765,
+              0.013562192882950738,
+              0.035126344233237385,
+              0.039305990639905725
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03479117647631156,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9951739844398199,
+              "maximum_residual_px": 0.1056786705729715
+            },
+            "stage_field_rmse_px": [
+              0.0025421126873676515,
+              0.009205832072896136,
+              0.026002790402902005,
+              0.033550986138730615
+            ],
+            "stage_measurement_rmse_px": [
+              0.003736057967680765,
+              0.013698636441272507,
+              0.03517037387370405,
+              0.0392604676718599
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 0.0011746667056896111,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9998182647066481,
+              "maximum_residual_px": 0.0067120136536334635
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0007599072209677524,
+              0.0007599072209677524,
+              0.0007599072209677524
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0010026748860638734,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.000778289237175397,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9999061072068248,
+              "maximum_residual_px": 0.0026090192033846296
+            },
+            "stage_field_rmse_px": [
+              0.00017676118068883133,
+              0.0011585126229506945,
+              0.0010019011407694585,
+              0.0009656717281161956
+            ],
+            "stage_measurement_rmse_px": [
+              0.00025524228966887887,
+              0.0014119556828629323,
+              0.0007696948144215563,
+              0.000292991034157421
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "shift": [
+          -1.0,
+          -1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.03616641091448449,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9945438722929927,
+              "maximum_residual_px": 0.10405951838226574
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.006378816477239032,
+              0.02570915224844606,
+              0.033317946850142985
+            ],
+            "stage_measurement_rmse_px": [
+              0.004214842844795471,
+              0.013194285326852469,
+              0.03535580561797047,
+              0.03953701556483341
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic": {
+            "field_vector_rmse_px": 0.03647700627865226,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9945705755060212,
+              "maximum_residual_px": 0.10509937036891748
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.006378816477239032,
+              0.025852746690311276,
+              0.033424367851289064
+            ],
+            "stage_measurement_rmse_px": [
+              0.004214842844795471,
+              0.013194285326852469,
+              0.03551988812909064,
+              0.039494935447318996
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "refined": {
+            "field_vector_rmse_px": 1.0241962394020728e-16,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 2.788014591027562e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0014002802274481318,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.000620023226263921,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9999293945460612,
+              "maximum_residual_px": 0.0021187601225158984
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.00012320271590963557,
+              0.00046714766443279617,
+              0.0004253667992247746
+            ],
+            "stage_measurement_rmse_px": [
+              0.00041721047268237344,
+              0.004100701326190019,
+              0.0006212866466709937,
+              0.0002124918299446567
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      }
+    ],
+    "summary": {
+      "baseline": {
+        "field_rmse_px": 0.05846663191242379,
+        "guard_rejections": 0,
+        "insufficient_points": 0
+      },
+      "cubic": {
+        "field_rmse_px": 0.03524107953263776,
+        "guard_rejections": 0,
+        "insufficient_points": 0
+      },
+      "refined": {
+        "field_rmse_px": 0.05305509429778342,
+        "guard_rejections": 0,
+        "insufficient_points": 0
+      },
+      "cubic_refined": {
+        "field_rmse_px": 0.0038392700940752694,
+        "guard_rejections": 0,
+        "insufficient_points": 0
+      }
+    },
+    "selected": "cubic_refined"
+  },
+  "boundary_control": {
+    "hashes": {
+      "tools/reference_imprint_probe.py": "15ea3409bfe3ae16f1bb4dd249b4fae3564bfe27607deae7b6bb6eb7c7d9f6a1",
+      "tools/coherent_registration.py": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+      "planetrecon/backends/torch_circular.py": "cb6a74b88affc57a932e5df84582de747c51e0780cb6218c22db542bc054d20a",
+      "planetrecon/backends/triton_correlation.py": "70d98bea18c516d80bf22f98444accf58e4c1e8e270f6f5de129a36a588d58e5",
+      "planetrecon/pipeline/local_align.py": "9d65f1e27819e0e4d56ed9a0d22e04ee9799587f295c07e074f040727c9cb378",
+      "tools/analytic_motion_probe.py": "558bc382a812dd01805b2225f3909ac04ebc6156df5b8c5f8186090317f7615f",
+      "tools/analytic_sampling_probe.py": "1272ea459942826d4ab1458f939bd5193a1c86782db1da66672bae91e3ffed4a",
+      "tools/regularized_ap_fit.py": "6e9116173d442950a46839dc07906d26c362e1f2e26f86cc71ad39c4b32636df",
+      "tools/ap_stability_screen.py": "35c54b907b70b5c5ffd4c5d69e66be4063247a31deeee63e2288f53370475783",
+      "tools/local_warp_trace.py": "d6f4fefcdf30b9412ab705ea44c6e6c3241a8376daee468355a212702c1aefc4",
+      "tools/ap_oracle_observations.py": "2ab251f327ad9f83bf8ade3f0ba6bb45fa190f5b2577e5ee8072869ec249c02b",
+      "tools/ap_stability_validation.py": "67ad84d3b180f71eb9d656581f0b0ed120f2b630e23b3c8254574635a5294ecc",
+      "tools/validate_local_warp_centring.py": "0fb343aecddf1594b787c6a624e38311dd5014c44e468ac0360f73df86d151eb",
+      "tools/ap_noise_coupling.py": "3aedae5cd153ee72a76f2e011afc257d86cf7cb01ae1dce367b6e0d682b4a7e6",
+      "tools/fractional_ap_trace.py": "51b7722fe57cd5cb7594da7f9a05dc569fbde798fa8eb684cc7953db7ced9c2f",
+      "tools/ap_fractional_phase.py": "f1ad23c2d5638b746a42af491e4d1d4d419301326a689177069d64347a54c9c7"
+    },
+    "source_sha256": "2e892582db322ae4c1e0c3b92b218ebf01a3361eb39928f2f9a1785123983b10",
+    "pad": 48,
+    "rows": [
+      {
+        "padded": false,
+        "shift": [
+          0.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": false,
+        "shift": [
+          1.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.03448057100038749,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.995049253954665,
+              "maximum_residual_px": 0.10044474286328374
+            },
+            "stage_field_rmse_px": [
+              0.0007160842417276331,
+              0.008039239117614162,
+              0.02555818487595006,
+              0.03329691180258493
+            ],
+            "stage_measurement_rmse_px": [
+              0.0011493606623290949,
+              0.011233393721040567,
+              0.03526319504540827,
+              0.039436234406817275
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0009989306647300107,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9998576203795029,
+              "maximum_residual_px": 0.003350342069899875
+            },
+            "stage_field_rmse_px": [
+              6.569819130439315e-05,
+              0.0010081165280561837,
+              0.0010240717071936896,
+              0.0009862677422688541
+            ],
+            "stage_measurement_rmse_px": [
+              0.00010440472855205741,
+              0.0011582271668765538,
+              0.0008052068812881969,
+              0.00023252337641533434
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": false,
+        "shift": [
+          0.0,
+          1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0345715606009346,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.995096843340337,
+              "maximum_residual_px": 0.10155078567636643
+            },
+            "stage_field_rmse_px": [
+              0.0025421126873681234,
+              0.009112756551358524,
+              0.025955512081266806,
+              0.033514844093763874
+            ],
+            "stage_measurement_rmse_px": [
+              0.003736057967681374,
+              0.013562192882951116,
+              0.035126344233238106,
+              0.039305990639905614
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0007782892371488596,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9999061072068262,
+              "maximum_residual_px": 0.0026090192032756604
+            },
+            "stage_field_rmse_px": [
+              0.00017676118069375602,
+              0.0011585126229388487,
+              0.001001901140760562,
+              0.0009656717281075737
+            ],
+            "stage_measurement_rmse_px": [
+              0.00025524228967578583,
+              0.0014119556828473391,
+              0.0007696948144161357,
+              0.00029299103415683875
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": false,
+        "shift": [
+          -1.0,
+          -1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.036166410914484616,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9945438722929923,
+              "maximum_residual_px": 0.10405951838227191
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.006378816477239055,
+              0.025709152248445718,
+              0.03331794685014281
+            ],
+            "stage_measurement_rmse_px": [
+              0.004214842844797831,
+              0.013194285326852186,
+              0.03535580561796993,
+              0.03953701556483351
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0006200232262638468,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9999293945460618,
+              "maximum_residual_px": 0.0021187601225241587
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0001232027159099692,
+              0.0004671476644327873,
+              0.00042536679922563017
+            ],
+            "stage_measurement_rmse_px": [
+              0.00041721047268702553,
+              0.004100701326216797,
+              0.0006212866466747671,
+              0.0002124918299450488
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": false,
+        "shift": [
+          0.25,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.055397910706591114,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9906099589306735,
+              "maximum_residual_px": 0.1767286370364714
+            },
+            "stage_field_rmse_px": [
+              0.005232819247604903,
+              0.015820572219585997,
+              0.03374952743384551,
+              0.04259937713581602
+            ],
+            "stage_measurement_rmse_px": [
+              0.00792055765192367,
+              0.018377294899737988,
+              0.03923061840271533,
+              0.04342624433183909
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004714280574277958,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996270955370312,
+              "maximum_residual_px": 0.009011487222786687
+            },
+            "stage_field_rmse_px": [
+              0.003475595891121992,
+              0.0035386818839612307,
+              0.0036696093640214943,
+              0.003945964225199491
+            ],
+            "stage_measurement_rmse_px": [
+              0.004538548132945437,
+              0.0015624099250025043,
+              0.0018678276216507828,
+              0.0017788091691996034
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": false,
+        "shift": [
+          0.5,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06731816149418399,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9889962615729458,
+              "maximum_residual_px": 0.20735142691679534
+            },
+            "stage_field_rmse_px": [
+              0.007418328113179323,
+              0.020400623034740092,
+              0.03954996242208541,
+              0.04954890589985403
+            ],
+            "stage_measurement_rmse_px": [
+              0.010646973637903815,
+              0.022334892982360962,
+              0.041494984095112694,
+              0.046632122197498356
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.003947919997235408,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995513115911197,
+              "maximum_residual_px": 0.008713517931791719
+            },
+            "stage_field_rmse_px": [
+              0.0004191189054495991,
+              0.001630390090081544,
+              0.0021928326807846665,
+              0.0026138576985743223
+            ],
+            "stage_measurement_rmse_px": [
+              0.0006041528955854746,
+              0.0017423097948385518,
+              0.0015427703296338883,
+              0.0020683711584038823
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          0.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 0.0
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          1.0,
+          0.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 7.873325204794773e-17,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 2.5308944005353475e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 7.873325204794773e-17,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 2.5308944005353475e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          0.0,
+          1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 7.873325204794773e-17,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 2.5308944005353475e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 7.873325204794773e-17,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 2.5308944005353475e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          -1.0,
+          -1.0
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 1.3062167700894171e-16,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 5.845530849406848e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 1.3062167700894171e-16,
+            "accepted_aps": 96,
+            "fit": {
+              "points": 96,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 1.0,
+              "maximum_residual_px": 5.845530849406848e-16
+            },
+            "stage_field_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_measurement_rmse_px": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          0.25,
+          0.25
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.055172944390270054,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.990605933827876,
+              "maximum_residual_px": 0.17668637274145124
+            },
+            "stage_field_rmse_px": [
+              0.005215902285716501,
+              0.01562927012336451,
+              0.03364289547602057,
+              0.042512877281264703
+            ],
+            "stage_measurement_rmse_px": [
+              0.00789498834728777,
+              0.01829371735245589,
+              0.039199418047631336,
+              0.04344001030598179
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.004577950944330475,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9996438656564237,
+              "maximum_residual_px": 0.008688555978867748
+            },
+            "stage_field_rmse_px": [
+              0.0034492989212752704,
+              0.0034251718189577864,
+              0.003574379317191004,
+              0.0038714821466644873
+            ],
+            "stage_measurement_rmse_px": [
+              0.004504790809009506,
+              0.0013415873778501533,
+              0.0019034196073391633,
+              0.0017745691351431921
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      },
+      {
+        "padded": true,
+        "shift": [
+          0.5,
+          0.5
+        ],
+        "variants": {
+          "baseline": {
+            "field_vector_rmse_px": 0.06698467713232903,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9889812788032646,
+              "maximum_residual_px": 0.2074017963084922
+            },
+            "stage_field_rmse_px": [
+              0.0074525057238444496,
+              0.020173343312206587,
+              0.039399678194575176,
+              0.04943088525181425
+            ],
+            "stage_measurement_rmse_px": [
+              0.010690527500617986,
+              0.022161443458214025,
+              0.04143051590121719,
+              0.0466545410252468
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "cubic_refined": {
+            "field_vector_rmse_px": 0.0036556242784051033,
+            "accepted_aps": 107,
+            "fit": {
+              "points": 107,
+              "fallback": false,
+              "downweighted_points": 0,
+              "field_guard_accepted": true,
+              "minimum_jacobian": 0.9995700062107516,
+              "maximum_residual_px": 0.008200587812688237
+            },
+            "stage_field_rmse_px": [
+              0.000503106878817259,
+              0.0013812293424065403,
+              0.001954310703831033,
+              0.0024459843444400516
+            ],
+            "stage_measurement_rmse_px": [
+              0.0007141123776382749,
+              0.0013583206432990884,
+              0.0013656036467098317,
+              0.002040831498889689
+            ],
+            "stage_accepted": [
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      }
+    ],
+    "limits": [
+      "Known exterior scene values are available only in this simulation; this is not a proposed padding fix for real captures.",
+      "Reference matching templates change to the extended-scene proxy while AP geometry, fitting kernels and final field fit stay fixed.",
+      "The original synthetic scene has nonzero signal at image boundaries; these results do not measure boundary bias in Saturn."
+    ]
+  },
+  "boundary_report_sha256": "20b113245cd24a0b6f77f85e89806792989641d0b52b26f0fee3345cb60241c6",
+  "analyzer_sha256": "949f6ff8312ac0fa7f305e40d37e4662e139209a92de37f97e1a935c2a861e7c",
+  "raw_report_sha256": "783d00bcd1422c07813dccaea2c7df13ef22146f3d72b4280c9e8ac9d7ef096b",
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "long_motion_baseline_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/long_motion_baseline_noise0.png",
+        "source_sha256": "fe5d298639928cd54422b873a032cfd7801feb6cf40c5afdfc87c6d490b45535",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/long_motion_baseline_noise0_sharpened.png",
+        "output_sha256": "e79bc6db252d17c80b83b037a141b765ab810971e791dd6853550d741ea4d48f"
+      },
+      "long_motion_baseline_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/long_motion_baseline_noise2.png",
+        "source_sha256": "0b370cdb3c8f92cec61dc48c78b3ae3f2548cd8abd9bdf156ce5e4679b751df4",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/long_motion_baseline_noise2_sharpened.png",
+        "output_sha256": "2c73dcc902ff538f910a4e07f5fd8547a8cfea374c92a24d11bcf27e4b987a24"
+      },
+      "long_motion_cubic_refined_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/long_motion_cubic_refined_noise0.png",
+        "source_sha256": "00eed090ce9ed7c97febbd48faf1303da88983f3ce55cf469455507f310fbf1f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/long_motion_cubic_refined_noise0_sharpened.png",
+        "output_sha256": "e3a1b760cf2ae6cec9020ab1d670ec647d3a7b1ddf917cde883c1b3f095af404"
+      },
+      "long_motion_cubic_refined_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/long_motion_cubic_refined_noise2.png",
+        "source_sha256": "2266ddcaafbe725ef0d5e00a5a7434754aa3b3e180ca1a185231b92883a0bbf7",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/long_motion_cubic_refined_noise2_sharpened.png",
+        "output_sha256": "cbfd669b93e44b5e0b86be8a7a46b588703af26f0de92a0d3d377bae87c1a5b5"
+      },
+      "long_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/long_motion_target.png",
+        "source_sha256": "0f4a67d16dec0ea918a3954320e17c81c0e2ab0d456339f4dfa5aa6ba586d487",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/long_motion_target_sharpened.png",
+        "output_sha256": "0b7c338d882be1761e39381b5ae968ef83e43f64dc8130f5c8876e9109fc2b76"
+      },
+      "short_motion_baseline_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_motion_baseline_noise0.png",
+        "source_sha256": "3e467fa7ccb37da9105ed57fcc6ea184e95ef9ca33204a6784f8fd3537227e0e",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_motion_baseline_noise0_sharpened.png",
+        "output_sha256": "739af74b7e85cde50c0a67ad26cdee63f9c68f286fec25348deedb862cdaee98"
+      },
+      "short_motion_baseline_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_motion_baseline_noise2.png",
+        "source_sha256": "651967354d96b6acff801d4c94ba89969922e1e06e1005b9761073bfedabd0cd",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_motion_baseline_noise2_sharpened.png",
+        "output_sha256": "2788a7731d76e6621cfc1c1c117b9ca4b6dedeba358805d88560e3252a8d6687"
+      },
+      "short_motion_cubic_refined_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_motion_cubic_refined_noise0.png",
+        "source_sha256": "7d4ebfbc274a86002858e69e1ed0daf8c27b0165063406b476095441ade80ad1",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_motion_cubic_refined_noise0_sharpened.png",
+        "output_sha256": "3fbc44ec2d32a2dab927d037be24062493412512e4a0d0e93ab5c83f0a028213"
+      },
+      "short_motion_cubic_refined_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_motion_cubic_refined_noise2.png",
+        "source_sha256": "9ef4c9356a2be8f5d0ffcc9af5a2c86c8330c0782811553802e7e8f66d804a56",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_motion_cubic_refined_noise2_sharpened.png",
+        "output_sha256": "0fbc91772074b4324d8d9bc1e6c743384e25de2a113daea3e2e682205ce568d5"
+      },
+      "short_motion_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_motion_target.png",
+        "source_sha256": "83b23df22cff2c0107bfae9924d52c9d3dd31657ac12ca1a39cdbb77a71d3530",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_motion_target_sharpened.png",
+        "output_sha256": "65c0986365782001386913909f09086d9100cbe6954a1dabe79951bd89ed9ade"
+      },
+      "short_offset_baseline_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_offset_baseline_noise0.png",
+        "source_sha256": "146cb34711ba02e02fd88472f56a0b36dd198d6183b528d812707ef0496245b6",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_offset_baseline_noise0_sharpened.png",
+        "output_sha256": "d0f2783ff3488e571a6e80aaee072e7e3ceefe4881bb87597dc5a8dee4e44626"
+      },
+      "short_offset_baseline_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_offset_baseline_noise2.png",
+        "source_sha256": "61b492300780025b2594f9fdf460ad237883f51995401f2881a2857dd3f72b85",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_offset_baseline_noise2_sharpened.png",
+        "output_sha256": "3d564e3b09fde6258bbec3f1259a31d32eb6650f07c0e8ed922d39c454e28a99"
+      },
+      "short_offset_cubic_refined_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_offset_cubic_refined_noise0.png",
+        "source_sha256": "d59aadaed32670aef5442d04cad1cd0f53902504f57dc798caa47d7d86c3f5aa",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_offset_cubic_refined_noise0_sharpened.png",
+        "output_sha256": "2118656edec5801798d62105351a1170c2bdd8d822ce578f4a9eb534f15eda8f"
+      },
+      "short_offset_cubic_refined_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_offset_cubic_refined_noise2.png",
+        "source_sha256": "5f1e01dae4a898a74b531219d8211dc790dab885760b884dca67ba833398f316",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_offset_cubic_refined_noise2_sharpened.png",
+        "output_sha256": "8b57af02ba1cce0a25bcf877caa7711930a14a4e7cb665eee291dd3cb985a468"
+      },
+      "short_offset_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/short_offset_target.png",
+        "source_sha256": "4418e68d7722a16e693c916c3727b252e884acec1325639bc6e771069b747416",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/short_offset_target_sharpened.png",
+        "output_sha256": "fe5175b98fcf9f2014389a7bd286f822aa0fdfb882ed577803df09d7340fcfd5"
+      },
+      "stationary_baseline_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/stationary_baseline_noise0.png",
+        "source_sha256": "c9288347d1f45b02d2887499906ed182359084b770b99d9e22d311e87468099b",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/stationary_baseline_noise0_sharpened.png",
+        "output_sha256": "9e400e2536fbf1dafe82381281a0488779a26592c4ec50be88c385da1fc2707f"
+      },
+      "stationary_baseline_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/stationary_baseline_noise2.png",
+        "source_sha256": "c7db09b948c1cd36ab0ff4c67787801c9c8fc7b925792aed3b287f61c818a15f",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/stationary_baseline_noise2_sharpened.png",
+        "output_sha256": "1c3190998902f8f5181d609e59af2fe9e9d8482d86be6e4c043949d79137089f"
+      },
+      "stationary_cubic_refined_noise0": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/stationary_cubic_refined_noise0.png",
+        "source_sha256": "c60cac896084a1af844342cde73db85c5a618dd38d23f5278cf736998c706bd2",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/stationary_cubic_refined_noise0_sharpened.png",
+        "output_sha256": "87decad7de34bc383a6fbf7cc57d7cb3f1ee2f03f0b7a96713172cdc9a8b4f3e"
+      },
+      "stationary_cubic_refined_noise2": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/stationary_cubic_refined_noise2.png",
+        "source_sha256": "7ac64aa16eb2449fe00cc437e01dcdb24025ed13c90eb9d15653c5bc4a523b7e",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/stationary_cubic_refined_noise2_sharpened.png",
+        "output_sha256": "69010a33dbe9e159ead1d292d0372ca30c436346558933b660a2a6ced828da5d"
+      },
+      "stationary_target": {
+        "source": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/stationary_target.png",
+        "source_sha256": "2840be5161665306b3894261dda9a6d02adb71a5dc05dc9c781731f589026a86",
+        "output": "/home/conman/Code/PlanetRecon/out/ap-fractional-validation/sharpened/stationary_target_sharpened.png",
+        "output_sha256": "5f3f58b5dcb2b5438c1671e8df23bb854ab3f61852d7de7ed4a1e4889a50daa3"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "limits": [
+    "Matching-only interpolation changes; final detector-pixel accumulation remains bilinear in every branch.",
+    "The selected policy was screened on known translations and validated on the existing fixed motion/noise controls.",
+    "Noise-free integer translations can still differ through reflected-boundary proxy filtering; the self-match is a separate control.",
+    "The refinement preserves original integer-score confidence/ambiguity gates and accepts only fractional NCC increases.",
+    "Subpixel matching tests do not establish a reduction in Saturn grain or reveal AutoStakkert internals.",
+    "Realistic noise and deforming images can expose different tradeoffs from noiseless translations.",
+    "This unoptimized diagnostic performs many score evaluations; no speed or production-readiness claim.",
+    "No production defaults, output filter or brightness normalization changes."
+  ]
+}
