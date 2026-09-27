@@ -36,14 +36,15 @@ def ring_edges(image):
     return result
 
 
-def edge_sensitivity(images):
+def edge_sensitivity(images, centres=None):
     """Repeat local/global comparisons over 75 paired windows per ansa.
 
     Extend peak search through the central ring to avoid a peak clipped at y=0.
     This is a robustness check on a descriptive width, not 75 independent tests.
     """
-    centres = {name: np.round(center_of_mass(np.maximum(a-a.max()*.02, 0))).astype(int)
-               for name, a in images.items()}
+    if centres is None:
+        centres = {name: np.round(center_of_mass(np.maximum(a-a.max()*.02, 0))).astype(int)
+                   for name, a in images.items()}
     result = {}
     for side, sign in [('left', -1), ('right', 1)]:
         differences, as_differences = [], []

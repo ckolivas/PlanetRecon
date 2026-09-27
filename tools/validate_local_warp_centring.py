@@ -19,25 +19,25 @@ from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
 from planetrecon.pipeline.local_align import LocalRegistration
 
 
-def shear_coordinates(shape, a, b, inverse=False):
+def shear_coordinates(shape, a, b, inverse=False, wavelengths=(160., 240.)):
     """Return x,y coordinates, applying the inverse in reverse composition order."""
     y, x = np.indices(shape, dtype=float)
     cy, cx = (np.asarray(shape)-1)/2
     if inverse:
-        yy = y-b*np.sin(2*np.pi*(x-cx)/240+.4)
-        xx = x-a*np.sin(2*np.pi*(yy-cy)/160+.5)
+        yy = y-b*np.sin(2*np.pi*(x-cx)/wavelengths[1]+.4)
+        xx = x-a*np.sin(2*np.pi*(yy-cy)/wavelengths[0]+.5)
     else:
-        xx = x+a*np.sin(2*np.pi*(y-cy)/160+.5)
-        yy = y+b*np.sin(2*np.pi*(xx-cx)/240+.4)
+        xx = x+a*np.sin(2*np.pi*(y-cy)/wavelengths[0]+.5)
+        yy = y+b*np.sin(2*np.pi*(xx-cx)/wavelengths[1]+.4)
     return np.stack((xx, yy))
 
 
-def make_frame(reference, a, b, blur):
+def make_frame(reference, a, b, blur, wavelengths=(160., 240.)):
     blurred = gaussian_filter(reference, blur) if blur else reference
-    inverse = shear_coordinates(reference.shape, a, b, inverse=True)
+    inverse = shear_coordinates(reference.shape, a, b, inverse=True, wavelengths=wavelengths)
     frame = map_coordinates(blurred, inverse[::-1], order=3, mode='reflect')
     y, x = np.indices(reference.shape)
-    field = shear_coordinates(reference.shape, a, b)-np.stack((x, y))
+    field = shear_coordinates(reference.shape, a, b, wavelengths=wavelengths)-np.stack((x, y))
     return frame, field, blurred
 
 
@@ -102,7 +102,8 @@ def image_errors(image, target, mask):
             'gradient_vector_rmse_adu_per_px': float(np.sqrt(np.mean(np.sum(gradients[:, mask]**2, axis=0))))}
 
 
-def run_case(engine, reference, parameters, n, seed, mask, out, name, match_known_blur=False):
+def run_case(engine, reference, parameters, n, seed, mask, out, name, match_known_blur=False,
+             wavelengths=(160., 240.)):
     aa, bb, blur, noise, weights = parameters
     weights = weights/weights.sum()
     rng = np.random.default_rng(seed)
@@ -110,7 +111,7 @@ def run_case(engine, reference, parameters, n, seed, mask, out, name, match_know
     desired = np.zeros_like(reference)
     blur_engines = {}
     for a, b, sigma, weight in zip(aa, bb, blur, weights):
-        clean, truth, blurred = make_frame(reference, a, b, sigma)
+        clean, truth, blurred = make_frame(reference, a, b, sigma, wavelengths)
         frame = clean+rng.normal(0, noise, reference.shape)
         # Supply the best constant-vector fit to the true displacement over the
         # scoring mask. Subtract only residual local motion, as production does.
@@ -153,6 +154,7 @@ def run_case(engine, reference, parameters, n, seed, mask, out, name, match_know
             clean_images[key] += weight*pull(clean, value[i])
         noiseless_oracle += weight*pull(clean, truth[i])
     report = {'seed': seed, 'frame_count': n, 'a_px': aa.tolist(), 'b_px': bb.tolist(),
+              'motion_wavelengths_px': list(wavelengths),
               'blur_sigma_px': blur.tolist(), 'independent_noise_sigma_adu': noise,
               'oracle_global_shifts_xy': np.asarray(shifts).tolist(),
               'true_mean_residual_vector_rms_px': float(np.sqrt(np.mean(np.sum(true_mean[:, mask]**2, axis=0)))),
@@ -184,9 +186,20 @@ def main():
     parser.add_argument('--cases', nargs='+', choices=list(cases(48)))
     parser.add_argument('--match-known-blur', action='store_true',
                         help='Oracle diagnostic: give the matching template the known simulated frame blur')
+    parser.add_argument('--coherent-spacing', type=float, help='Experimental shared spline motion grid spacing')
+    parser.add_argument('--coherent-stiffness', type=float, default=.1)
+    parser.add_argument('--patch-average', action='store_true')
+    parser.add_argument('--motion-wavelengths', type=float, nargs=2, default=(160., 240.), metavar=('Y', 'X'))
     args = parser.parse_args()
     if args.frames < 8:
         parser.error('--frames must be at least 8')
+    if not np.isfinite(args.motion_wavelengths).all() or min(args.motion_wavelengths) <= 0:
+        parser.error('--motion-wavelengths must be positive finite values')
+    if args.coherent_spacing is not None and (not np.isfinite(args.coherent_spacing)
+            or args.coherent_spacing < 4 or args.match_known_blur):
+        parser.error('--coherent-spacing must be finite and >= 4; cannot combine with --match-known-blur')
+    if not np.isfinite(args.coherent_stiffness) or args.coherent_stiffness <= 0:
+        parser.error('--coherent-stiffness must be positive and finite')
     args.out.mkdir(parents=True, exist_ok=False)
     torch.set_num_threads(4)
     reference = np.load(args.reference)
@@ -194,6 +207,8 @@ def main():
               'device': args.device, 'production_changed': False,
               'global_shift': 'Oracle best constant-vector fit to true displacement over scene mask, independently per frame',
               'matching_template_uses_known_blur': args.match_known_blur,
+              'coherent_spacing_px': args.coherent_spacing,
+              'coherent_stiffness': args.coherent_stiffness, 'patch_average': args.patch_average,
               'export_black_white_adu': [0., 255.], 'scenes': {}, 'limits': [
                   'Synthetic composed shears are not a full atmospheric or planetary rotation model.',
                   'Reference is fixed; Saturn source contains its existing reference texture and noise.',
@@ -210,13 +225,21 @@ def main():
         mask = binary_erosion(scene > .08*scene.max(), iterations=3)
         mask[:8] = mask[-8:] = False
         mask[:, :8] = mask[:, -8:] = False
-        engine = TorchCircularRegistration(CircularMultiscaleRegistration(scene), device=args.device)
+        matcher = CircularMultiscaleRegistration(scene)
+        if args.coherent_spacing is None:
+            engine = TorchCircularRegistration(matcher, device=args.device)
+        else:
+            from tools.coherent_registration import CoherentRegistration
+            engine = CoherentRegistration(matcher, device=args.device, spacing=args.coherent_spacing,
+                                          stiffness=args.coherent_stiffness,patch_average=args.patch_average)
         report['scenes'][scene_name] = {}
         for name, parameters in cases(args.frames).items():
             if args.cases and name not in args.cases:
                 continue
             result = run_case(engine, scene, parameters, args.frames, args.seed, mask,
-                              args.out, f'{scene_name}_{name}', args.match_known_blur)
+                              args.out, f'{scene_name}_{name}', args.match_known_blur, args.motion_wavelengths)
+            if hasattr(engine, 'stats'):
+                result['coherent_fit'] = engine.stats[-args.frames:]
             report['scenes'][scene_name][name] = result
             print(scene_name, name, 'RMSE local/centred/global/oracle:',
                   [round(result['variants'][v]['image_vs_noiseless_oracle']['rmse_adu'], 5)

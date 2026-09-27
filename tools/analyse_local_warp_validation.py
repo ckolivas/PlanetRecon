@@ -49,6 +49,8 @@ def main():
     painter.setPen(QColor('white'))
     local_title = ('Blur-matched template (known blur)' if report.get('matching_template_uses_known_blur')
                    else 'Current local alignment')
+    if report.get('coherent_spacing_px') is not None:
+        local_title = 'Experimental coherent alignment'
     for row, (case, label) in enumerate(rows):
         for col, (variant, title) in enumerate([
                 ('local', local_title), ('centred', 'Subtract mean warp'),
