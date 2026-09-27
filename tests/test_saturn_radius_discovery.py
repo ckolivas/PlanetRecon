@@ -1,6 +1,7 @@
 """Resolved ring boundaries must reach the next run as detector-pixel geometry."""
 from dataclasses import replace
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,6 +16,57 @@ from planetrecon.geometry.saturn_fit import fit_saturn_geometry
 from planetrecon.io.source import ArraySource
 from planetrecon.pipeline.preprocess import screen_source
 from planetrecon.reconstruction import ReconstructionConfig
+
+
+@pytest.mark.parametrize('window,expected', [(0, 54.6425), (1, 53.7540), (2, 54.1812)])
+def test_real_saturn_profiles_match_the_same_boundary_on_both_sides(window, expected):
+    from planetrecon.geometry.saturn_fit import _inner_ring_edge
+    # Three 32-frame time windows of the user's Saturn R capture. At 256-pixel
+    # analysis width a one-sided feature near radius 46 used to be paired with
+    # the common boundary near 54, rejecting all three independent fits.
+    with np.load(Path(__file__).parent/'data/saturn_inner_profiles.npz') as data:
+        radii, profiles = data[f'radii_{window}'], data[f'profiles_{window}']
+    for sides in (profiles, profiles[::-1]):
+        edge, pair = _inner_ring_edge(radii, sides, contrast=150., outer=81.)
+        assert edge == pytest.approx(expected, abs=.001)
+        assert abs(pair[0]-pair[1]) <= 1.01
+
+
+@pytest.mark.parametrize('kind', ['different_edges', 'one_blank_side', 'no_contrast'])
+def test_matching_inner_edges_still_requires_two_resolved_boundaries(kind):
+    from planetrecon.geometry.saturn_fit import _inner_ring_edge
+    radii = np.arange(35., 68., .2)
+    def edge(r):
+        return 1/(1+np.exp(-(radii-r)))
+    if kind == 'different_edges':
+        profiles = np.stack((edge(43.), edge(55.)))
+    elif kind == 'one_blank_side':
+        profiles = np.stack((edge(50.), np.zeros_like(radii)))
+    else:
+        profiles = np.stack((edge(50.), edge(50.))) * .0001
+    with pytest.raises(ValueError, match='Inner ring edge'):
+        _inner_ring_edge(radii, profiles, contrast=1., outer=80.)
+
+
+def test_old_saturn_boundary_estimates_are_refreshed_without_losing_quality():
+    from copy import deepcopy
+    from planetrecon.pipeline.preprocess_cache import cache_report, GEOMETRY_KEYS
+    from planetrecon.geometry.saturn_fit import SATURN_FIT_VERSION
+    source, config = recording()
+    selection = screen_source(source, config)
+    selection.summary['geometry_estimate'] = discover_geometry(source, config, selection)
+    selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
+    before = deepcopy(selection)
+    report = cache_report(selection, config=config)
+    assert report['geometry_estimate']['saturn_geometry']['estimator_version'] == SATURN_FIT_VERSION
+    assert report['geometry_estimate'].get('applicable', True)
+    del selection.summary['geometry_estimate']['saturn_geometry']['estimator_version']
+    report = cache_report(selection, config=config)
+    assert report['status'] == 'ready'
+    assert report['geometry_estimate']['applicable'] is False
+    assert not report['geometry_estimate']['suggestions']
+    np.testing.assert_array_equal(before.accepted, selection.accepted)
+    np.testing.assert_array_equal(before.measurements, selection.measurements)
 
 
 def scene(latitude=.18, angle=.4, scale=1., field=0.):

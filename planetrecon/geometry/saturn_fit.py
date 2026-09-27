@@ -12,6 +12,33 @@ from scipy.signal import find_peaks
 from planetrecon.geometry.fit import fit_disc_ellipse
 
 
+SATURN_FIT_VERSION = 2
+
+
+def _inner_ring_edge(radii, profiles, contrast, outer):
+    """Match the same rising boundary in both ansae before choosing an edge.
+
+    A faint inner band or illumination gradient can be resolved on just one
+    side. Choosing each side's first peak independently then compares different
+    structures. Keep the existing contrast gates, but require a corresponding
+    radial peak on the opposite side and use the innermost matched pair.
+    """
+    candidates = []
+    for profile in profiles:
+        gradient = np.gradient(gaussian_filter1d(profile, 2), radii)
+        peaks, _ = find_peaks(gradient, height=.25*gradient.max(), prominence=.12*gradient.max())
+        if not len(peaks) or gradient.max() < .008*contrast:
+            raise ValueError('Inner ring edge is not resolved in both ansae.')
+        candidates.append(radii[peaks])
+    left, right = np.meshgrid(*candidates, indexing='ij')
+    matches = abs(left-right) <= max(1.5, .02*outer)
+    if not matches.any():
+        raise ValueError('Inner ring edges disagree between ansae.')
+    pairs = np.column_stack((left[matches], right[matches]))
+    pair = pairs[np.argmin(pairs.mean(axis=1))]
+    return float(pair.mean()), pair.tolist()
+
+
 def _ellipse_edges(image, initial, choose, contrast, *, lock_angle=False, axis_ratio=None):
     p = np.asarray(initial, dtype=float)
     for _ in range(3):
@@ -162,17 +189,8 @@ def _fit_saturn(img, opening_rad):
     u, v = np.cos(angles)[:, None]*radii, np.sin(angles)[:, None]*radii*ring_b/outer
     c, s = np.cos(angle), np.sin(angle)
     values = map_coordinates(image, (cy+u*s+v*c, cx+u*c-v*s), order=1)
-    inner_edges = []
-    for side in np.array_split(values, 2):
-        profile = np.median(side, axis=0)
-        gradient = np.gradient(gaussian_filter1d(profile, 2), radii)
-        peaks, _ = find_peaks(gradient, height=.25*gradient.max(), prominence=.12*gradient.max())
-        if not len(peaks) or gradient.max() < .008*contrast:
-            raise ValueError('Inner ring edge is not resolved in both ansae.')
-        inner_edges.append(float(radii[peaks[0]]))
-    if abs(inner_edges[0]-inner_edges[1]) > max(3., .06*outer):
-        raise ValueError('Inner ring edges disagree between ansae.')
-    inner = float(np.mean(inner_edges))
+    profiles = [np.median(side, axis=0) for side in np.array_split(values, 2)]
+    inner, inner_edges = _inner_ring_edge(radii, profiles, contrast, outer)
     inner_b = inner*ring_b/outer
     globe = _ellipse_edges(image, [cx, cy, globe_a, globe_a*.9, angle],
                            lambda u, v: ((np.hypot(u/outer, v/ring_b) > 1.12)
@@ -187,7 +205,8 @@ def _fit_saturn(img, opening_rad):
             'semi_minor': float(globe_b), 'pa_rad': float(angle),
             'flattening': float(max(0., 1-globe_b/globe_a)),
             'ring_inner': inner, 'ring_outer': float(outer),
+            'inner_edge_sides_px': inner_edges,
             'opening_rad': float(np.arcsin(ring_b/outer)),
             'opening_origin': 'viewing latitude' if ratio is not None else 'ring ellipse',
             'degeneracy': ('low_opening',) if ring_b/outer < .2 else (),
-            'method': 'separate globe limb and ring boundary gradients v1'}
+            'method': 'separate globe limb and paired ring boundary gradients v2'}

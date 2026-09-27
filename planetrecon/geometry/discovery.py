@@ -199,9 +199,10 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     suggestions.update(field_center_x=float(np.mean(centres, axis=0)[0])*scale+.5*bin_scale,
                        field_center_y=float(np.mean(centres, axis=0)[1])*scale+.5*bin_scale)
     if saturn_target:
-        from planetrecon.geometry.saturn_fit import fit_saturn_geometry
+        from planetrecon.geometry.saturn_fit import SATURN_FIT_VERSION, fit_saturn_geometry
         ring_fits = [fit_saturn_geometry(average, opening_rad=config.sub_obs_lat_rad) for average in averages]
         report['saturn_geometry'] = {'fits': ring_fits, 'status': 'unresolved',
+                                    'estimator_version': SATURN_FIT_VERSION,
                                     'detector_pixels_per_sample': float(scale)}
         good = [fit for fit in ring_fits if fit['ok']]
         keys = {'equatorial_radius_px': 'radius', 'ring_inner_radius_px': 'ring_inner',

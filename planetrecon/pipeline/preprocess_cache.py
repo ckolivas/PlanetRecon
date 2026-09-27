@@ -118,6 +118,11 @@ def cache_report(selection, path=None, config=None, source=None):
             and 'motion_reference' not in selection.summary.get('geometry_analysis_config', {})):
         estimate = {'suggestions': {}, 'applicable': False,
                     'notes': ['Motion reference selection changed; run Preprocess to refresh geometry. Quality/shape exclusions remain valid.']}
+    if 'saturn_geometry' in estimate:
+        from planetrecon.geometry.saturn_fit import SATURN_FIT_VERSION
+        if estimate['saturn_geometry'].get('estimator_version') != SATURN_FIT_VERSION:
+            estimate = {'suggestions': {}, 'applicable': False,
+                        'notes': ['Saturn boundary estimator changed; run Preprocess to refresh geometry. Quality/shape exclusions remain valid.']}
     if source is not None and config is not None:
         view = estimate.get('viewing_geometry', {})
         if view.get('origin') == 'jpl_horizons_geocentric':
