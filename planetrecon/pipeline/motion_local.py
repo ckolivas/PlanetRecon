@@ -6,7 +6,7 @@ from planetrecon.pipeline.local_align import LocalRegistration
 
 
 def build_motion_template(reference, indices, read_aligned, should_cancel=None):
-    """Average observed proxies in the best frame's geometry and detector origin."""
+    """Average observed proxies in the selected anchor geometry and detector origin."""
     total, weight = np.zeros_like(reference), np.zeros_like(reference)
     used = 0
     for index in indices:
@@ -72,11 +72,22 @@ def _cuda_inverse_local_coordinates(shift):
     return output[0],output[1]
 
 
-def local_coordinates(template_with_support, frame, pose, reference_pose, render, window, use_cuda):
+def local_coordinates(template_with_support, frame, pose, reference_pose, render, window, use_cuda,
+                      *, method="square", sampling_multiplier=5., wavelength_nm=550., should_cancel=None):
     """Predict a fixed, prepared reference; only pose and observations vary."""
     projected = render(template_with_support,pose,reference_pose)
     predicted,support = projected[...,0],projected[...,1]
-    matcher = LocalRegistration(predicted,window=window,step=window//2,use_cuda=use_cuda,
-                                valid_mask=support >= 1.-1e-9)
+    if should_cancel and should_cancel():
+        raise InterruptedError('cancelled during local motion alignment')
+    if method == 'circular_multiscale':
+        from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
+        matcher = CircularMultiscaleRegistration(predicted, sampling_multiplier=sampling_multiplier,
+            wavelength_nm=wavelength_nm, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
+            should_cancel=should_cancel)
+    elif method == 'square':
+        matcher = LocalRegistration(predicted,window=window,step=window//2,use_cuda=use_cuda,
+                                    valid_mask=support >= 1.-1e-9)
+    else:
+        raise ValueError('unknown local motion alignment method')
     shift = matcher.displacement(frame,(0.,0.))
     return inverse_local_coordinates(shift, use_cuda=use_cuda)

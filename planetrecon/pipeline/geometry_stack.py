@@ -412,6 +412,7 @@ def stack_source_geometry(
     state_checkpoint=None,
     selection=None,
     cache_status=None,
+    reference_selection=None,
 ) -> ReconstructionResult:
     if config.frame_preselection and cache_status is None:
         from planetrecon.pipeline.baseline import stack_source
@@ -489,8 +490,28 @@ def stack_source_geometry(
     sample_idx = []
     sample_planes = []
     sample_frames = []
-    chosen_reference = (config.reference_index if config.reference_index or selection is None else
-                        selection.best_reference_index)
+    from planetrecon.pipeline.motion_reference import motion_reference_plan
+    reference_selection = selection if reference_selection is None else reference_selection
+    reference_plan = motion_reference_plan(source, config, reference_selection)
+    chosen_reference = reference_plan['anchor_index']
+    # An uncached capture has not yet had invalid/saturated frames screened.
+    # Move the automatic anchor to another usable candidate, not an arbitrary
+    # surviving geometry sample. Never replace an explicit user reference.
+    from planetrecon.pipeline.preprocess import FrameSelection
+    unscreened = None
+    while True:
+        if should_cancel is not None and should_cancel():
+            return cancelled_before_geometry()
+        reference_frame = usable_frame(source.read_raw(chosen_reference))
+        if reference_frame is not None:
+            break
+        if reference_selection is not None or config.reference_index:
+            raise ValueError('selected reference frame is invalid or saturated')
+        if unscreened is None:
+            unscreened = FrameSelection(np.ones(n, dtype=bool), np.ones((n, 4)), {})
+        unscreened.accepted[chosen_reference] = False
+        reference_plan = motion_reference_plan(source, config, unscreened)
+        chosen_reference = reference_plan['anchor_index']
     candidates = sorted({0, n // 2, n - 1, chosen_reference})
     if selection is not None:
         accepted_indices = np.flatnonzero(selection.accepted)
@@ -499,11 +520,11 @@ def stack_source_geometry(
     for index in candidates:
         if should_cancel is not None and should_cancel():
             return cancelled_before_geometry()
-        if selection is not None and not selection.accepted[index]:
+        if selection is not None and not selection.accepted[index] and index != chosen_reference:
             continue
-        frame = usable_frame(source.read_raw(index))
+        frame = reference_frame if index == chosen_reference else usable_frame(source.read_raw(index))
         if frame is None:
-            if index == chosen_reference and (selection is not None or config.reference_index != 0):
+            if index == chosen_reference:
                 raise ValueError("selected reference frame is invalid or saturated")
             continue
         sample_idx.append(index)
@@ -537,6 +558,7 @@ def stack_source_geometry(
                 source, config, planes=sample_planes, sample_indices=sample_idx, reference_index=chosen_reference,
                 viewing_record=viewing_record,
             )
+            diagnostics['motion_reference'] = reference_plan
             if diagnostics.get('unavailable_motion'):
                 raise _UnresolvedMotion('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
                                  + '. Correct the geometry or choose Motion model None for ordinary stacking.')
@@ -665,8 +687,7 @@ def stack_source_geometry(
         def local_plane(frame):
             return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
-        accepted = np.flatnonzero(selection.accepted)
-        candidates = accepted[np.argsort(-selection.measurements[accepted,0],kind='stable')[:64]]
+        candidates = np.asarray(reference_plan['template_candidates'], dtype=int)
         def read_aligned(index):
             frame = usable_frame(source.read_raw(index))
             if frame is None:
@@ -697,13 +718,21 @@ def stack_source_geometry(
             local_template_with_support = torch.as_tensor(
                 local_template_with_support,device='cuda:0',dtype=torch.float64)
         diagnostics['local_alignment'] = {
-            'version': 1, 'enabled': True, 'window_px':config.local_patch_size,
+            'version': 2, 'enabled': True, 'method': config.alignment_method, 'window_px':config.local_patch_size,
             'step_px':config.local_patch_size//2, 'maximum_residual_px':3,
             'template_candidates':candidates.tolist(), 'anchor_index':anchor_index,
-            'template':'observed mean in best-frame geometry; predicted at each frame time',
+            'template':'observed mean in selected anchor geometry; predicted at each frame time',
             'composition':'invert residual pull; evaluate geometry; scatter original samples once',
             'registration_proxy':'RGB luminance' if bayer else 'luminance',
         }
+        if config.alignment_method == 'circular_multiscale':
+            from planetrecon.pipeline.circular_align import minimum_diameter
+            diagnostics['local_alignment'].update(
+                minimum_diameter_px=minimum_diameter(config.sampling_multiplier, config.alignment_wavelength_nm),
+                sampling_multiplier=config.sampling_multiplier, wavelength_nm=config.alignment_wavelength_nm,
+                maximum_residual_px=6)
+            diagnostics['local_alignment'].pop('window_px')
+            diagnostics['local_alignment'].pop('step_px')
     xg, yg = detector_xy_grids(h, w)
     # Optical blur crosses globe/ring/shadow boundaries. Keep full bilinear
     # footprints and CFA completion; classification is for scoring/diagnostics.
@@ -720,6 +749,8 @@ def stack_source_geometry(
 
     snapshot_provenance = capture_provenance(source, requested_config, calibration)
     snapshot_provenance['scalar_frame_weight'] = 'linear quality' if config.quality_weighting else 'equal'
+    snapshot_provenance['motion_reference'] = reference_plan
+    snapshot_provenance['frame_brightness'] = 'recorded detector values; explicit calibration only; no per-frame brightness normalisation'
     snapshot_provenance["preprocessing_cache"] = cache_status or {"status": "disabled"}
     if config.local_alignment:
         snapshot_provenance['local_alignment'] = diagnostics['local_alignment']
@@ -736,6 +767,8 @@ def stack_source_geometry(
         state_identity = resume.identity(source, requested_config, calibration, should_cancel)
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
+        state_identity['reference_selection_digest'] = (reconstruction_digest(reference_selection)
+                                                       if reference_selection is not None else None)
         # Re-estimation is bounded in image count. Refuse continuation if any
         # fitted geometry or per-frame timing changed, even with identical sums.
         pose_hash = hashlib.sha256()
@@ -887,7 +920,8 @@ def stack_source_geometry(
                 score_mask[:2] = score_mask[-2:] = False
                 score_mask[:, :2] = score_mask[:, -2:] = False
                 lap = convolve(quality_plane, LAPLACIAN_KERNEL, mode="nearest")
-                score = max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12
+                score = max(selection.measurements[index, 0], 1e-12) if selection is not None else (
+                    max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12)
             else:
                 score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(quality_plane), 1e-12)
             if not np.isfinite(score):
@@ -899,7 +933,9 @@ def stack_source_geometry(
             if config.local_alignment:
                 local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)
                 sample_xy = local_coordinates(local_template_with_support,local_image,
-                    pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda')
+                    pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda',
+                    method=config.alignment_method, sampling_multiplier=config.sampling_multiplier,
+                    wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel)
             if gpu_accumulator is not None:
                 if bayer and demo is None:
                     demo = demosaic(calibrated)

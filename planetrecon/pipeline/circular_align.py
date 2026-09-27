@@ -74,7 +74,7 @@ class CircularMultiscaleRegistration:
     the stacker once using the final displacement field.
     """
     def __init__(self, reference, *, sampling_multiplier=5., wavelength_nm=550.,
-                 use_cuda=False, should_cancel=None):
+                 use_cuda=False, should_cancel=None, valid_mask=None):
         reference = np.asarray(reference, dtype=float)
         if reference.ndim != 2 or min(reference.shape) < 5 or not np.isfinite(reference).all():
             raise ValueError('finite two-dimensional reference of at least 5 by 5 required')
@@ -93,7 +93,7 @@ class CircularMultiscaleRegistration:
             if size + 6 > min(self.shape):
                 break
             self.layers.append(LocalRegistration(reference, window=size,
-                               step=max(1, size//2), circular=True))
+                               step=max(1, size//2), circular=True, valid_mask=valid_mask))
         self.provenance = {
             'version': 1, 'method': 'circular_multiscale',
             'sampling_multiplier': sampling_multiplier, 'wavelength_nm': wavelength_nm,

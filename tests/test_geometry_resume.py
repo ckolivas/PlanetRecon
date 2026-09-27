@@ -32,7 +32,8 @@ def capture(tmp_path, color, mode=None):
 
 
 def config(mode):
-    return ReconstructionConfig(device='cpu',threads=2,batch_frames=2,geometry_mode=mode,
+    # These legacy fixtures specify detector geometry at the first frame.
+    return ReconstructionConfig(device='cpu',threads=2,batch_frames=2,geometry_mode=mode,motion_reference='best',
         cadence_s=.2,reference_epoch_s=.15,field_center_x=24.,field_center_y=20.,
         equatorial_radius_px=9.,sub_obs_lat_rad=.4,flattening=.1,
         field_rate_rad_s=.04,surface_rate_rad_s=.08,

@@ -104,6 +104,9 @@ class ConfigControls(QTabWidget):
         self.geometry_estimate_text = 'Preprocessing can prefill geometry for the next run. User edits are preserved.'
         self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
         self.motion_model_label = geo.labelForField(self.fields['geometry_mode'])
+        self._choice(geo, 'motion_reference', 'Automatic motion reference', ['midpoint', 'best'])
+        self.fields['motion_reference'].setItemText(0, 'Good frames near capture midpoint')
+        self.fields['motion_reference'].setItemText(1, 'Best frames across capture')
         from planetrecon.geometry.rotation import PERIOD_DAYS
         self._choice(geo, 'rotation_planet', 'Planet rotation preset', [None, *PERIOD_DAYS])
         self.fields['rotation_planet'].setItemText(0, 'Measured / manual rate')
@@ -316,17 +319,13 @@ class ConfigControls(QTabWidget):
             self.geometry_auto.pop('sub_obs_lat_rad', None)
             self._set_geometry_help('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
         self.fields['local_alignment'].setEnabled(
-            self.fields['frame_preselection'].isChecked()
-            and self.fields['geometry_mode'].currentData() != 'field')
+            self.fields['frame_preselection'].isChecked())
         self.fields['local_patch_size'].setEnabled(
             self.fields['local_alignment'].isChecked()
             and self.fields['frame_preselection'].isChecked()
-            and self.fields['geometry_mode'].currentData() != 'field'
-            and (self.fields['alignment_method'].currentData() == 'square'
-                 or self.fields['geometry_mode'].currentData() != 'none'))
+            and self.fields['alignment_method'].currentData() == 'square')
         self.fields['alignment_method'].setEnabled(
-            self.fields['geometry_mode'].currentData() == 'none'
-            and self.fields['local_alignment'].isChecked()
+            self.fields['local_alignment'].isChecked()
             and self.fields['frame_preselection'].isChecked())
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
@@ -402,12 +401,7 @@ class ConfigControls(QTabWidget):
             sun_lon_rad=None, sun_lat_rad=None, moon_x=None, moon_y=None, moon_radius_px=None,
             ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
         for key, edit in self.fields.items():
-            if key == 'alignment_method' and self.fields['geometry_mode'].currentData() != 'none':
-                values[key] = 'square'
-                continue
-            if key == 'local_alignment' and (
-                    not self.fields['frame_preselection'].isChecked()
-                    or self.fields['geometry_mode'].currentData() == 'field'):
+            if key == 'local_alignment' and not self.fields['frame_preselection'].isChecked():
                 values[key] = False
                 continue
             if not saturn and key in saturn_defaults:

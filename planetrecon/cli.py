@@ -205,6 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--exposure", type=float, default=None, help="integration time in seconds (default: recorded metadata; 0 disables midpoint offset)")
     st.add_argument("--cadence", type=float, default=None, help="seconds between frame starts")
     st.add_argument("--reference-epoch", type=float, default=0.0)
+    st.add_argument("--motion-reference", choices=("midpoint", "best"), default="midpoint",
+                    help="automatic reference pool for motion compensation")
     st.add_argument("--ring-inner", type=float, default=None, help="Saturn ring inner radius in pixels")
     st.add_argument("--ring-outer", type=float, default=None, help="Saturn ring outer radius in pixels")
     st.add_argument("--ring-transmission", type=float, default=0.35)
@@ -444,6 +446,7 @@ def main(argv: list[str] | None = None) -> int:
             exposure_s=args.exposure,
             cadence_s=args.cadence,
             reference_epoch_s=args.reference_epoch,
+            motion_reference=args.motion_reference,
             ring_inner_radius_px=args.ring_inner,
             ring_outer_radius_px=args.ring_outer,
             ring_transmission=args.ring_transmission,

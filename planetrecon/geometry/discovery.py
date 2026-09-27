@@ -112,7 +112,7 @@ def discover_geometry(source, config, selection, calibration=None, should_cancel
 
 
 def _discover_geometry(source, config, selection, calibration=None, should_cancel=None):
-    """Three short averages aligned to the best retained frame; at most 97 reads."""
+    """Three short averages aligned to the motion reference; at most 97 reads."""
     from dataclasses import replace
     from planetrecon.geometry.pose import capture_exposure
     exposure = capture_exposure(source, config.exposure_s)
@@ -146,7 +146,16 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
                                  np.arange(int(plane.shape[1]*factor))/factor, indexing='ij')
             plane = map_coordinates(plane, (yy, xx), order=1, mode='nearest')
         return plane, bin_scale, bin_scale / factor
-    reference_index = selection.best_reference_index
+    from planetrecon.pipeline.motion_reference import motion_reference_plan
+    try:
+        reference_plan = motion_reference_plan(source, config, selection)
+    except ValueError as exc:
+        # An invalid manual anchor blocks geometry, not the independent quality
+        # measurements (for example after opening a shorter capture).
+        report['notes'].append(f'Motion reference is unavailable: {exc}.')
+        return report
+    report['motion_reference'] = reference_plan
+    reference_index = reference_plan['anchor_index']
     report['reference_index'] = reference_index
     anchor, bin_scale, scale = read_plane(reference_index)
     for group in np.array_split(accepted, 3):

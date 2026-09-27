@@ -34,7 +34,7 @@ def capture(tmp_path):
 def test_cached_best_reference_used_from_first_batch_and_after_resume(tmp_path, mode):
     path = capture(tmp_path)
     cfg = ReconstructionConfig(device='cpu', threads=2, batch_frames=2, geometry_mode=mode,
-        cadence_s=.1, field_rate_rad_s=0., surface_rate_rad_s=0.,
+        cadence_s=.1, field_rate_rad_s=0., surface_rate_rad_s=0., motion_reference='best',
         field_center_x=40.5, field_center_y=32.5, equatorial_radius_px=21.,
         sub_obs_lat_rad=.4, ring_inner_radius_px=25. if mode == 'saturn' else None,
         ring_outer_radius_px=30. if mode == 'saturn' else None)

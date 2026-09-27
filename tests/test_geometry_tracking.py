@@ -28,7 +28,8 @@ def test_explicit_zero_surface_rate_matches_registered_stack(color, preprocessed
         labels = cfa_labels(*scene.shape, color)
         planes *= np.where(labels == 'R', .8, np.where(labels == 'B', .6, 1.))
     source = ArraySource(planes, color_mode=color, bit_depth=32, timestamps=np.arange(len(planes)))
-    cfg = ReconstructionConfig(device='cpu', threads=2, field_center_x=48.5, field_center_y=40.5,
+    # Compare both paths in the same original best-frame coordinates.
+    cfg = ReconstructionConfig(device='cpu', threads=2, motion_reference='best', field_center_x=48.5, field_center_y=40.5,
         equatorial_radius_px=25., pole_pa_rad=.3, flattening=.1, sub_obs_lat_rad=.1, quality_weighting=weighted)
     selection = preprocess_source(source, cfg) if preprocessed else None
     baseline = stack_source(source, cfg, preprocessing=selection)
@@ -49,7 +50,7 @@ def test_translation_tracking_preserves_signed_surface_compensation(rate):
     frames = [render_globe_texture(size, size, 48+3*np.sin(t), 48+2*np.sin(t*.7),
               0., globe, t, texture, apply_field=False, limb_weight=False) for t in times]
     source = ArraySource(np.stack(frames), bit_depth=32, timestamps=times)
-    cfg = ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+    cfg = ReconstructionConfig(device='cpu', threads=2, frame_preselection=False, motion_reference='best',
         geometry_mode='surface', field_center_x=48., field_center_y=48.,
         equatorial_radius_px=radius, pole_pa_rad=.25, surface_rate_rad_s=rate)
     result = stack_source(source, cfg)

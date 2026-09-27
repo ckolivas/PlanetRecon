@@ -39,9 +39,8 @@ def test_invalid_sampling_refused(kwargs):
         ReconstructionConfig(**kwargs)
 
 
-def test_circular_method_cannot_silently_use_square_motion_path():
-    with pytest.raises(ValueError, match='Motion model None'):
-        circular_config(geometry_mode='surface')
+def test_circular_method_is_retained_for_motion_path():
+    assert circular_config(geometry_mode='surface').alignment_method == 'circular_multiscale'
 
 
 def test_local_distortion_recovered_without_sharpening_or_folds():
@@ -232,8 +231,8 @@ def test_capture_controls_persist_sampling_and_classic_stack(tmp_path, method):
         fields['alignment_method'].setCurrentIndex(fields['alignment_method'].findData(method))
         fields['local_patch_size'].setValue(49)
         fields['quality_weighting'].setChecked(False)
-        # Classic Stack must not demand the incomplete motion geometry.
-        fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('saturn'))
+        # Ordinary stacking explicitly selects no geometric motion.
+        fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('none'))
         win.path = capture(tmp_path)
         win._buttons()
         win.stack_btn.click()

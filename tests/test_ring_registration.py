@@ -33,7 +33,8 @@ def source(colour, offsets, field_rate=0., ring_texture=None):
 
 
 def config():
-    return ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+    # Drift comparisons share the original first-frame detector coordinates.
+    return ReconstructionConfig(device='cpu', threads=2, frame_preselection=False, motion_reference='best',
         geometry_mode='saturn', field_center_x=56, field_center_y=56,
         equatorial_radius_px=20, flattening=.1, sub_obs_lat_rad=.4,
         ring_inner_radius_px=26, ring_outer_radius_px=42, ring_transmission=.35,

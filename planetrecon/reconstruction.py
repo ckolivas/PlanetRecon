@@ -41,6 +41,7 @@ class ReconstructionConfig:
     alignment_wavelength_nm: float = 550.0
     max_shift_px: float = 32.0
     reference_index: int = 0
+    motion_reference: str = "midpoint"
     crop: str = "feature"
     baseline_operator_version: str = C.BASELINE_OPERATOR_VERSION
     geometry_operator_version: str = C.GEOMETRY_OPERATOR_VERSION
@@ -158,13 +159,13 @@ class ReconstructionConfig:
             if (isinstance(value, bool) or not isinstance(value, (int, float))
                     or not math.isfinite(value) or not low <= value <= high):
                 raise ValueError(f'{name} must be a number from {low:g} to {high:g}')
-        if self.local_alignment and self.alignment_method == 'circular_multiscale' and self.geometry_mode != 'none':
-            raise ValueError('circular multiscale alignment requires Motion model None')
+        if self.motion_reference not in ('midpoint', 'best'):
+            raise ValueError('unknown motion_reference')
         if (type(self.local_patch_size) is not int or not 15 <= self.local_patch_size <= 255
                 or self.local_patch_size % 2 != 1):
             raise ValueError('local_patch_size must be an odd integer from 15 to 255 pixels')
-        if self.local_alignment and (self.geometry_mode == 'field' or not self.frame_preselection):
-            raise ValueError('local alignment requires cached preprocessing and none, surface, combined or saturn geometry')
+        if self.local_alignment and not self.frame_preselection:
+            raise ValueError('local alignment requires cached preprocessing')
         if type(self.frame_preselection) is not bool:
             raise ValueError('frame_preselection must be a bool')
         for name in ("bias_path", "dark_path", "flat_path"):

@@ -32,7 +32,8 @@ def sphere(t, rate=.1, dx=0., dy=0., field_rate=0.):
 
 
 def config(rate=.1, field_rate=0.):
-    return ReconstructionConfig(device='cpu', threads=2, frame_preselection=False,
+    # Oracle images below are at the first frame's detector origin.
+    return ReconstructionConfig(device='cpu', threads=2, frame_preselection=False, motion_reference='best',
         geometry_mode='combined' if field_rate else 'surface',
         field_center_x=64, field_center_y=64, equatorial_radius_px=42,
         surface_rate_rad_s=rate, field_rate_rad_s=field_rate)

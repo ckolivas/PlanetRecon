@@ -124,7 +124,7 @@ def _stack_source(
                       if largest >= 15 else 'Disable Local patch alignment for this capture.')
             raise ValueError(f'Local patch size {config.local_patch_size} needs frames at least '
                              f'{required} by {required} pixels; this capture is {w} by {h}. {remedy}')
-    selection = None
+    selection = reference_selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
         from planetrecon.pipeline.preprocess_cache import load_cache, identity, cache_report, selection_digest
@@ -143,6 +143,7 @@ def _stack_source(
             raise ValueError('Local alignment requires a matching cache. Run Preprocess first.')
         if config.stack_percent < 100 and selection is None:
             raise ValueError('Best-frame selection requires a matching preprocessing cache. Run Preprocess first, or set best frames to 100%.')
+        reference_selection = selection
         if selection is not None and config.stack_percent < 100:
             from planetrecon.pipeline.preprocess import best_frame_mask, quality_range
             accepted = best_frame_mask(selection, config.stack_percent, config.frame_selection_mode)
@@ -161,12 +162,13 @@ def _stack_source(
         if selection is not None:
             if not selection.accepted.any():
                 raise ValueError('no usable frames remain after preprocessing')
-            if config.local_alignment and np.count_nonzero(selection.accepted) < 4:
+            reference_mask = reference_selection if config.geometry_mode != 'none' else selection
+            if config.local_alignment and np.count_nonzero(reference_mask.accepted) < 4:
                 raise ValueError('Local alignment needs at least four selected frames to build its reference. '
                                  'Select more frames or disable Local patch alignment.')
             if config.reference_index >= len(selection.accepted):
                 raise ValueError('reference_index is outside the capture')
-            if config.reference_index and not selection.accepted[config.reference_index]:
+            if config.reference_index and not reference_mask.accepted[config.reference_index]:
                 raise ValueError('selected reference frame was rejected by preprocessing or best-frame selection; choose a retained frame or automatic reference 0')
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
@@ -179,7 +181,7 @@ def _stack_source(
             should_cancel=should_cancel,
             resume_from=resume_from,
             state_checkpoint=state_checkpoint,
-            selection=selection, cache_status=cache_status,
+            selection=selection, cache_status=cache_status, reference_selection=reference_selection,
         )
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)

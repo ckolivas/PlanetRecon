@@ -15,7 +15,8 @@ from planetrecon.pipeline.provenance import capture_provenance
 
 SCHEMA = 'planetrecon-preprocessing-1'
 GEOMETRY_KEYS = ('cadence_s', 'exposure_s', 'field_angle0_rad', 'field_rate_rad_s',
-                 'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad', 'rotation_planet')
+                 'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad', 'rotation_planet',
+                 'motion_reference', 'reference_index')
 
 
 def default_cache_path(source):
@@ -113,6 +114,10 @@ def cache_report(selection, path=None, config=None, source=None):
                 and estimate.get('saturn_geometry', {}).get('status') != 'estimated'):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
                         'notes': [*estimate.get('notes', []), 'Cached whole-silhouette flattening is not used for Saturn globe geometry.']}
+    if (config is not None and 'reference_index' in estimate
+            and 'motion_reference' not in selection.summary.get('geometry_analysis_config', {})):
+        estimate = {'suggestions': {}, 'applicable': False,
+                    'notes': ['Motion reference selection changed; run Preprocess to refresh geometry. Quality/shape exclusions remain valid.']}
     if source is not None and config is not None:
         view = estimate.get('viewing_geometry', {})
         if view.get('origin') == 'jpl_horizons_geocentric':
