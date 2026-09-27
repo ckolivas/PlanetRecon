@@ -354,7 +354,8 @@ class SERSource(FrameSource):
             return False
         return self.header.samples_are_little_endian
 
-    def read_raw(self, index: int) -> np.ndarray:
+    def read_frame_bytes(self, index: int) -> bytes:
+        """Read one unchanged packed frame, including its original byte order."""
         if index < 0 or index >= self._n:
             raise IndexError(index)
         self._check_input()
@@ -362,6 +363,10 @@ class SERSource(FrameSource):
         data = self._file.read(self.header.frame_bytes)
         if len(data) != self.header.frame_bytes:
             raise OSError("SER frame truncated while open")
+        return data
+
+    def read_raw(self, index: int) -> np.ndarray:
+        data = self.read_frame_bytes(index)
         if self.header.bytes_per_sample == 1:
             samples = np.frombuffer(data, dtype=np.uint8).astype(np.uint16, copy=False)
         else:

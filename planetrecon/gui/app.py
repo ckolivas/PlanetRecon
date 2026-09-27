@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from planetrecon.export import ExportCancelled, ExportConfig, export_result
+from planetrecon.ser_export import SERExportReport, export_filtered_ser
 from planetrecon.gui.controls import ConfigControls
 from planetrecon.gui.preview import display_result_preview
 from planetrecon.gui.quality import QualityPlot
@@ -80,6 +81,30 @@ class ExportWorker(QThread):
             self.outcome.emit(None, exc)
         finally:
             self.result = None
+
+
+class SERExportWorker(QThread):
+    outcome = Signal(object, object)
+    progress = Signal(str, int, int)
+
+    def __init__(self, source, path, config, cache_path, digest, validation, overwrite):
+        super().__init__()
+        self.source, self.path, self.config = source, path, config
+        self.cache_path, self.digest = cache_path, digest
+        self.validation, self.overwrite = validation, overwrite
+        self.cancel_event = threading.Event()
+
+    def run(self):
+        from planetrecon.pipeline.preprocess_cache import CacheValidation
+        try:
+            validation = CacheValidation(**self.validation) if self.validation else None
+            report = export_filtered_ser(self.source, self.path, self.config,
+                cache_path=self.cache_path, expected_digest=self.digest, validation=validation,
+                overwrite=self.overwrite, should_cancel=self.cancel_event.is_set,
+                on_progress=self.progress.emit)
+            self.outcome.emit(report, None)
+        except Exception as exc:
+            self.outcome.emit(None, exc)
 
 
 class MainWindow:
@@ -188,6 +213,18 @@ class MainWindow:
         layout.addWidget(self.preprocessing_label)
         self.quality_plot = QualityPlot()
         self.quality_plot.frameRequested.connect(self._request_quality_frame)
+        ser_row = QHBoxLayout()
+        self.export_ser_btn = QPushButton('Export SER…')
+        self.export_ser_btn.setToolTip('Save the green selected frames in capture order. Requires a SER capture and enabled, validated quality/size screening. Original full frames and timestamps are retained.')
+        self.export_ser_btn.clicked.connect(self._choose_ser_export)
+        self.cancel_ser_btn = QPushButton('Cancel export')
+        self.cancel_ser_btn.clicked.connect(self._cancel_save)
+        self.ser_export_status = QLabel('')
+        self.ser_export_status.setWordWrap(True)
+        for widget in (self.export_ser_btn, self.cancel_ser_btn, self.ser_export_status):
+            ser_row.addWidget(widget)
+        ser_row.setStretch(2, 1)
+        self.quality_plot.layout().addLayout(ser_row)
         self.batch_status = QPlainTextEdit()
         self.batch_status.setReadOnly(True)
         self.batch_status.setMaximumHeight(100)
@@ -408,7 +445,8 @@ class MainWindow:
         self._save_settings()
 
     def _buttons(self):
-        busy = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
+        processing = self.job is not None or self.run_stage is not None or self.batch_active or self.batch_saving
+        busy = processing or isinstance(self.export_worker, SERExportWorker)
         self.quality_plot.set_browsing_enabled(not busy and not self.closing)
         self.open_btn.setEnabled(not busy and not self.closing)
         self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
@@ -418,10 +456,11 @@ class MainWindow:
         self.controls.setEnabled(not busy and not self.closing)
         for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
             control.setEnabled(not busy and not self.closing)
-        self.cancel_btn.setEnabled(busy and self.cancel_started is None)
+        self.cancel_btn.setEnabled(processing and self.cancel_started is None)
         self.save_btn.setEnabled(self.last_result is not None and self.export_worker is None and not self.closing
                                  and not self.batch_active)
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
+        self._ser_export_buttons()
         for edit in (self.encoding, self.save_black, self.save_white, self.save_gamma):
             edit.setEnabled(not self.batch_active and not self.batch_saving)
         if not self.batch_active and not self.batch_saving:
@@ -837,6 +876,18 @@ class MainWindow:
                     and self.controls.fields['stack_percent'].value() < 100):
                 reason += ' Run will create a matching cache before selecting frames.'
             self.preprocessing_label.setText(reason)
+        self._ser_export_buttons()
+
+    def _ser_export_buttons(self):
+        ready = (self.path is not None and self.path.suffix.lower() == '.ser'
+                 and self.preprocessing_info.get('status') == 'ready'
+                 and bool(self.preprocessing_info.get('digest'))
+                 and self.controls.fields['frame_preselection'].isChecked()
+                 and self.quality_plot.selection is not None and self.quality_plot.selected.any())
+        idle = (self.job is None and self.run_stage is None and not self.batch_active
+                and self.export_worker is None and not self.closing)
+        self.export_ser_btn.setEnabled(bool(ready and idle))
+        self.cancel_ser_btn.setEnabled(isinstance(self.export_worker, SERExportWorker))
 
     def _preprocessing_settings_changed(self, value=None):
         if self.preprocessing_info.get('status') == 'ready':
@@ -1191,14 +1242,68 @@ class MainWindow:
         self._buttons()
         return True
 
+    def _choose_ser_export(self):
+        if not self.export_ser_btn.isEnabled():
+            return
+        path, _ = QFileDialog.getSaveFileName(self.window, 'Export filtered SER',
+            str(Path(self._dialog_directory()) / (self.path.stem + '_filtered.ser')),
+            'SER capture (*.ser)', options=QFileDialog.Option.DontConfirmOverwrite)
+        if not path:
+            return
+        destination = Path(path)
+        if not destination.suffix:
+            destination = destination.with_suffix('.ser')
+        self._remember_directory(destination.parent)
+        overwrite = False
+        if destination.exists() or destination.is_symlink():
+            overwrite = QMessageBox.question(self.window, 'Replace SER?', f'Replace {destination}?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+            if not overwrite:
+                return
+        self.save_filtered_ser(destination, overwrite=overwrite)
+
+    def save_filtered_ser(self, path, *, overwrite=False):
+        self._ser_export_buttons()
+        if not self.export_ser_btn.isEnabled():
+            return False
+        try:
+            config = self.controls.configuration()
+        except ValueError as exc:
+            self.ser_export_status.setText(f'Export settings: {exc}')
+            return False
+        self._stop_frame_preview()
+        self.export_worker = SERExportWorker(self.path, Path(path), config,
+            self.preprocessing_info.get('path'), self.preprocessing_info['digest'],
+            dict(self.cache_validation) if self.cache_validation else None, overwrite)
+        self.export_worker.progress.connect(self._ser_export_progress)
+        self.export_worker.outcome.connect(self._save_outcome)
+        self.export_worker.finished.connect(self._save_finished)
+        self.ser_export_status.setText('Preparing filtered SER export…')
+        self.export_worker.start()
+        self._buttons()
+        return True
+
+    def _ser_export_progress(self, stage, done, total):
+        self.ser_export_status.setText(f'{stage}: {done:,}/{total:,} frames')
+
     def _cancel_save(self):
         if self.batch_saving:
             self._stop_batch()
         if self.export_worker is not None:
             self.export_worker.cancel_event.set()
             self.save_status.setText('Cancelling save before publication…')
+            if isinstance(self.export_worker, SERExportWorker):
+                self.ser_export_status.setText('Cancelling SER export…')
 
     def _save_outcome(self, report, error):
+        if isinstance(self.export_worker, SERExportWorker) or isinstance(report, SERExportReport):
+            if error is not None:
+                self.ser_export_status.setText('SER export cancelled.' if isinstance(error, ExportCancelled)
+                                               else f'SER export failed: {error}')
+            else:
+                self.ser_export_status.setText(f'Saved {report.path} · {report.n_written:,}/{report.n_input:,} frames in capture order')
+            return
         if self.batch_saving and self.batch_current is not None:
             self.batch_current.status = ('cancelled' if isinstance(error, ExportCancelled) else
                                          'failed' if error is not None else 'saved')

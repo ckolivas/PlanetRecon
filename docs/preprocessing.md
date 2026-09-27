@@ -564,3 +564,23 @@ rejections. Changes to input/calibration settings clear unvalidated measurements
 
 Plot arrays travel only in inspection/preprocessing worker events, not in result
 provenance or exported metadata. Existing cache files need no conversion.
+
+## Filtered SER export
+
+After opening or preprocessing a SER capture, use **Export SER…** on the
+**Frame quality** tab to save the green selected frames. The export applies the
+cached quality and size exclusions plus the current **Upper quality range (%)**
+or **Frame count** selection. Cached preprocessing must be enabled and validated;
+no stack needs to be run first.
+
+Frames stay in their original capture order even when the graph is sorted by
+quality. Full detector frames are copied byte for byte, preserving bit depth,
+mono/Bayer/RGB data and each retained frame's timestamp when present. Calibration,
+alignment, debayering and brightness normalisation are not applied. Explicit
+Bayer/endian overrides are recorded in the output header so other readers use
+the chosen interpretation. The original capture is never replaced.
+
+The save dialog suggests `<capture stem>_filtered.ser`. Export runs in the
+background with frame progress and a **Cancel export** button. The destination
+appears only after a complete export; cancellation or failure leaves an existing
+destination intact.
