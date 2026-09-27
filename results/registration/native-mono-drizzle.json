@@ -1,0 +1,391 @@
+{
+  "n_used": 5738,
+  "hashes": {
+    "reference": "3ffcb6cf01e740482a627d474a35a5bfce4bb99b7064622ed58410b880d3403c",
+    "indices": "01f4ad5258de473b6852f116ea952952a0862b0727de1934c70e554cb444d8ef",
+    "quality": "aac214c4f9f33b2d770b93b391d2e5b4b75b4061a829c6ecd46d9bb3153895f2",
+    "global_shifts": "427e7022edd4e77cad5a0bf204388453764c0bf74535a7291a43821f925d0726",
+    "model_code": "51f5fab4523304b1153788699899b6ae4bdd29467df8d43c9edc0121ed75836f",
+    "deposit_code": "1ca529a55bd190e877d64a8dfa9e900a0ba4e61ec5791b121266309cedad8f73"
+  },
+  "config": {
+    "scale": 1.0,
+    "pixel_fractions": {
+      "square_1": 1.0,
+      "square_half": 0.5,
+      "point": 0.0
+    }
+  },
+  "scipy_parity_max_adu": 1.2573275753879898e-14,
+  "normalization": false,
+  "output_filtering": false,
+  "production_changed": false,
+  "variants": {
+    "square_1": {
+      "previous_stack_max_difference_adu": 1.7905676941154525e-12,
+      "path": "out/saturn-native-drizzle/sharpened/square_1_sharpened.png",
+      "sha256": "15af149fcdd49c3df01304098bc204e8ab2aaea347cf2ed8ec09c29b26a441d1",
+      "variation": {
+        "upper": {
+          "median": 32570.0,
+          "highpass_percent": 2.957700868419032,
+          "laplacian_percent": 2.821528655480188
+        },
+        "lower": {
+          "median": 33396.0,
+          "highpass_percent": 2.9832415643182184,
+          "laplacian_percent": 2.82917235381704
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.4844964041435205,
+          "profile": [
+            234.6,
+            303.6,
+            276.0,
+            338.1,
+            372.6666666666667,
+            400.3,
+            421.0,
+            490.3,
+            531.9666666666667,
+            580.4,
+            677.4666666666667,
+            726.0,
+            850.4666666666667,
+            1016.4,
+            981.9666666666667,
+            608.3666666666667,
+            373.03333333333336,
+            1131.6333333333334,
+            4330.233333333334,
+            8879.033333333333,
+            12958.566666666668,
+            14906.7,
+            16556.4,
+            18064.833333333332,
+            19259.8,
+            19603.566666666666,
+            20481.6,
+            20998.066666666666,
+            21437.7,
+            21707.633333333335,
+            21588.933333333334
+          ],
+          "crossings": [
+            17.424865566185204,
+            24.909361970328725
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.132843015592428,
+          "profile": [
+            289.8,
+            317.4,
+            386.46666666666664,
+            393.3666666666667,
+            400.3,
+            476.43333333333334,
+            518.0333333333333,
+            559.6333333333333,
+            684.4,
+            684.4333333333333,
+            712.1333333333333,
+            864.4,
+            975.1333333333333,
+            719.1,
+            297.3,
+            152.0,
+            1754.0333333333333,
+            6852.2,
+            12781.3,
+            16730.933333333334,
+            17843.866666666665,
+            18864.566666666666,
+            19064.566666666666,
+            19696.4,
+            20200.733333333334,
+            20550.4,
+            20473.4,
+            20641.5,
+            20902.3,
+            21333.433333333334,
+            21154.0
+          ],
+          "crossings": [
+            16.144455850142208,
+            22.277298865734636
+          ]
+        }
+      }
+    },
+    "square_half": {
+      "path": "out/saturn-native-drizzle/sharpened/square_half_sharpened.png",
+      "sha256": "69f671ef1faaccafa06f0a6936cd208fc8265f769c1862ad7a05399e82c11fd1",
+      "variation": {
+        "upper": {
+          "median": 32518.0,
+          "highpass_percent": 4.087634443370754,
+          "laplacian_percent": 4.328776478286267
+        },
+        "lower": {
+          "median": 33345.0,
+          "highpass_percent": 4.259111258642415,
+          "laplacian_percent": 4.443623120944786
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.571001010288246,
+          "profile": [
+            262.2,
+            289.8,
+            296.8,
+            324.3333333333333,
+            345.06666666666666,
+            421.1,
+            407.3,
+            483.43333333333334,
+            518.1333333333333,
+            608.1666666666666,
+            656.7,
+            705.2333333333333,
+            843.4666666666667,
+            1030.2333333333333,
+            1009.6,
+            587.5666666666667,
+            393.93333333333334,
+            1090.2666666666667,
+            4302.966666666666,
+            8872.833333333334,
+            13037.166666666666,
+            14861.666666666666,
+            16548.4,
+            18016.133333333335,
+            19293.433333333334,
+            19566.366666666665,
+            20500.366666666665,
+            20978.833333333332,
+            21452.266666666666,
+            21704.233333333334,
+            21623.3
+          ],
+          "crossings": [
+            17.429976862659654,
+            25.0009778729479
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.161459028319619,
+          "profile": [
+            303.6,
+            310.53333333333336,
+            372.7,
+            393.43333333333334,
+            386.53333333333336,
+            497.3,
+            525.0,
+            559.7,
+            698.2,
+            691.3333333333334,
+            726.0,
+            885.0333333333333,
+            975.0666666666667,
+            725.9666666666667,
+            317.93333333333334,
+            145.06666666666666,
+            1669.2,
+            6840.366666666667,
+            12805.466666666667,
+            16760.1,
+            17817.833333333332,
+            18850.833333333332,
+            19019.133333333335,
+            19726.233333333334,
+            20151.866666666665,
+            20577.166666666668,
+            20420.466666666667,
+            20589.3,
+            20930.5,
+            21339.833333333332,
+            21161.766666666666
+          ],
+          "crossings": [
+            16.15775324717182,
+            22.319212275491438
+          ]
+        }
+      }
+    },
+    "point": {
+      "previous_stack_max_difference_adu": 1.7053025658242404e-12,
+      "path": "out/saturn-native-drizzle/sharpened/point_sharpened.png",
+      "sha256": "8aef0913a0bd066f6ee9cf4f87cb8b04eb1bd233a040034263845294d15b6889",
+      "variation": {
+        "upper": {
+          "median": 32518.0,
+          "highpass_percent": 5.373793888994543,
+          "laplacian_percent": 5.832531849334841
+        },
+        "lower": {
+          "median": 33193.0,
+          "highpass_percent": 5.572717304879434,
+          "laplacian_percent": 5.975100291910013
+        }
+      },
+      "ring_edges": {
+        "left": {
+          "width_10_90_px": 7.374684160170808,
+          "profile": [
+            234.6,
+            296.73333333333335,
+            303.7,
+            331.23333333333335,
+            338.23333333333335,
+            414.26666666666665,
+            400.43333333333334,
+            497.26666666666665,
+            545.9333333333333,
+            573.4666666666667,
+            663.6333333333333,
+            712.1,
+            857.2666666666667,
+            1009.4333333333333,
+            1037.0333333333333,
+            594.5666666666667,
+            380.06666666666666,
+            1041.6666666666667,
+            4335.133333333333,
+            8812.733333333334,
+            13118.833333333334,
+            14864.9,
+            16462.233333333334,
+            18113.166666666668,
+            19184.066666666666,
+            19690.6,
+            20413.233333333334,
+            20962.4,
+            21484.433333333334,
+            21671.666666666668,
+            21734.2
+          ],
+          "crossings": [
+            17.435107890368812,
+            24.80979205053962
+          ]
+        },
+        "right": {
+          "width_10_90_px": 6.318920772705468,
+          "profile": [
+            282.9,
+            310.6,
+            352.06666666666666,
+            400.46666666666664,
+            372.8333333333333,
+            483.53333333333336,
+            490.4,
+            573.6,
+            698.2333333333333,
+            663.6333333333333,
+            691.3333333333334,
+            884.9666666666667,
+            1002.6,
+            712.1333333333333,
+            304.06666666666666,
+            152.03333333333333,
+            1651.9666666666667,
+            6860.7,
+            12883.533333333333,
+            16614.6,
+            17908.433333333334,
+            18840.433333333334,
+            18996.5,
+            19613.366666666665,
+            20270.966666666667,
+            20503.166666666668,
+            20485.133333333335,
+            20510.733333333334,
+            20926.766666666666,
+            21392.766666666666,
+            21130.366666666665
+          ],
+          "crossings": [
+            16.160364324019916,
+            22.479285096725384
+          ]
+        }
+      }
+    }
+  },
+  "sharpening": {
+    "planetary_tools": "/home/conman/Code/PlanetaryTools/planetary-app",
+    "planetary_tools_commit": "aedf4968d18ef55a3a5fc3c8de6593be642c7f26",
+    "wavelet": {
+      "fine": 27.0,
+      "medium": 0.0,
+      "coarse": 0.0,
+      "chunky": 0.0,
+      "luminance": false,
+      "auto": false,
+      "target_noise": 3.0,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "deconvolution": {
+      "amount": 15.6,
+      "adaptive": true,
+      "luminance": true,
+      "auto": false,
+      "target_noise": 3.5,
+      "target_contrast": 15.0,
+      "clamp": true,
+      "clamp_low": false
+    },
+    "images": {
+      "point": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/point.png",
+        "source_sha256": "b8942112e53a25544d0500bb6b18ae4ed973f4bac76419d9f780c159a4202196",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/sharpened/point_sharpened.png",
+        "output_sha256": "8aef0913a0bd066f6ee9cf4f87cb8b04eb1bd233a040034263845294d15b6889"
+      },
+      "square_1": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/square_1.png",
+        "source_sha256": "6d7bc4dbee18b0d6067f7c133f2d6287e18c1eb7b7094fef3d1911ca0967dfbe",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/sharpened/square_1_sharpened.png",
+        "output_sha256": "15af149fcdd49c3df01304098bc204e8ab2aaea347cf2ed8ec09c29b26a441d1"
+      },
+      "square_half": {
+        "source": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/square_half.png",
+        "source_sha256": "ac7acc6820624c21d027885bea83d5c7e26aaa841fff95e6845544b26a7b9770",
+        "output": "/home/conman/Code/PlanetRecon/out/saturn-native-drizzle/sharpened/square_half_sharpened.png",
+        "output_sha256": "69f671ef1faaccafa06f0a6936cd208fc8265f769c1862ad7a05399e82c11fd1"
+      }
+    },
+    "implementation_sha256": {
+      "io/loader.py": "d605eb584851f0a8c4e421112e851541b2ec71a9bba4f2e9fe1909ad627b60e4",
+      "io/png_read.py": "f542c2b68830f8b54d1e78e26967652ff16be85561474d428b00538170097095",
+      "io/png_write.py": "7abf0811743d2e1844ffd0a18e3fcf9b24b885d317ebf5931a49ecd88e17ca90",
+      "filters/registry.py": "65e738f12e4cd6582d176541cb7beaaa516a7e62254eeb0e183d8827fe5920d4",
+      "filters/wavelet.py": "a045b0b0047453a0064e24f4ed317c2aa193fd1e8a7ef676a661b30f1385837d",
+      "filters/adaptive_deconv.py": "7cdefa87955347634c8bfd8d200c017f2134ce0bf69d5c53dc9d2754a9bdff87",
+      "core/colour.py": "3298403a0bc9ad5264a92803303466f4f8e6c8231f4707f2d1598a3104b3612b",
+      "core/brightness.py": "3e46a492611c785fb1d3ec5b7923702ca2fc1da3ae667ace90a2dc5004d229cf"
+    }
+  },
+  "limits": [
+    "Fixed global translations only; no local deformation, AP recombination or resolution enlargement.",
+    "Area-overlap square footprints at native scale are explicit test kernels, not claims about AS internals.",
+    "A unit square footprint equals bilinear sampling for translations; point placement equals rounded translations.",
+    "At exact integer placement these kernels preserve an impulse and cannot generate the previously measured broad AS response.",
+    "Fine-scale variation includes detail and artifacts; descriptive ring widths are not calibrated resolution."
+  ],
+  "developer_source": {
+    "date": "2024-01-18",
+    "author": "Emil Kraaikamp (MvZ)",
+    "post": 39,
+    "url": "https://www.cloudynights.com/forums/topic/907378-jupiter-at-20-degrees-11624-not-what-you-think-dont-miss-panel-26/page/2/",
+    "description": "Distinguishes integer regular stacking, subpixel enlarged drizzle and temporal Bayer channel reconstruction; not a current-version implementation audit."
+  }
+}
