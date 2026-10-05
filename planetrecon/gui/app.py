@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from planetrecon.export import ExportCancelled, ExportConfig, export_result
-from planetrecon.ser_export import SERExportReport, export_filtered_ser
+from planetrecon.ser_export import SERExportReport, export_filtered_ser, export_frame_mask
 from planetrecon.gui.controls import ConfigControls
 from planetrecon.gui.preview import display_result_preview
 from planetrecon.gui.quality import QualityPlot
@@ -87,11 +87,12 @@ class SERExportWorker(QThread):
     outcome = Signal(object, object)
     progress = Signal(str, int, int)
 
-    def __init__(self, source, path, config, cache_path, digest, validation, overwrite):
+    def __init__(self, source, path, config, cache_path, digest, validation, overwrite, minimum_quality=None):
         super().__init__()
         self.source, self.path, self.config = source, path, config
         self.cache_path, self.digest = cache_path, digest
         self.validation, self.overwrite = validation, overwrite
+        self.minimum_quality = minimum_quality
         self.cancel_event = threading.Event()
 
     def run(self):
@@ -101,7 +102,7 @@ class SERExportWorker(QThread):
             report = export_filtered_ser(self.source, self.path, self.config,
                 cache_path=self.cache_path, expected_digest=self.digest, validation=validation,
                 overwrite=self.overwrite, should_cancel=self.cancel_event.is_set,
-                on_progress=self.progress.emit)
+                on_progress=self.progress.emit, minimum_quality=self.minimum_quality)
             self.outcome.emit(report, None)
         except Exception as exc:
             self.outcome.emit(None, exc)
@@ -213,9 +214,20 @@ class MainWindow:
         layout.addWidget(self.preprocessing_label)
         self.quality_plot = QualityPlot()
         self.quality_plot.frameRequested.connect(self._request_quality_frame)
+        ser_quality_row = QHBoxLayout()
+        self.ser_quality_check = QCheckBox('Export quality >')
+        self.ser_min_quality = QLineEdit('0')
+        self.ser_min_quality.setMaximumWidth(140)
+        self.ser_min_quality.setToolTip('Absolute Kraaikamp-style estimator score, as shown by Absolute quality on the graph. Scientific notation is accepted. Only scores strictly above this value are exported; size and other preprocessing exclusions still apply.')
+        self.ser_quality_check.setToolTip('Use an absolute quality score instead of the stacking percentage. The graph colours continue to show the stacking selection.')
+        self.ser_export_count = QLabel()
+        ser_quality_row.addWidget(self.ser_quality_check)
+        ser_quality_row.addWidget(self.ser_min_quality)
+        ser_quality_row.addWidget(self.ser_export_count, 1)
+        self.quality_plot.layout().addLayout(ser_quality_row)
         ser_row = QHBoxLayout()
         self.export_ser_btn = QPushButton('Export SER…')
-        self.export_ser_btn.setToolTip('Save the green selected frames in capture order. Requires a SER capture and enabled, validated quality/size screening. Original full frames and timestamps are retained.')
+        self.export_ser_btn.setToolTip('Save frames above the export quality score, or the green selected frames when that option is off. Requires a SER capture and enabled, validated screening. Original full frames, order and timestamps are retained.')
         self.export_ser_btn.clicked.connect(self._choose_ser_export)
         self.cancel_ser_btn = QPushButton('Cancel export')
         self.cancel_ser_btn.clicked.connect(self._cancel_save)
@@ -376,6 +388,12 @@ class MainWindow:
                     value = quality_settings.get(key)
                     if isinstance(value, bool):
                         getattr(self.quality_plot, f'{key}_control').setChecked(value)
+                ser_settings = saved.get('ser_export', {})
+                if isinstance(ser_settings, dict):
+                    if isinstance(ser_settings.get('minimum_quality'), str):
+                        self.ser_min_quality.setText(ser_settings['minimum_quality'])
+                    if isinstance(ser_settings.get('use_quality'), bool):
+                        self.ser_quality_check.setChecked(ser_settings['use_quality'])
                 last_path = saved.get('capture')
                 # Restore preferences, but only open a capture explicitly chosen
                 # by the user (or supplied as a launch argument).
@@ -403,11 +421,14 @@ class MainWindow:
         self.settings_timer.timeout.connect(self._save_settings)
         for edit in (*self.controls.fields.values(), self.encoding, self.zoom, self.channel,
                      self.save_black, self.save_white, self.save_gamma,
+                     self.ser_quality_check, self.ser_min_quality,
                      self.quality_plot.absolute_control, self.quality_plot.log_control):
             signal = (edit.currentIndexChanged if isinstance(edit, QComboBox) else
                       edit.toggled if isinstance(edit, QCheckBox) else
                       edit.textChanged if isinstance(edit, QLineEdit) else edit.valueChanged)
             signal.connect(lambda *_: self.settings_timer.start())
+        self.ser_quality_check.toggled.connect(self._ser_export_buttons)
+        self.ser_min_quality.textChanged.connect(self._ser_export_buttons)
         self._export_options()
         self._buttons()
         if self.path is not None:
@@ -425,6 +446,8 @@ class MainWindow:
                 controls=self.controls.settings_state(),
                 quality_plot=dict(absolute=self.quality_plot.absolute_control.isChecked(),
                                   log=self.quality_plot.log_control.isChecked()),
+                ser_export=dict(use_quality=self.ser_quality_check.isChecked(),
+                                minimum_quality=self.ser_min_quality.text()),
                 capture=str(self.path) if self.path else None,
                 last_directory=self.last_directory,
                 encoding=self.encoding.currentText(), zoom=self.zoom.currentText(),
@@ -878,15 +901,28 @@ class MainWindow:
             self.preprocessing_label.setText(reason)
         self._ser_export_buttons()
 
-    def _ser_export_buttons(self):
+    def _ser_export_buttons(self, *_):
         ready = (self.path is not None and self.path.suffix.lower() == '.ser'
                  and self.preprocessing_info.get('status') == 'ready'
                  and bool(self.preprocessing_info.get('digest'))
                  and self.controls.fields['frame_preselection'].isChecked()
-                 and self.quality_plot.selection is not None and self.quality_plot.selected.any())
+                 and self.quality_plot.selection is not None)
         idle = (self.job is None and self.run_stage is None and not self.batch_active
                 and self.export_worker is None and not self.closing)
-        self.export_ser_btn.setEnabled(bool(ready and idle))
+        count = 0
+        if ready:
+            try:
+                mask = export_frame_mask(self.quality_plot.selection, self.quality_plot.percent,
+                    self.quality_plot.mode, self.ser_min_quality.text() if self.ser_quality_check.isChecked() else None)
+                count = int(mask.sum())
+                self.ser_export_count.setText(f'Export: {count:,}/{len(mask):,} frames')
+            except ValueError as exc:
+                self.ser_export_count.setText(str(exc))
+        else:
+            self.ser_export_count.setText('')
+        self.ser_quality_check.setEnabled(idle)
+        self.ser_min_quality.setEnabled(idle and self.ser_quality_check.isChecked())
+        self.export_ser_btn.setEnabled(bool(ready and idle and count))
         self.cancel_ser_btn.setEnabled(isinstance(self.export_worker, SERExportWorker))
 
     def _preprocessing_settings_changed(self, value=None):
@@ -1275,7 +1311,8 @@ class MainWindow:
         self._stop_frame_preview()
         self.export_worker = SERExportWorker(self.path, Path(path), config,
             self.preprocessing_info.get('path'), self.preprocessing_info['digest'],
-            dict(self.cache_validation) if self.cache_validation else None, overwrite)
+            dict(self.cache_validation) if self.cache_validation else None, overwrite,
+            float(self.ser_min_quality.text()) if self.ser_quality_check.isChecked() else None)
         self.export_worker.progress.connect(self._ser_export_progress)
         self.export_worker.outcome.connect(self._save_outcome)
         self.export_worker.finished.connect(self._save_finished)

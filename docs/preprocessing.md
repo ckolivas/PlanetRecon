@@ -599,6 +599,16 @@ cached quality and size exclusions plus the current **Upper quality range (%)**
 or **Frame count** selection. Cached preprocessing must be enabled and validated;
 no stack needs to be run first.
 
+Enable **Export quality >** to enter an absolute Kraaikamp-style estimator score,
+as shown by the graph's **Absolute quality** mode or frame score readout. This
+exports only frames with scores strictly greater than the entered value;
+scientific notation is accepted. It overrides the stacking percentage/count
+selection while retaining cached size and other preprocessing exclusions.
+The export row shows the resulting frame count; the graph colours still show
+the stacking selection. The setting is remembered across restarts. Leave it off
+to export the green selected frames as before. This uses PlanetRecon's existing
+estimator adaptation described above, not a calibrated AutoStakkert score.
+
 Frames stay in their original capture order even when the graph is sorted by
 quality. Full detector frames are copied byte for byte, preserving bit depth,
 mono/Bayer/RGB data and each retained frame's timestamp when present. Calibration,

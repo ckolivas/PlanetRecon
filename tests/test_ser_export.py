@@ -17,7 +17,7 @@ from planetrecon.pipeline.preprocess_cache import (
     quality_plot_data, save_cache, selection_digest,
 )
 from planetrecon.reconstruction import ReconstructionConfig
-from planetrecon.ser_export import export_filtered_ser
+from planetrecon.ser_export import export_filtered_ser, export_frame_mask
 
 
 def capture(tmp_path, *, color=0, depth=8, endian=0, timestamps=True, convention='ecosystem'):
@@ -85,6 +85,37 @@ def test_graph_selection_rules(tmp_path, mode, percent, kept):
     with SERSource(path) as source, SERSource(out) as filtered:
         assert filtered.n_frames() == len(kept)
         assert [filtered.read_frame_bytes(j) for j in range(len(kept))] == [source.read_frame_bytes(i) for i in kept]
+
+
+def test_absolute_export_quality_overrides_stack_percentage_and_preserves_size_mask(tmp_path):
+    path, cfg, _ = capture(tmp_path)
+    out = tmp_path/'absolute.ser'
+    # The top 1% quality range has no accepted frames (best score fails size).
+    # An absolute cutoff of 70 keeps scores 80 and 90, not the equal score 70.
+    report = export_filtered_ser(path, out,
+        replace(cfg, frame_selection_mode='quality_range', stack_percent=1), minimum_quality=70)
+    assert report.n_written == 2
+    with SERSource(path) as source, SERSource(out) as filtered:
+        assert [filtered.read_frame_bytes(i) for i in range(2)] == [source.read_frame_bytes(i) for i in [3, 5]]
+        np.testing.assert_array_equal(filtered.timestamps(), source.timestamps()[[3, 5]])
+
+
+@pytest.mark.parametrize('threshold', [-1, float('nan'), float('inf'), '', 'bad', True])
+def test_invalid_absolute_export_quality(tmp_path, threshold):
+    path, cfg, _ = capture(tmp_path)
+    out = tmp_path/'invalid.ser'
+    with pytest.raises(ValueError, match='finite, non-negative'):
+        export_filtered_ser(path, out, cfg, minimum_quality=threshold)
+    assert not out.exists()
+
+
+def test_absolute_quality_is_not_normalized_and_excludes_nonfinite_scores(tmp_path):
+    _, _, selected = capture(tmp_path)
+    selected.measurements[:, 0] = 2e-8
+    selected.measurements[0, 0] = np.nan
+    mask = export_frame_mask(selected, 1, 'frame_count', '1e-8')
+    np.testing.assert_array_equal(np.flatnonzero(mask), [2, 3, 5, 6, 7])
+    assert not export_frame_mask(selected, 100, 'quality_range', 2e-8).any()
 
 
 def test_spec_endian_is_encoded_for_other_ser_readers(tmp_path):
@@ -303,4 +334,53 @@ def test_gui_export_cancel_and_dialog(tmp_path, monkeypatch):
             win.export_worker.wait(5000)
             app.processEvents()
         win.window.close()
+        app.processEvents()
+
+
+def test_gui_absolute_export_quality_count_and_saved_preference(tmp_path):
+    pytest.importorskip('PySide6')
+    from planetrecon.gui.app import MainWindow, create_app
+    path, cfg, selected = capture(tmp_path)
+    app = create_app(['ser-quality-test'])
+    settings_path = tmp_path/'settings.json'
+    win = MainWindow(config=cfg, settings_path=settings_path)
+    restored = None
+    try:
+        win.path = path
+        with SERSource(path) as source:
+            report = cache_report(selected, default_cache_path(source))
+        win._set_preprocessing({**report, 'frame_quality': quality_plot_data(selected)})
+        assert not win.ser_quality_check.isChecked()
+        assert not win.ser_min_quality.isEnabled()
+        win.controls.fields['frame_selection_mode'].setCurrentIndex(
+            win.controls.fields['frame_selection_mode'].findData('quality_range'))
+        win.controls.fields['stack_percent'].setValue(1)
+        assert not win.quality_plot.selected.any() and not win.export_ser_btn.isEnabled()
+        win.ser_quality_check.setChecked(True)
+        for value in ('bad', 'nan', '-1', '1000'):
+            win.ser_min_quality.setText(value)
+            assert not win.export_ser_btn.isEnabled()
+        win.ser_min_quality.setText('7e1')
+        assert win.ser_export_count.text() == 'Export: 2/8 frames'
+        assert win.export_ser_btn.isEnabled()
+        assert not win.quality_plot.selected.any()  # Stacking selection is unchanged.
+        out = tmp_path/'gui-quality.ser'
+        assert win.save_filtered_ser(out)
+        assert not win.ser_quality_check.isEnabled() and not win.ser_min_quality.isEnabled()
+        pump(app, lambda: win.export_worker is None)
+        assert '2/8 frames in capture order' in win.ser_export_status.text()
+        with SERSource(path) as source, SERSource(out) as filtered:
+            assert [filtered.read_frame_bytes(i) for i in range(2)] == [source.read_frame_bytes(i) for i in [3, 5]]
+        win._save_settings()
+        restored = MainWindow(config=cfg, settings_path=settings_path)
+        assert restored.ser_quality_check.isChecked() and restored.ser_min_quality.text() == '7e1'
+        assert restored.path is None and restored.job is None
+    finally:
+        for window in (win, restored):
+            if window is not None:
+                window._shutdown()
+                if window.export_worker is not None:
+                    window.export_worker.wait(5000)
+                    app.processEvents()
+                window.window.close()
         app.processEvents()

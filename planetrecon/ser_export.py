@@ -1,5 +1,6 @@
 """Lossless, ordered SER filtering using validated preprocessing selections."""
 from dataclasses import dataclass
+import math
 import os
 from pathlib import Path
 import struct
@@ -22,15 +23,39 @@ class SERExportReport:
     has_timestamps: bool
 
 
+def _quality_threshold(value):
+    if value is None:
+        return None
+    try:
+        threshold = float(value)
+    except (ValueError, TypeError):
+        raise ValueError('Export quality must be a finite, non-negative score') from None
+    if isinstance(value, bool) or not math.isfinite(threshold) or threshold < 0:
+        raise ValueError('Export quality must be a finite, non-negative score')
+    return threshold
+
+
+def export_frame_mask(selection, percent, mode, minimum_quality=None):
+    """Use either the stack selection or a strict absolute estimator-score cutoff."""
+    threshold = _quality_threshold(minimum_quality)
+    if threshold is None:
+        return best_frame_mask(selection, percent, mode)
+    scores = selection.measurements[:, 0]
+    return selection.accepted & np.isfinite(scores) & (scores > threshold)
+
+
 def export_filtered_ser(source_path, destination, config, *, cache_path=None,
                         expected_digest=None, validation=None, overwrite=False,
-                        should_cancel=None, on_progress=None):
+                        should_cancel=None, on_progress=None, minimum_quality=None):
     """Copy selected full detector frames verbatim, never quality-sort them.
 
     Calibration settings are used to validate the measurements only.
     Output pixels remain uncalibrated, uncropped and unnormalised. Explicit
     Bayer/endian interpretation is recorded in the output's ecosystem header.
+    minimum_quality overrides stack selection with a strict absolute quality
+    score threshold, retaining preprocessing exclusions (including size limits).
     """
+    minimum_quality = _quality_threshold(minimum_quality)
     source_path, destination = Path(source_path), Path(destination)
     if source_path.suffix.lower() != '.ser' or destination.suffix.lower() != '.ser':
         raise ValueError('Filtered SER export requires a SER input and .ser output')
@@ -70,7 +95,8 @@ def export_filtered_ser(source_path, destination, config, *, cache_path=None,
                 raise ValueError(report.get('reason', 'Preprocess this capture before exporting'))
             if expected_digest is not None and selection.digest != expected_digest:
                 raise ValueError('Preprocessing changed; reload the quality graph before exporting')
-            indices = np.flatnonzero(best_frame_mask(selection, config.stack_percent, config.frame_selection_mode))
+            indices = np.flatnonzero(export_frame_mask(selection, config.stack_percent,
+                                                       config.frame_selection_mode, minimum_quality))
             if not indices.size:
                 raise ValueError('No frames remain inside the selected quality and size limits')
             timestamps = raw.timestamps()
