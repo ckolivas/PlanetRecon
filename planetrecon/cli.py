@@ -246,6 +246,9 @@ def main(argv: list[str] | None = None) -> int:
 
     gui = sub.add_parser("gui", help="Qt6 shell with progressive baseline reconstruction")
     gui.add_argument("--path", type=Path, default=None)
+    ser = sub.add_parser("ser", help="Qt6 SER tool: frame quality graph, frame viewer and filtered SER export")
+    ser.add_argument("capture", type=Path, nargs="?", default=None)
+    ser.add_argument("--path", type=Path, default=None)
     smoke = sub.add_parser("gui-smoke", help="bounded Qt/owned-worker/scientific-save packaging check")
     smoke.add_argument("--out", type=Path, required=True)
     smoke.add_argument("--device", choices=("cpu", "gpu"), default="cpu")
@@ -499,6 +502,13 @@ def main(argv: list[str] | None = None) -> int:
 
         argv = [] if args.path is None else [str(args.path)]
         return gui_main(argv)
+    if args.cmd == "ser":
+        from planetrecon.gui.ser_app import main as ser_main
+
+        if args.capture is not None and args.path is not None:
+            parser.error("give the capture once, either positionally or with --path")
+        capture = args.capture if args.capture is not None else args.path
+        return ser_main([] if capture is None else [str(capture)])
     if args.cmd == "gui-smoke":
         from planetrecon.gui.smoke import run_smoke
 

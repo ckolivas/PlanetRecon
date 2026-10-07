@@ -23,6 +23,7 @@ gpu = ["torch"]
 
 [project.scripts]
 planetrecon = "planetrecon.cli:main"
+planetrecon-ser = "planetrecon.gui.ser_app:main"
 
 [tool.setuptools.packages.find]
 include = ["planetrecon*"]

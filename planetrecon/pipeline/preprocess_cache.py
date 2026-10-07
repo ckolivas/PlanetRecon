@@ -320,12 +320,15 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
 
 
 def preprocess_source(source, config, *, calibration=None, cache_path=None,
-                      should_cancel=None, on_progress=None, validation=None, on_device=None):
+                      should_cancel=None, on_progress=None, validation=None, on_device=None,
+                      measure_geometry=True):
     """Compute fresh screening + geometry, cache if file-backed, and return it.
 
     Callable independently of reconstruction, even when cache use is disabled.
     Cancellation never replaces an existing cache. Array sources return a
     reusable in-memory selection; callers can also choose an explicit path.
+    Without measure_geometry only quality and shape are measured; the cache
+    records an inapplicable estimate, so motion runs preprocess again.
     """
     from planetrecon.geometry.discovery import discover_geometry
     from planetrecon.memory import cpu_memory_limit
@@ -347,13 +350,17 @@ def preprocess_source(source, config, *, calibration=None, cache_path=None,
                                   on_progress=on_progress, on_device=on_device)
         if selection.cancelled:
             raise InterruptedError('preprocessing cancelled')
-        if on_device:
-            on_device({'backend': 'cpu', 'reason': 'Geometry estimation', 'phase': 'geometry'})
         from planetrecon.geometry.pose import capture_timing
         selection.summary['timing'] = capture_timing(source, cadence_s=config.cadence_s)
-        selection.summary['geometry_estimate'] = discover_geometry(source, config, selection, calibration, should_cancel)
-        selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
-        selection.summary['geometry_analysis_mode'] = config.geometry_mode
+        if measure_geometry:
+            if on_device:
+                on_device({'backend': 'cpu', 'reason': 'Geometry estimation', 'phase': 'geometry'})
+            selection.summary['geometry_estimate'] = discover_geometry(source, config, selection, calibration, should_cancel)
+            selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
+            selection.summary['geometry_analysis_mode'] = config.geometry_mode
+        else:
+            selection.summary['geometry_estimate'] = {'suggestions': {}, 'applicable': False, 'status': 'not_measured',
+                'notes': ['Geometry was not measured; run Preprocess to estimate it. Quality/shape exclusions remain valid.']}
         selection.identity = identity(source, config, calibration, should_cancel)
         if selection.identity != before:
             raise ValueError('capture changed during preprocessing; no cache was saved')

@@ -6,14 +6,17 @@ from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPen
 from PySide6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QSplitter, QToolTip, QVBoxLayout, QWidget
 
-from planetrecon.pipeline.preprocess import FrameSelection, best_frame_mask, quality_range
+from planetrecon.pipeline.preprocess import FrameSelection, quality_range
+from planetrecon.ser_export import export_frame_mask
 
 
 class QualityPlot(QWidget):
     frameRequested = Signal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, registration_note=True):
         super().__init__(parent)
+        # Stacking can still reject selected frames during registration.
+        self.registration_note = ' · Before registration rejection' if registration_note else ''
         self.data = None
         self.selection = None
         self.selected = np.zeros(0, dtype=bool)
@@ -21,6 +24,7 @@ class QualityPlot(QWidget):
         self.quality_order = np.zeros(0, dtype=int)
         self.quality_ranks = np.zeros(0, dtype=int)
         self.cutoff = None
+        self.cutoff_label = ''
         self.enabled = True
         self.percent = 100
         self.mode = 'quality_range'
@@ -107,7 +111,8 @@ class QualityPlot(QWidget):
                            and index < len(self.selected) else f'Frame {index + 1}')
             self.frame_label.setText(description.replace('\n', ' · '))
 
-    def set_report(self, report, percent, mode, enabled):
+    def set_report(self, report, percent, mode, enabled, *, minimum_quality=None):
+        """minimum_quality replaces the percentage with a strict absolute score cutoff."""
         data = report.get('frame_quality') if report.get('status') == 'ready' else None
         if data is not self.data:
             self.data = data
@@ -132,30 +137,42 @@ class QualityPlot(QWidget):
                 self._set_order()
         self.percent, self.mode, self.enabled = percent, mode, enabled
         self.cutoff = None
+        self.cutoff_label = f'Upper {percent}% cutoff'
         if self.selection is None:
             self.selected = np.zeros(0, dtype=bool)
             self.order = np.zeros(0, dtype=int)
             self.summary.setText('Open a preprocessed capture or use Preprocess to load frame quality.')
+        elif not enabled:
+            self.selected = np.ones(len(self.selection.accepted), dtype=bool)
+            self.summary.setText('Cached screening and quality selection disabled')
         else:
-            self.selected = (best_frame_mask(self.selection, percent, mode) if enabled
-                             else np.ones(len(self.selection.accepted), dtype=bool))
-            if not enabled:
-                self.summary.setText('Cached screening and quality selection disabled')
-            else:
-                screened = int((~self.selection.accepted).sum())
-                below = int((self.selection.accepted & ~self.selected).sum())
-                selection_text = f'Best {percent}% by count'
-                if mode == 'quality_range':
-                    selection_text = f'Upper {percent}% of quality range'
-                    if self.low is not None and self.high > self.low:
-                        self.cutoff = self.low + (self.high - self.low) * (1 - percent / 100.)
-                        selection_text += f' · cutoff {self.cutoff:.5g}'
-                    else:
-                        selection_text += ' · flat/unavailable range'
-                self.summary.setText(f'{selection_text} · {self.selected.sum():,}/{len(self.selected):,} selected'
-                                     f' · {screened:,} screened out · {below:,} below selection')
+            try:
+                # The same rule as the export, so the graph is the exported mask.
+                self.selected = export_frame_mask(self.selection, percent, mode, minimum_quality)
+                error = None
+            except ValueError as exc:
+                self.selected = np.zeros(len(self.selection.accepted), dtype=bool)
+                error = str(exc)
+            screened = int((~self.selection.accepted).sum())
+            below = int((self.selection.accepted & ~self.selected).sum())
+            selection_text = f'Best {percent}% by count'
+            if error is not None:
+                selection_text = error
+            elif minimum_quality is not None:
+                self.cutoff = float(minimum_quality)
+                self.cutoff_label = f'Quality > {self.cutoff:.5g}'
+                selection_text = f'Absolute quality above {self.cutoff:.5g}'
+            elif mode == 'quality_range':
+                selection_text = f'Upper {percent}% of quality range'
+                if self.low is not None and self.high > self.low:
+                    self.cutoff = self.low + (self.high - self.low) * (1 - percent / 100.)
+                    selection_text += f' · cutoff {self.cutoff:.5g}'
+                else:
+                    selection_text += ' · flat/unavailable range'
+            self.summary.setText(f'{selection_text} · {self.selected.sum():,}/{len(self.selected):,} selected'
+                                 f' · {screened:,} screened out · {below:,} below selection')
         self.legend.setText(
-            'Green: selected · Orange: below selection · Red: screened out · Bottom strip: mask · Before registration rejection'
+            'Green: selected · Orange: below selection · Red: screened out · Bottom strip: mask' + self.registration_note
             if enabled else 'Grey: measured quality · Screening masks are inactive; run-time validity checks still apply')
         self.order_control.setEnabled(self.selection is not None)
         self._frame_caption()
@@ -285,12 +302,13 @@ class QualityCanvas(QWidget):
                 y = rect.bottom() + 4 + state * 3
                 painter.drawLine(QPointF(x, y), QPointF(x, y+2))
         painter.restore()
-        if plot.cutoff is not None:
-            y = rect.bottom() - plot.quality_position(plot.cutoff) * rect.height()
+        position = None if plot.cutoff is None else float(plot.quality_position(plot.cutoff))
+        if position is not None and 0 <= position <= 1:  # An absolute cutoff may lie outside the axis.
+            y = rect.bottom() - position * rect.height()
             painter.setPen(QPen(QColor('#f4e285'), 1.5, Qt.PenStyle.DashLine))
             painter.drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y))
             painter.drawText(QRectF(rect.right()-190, y-18, 185, 17), Qt.AlignmentFlag.AlignRight,
-                             f'Upper {plot.percent}% cutoff')
+                             plot.cutoff_label)
         if plot.preview_index is not None:
             ranks = np.flatnonzero(order == plot.preview_index)
             if len(ranks):

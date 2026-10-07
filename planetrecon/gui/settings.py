@@ -7,12 +7,12 @@ import tempfile
 from PySide6.QtCore import QStandardPaths
 
 
-def default_path():
-    override = os.environ.get('PLANETRECON_SETTINGS_PATH')
+def default_path(name='settings.json', variable='PLANETRECON_SETTINGS_PATH'):
+    override = os.environ.get(variable)
     if override:
         return Path(override)
     return Path(QStandardPaths.writableLocation(
-        QStandardPaths.StandardLocation.GenericConfigLocation)) / 'PlanetRecon' / 'settings.json'
+        QStandardPaths.StandardLocation.GenericConfigLocation)) / 'PlanetRecon' / name
 
 
 def load(path):

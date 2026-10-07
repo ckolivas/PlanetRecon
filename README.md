@@ -312,6 +312,7 @@ python3 -m planetrecon stack --path capture.ser --geometry saturn \
   --ring-inner 95 --ring-outer 180 --surface-rate-deg-s 0.03 \
   --out out/stack-saturn
 python3 -m planetrecon gui --path capture.ser
+python3 -m planetrecon ser capture.ser
 python3 -m pytest tests -q
 python3 -m pytest tests -q --run-slow
 python3 -m planetrecon generate --seed 1001 --dr0 8 --out out
@@ -346,6 +347,41 @@ numbers as diagnostics but inherit only the development pass/fail decisions.
 regimes if they are missing, then writes classification tables under
 `out/prompt2/`. Extension seeds `2013–2024` are only for an inconclusive
 12-seed result.
+
+## SER tool
+
+`python3 -m planetrecon ser [capture.ser]` (or the installed `planetrecon-ser`
+script, or `./start-ser.sh` from a checkout) starts a separate Qt application
+for SER captures only. It reads the capture, measures frame quality and shape
+(or reuses a validated `.planetrecon-preprocess.npz` cache beside the capture),
+shows the frame quality graph and the frame clicked on it, and
+exports the selected frames as a lossless filtered SER. It does not stack.
+
+- **Open SER…** validates an existing cache and displays it. With no cache,
+  frame quality is measured automatically and cached. A cache made with a
+  different capture interpretation or calibration is reported and kept;
+  **Preprocess** replaces it.
+- **Preprocess** measures again. After an input setting changes it first
+  checks whether the existing cache still matches and reuses it if so.
+- **Frame selection** chooses the green frames and therefore the export:
+  the upper part of the capture's quality range, a ranked percentage of
+  screened frames, or every score strictly above an absolute quality value.
+  The dashed line on the graph is the active cutoff. Shape and validity
+  screening applies in every mode.
+- Clicking the graph reads that frame directly from the capture (up to 1024
+  pixels on the long side, nearest-neighbour Bayer colour) using one linear
+  display range for the whole capture.
+- **Export SER…** copies the selected full frames unchanged, in capture
+  order, with their timestamps, as described in
+  [Filtered SER export](docs/preprocessing.md#filtered-ser-export).
+
+Caches are shared with the reconstruction application in both directions.
+The SER tool measures quality and shape only; it records that geometry was
+not estimated, so a later motion-compensated **Run** in the reconstruction
+application preprocesses again while ordinary stacking reuses the cache.
+Preferences are stored separately in `PlanetRecon/ser-settings.json`
+(`PLANETRECON_SER_SETTINGS_PATH` overrides the location). Frozen bundles
+start the tool with `planetrecon ser`.
 
 ## Qt capture workflow (W14)
 

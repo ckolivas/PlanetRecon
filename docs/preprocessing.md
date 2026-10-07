@@ -616,6 +616,12 @@ alignment, debayering and brightness normalisation are not applied. Explicit
 Bayer/endian overrides are recorded in the output header so other readers use
 the chosen interpretation. The original capture is never replaced.
 
+The standalone SER tool (`planetrecon ser`) uses the same export. Its **Frame
+selection** offers the quality range, frame count and absolute quality as one
+choice, and its graph colours and cutoff line always show the frames that will
+be exported. Its preprocessing measures quality and shape only and records that
+geometry was not estimated.
+
 The save dialog suggests `<capture stem>_filtered.ser`. Export runs in the
 background with frame progress and a **Cancel export** button. The destination
 appears only after a complete export; cancellation or failure leaves an existing
