@@ -14,6 +14,14 @@ from planetrecon.runtime import apply_thread_limits
 apply_thread_limits()
 
 
+@pytest.fixture(autouse=True)
+def isolated_preferences(tmp_path_factory, monkeypatch):
+    """GUI windows save preferences; keep them out of the user's own files."""
+    directory = tmp_path_factory.mktemp('preferences')
+    monkeypatch.setenv('PLANETRECON_SETTINGS_PATH', str(directory/'settings.json'))
+    monkeypatch.setenv('PLANETRECON_SER_SETTINGS_PATH', str(directory/'ser-settings.json'))
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-slow",
