@@ -374,6 +374,19 @@ exports the selected frames as a lossless filtered SER. It does not stack.
 - **Export SER…** copies the selected full frames unchanged, in capture
   order, with their timestamps, as described in
   [Filtered SER export](docs/preprocessing.md#filtered-ser-export).
+- **Batch preprocess…** takes several captures and preprocesses each in turn
+  with the current settings. A cache that already matches is validated and
+  reused; a missing or unmatched cache is measured and replaced.
+- **Batch export…** takes several captures and a folder. Each capture is
+  preprocessed first when it has no matching cache, then the frames inside
+  the current **Frame selection** are written to `<capture stem>_filtered.ser`
+  in that folder. Existing outputs are skipped or replaced as chosen once
+  before the batch starts.
+
+A batch works through the captures in the window, so each quality graph is
+shown as it is processed, and lists one result per capture. A capture that
+fails or has no selected frames does not stop the rest; **Cancel** stops the
+batch. Double-click a listed capture to open it afterwards.
 
 Caches are shared with the reconstruction application in both directions.
 The SER tool measures quality and shape only; it records that geometry was

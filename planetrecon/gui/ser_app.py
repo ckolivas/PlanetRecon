@@ -5,16 +5,19 @@ with the reconstruction application, without any stacking or geometry.
 """
 from __future__ import annotations
 
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 import sys
 import time
 
 import numpy as np
 from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QMessageBox, QProgressBar, QPushButton, QScrollArea, QSpinBox, QSplitter,
-    QVBoxLayout, QWidget,
+    QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMainWindow, QMessageBox, QProgressBar, QPushButton, QScrollArea, QSpinBox, QSplitter,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 from planetrecon.export import ExportCancelled
@@ -24,6 +27,7 @@ from planetrecon.gui.quality import QualityPlot
 from planetrecon.jobs import JobHandle, input_frame_preview, start_stack_job
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits, detected_thread_count
+from planetrecon.ser_export import quality_threshold
 
 # Settings that change the measured samples; the rest only select or schedule.
 INPUT_KEYS = ('bayer_override', 'endian_override', 'endian_convention', 'recover_complete_frames',
@@ -31,6 +35,7 @@ INPUT_KEYS = ('bayer_override', 'endian_override', 'endian_convention', 'recover
               'read_noise_e', 'saturate_adu')
 SELECTION_KEYS = ('selection_mode', 'stack_percent', 'minimum_quality')
 FRAME_PREVIEW_LIMIT = 1024
+BATCH_OUTCOMES = ('exported', 'measured', 'cached', 'skipped', 'failed', 'cancelled')
 
 HELP = {
     **CONTROL_HELP,
@@ -242,6 +247,30 @@ class SERControls(QScrollArea):
         self._selection_mode_changed()
 
 
+@dataclass
+class BatchItem:
+    path: Path
+    destination: Path | None  # Filtered SER to write; None only preprocesses.
+    row: QTreeWidgetItem
+    measured: bool = False
+    exporting: bool = False
+    outcome: str | None = None
+
+
+@dataclass
+class Batch:
+    """Captures taken in turn through the single-capture workflow."""
+    title: str
+    items: list
+    overwrite: bool = False
+    index: int = -1
+    cancelled: bool = False
+
+    @property
+    def current(self):
+        return self.items[self.index] if 0 <= self.index < len(self.items) else None
+
+
 class SERWindow:
     def __init__(self, path: Path | None = None, *, settings_path: Path | None = None):
         from planetrecon.gui import settings
@@ -263,6 +292,7 @@ class SERWindow:
         self.frame_source = None
         self.levels = None
         self.export_worker = None
+        self.batch: Batch | None = None
         self.closing = False
         owner = self
 
@@ -287,8 +317,14 @@ class SERWindow:
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure frame quality and shape, and save the reusable cache beside the capture, replacing an existing cache. After a settings change, a cache that still matches is reused instead.')
         self.cancel_btn = QPushButton('Cancel')
-        self.cancel_btn.setToolTip('Cancel validation or preprocessing. An existing cache is not replaced.')
+        self.cancel_btn.setToolTip('Cancel validation or preprocessing, or stop a batch. An existing cache is not replaced.')
+        self.batch_preprocess_btn = QPushButton('Batch preprocess…')
+        self.batch_preprocess_btn.setToolTip('Choose several SER captures and preprocess each with the current settings. A cache that already matches is validated and reused; a missing or unmatched cache is measured and replaced.')
+        self.batch_export_btn = QPushButton('Batch export…')
+        self.batch_export_btn.setToolTip('Choose several SER captures and a folder. Each capture is preprocessed first when it has no matching cache, then its frames inside the current Frame selection are saved as <capture>_filtered.ser.')
         for button, slot in ((self.open_btn, self._choose), (self.preprocess_btn, self._preprocess),
+                             (self.batch_preprocess_btn, lambda *_: self._choose_batch(export=False)),
+                             (self.batch_export_btn, lambda *_: self._choose_batch(export=True)),
                              (self.cancel_btn, self._cancel)):
             button.clicked.connect(slot)
             buttons.addWidget(button)
@@ -324,6 +360,18 @@ class SERWindow:
         split.addWidget(self.quality_plot)
         split.setSizes([320, 840])
         layout.addWidget(split, 1)
+
+        self.batch_box = QGroupBox('Batch')
+        self.batch_list = QTreeWidget()
+        self.batch_list.setHeaderLabels(['Capture', 'Result'])
+        self.batch_list.setRootIsDecorated(False)
+        self.batch_list.setMaximumHeight(150)
+        self.batch_list.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.batch_list.setToolTip('Double-click a capture to open it.')
+        self.batch_list.itemActivated.connect(self._open_batch_item)
+        QVBoxLayout(self.batch_box).addWidget(self.batch_list)
+        self.batch_box.hide()
+        layout.addWidget(self.batch_box)
 
         self.progress = QProgressBar()
         layout.addWidget(self.progress)
@@ -396,19 +444,29 @@ class SERWindow:
 
     # Capture and preprocessing
 
-    def _buttons(self):
-        idle = self.job is None and self.export_worker is None and not self.closing
+    def _busy(self):
+        return self.job is not None or self.export_worker is not None or self.closing
+
+    def _selected_count(self):
+        """Frames the selection would export; None without validated measurements."""
         info = self.preprocessing_info
         ready = (self.path is not None and info.get('status') == 'ready' and bool(info.get('digest'))
                  and self.quality_plot.selection is not None)
-        count = int(self.quality_plot.selected.sum()) if ready else 0
-        self.export_count.setText(f'Export: {count:,}/{len(self.quality_plot.selected):,} frames' if ready else '')
-        self.open_btn.setEnabled(idle)
+        return int(self.quality_plot.selected.sum()) if ready else None
+
+    def _buttons(self):
+        idle = not self._busy() and self.batch is None
+        count = self._selected_count()
+        self.export_count.setText('' if count is None else
+                                  f'Export: {count:,}/{len(self.quality_plot.selected):,} frames')
+        for button in (self.open_btn, self.batch_preprocess_btn, self.batch_export_btn):
+            button.setEnabled(idle)
         self.preprocess_btn.setEnabled(idle and self.path is not None)
-        self.cancel_btn.setEnabled(self.job is not None and self.cancel_started is None)
+        self.cancel_btn.setEnabled(self.job is not None and self.cancel_started is None
+                                   or self.batch is not None and not self.batch.cancelled)
         self.controls.setEnabled(idle)
         self.quality_plot.set_browsing_enabled(self.job is None and not self.closing)
-        self.export_btn.setEnabled(bool(ready and idle and count))
+        self.export_btn.setEnabled(bool(idle and count))
         self.cancel_export_btn.setEnabled(self.export_worker is not None)
 
     def _choose(self):
@@ -418,7 +476,7 @@ class SERWindow:
             self.open_capture(name)
 
     def open_capture(self, path):
-        if self.job is not None or self.export_worker is not None or self.closing:
+        if self._busy():
             return False
         self.path = Path(path)
         self.last_directory = str(self.path.absolute().parent)
@@ -440,7 +498,8 @@ class SERWindow:
             'Loading cached preprocessing; validating capture data.' if cached
             else 'No preprocessing cache; measuring frame quality.')}
         self._refresh()
-        self._start('inspect' if cached else 'preprocess')
+        # A batch applies the current settings, so it replaces an unmatched cache.
+        self._start('inspect' if cached else 'preprocess', measure_after=self.batch is not None)
 
     def _preprocess(self):
         if self.path is None:
@@ -453,13 +512,15 @@ class SERWindow:
             self._start('preprocess')
 
     def _start(self, stage, *, measure_after=False):
-        if self.job is not None or self.export_worker is not None or self.path is None or self.closing:
+        if self._busy() or self.path is None:
             return
         self._close_frame_source()
         self.error.clear()
         try:
             if self.path.suffix.lower() != '.ser':
                 raise ValueError('This tool reads SER captures only.')
+            if not self.path.is_file():
+                raise ValueError(f'Capture not found: {self.path}')
             cfg = self.controls.configuration()
             handle = start_stack_job(self.path, cfg, emit_previews=False,
                 inspect_only=stage == 'inspect', preprocess_only=stage == 'preprocess',
@@ -474,6 +535,8 @@ class SERWindow:
         self.config = cfg
         self._save_settings()
         self.job, self.stage, self.measure_after = handle, stage, measure_after
+        if stage == 'preprocess' and self.batch is not None:
+            self.batch.current.measured = True
         self.cancel_started = None
         self.started = time.monotonic()
         self.progress.setRange(0, 0)
@@ -482,6 +545,9 @@ class SERWindow:
         self._buttons()
 
     def _cancel(self):
+        if self.batch is not None:
+            self.batch.cancelled = True
+            self._cancel_export()
         if self.job is not None and self.cancel_started is None:
             self.cancel_started = time.monotonic()
             self.job.cancel_event.set()
@@ -496,6 +562,7 @@ class SERWindow:
             self.error.setText(f'Could not display processing update: {exc}')
             self.status.setText('Processing stopped. Reopen the capture or retry Preprocess.')
             self._finish_job()
+            self._batch_step()
 
     def _poll_events(self):
         handle = self.job
@@ -572,6 +639,7 @@ class SERWindow:
             self._finish_job()
         if measure:
             self._start('preprocess')
+        self._batch_step()
 
     def _finish_job(self):
         self.timer.stop()
@@ -701,8 +769,7 @@ class SERWindow:
         self.export_ser(destination, overwrite=overwrite)
 
     def export_ser(self, path, *, overwrite=False):
-        self._buttons()
-        if not self.export_btn.isEnabled():
+        if self._busy() or not self._selected_count():
             return False
         try:
             config = self.controls.configuration()
@@ -727,16 +794,27 @@ class SERWindow:
 
     def _cancel_export(self):
         if self.export_worker is not None:
+            if self.batch is not None:
+                self.batch.cancelled = True
             self.export_worker.cancel_event.set()
             self.export_status.setText('Cancelling SER export…')
+            self._buttons()
 
     def _export_outcome(self, report, error):
-        if error is not None:
-            self.export_status.setText('SER export cancelled.' if isinstance(error, ExportCancelled)
-                                       else f'SER export failed: {error}')
+        if error is None:
+            outcome = 'exported'
+            text = f'Saved {report.path} · {report.n_written:,}/{report.n_input:,} frames in capture order'
+        elif isinstance(error, ExportCancelled):
+            outcome, text = 'cancelled', 'SER export cancelled.'
         else:
-            self.export_status.setText(
-                f'Saved {report.path} · {report.n_written:,}/{report.n_input:,} frames in capture order')
+            outcome, text = 'failed', f'SER export failed: {error}'
+        self.export_status.setText(text)
+        item = self.batch.current if self.batch is not None else None
+        if item is not None:
+            if error is None:
+                text = (f'Saved {report.path.name} · {report.n_written:,}/{report.n_input:,} frames'
+                        + (' · frame quality measured first' if item.measured else ''))
+            self._batch_result(item, outcome, text, f'{text}\n{item.destination}')
 
     def _export_finished(self):
         worker = self.export_worker
@@ -745,15 +823,158 @@ class SERWindow:
             worker.deleteLater()
             self.export_worker = None
         self._buttons()
+        self._batch_step()
         if self.closing:
             self.window.close()
+
+    # Batches
+
+    def _choose_batch(self, *, export):
+        if self._busy() or self.batch is not None:
+            return
+        title = 'Batch export' if export else 'Batch preprocess'
+        names, _ = QFileDialog.getOpenFileNames(self.window, f'{title}: SER captures',
+                                                self._dialog_directory(), 'SER captures (*.ser)')
+        if not names:
+            return
+        paths = [Path(name) for name in names]
+        self._remember_directory(paths[0].parent)
+        directory, existing = None, 'skip'
+        if export:
+            directory = QFileDialog.getExistingDirectory(self.window, f'{title}: folder for filtered SER files',
+                                                         self._dialog_directory())
+            if not directory:
+                return
+            present = sum(path.exists() or path.is_symlink()
+                          for path in (self._batch_destination(path, directory) for path in paths))
+            if present:
+                box = QMessageBox(QMessageBox.Icon.Question, 'Existing SER files',
+                    f'{present:,} of the {len(paths):,} filtered SER files already exist in {directory}.',
+                    parent=self.window)
+                replace = box.addButton('Replace', QMessageBox.ButtonRole.DestructiveRole)
+                skip = box.addButton('Skip existing', QMessageBox.ButtonRole.AcceptRole)
+                box.addButton(QMessageBox.StandardButton.Cancel)
+                box.setDefaultButton(skip)
+                box.exec()
+                if box.clickedButton() is replace:
+                    existing = 'replace'
+                elif box.clickedButton() is not skip:
+                    return
+        self.start_batch(paths, export_directory=directory, existing=existing)
+
+    @staticmethod
+    def _batch_destination(path, directory):
+        return Path(directory) / f'{Path(path).stem}_filtered.ser'
+
+    def start_batch(self, paths, *, export_directory=None, existing='skip'):
+        """Validate or measure each capture in turn with the current settings.
+
+        With export_directory, each capture's selected frames are then saved
+        there. Existing outputs are skipped unless existing is 'replace'.
+        """
+        if self._busy() or self.batch is not None:
+            return False
+        paths = list(dict.fromkeys(Path(path) for path in paths))
+        if not paths:
+            return False
+        title = 'Batch preprocess' if export_directory is None else 'Batch export'
+        self.error.clear()
+        destinations = [None] * len(paths)
+        try:
+            self.controls.configuration()
+            if export_directory is not None:
+                quality_threshold(self.controls.minimum_quality())
+                destinations = [self._batch_destination(path, export_directory) for path in paths]
+                outputs = {path.resolve() for path in destinations}
+                if len(outputs) < len(paths):
+                    raise ValueError('two captures share a name and would export to the same file')
+                if outputs & {path.resolve() for path in paths}:
+                    raise ValueError('an export would replace one of the selected captures')
+        except ValueError as exc:
+            self.error.setText(f'{title} not started: {exc}')
+            return False
+        self.batch_list.clear()
+        items = []
+        for path, destination in zip(paths, destinations):
+            row = QTreeWidgetItem([path.name, 'Queued'])
+            row.setData(0, Qt.ItemDataRole.UserRole, str(path))
+            row.setToolTip(0, str(path))
+            self.batch_list.addTopLevelItem(row)
+            items.append(BatchItem(path, destination, row))
+        self.batch_box.show()
+        self.batch = Batch(title, items, overwrite=existing == 'replace')
+        self._batch_step()
+        return True
+
+    def _batch_step(self):
+        """Continue the batch whenever the single-capture workflow becomes idle."""
+        batch = self.batch
+        while batch is not None and self.job is None and self.export_worker is None:
+            item = batch.current
+            if item is not None and item.outcome is None and not batch.cancelled:
+                info = self.preprocessing_info
+                if info.get('status') != 'ready':
+                    self._batch_result(item, 'failed', self.error.text()
+                                       or info.get('reason', 'Frame quality could not be measured'))
+                elif item.destination is None:
+                    self._batch_result(item, 'measured' if item.measured else 'cached',
+                        ('Measured' if item.measured else 'Cache reused')
+                        + f": {info['accepted']:,}/{info['n_total']:,} frames retained")
+                elif not item.exporting:
+                    item.exporting = True
+                    item.row.setText(1, 'Exporting…')
+                    if not self.export_ser(item.destination, overwrite=batch.overwrite):
+                        self._batch_result(item, 'failed', 'No frames are inside the selected quality and size limits')
+                else:
+                    self._batch_result(item, 'failed', 'SER export stopped without a result')
+                continue
+            if batch.cancelled or batch.index + 1 >= len(batch.items):
+                self._batch_finish()
+                return
+            batch.index += 1
+            item = batch.current
+            self.batch_box.setTitle(f'{batch.title}: capture {batch.index + 1:,} of {len(batch.items):,}')
+            self.batch_list.scrollToItem(item.row)
+            if item.destination is not None and not batch.overwrite and (
+                    item.destination.exists() or item.destination.is_symlink()):
+                self._batch_result(item, 'skipped', f'Skipped: {item.destination.name} already exists')
+                continue
+            item.row.setText(1, 'Validating or measuring frame quality…')
+            self.open_capture(item.path)
+
+    def _batch_result(self, item, outcome, text, detail=None):
+        item.outcome = outcome
+        item.row.setText(1, text)
+        item.row.setToolTip(1, detail or text)
+        if outcome == 'failed':
+            item.row.setForeground(1, QColor('#bb3333'))
+
+    def _batch_finish(self):
+        batch, self.batch = self.batch, None
+        for item in batch.items:
+            if item.outcome is None:
+                self._batch_result(item, 'cancelled', 'Cancelled')
+        counts = Counter(item.outcome for item in batch.items)
+        summary = (f"{batch.title} {'cancelled' if batch.cancelled else 'finished'}: "
+                   + ', '.join(f'{counts[key]:,} {key}' for key in BATCH_OUTCOMES if counts[key]))
+        self.batch_box.setTitle(summary)
+        self.status.setText(summary + '. Double-click a capture in the batch list to open it.')
+        self.error.clear()  # Each capture's failure is reported in the list.
+        self._buttons()
+
+    def _open_batch_item(self, row, _column=0):
+        if self.batch is None:
+            self.open_capture(row.data(0, Qt.ItemDataRole.UserRole))
 
     def _shutdown(self, *_):
         self.settings_timer.stop()
         self._save_settings()
+        if self.batch is not None:
+            self.batch.cancelled = True
         self._finish_job()
         self._close_frame_source()
         self._cancel_export()
+        self._batch_step()
 
 
 def main(argv=None):

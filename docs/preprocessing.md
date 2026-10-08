@@ -620,7 +620,11 @@ The standalone SER tool (`planetrecon ser`) uses the same export. Its **Frame
 selection** offers the quality range, frame count and absolute quality as one
 choice, and its graph colours and cutoff line always show the frames that will
 be exported. Its preprocessing measures quality and shape only and records that
-geometry was not estimated.
+geometry was not estimated. **Batch export…** applies the current selection to
+several captures in turn, preprocessing any capture without a matching cache
+first, and writes `<capture stem>_filtered.ser` for each into one folder. It
+refuses to start if two captures would share an output name or an output would
+replace a selected capture.
 
 The save dialog suggests `<capture stem>_filtered.ser`. Export runs in the
 background with frame progress and a **Cancel export** button. The destination
