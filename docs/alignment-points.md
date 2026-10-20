@@ -42,10 +42,12 @@ CUDA runs the correlations, field solve, proxy filtering, local quality and
 reference resampling; peak decisions use the shared CPU code. CPU and CUDA
 fields agree to 1e-9 px in the tests. Checkpoints bind the point size.
 
-## With a motion model (Surface, Combined)
+## With a motion model (Surface, Combined, Saturn)
 
-Alignment points combine with the Surface and Combined motion models; Field
-and Saturn are refused (use circular or square alignment for them).
+Alignment points combine with the Surface, Combined and Saturn motion models;
+Field is refused (use circular or square alignment for it). Saturn uses the
+same steps with its layered model: the globe spins, the rings stay fixed, and
+camera drift is measured on the exposed rings.
 
 1. **Reference.** Up to 3000 of the best selected frames are predicted into the
    anchor frame's geometry by the globe model, including each frame's measured
@@ -80,6 +82,27 @@ with alignment points) and the finest band (+29% at 0.25–0.30); between 0.12
 and 0.25 cycles/px the two are within a few percent. On this short capture
 local quality adds nothing measurable with Surface.
 
+Saturn R (6 minute capture, about 5.7 px of rotation at the disc centre over
+the capture), 21%, independent half-stack SNR:
+
+| method | 0.04–0.08 | 0.08–0.12 | 0.12–0.16 | 0.16–0.20 | 0.20–0.25 | 0.25–0.30 |
+|---|---|---|---|---|---|---|
+| None + alignment points | 104,000 | 2,530 | 436 | 129 | 14.8 | 0.58 |
+| Saturn + circular | 53,400 | 1,980 | 251 | 67 | 6.0 | 0.36 |
+| Saturn + alignment points, no local quality | 81,800 | 2,080 | 298 | 90 | 7.7 | 0.46 |
+| Saturn + alignment points | 106,000 | 2,780 | 444 | 133 | 11.7 | 0.60 |
+
+Saturn with alignment points roughly doubles the fine-band SNR of Saturn with
+circular alignment, the best Saturn motion stack before. Against None with
+alignment points it is level: measured separately on the globe interior, limb,
+exposed rings and ring edges, every band is within about 10% either way, and
+sharpened crops are indistinguishable. Each point's ±6 px search already
+follows the local displacement that rotation causes, so on this capture
+derotation adds little. Local quality matters much more here than on Jupiter
+(each half used about 12,000 of 13,800 screened frames instead of 2,675).
+Saturn with alignment points takes about 6 minutes per half on the RTX 5070,
+against about 2 minutes for None.
+
 With CUDA the Surface path runs on the device: registration planes (green
 proxy, demosaic, luminance), camera-drift tracking (predicted reference,
 support and visibility mask, erosion, masked correlation and the distinct-peak
@@ -90,6 +113,10 @@ and 2e-14 of full scale in the Jupiter stack. Jupiter at 63% went from about
 6 minutes to about 70 s per 1,670-frame half (about 42 ms per frame including
 local-quality ranking); drift tracking alone fell from about 80-100 ms to 14 ms
 per frame and also speeds up Surface runs with circular or square alignment.
+Saturn's exposed-ring drift tracking (including the field-rotated variant with
+its interpolation-loss gate) runs the same way, matching the CPU to about
+7e-12 px at about 11 ms per frame, against 52 ms when only the correlations
+ran on the GPU.
 
 ## Why the earlier stacks were poor
 
