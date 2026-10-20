@@ -159,8 +159,10 @@ def test_cuda_normalisation_retains_same_sums(tmp_path, mode, colour):
         normal = stack_source(src, replace(cfg, normalise_brightness=True))
     assert raw.backend == normal.backend == 'cuda'
     gain = .7*65535/raw.image[raw.validity].max()
-    np.testing.assert_allclose(normal.image, raw.image*gain, rtol=1e-14)
-    np.testing.assert_array_equal(normal.coverage, raw.coverage)
+    # Separate CUDA runs agree only to float64 rounding: atomic scatter adds
+    # colliding samples in a varying order (last-bit differences at a few pixels).
+    np.testing.assert_allclose(normal.image, raw.image*gain, rtol=1e-13)
+    np.testing.assert_allclose(normal.coverage, raw.coverage, rtol=1e-13, atol=0)
 
 
 def test_cli_enables_seventy_percent_output_normalisation(tmp_path, capsys):
