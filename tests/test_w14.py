@@ -468,7 +468,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
         endian_convention='spec', recover_complete_frames=True, reject_saturated=False, frame_preselection=True,
         quality_weighting=False, normalise_brightness=True, normalise_percent=80, motion_reference='best',
         stack_percent=25, frame_selection_mode='frame_count', local_alignment=False, local_patch_size=33, reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
-        alignment_method='square', sampling_multiplier=7., alignment_wavelength_nm=450., ap_size=40, local_quality=False, local_quality_pool=3.,
+        alignment_method='square', sampling_multiplier=7., alignment_wavelength_nm=450., ap_size=40,
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',
         gain_e_per_adu=2.5, read_noise_e=3., saturate_adu=4000., geometry_mode='saturn',
         reference_epoch_s=1., field_angle0_rad=5., field_rate_rad_s=2., surface_rate_rad_s=3.,

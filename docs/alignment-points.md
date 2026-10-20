@@ -7,16 +7,17 @@ with Motion model **None**. Settings:
 - **Alignment point size** (`--ap-size`, default 64 px). Points are placed every
   half size on regions whose reference mean is at least 10% of the reference
   maximum and whose band-passed texture is at least 0.1 of the median point.
-- **Local quality** (`--local-quality`, default on). Each point ranks every
-  screened frame by its own sharpness and stacks its best N frames, where N is
-  the number of frames the global quality-range/count selection keeps. Point
-  selections are blended with normalised Gaussian footprints (sigma 0.6 x
-  spacing); the global selection applies outside the points. Quality weighting
-  still applies to the contributing frames.
-- **Local quality candidates** (`--local-quality-pool`, default 2). Only the
-  best POOL x N frames by global quality are ranked and can be stacked; other
-  frames are skipped entirely. With a pool no larger than N (for example 100%
-  selection) ranking is skipped, since every point would use every frame.
+- **Local quality** is always used. Each point ranks every screened frame by
+  its own sharpness and stacks its best N frames, where N is the number of
+  frames the global quality-range/count selection keeps. Point selections are
+  blended with normalised Gaussian footprints (sigma 0.6 x spacing); the global
+  selection applies outside the points. Quality weighting still applies to the
+  contributing frames. When every screened frame is selected (for example
+  100%), each point would use every frame, so ranking is skipped; the result is
+  unchanged.
+
+There is no option to disable local quality or narrow its candidates: both
+were measured to lose detail (below), so they would trade quality for speed.
 
 The method:
 
@@ -122,12 +123,11 @@ Mars IR642, 14% (14,944 frames):
 
 Further checks:
 
-- Candidate pool on Saturn R at 21% (equal weights; SNR at 0.12–0.16 /
-  0.16–0.20 / 0.20–0.25 cycles/px): no local quality 289 / 84 / 9.3 from 5,350
-  frames; pool 1.5x 378 / 107 / 11.8 from 8,025; pool 2x 399 / 115 / 13.2 from
-  10,699; pool 3x 413 / 119 / 14.1 from 15,984; all screened frames 438 / 137 /
-  12.0 from about 24,000. The default 2x keeps most of the gain at under half
-  the frames.
+- Restricting local quality to the globally best frames loses detail. On
+  Saturn R at 21% (equal weights; SNR at 0.12–0.16 / 0.16–0.20 / 0.20–0.25
+  cycles/px): no local quality 289 / 84 / 9.3 from 5,350 frames; candidates
+  limited to 1.5x the selection 378 / 107 / 11.8; 2x 399 / 115 / 13.2; 3x 413 /
+  119 / 14.1; every screened frame 438 / 137 / 12.0 from about 24,000 frames.
 - Linear quality weights beat equal weights by 3–4% both with and without
   local quality, so quality weighting remains on.
 - 48 px and 64 px points perform within a few percent; 64 px is the default
@@ -151,14 +151,13 @@ The global shifts measured while ranking local quality are reused for stacking.
 
 The setup phases report progress: **Building alignment reference** (two passes
 over up to 3000 frames) and **Ranking frames by local quality** (every
-screened frame). Local quality stacks most of its candidate pool, because each
-point keeps its own best frames; the pool bounds both phases.
+screened frame). Local quality then stacks nearly every screened frame, because
+each point keeps its own best frames.
 
 Measured on the RTX 5070 for a 47,708-frame 1124x466 colour Saturn capture
-(about 45,000 screened, 50% quality range, all frames as candidates): reference 56 s,
-local-quality ranking 236 s (5.2 ms/frame), stacking about 14 ms/frame, roughly 15 minutes.
-At 50% a 2x pool already includes every screened frame; a pool of 1.2–1.5 trades
-some local choice for proportionally less time.
-Without local quality only the selected frames are stacked. Before these
+(about 45,000 screened, 50% quality range): reference 56 s, local-quality ranking
+236 s (5.2 ms/frame), stacking about 14 ms/frame, roughly 15 minutes in total
+(before ranking shifts were reused for stacking).
+Before these
 optimisations the same capture needed about 36 ms/frame for ranking and 80 ms/frame
 for stacking, mostly CPU demosaicing and CPU accumulation.

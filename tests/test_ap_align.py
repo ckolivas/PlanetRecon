@@ -155,16 +155,14 @@ def test_stacking_with_alignment_points_and_local_quality(tmp_path, color_id):
         assert count < result.n_used <= selected.accepted.sum()
         assert 'alignment points' in result.provenance['registration']
         assert np.isfinite(result.image).all() and result.validity.any()
-        assert detail['local_quality']['ranked_frames'] == min(2*count, selected.accepted.sum())
-        # A pool no larger than the selection gives every point every frame: skip ranking.
-        same = stack_source(source, replace(cfg, local_quality_pool=1.))
-        assert same.provenance['local_alignment']['local_quality']['ranked_frames'] == 0
-        assert same.n_used == count
-        narrow = stack_source(source, replace(cfg, local_quality_pool=1.5))
-        assert count < narrow.n_used <= int(np.ceil(1.5*count))
-        plain = stack_source(source, replace(cfg, local_quality=False))
-        assert plain.n_used == count and 'local_quality' not in plain.provenance['local_alignment']
-        assert not np.array_equal(plain.image, result.image)
+        # Every screened frame is a candidate.
+        assert detail['local_quality']['ranked_frames'] == selected.accepted.sum()
+        # With every screened frame selected each point would use every frame:
+        # ranking is skipped and the result equals plain alignment-point stacking.
+        everything = replace(cfg, stack_percent=100)
+        skipped = stack_source(source, everything)
+        assert skipped.provenance['local_alignment']['local_quality']['ranked_frames'] == 0
+        assert skipped.n_used == selected.accepted.sum()
 
 
 def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):
@@ -184,9 +182,7 @@ def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):
         resumed = stack_source(source, cfg, resume_from=checkpoint)
         np.testing.assert_array_equal(resumed.image, whole.image)
         np.testing.assert_array_equal(resumed.coverage, whole.coverage)
-        for changed in (replace(cfg, ap_size=48), replace(cfg, local_quality=False),
-                        replace(cfg, local_quality_pool=3.),
-                        replace(cfg, alignment_method='circular_multiscale')):
+        for changed in (replace(cfg, ap_size=48), replace(cfg, alignment_method='circular_multiscale')):
             with pytest.raises(ValueError, match='identity'):
                 stack_source(source, changed, resume_from=checkpoint)
 
@@ -194,10 +190,13 @@ def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):
 def test_alignment_points_refuse_motion_models_and_validate_settings(tmp_path):
     with pytest.raises(ValueError, match='ap_size'):
         points_config(ap_size=300)
-    with pytest.raises(ValueError, match='local_quality'):
-        points_config(local_quality=1)
-    with pytest.raises(ValueError, match='local_quality_pool'):
-        points_config(local_quality_pool=.5)
+    # Saved jobs from before local quality became unconditional still load,
+    # unless they explicitly disabled it.
+    loaded = ReconstructionConfig.from_dict({**points_config().to_dict(), 'local_quality': True,
+                                             'local_quality_pool': 2.})
+    assert loaded == points_config()
+    with pytest.raises(ValueError, match='local quality was removed'):
+        ReconstructionConfig.from_dict({**points_config().to_dict(), 'local_quality': False})
     with SERSource(capture(tmp_path)) as source:
         cfg = points_config(geometry_mode='field', field_rate_rad_s=0.)
         with pytest.raises(ValueError, match='ordinary stacking only'):
@@ -222,10 +221,9 @@ def test_cli_alignment_point_inputs_reach_the_config(tmp_path, monkeypatch):
         preprocess_source(source, points_config())
     with pytest.raises(SystemExit):
         cli.main(['stack', '--path', str(path), '--device', 'cpu', '--out', str(tmp_path/'out'),
-                  '--local-alignment', '--alignment-method', 'alignment_points', '--ap-size', '40',
-                  '--no-local-quality'])
+                  '--local-alignment', '--alignment-method', 'alignment_points', '--ap-size', '40'])
     cfg = seen['config']
-    assert (cfg.alignment_method, cfg.ap_size, cfg.local_quality) == ('alignment_points', 40, False)
+    assert (cfg.alignment_method, cfg.ap_size) == ('alignment_points', 40)
 
 
 @pytest.mark.parametrize('color_id', [0, 8])

@@ -69,9 +69,6 @@ class ConfigControls(QTabWidget):
         self.fields['local_patch_size'].setSingleStep(2)
         self._integer(capture, 'ap_size', 'Alignment point size (pixels)', 16, 256)
         self.fields['ap_size'].setSingleStep(8)
-        self._check(capture, 'local_quality', 'Local quality (each point stacks its own best frames)')
-        self._number(capture, 'local_quality_pool', 'Local quality candidates (× selected frames)')
-        self.fields['local_quality'].toggled.connect(self._mode_changed)
         self.fields['local_alignment'].toggled.connect(self._mode_changed)
         self.fields['frame_preselection'].toggled.connect(self._mode_changed)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
@@ -349,8 +346,6 @@ class ConfigControls(QTabWidget):
         points = (self.fields['local_alignment'].isChecked() and self.fields['frame_preselection'].isChecked()
                   and self.fields['alignment_method'].currentData() == 'alignment_points')
         self.fields['ap_size'].setEnabled(points)
-        self.fields['local_quality'].setEnabled(points)
-        self.fields['local_quality_pool'].setEnabled(points and self.fields['local_quality'].isChecked())
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     def _choose_table(self, edit):
