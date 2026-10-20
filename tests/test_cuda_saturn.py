@@ -96,7 +96,7 @@ def test_cuda_stack_matches_cpu(colour, latitude, transmission, moon):
     execution = gpu.provenance['geometry_execution']
     assert execution['projection_and_accumulation'] == 'cuda'
     assert execution['ring_reference_warps_and_correlations'] == ('unused' if moon else 'cuda')
-    assert execution['drift_peak_acceptance'] == 'cpu'
+    assert execution['drift_peak_acceptance'] == ('cpu' if moon else 'cuda with cpu subpixel solve')
     equal_result(gpu,cpu)
 
 

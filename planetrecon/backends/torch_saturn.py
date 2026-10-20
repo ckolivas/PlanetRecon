@@ -129,7 +129,8 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
 
     def sample_corners(self, pose, ref, sample_xy=None):
         if self.prepared_pose != pose:
-            self.prepare_source(pose)
+            # Scoring regions only return to the host when prepare_source is asked.
+            self.source_info, self.prepared_pose = self.classify(pose), pose
         coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
         yield from self.corners(*self.map(pose,ref,self.source_info,**coords))
 

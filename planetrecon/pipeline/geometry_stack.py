@@ -585,17 +585,18 @@ def stack_source_geometry(
             track_translation = (not isinstance(model, SaturnSceneModel)
                                  or (model.moon is None and static_attitude))
             ring_registration = None
-            ring_acceleration = {}
+            ring_on_device = False
             if (isinstance(model, SaturnSceneModel) and model.moon is None
                     and not model.edge_on
                     and not static_attitude):
-                from planetrecon.pipeline.ring_align import RingRegistration
-                if backend.name == 'cuda':
-                    from planetrecon.backends.torch_registration import TorchRingRegistrationOps
-                    ring_ops = TorchRingRegistrationOps((h,w))
-                    ring_acceleration = {'score_provider':ring_ops.scores, 'renderer':ring_ops.render}
+                ring_on_device = backend.name == 'cuda'
+                if ring_on_device:
+                    # Device ring drift tracking; same decisions as RingRegistration.
+                    from planetrecon.backends.torch_surface import TorchRingTracker as RingRegistration
+                else:
+                    from planetrecon.pipeline.ring_align import RingRegistration
                 ring_registration = RingRegistration(anchor_plane, anchor_pose.cx, anchor_pose.cy,
-                    model.globe.equatorial_radius_px, model.rings.outer_radius_px, **ring_acceleration)
+                    model.globe.equatorial_radius_px, model.rings.outer_radius_px)
             track_surface = (isinstance(model, OblateGlobeModel)
                              and diagnostics['surface_rate_rad_s'] != 0)
             track_field = (config.geometry_mode == 'field' and not static_attitude
@@ -655,8 +656,8 @@ def stack_source_geometry(
                         anchor_frame = sample_frames[sample_idx.index(anchor_index)]
                         colour_anchor = _alignment_plane(demosaic(anchor_frame), 'RGB')
                         if ring_registration is not None:
-                            colour_rings = RingRegistration(colour_anchor, anchor_pose.cx, anchor_pose.cy,
-                                model.globe.equatorial_radius_px, model.rings.outer_radius_px, **ring_acceleration)
+                            colour_rings = type(ring_registration)(colour_anchor, anchor_pose.cx, anchor_pose.cy,
+                                model.globe.equatorial_radius_px, model.rings.outer_radius_px)
                     colour_plane = _alignment_plane(demosaic(frame), 'RGB')
                     if colour_rings is not None:
                         displacement = (colour_rings.displacement(colour_plane)
@@ -686,9 +687,9 @@ def stack_source_geometry(
     local_template = local_support = local_render = None
     local_selection = None
     points = config.local_alignment and config.alignment_method == 'alignment_points'
-    # Device registration planes when surface drift is tracked on CUDA.
+    # Device registration planes when surface or ring drift is tracked on CUDA.
     gpu_planes = None
-    if surface_tracker is not None and track_surface:
+    if (surface_tracker is not None and track_surface) or ring_on_device:
         from planetrecon.backends.torch_surface import TorchPlanes
         gpu_planes = TorchPlanes((h, w), color)
     if config.local_alignment:
@@ -864,9 +865,10 @@ def stack_source_geometry(
     snapshot_provenance['geometry_execution'] = {
         'projection_and_accumulation': backend.name,
         'geometry_estimation': 'cpu',
-        'drift_matching': 'cuda correlations with cpu peak checks' if ring_acceleration else 'cpu',
+        'drift_matching': 'cuda' if ring_on_device or surface_tracker is not None else 'cpu',
         'ring_reference_warps_and_correlations': backend.name if ring_registration is not None else 'unused',
-        'drift_peak_acceptance': 'cpu',
+        'drift_peak_acceptance': 'cuda with cpu subpixel solve' if ring_on_device or surface_tracker is not None
+                                 else 'cpu',
         'local_patch_correlations': backend.name if config.local_alignment else 'unused',
         'local_reference_prediction': backend.name if config.local_alignment else 'unused',
         'local_residual_inversion': backend.name if config.local_alignment else 'unused',
@@ -982,22 +984,26 @@ def stack_source_geometry(
                 from planetrecon.rank import LAPLACIAN_KERNEL
 
                 if gpu_accumulator is not None:
-                    score_regions = gpu_accumulator.prepare_source(pose)
+                    score_regions = gpu_accumulator.prepare_source(pose) if selection is None else None
                 else:
                     layer_info = model.classify_detector(xg, yg, pose)
                     layer_labels = model.reconstruction_labels(layer_info)
                     source_regions = model.reconstruction_regions(layer_info)
                     score_regions = np.where((layer_info['labels'] == LAYER_GLOBE)
                         & ~(layer_info['on_ring'] & model.low_opening), source_regions, -1)
-                # Evaluate real globe texture only where the whole Laplacian
-                # stencil stays in one illumination region; no artificial edge.
-                score_mask = (binary_erosion(score_regions == 1, iterations=2 if bayer else 1)
-                              | binary_erosion(score_regions == 3, iterations=2 if bayer else 1))
-                score_mask[:2] = score_mask[-2:] = False
-                score_mask[:, :2] = score_mask[:, -2:] = False
-                lap = convolve(quality_plane, LAPLACIAN_KERNEL, mode="nearest")
-                score = max(selection.measurements[index, 0], 1e-12) if selection is not None else (
-                    max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12)
+                if selection is not None:
+                    score = max(selection.measurements[index, 0], 1e-12)
+                else:
+                    # Evaluate real globe texture only where the whole Laplacian
+                    # stencil stays in one illumination region; no artificial edge.
+                    score_mask = (binary_erosion(score_regions == 1, iterations=2 if bayer else 1)
+                                  | binary_erosion(score_regions == 3, iterations=2 if bayer else 1))
+                    score_mask[:2] = score_mask[-2:] = False
+                    score_mask[:, :2] = score_mask[:, -2:] = False
+                    if quality_plane is None:
+                        quality_plane = _alignment_plane(calibrated, color)
+                    lap = convolve(quality_plane, LAPLACIAN_KERNEL, mode="nearest")
+                    score = max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12
             else:
                 if selection is None and quality_plane is None:
                     quality_plane = _alignment_plane(calibrated, color)

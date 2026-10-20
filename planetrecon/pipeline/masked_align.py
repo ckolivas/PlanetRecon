@@ -45,21 +45,18 @@ class MaskedRegistration:
             self.template[self.mask] = proxy[self.mask] - proxy[self.mask].mean()
             self.energy = float(np.sum(self.template**2))
 
-    def displacement(self, frame, *, min_improvement=0., distinct_peaks=False, score_provider=None):
+    def displacement(self, frame, *, min_improvement=0., distinct_peaks=False):
         """Return a supported displacement, or None when observed pixels do not constrain it."""
         if self.energy <= 1e-12:
             return None
         proxy = gaussian_filter(np.asarray(frame, dtype=float), 1.5)
         mask = self.mask.astype(float)
         # Linear correlations: padding is never treated as observed dark sky.
-        if score_provider is not None:
-            scores = score_provider(proxy, self.template, mask, self.count, self.energy)
-        else:
-            dot,total,squares,support = observed_correlations(proxy,self.template,mask)
-            variance = np.maximum(squares - total**2/self.count, 0.)
-            denominator = np.sqrt(self.energy*variance)
-            valid = (support >= self.count - 1e-6) & (denominator > 1e-12)
-            scores = np.divide(dot, denominator, out=np.full(dot.shape, -np.inf), where=valid)
+        dot,total,squares,support = observed_correlations(proxy,self.template,mask)
+        variance = np.maximum(squares - total**2/self.count, 0.)
+        denominator = np.sqrt(self.energy*variance)
+        valid = (support >= self.count - 1e-6) & (denominator > 1e-12)
+        scores = np.divide(dot, denominator, out=np.full(dot.shape, -np.inf), where=valid)
         py, px = np.unravel_index(np.argmax(scores), scores.shape)
         peak = scores[py, px]
         if not np.isfinite(peak) or peak < .8:

@@ -8,12 +8,9 @@ from planetrecon.pipeline.masked_align import MaskedRegistration
 class RingRegistration(MaskedRegistration):
     """Masked normalized correlation; supplied field rotation, no moon tracks."""
 
-    def __init__(self, reference, cx, cy, globe_radius, ring_radius, *, valid_mask=None,
-                 score_provider=None, renderer=None):
+    def __init__(self, reference, cx, cy, globe_radius, ring_radius, *, valid_mask=None):
         reference = np.asarray(reference, dtype=float)
         self.reference = reference
-        self.score_provider = score_provider
-        self.renderer = renderer
         self.geometry = (cx, cy, globe_radius, ring_radius)
         self.shape = reference.shape
         y, x = np.indices(self.shape)
@@ -32,13 +29,13 @@ class RingRegistration(MaskedRegistration):
         # separate maxima compete with the fitted peak; periodic/flat ring
         # patterns must still fail the existing uniqueness/contrast guards.
         return super().displacement(frame, min_improvement=min_improvement,
-                                     distinct_peaks=True, score_provider=self.score_provider)
+                                     distinct_peaks=True)
 
     def displacement_at_pose(self, frame, pose, reference_pose):
         """Follow field rotation, gating drift against measured interpolation loss."""
         from planetrecon.geometry.model import FieldOnlyModel, render_observed
         field = FieldOnlyModel()
-        render = self.renderer or (lambda image, src, ref: render_observed(image, field, src, ref))
+        render = lambda image, src, ref: render_observed(image, field, src, ref)
         projected = render(np.stack((self.reference,np.ones(self.shape)),axis=-1), pose, reference_pose)
         predicted,support = projected[...,0],projected[...,1]
         roundtrip = render(predicted, reference_pose, pose)
@@ -53,6 +50,5 @@ class RingRegistration(MaskedRegistration):
         # those zeros nor their smoothing footprint are a reference observation.
         supported = minimum_filter(support >= 1.-1e-12, size=15, mode='constant', cval=0)
         matcher = RingRegistration(predicted, pose.cx, pose.cy, *self.geometry[2:],
-                                   valid_mask=supported, score_provider=self.score_provider,
-                                   renderer=self.renderer)
+                                   valid_mask=supported)
         return matcher.displacement(frame, min_improvement=loss)

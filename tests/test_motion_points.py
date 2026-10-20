@@ -1,4 +1,4 @@
-"""Alignment points and local quality with the surface motion model."""
+"""Alignment points and local quality with the Surface and Saturn motion models."""
 from dataclasses import replace
 
 import numpy as np
@@ -119,13 +119,85 @@ def test_surface_alignment_points_correct_seeing_with_local_quality_and_resume(t
             stack_source(src, replace(cfg, ap_size=48), preprocessing=selection, resume_from=state)
 
 
-def test_alignment_points_refuse_field_and_saturn_motion(tmp_path):
+def test_alignment_points_refuse_field_motion(tmp_path):
     from planetrecon.io.ser import SERSource
     from planetrecon.pipeline.baseline import stack_source
     with SERSource(seeing_capture(tmp_path)) as src:
-        for mode in ('field', 'saturn'):
-            with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface or Combined'):
-                stack_source(src, points_config(geometry_mode=mode))
+        with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface, Combined or Saturn'):
+            stack_source(src, points_config(geometry_mode='field'))
+
+
+def saturn_seeing_capture(tmp_path, n=8):
+    """Rotating globe, field rotation and camera drift with smooth seeing (test_cuda_saturn geometry)."""
+    from planetrecon.geometry.globe import GlobeParams
+    from planetrecon.geometry.rings import RingParams
+    from planetrecon.geometry.saturn import render_saturn
+    from planetrecon.io.ser import write_ser
+    from test_cuda_saturn import capture
+    _, cfg = capture('mono')
+    globe = GlobeParams(20., .1, .3, .4, 0., .07, 1.5)
+    rings = RingParams(26., 42., .35, .8, .2)
+    texture = lambda lon, lat: 1 + .2*np.cos(5*lon)*np.cos(3*lat) + .1*np.sin(9*lon + 4*lat)
+    y, x = np.indices((112, 112), dtype=float)
+    drift = np.random.default_rng(31).uniform(-1.5, 1.5, size=(n, 2))
+    frames = []
+    for t in range(n):
+        image = render_saturn(112, 112, FramePose(t*.5, .025*(t*.5 - 1.5) + .1, 56 + drift[t, 0], 56 + drift[t, 1]),
+                              globe, rings, texture, field_angle0_rad=.1)
+        ux, uy = smooth_field((112, 112), 40 + t, 1., sigma=10)
+        frames.append(map_coordinates(image, [y + uy, x + ux], order=3, mode='constant'))
+    frames = np.clip(np.stack(frames)*1000, 0, 65535).astype('u2')
+    path = write_ser(tmp_path/'saturn.ser', frames, timestamps=np.arange(n)*5000000)
+    return path, replace(cfg, frame_preselection=True, local_alignment=True, alignment_method='alignment_points',
+                         ap_size=24, stack_percent=50, frame_selection_mode='frame_count')
+
+
+def test_saturn_alignment_points_with_local_quality_and_resume(tmp_path):
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.baseline import stack_source
+    path, cfg = saturn_seeing_capture(tmp_path)
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        whole = stack_source(src, cfg, preprocessing=selection)
+        detail = whole.provenance['local_alignment']
+        assert whole.provenance['geometry']['registration'].startswith('exposed rings')
+        assert detail['method'] == 'alignment_points' and detail['points'] > 2
+        assert detail['local_quality']['ranked_frames'] == 8
+        assert 4 < whole.n_used <= 8
+        ordinary = stack_source(src, replace(cfg, local_alignment=False), preprocessing=selection)
+        assert ordinary.n_used == 4 and not np.array_equal(whole.image, ordinary.image)
+        for layer in ('globe', 'ring'):
+            assert whole.layer_coverage[layer].max() > 0
+        state = tmp_path/'state.npz'
+        stop = False
+
+        def event(result, info):
+            nonlocal stop
+            stop = stop or (result.stage not in ('cache_ready', 'setup') and info['n_processed'] >= 3)
+        partial = stack_source(src, cfg, preprocessing=selection, on_event=event,
+                               should_cancel=lambda: stop, state_checkpoint=state)
+        assert partial.incomplete
+        resumed = stack_source(src, cfg, preprocessing=selection, resume_from=state)
+        np.testing.assert_array_equal(resumed.image, whole.image)
+        np.testing.assert_array_equal(resumed.coverage, whole.coverage)
+
+
+def test_cuda_saturn_alignment_point_stack_matches_cpu(tmp_path):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.baseline import stack_source
+    from test_cuda_saturn import equal_result
+    path, cfg = saturn_seeing_capture(tmp_path)
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        cpu = stack_source(src, cfg, preprocessing=selection)
+        gpu = stack_source(src, replace(cfg, device='gpu'), preprocessing=selection)
+    assert gpu.backend == 'cuda'
+    equal_result(gpu, cpu)
+    for layer in ('globe', 'ring'):
+        np.testing.assert_allclose(gpu.layer_coverage[layer], cpu.layer_coverage[layer], rtol=1e-7, atol=1e-9)
 
 
 @pytest.mark.parametrize('colour', ['mono', 'RGGB'])

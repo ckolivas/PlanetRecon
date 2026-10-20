@@ -1,7 +1,8 @@
-"""CUDA surface-motion helpers: registration planes and camera-drift tracking.
+"""CUDA motion helpers: registration planes and camera-drift tracking.
 
-Device equivalents of detector.extract_green_proxy / bilinear demosaic and of
-globe_align.surface_displacement (MaskedRegistration with distinct peaks). The
+Device equivalents of detector.extract_green_proxy / bilinear demosaic, of
+globe_align.surface_displacement and of ring_align.RingRegistration
+(MaskedRegistration with distinct peaks). The
 CPU implementations remain the reference; only the final 3x3 peak neighbourhood
 returns to the host for the shared subpixel decision.
 """
@@ -97,9 +98,7 @@ class TorchSurfaceTracker:
         _, _, reference_globe, _ = sky_to_body(rx, ry, self.model.globe, reference_pose.t_s)
         support = minimum_filter(reference_globe, size=3, mode='constant', cval=0)
         self.reference_support = torch.as_tensor(support.astype(np.float64), device=self.device)
-        self.full = (2 * h - 1, 2 * w - 1)
-        self.fft = tuple(next_fast_len(n, real=True) for n in self.full)
-        self.ones_fft = torch.fft.rfft2(torch.ones((h, w), device=self.device, dtype=torch.float64), s=self.fft)
+        self.matcher = MaskedMatcher((h, w), self.device)
 
     def on_globe(self, pose):
         """Visible near-side globe pixels at a frame pose (geometry.globe.globe_hit)."""
@@ -136,19 +135,51 @@ class TorchSurfaceTracker:
         predicted = self._render(self.reference, pose)
         support = self._render(self.reference_support, pose)
         observed = ((support >= 1. - 1e-12) & self.on_globe(pose)).to(torch.float64)
-        # minimum_filter(size=15, mode='constant', cval=0): erosion with an unobserved border.
-        mask = -F.max_pool2d(-F.pad(observed[None, None], (7, 7, 7, 7), value=0.), 15, stride=1)[0, 0] > .5
-        count = int(mask.sum())
-        if count < 32:
+        mask = _eroded(observed)
+        template, count, energy = masked_template(predicted, mask)
+        if count < 32 or energy <= 1e-12:
             return None
-        proxy_ref = _gaussian(predicted, 1.5)
-        selected = proxy_ref[mask]
-        template = torch.zeros_like(proxy_ref)
-        template[mask] = selected - selected.mean()
-        energy = float(template.square().sum())
-        if energy <= 1e-12:
-            return None
-        proxy = _gaussian(torch.as_tensor(frame, device=self.device, dtype=torch.float64), 1.5)
+        return self.matcher(template, mask, count, energy, _gaussian(self.matcher.tensor(frame), 1.5))
+
+
+def _eroded(observed, size=15):
+    """minimum_filter(size, mode='constant', cval=0): erosion with an unobserved border."""
+    r = size // 2
+    return -F.max_pool2d(-F.pad(observed.to(torch.float64)[None, None], (r, r, r, r), value=0.), size,
+                         stride=1)[0, 0] > .5
+
+
+def masked_template(reference, mask):
+    """MaskedRegistration's zero-mean smoothed template on the observed mask."""
+    count = int(mask.sum())
+    template = torch.zeros_like(reference)
+    if count < 32:
+        return template, count, 0.
+    selected = _gaussian(reference, 1.5)[mask]
+    template[mask] = selected - selected.mean()
+    return template, count, float(template.square().sum())
+
+
+class MaskedMatcher:
+    """MaskedRegistration.displacement with distinct peaks, on the device.
+
+    Float64 FFT correlations and the peak decisions stay on the GPU; only the
+    3x3 neighbourhood of the accepted peak returns for the subpixel solve.
+    """
+
+    def __init__(self, shape, device='cuda:0'):
+        self.device = device
+        self.shape = tuple(shape)
+        h, w = self.shape
+        self.full = (2 * h - 1, 2 * w - 1)
+        self.fft = tuple(next_fast_len(n, real=True) for n in self.full)
+        self.ones_fft = torch.fft.rfft2(torch.ones((h, w), device=device, dtype=torch.float64), s=self.fft)
+
+    def tensor(self, value):
+        return torch.as_tensor(value if torch.is_tensor(value) else np.asarray(value), device=self.device,
+                               dtype=torch.float64)
+
+    def __call__(self, template, mask, count, energy, proxy, min_improvement=0.):
         maskf = mask.to(torch.float64)
         observed_fft = torch.fft.rfft2(torch.stack((proxy, proxy.square())), s=self.fft)
         kernels = torch.fft.rfft2(torch.stack((template, maskf)).flip((-2, -1)), s=self.fft)
@@ -184,5 +215,80 @@ class TorchSurfaceTracker:
         delta = np.zeros(2) if peak >= 1 - 1e-12 else np.linalg.solve(-hessian, [gy, gx])
         if not np.isfinite(delta).all() or np.any(np.abs(delta) > 1.):
             return None
-        offsets = np.array([py, px]) - (np.array(self.reference.shape) - 1) + delta
+        offsets = np.array([py, px]) - (np.array(self.shape) - 1) + delta
+        if min_improvement > 0:
+            y, x = torch.nonzero(mask, as_tuple=True)
+            moved = _bilinear_constant(proxy, y + offsets[0], x + offsets[1])
+            moved = moved - moved.mean()
+            norm = float((energy * moved.square().sum()).sqrt())
+            gain = (float(template[mask] @ moved) / norm - float(scores[self.shape[0] - 1, self.shape[1] - 1])
+                    if norm > 0 else -np.inf)
+            if gain <= min_improvement:
+                return 0., 0.
         return offsets[1], offsets[0]
+
+
+def _bilinear_constant(image, y, x):
+    """map_coordinates(order=1, mode='constant', cval=0): zero outside [0, n-1]."""
+    h, w = image.shape
+    inside = (y >= 0) & (y <= h - 1) & (x >= 0) & (x <= w - 1)
+    y0 = y.floor().clamp(0, h - 1)
+    x0 = x.floor().clamp(0, w - 1)
+    fy, fx = (y - y0).clamp(0, 1), (x - x0).clamp(0, 1)
+    y0, x0 = y0.long(), x0.long()
+    y1, x1 = (y0 + 1).clamp(max=h - 1), (x0 + 1).clamp(max=w - 1)
+    value = ((1 - fy) * ((1 - fx) * image[y0, x0] + fx * image[y0, x1])
+             + fy * ((1 - fx) * image[y1, x0] + fx * image[y1, x1]))
+    return torch.where(inside, value, torch.zeros_like(value))
+
+
+class TorchRingTracker:
+    """Device equivalent of ring_align.RingRegistration for one run's anchor.
+
+    Exposed-ring masks, smoothed templates, field-rotated references and the
+    interpolation-loss gate follow the CPU class; only peak neighbourhoods and
+    scalars return to the host.
+    """
+
+    def __init__(self, reference, cx, cy, globe_radius, ring_radius, device='cuda:0'):
+        from planetrecon.backends.torch_registration import TorchRingRegistrationOps
+        self.ops = TorchRingRegistrationOps(np.shape(reference), device)
+        self.matcher = MaskedMatcher(np.shape(reference), device)
+        self.reference = self.matcher.tensor(reference)
+        self.globe_radius, self.ring_radius = globe_radius, ring_radius
+        self.mask = self._mask(cx, cy)
+        self.template, self.count, self.energy = masked_template(self.reference, self.mask)
+
+    def _mask(self, cx, cy, valid=None):
+        radius = torch.hypot(self.ops.x - cx, self.ops.y - cy)
+        mask = (radius > self.globe_radius + 8) & (radius < self.ring_radius + 8)
+        mask[:7] = mask[-7:] = False
+        mask[:, :7] = mask[:, -7:] = False
+        return mask if valid is None else mask & valid
+
+    def displacement(self, frame):
+        if self.energy <= 1e-12:
+            return None
+        return self.matcher(self.template, self.mask, self.count, self.energy,
+                            _gaussian(self.matcher.tensor(frame), 1.5))
+
+    def displacement_at_pose(self, frame, pose, reference_pose):
+        """Follow field rotation, gating drift against measured interpolation loss."""
+        projected = self.ops.render_tensor(torch.stack((self.reference, torch.ones_like(self.reference)), -1),
+                                           pose, reference_pose)
+        predicted, support = projected[..., 0], projected[..., 1]
+        roundtrip = self.ops.render_tensor(predicted, reference_pose, pose)
+        values = _gaussian(roundtrip, 1.5)[self.mask]
+        if values.numel():
+            values = values - values.mean()
+        norm = float((self.energy * values.square().sum()).sqrt())
+        if norm <= 1e-12:
+            return None
+        loss = max(1e-12, 1. - float(self.template[self.mask] @ values) / norm)
+        # Rotation may expose pixels outside the original capture.
+        mask = self._mask(pose.cx, pose.cy, _eroded(support >= 1. - 1e-12))
+        template, count, energy = masked_template(predicted, mask)
+        if energy <= 1e-12:
+            return None
+        return self.matcher(template, mask, count, energy, _gaussian(self.matcher.tensor(frame), 1.5),
+                            min_improvement=loss)

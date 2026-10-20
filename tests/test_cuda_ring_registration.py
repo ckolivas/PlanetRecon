@@ -1,11 +1,11 @@
-"""CUDA ring tracking preserves CPU support, ambiguity and interpolation guards."""
+"""Device ring tracking preserves CPU support, ambiguity and interpolation guards."""
 import numpy as np
 import pytest
 from scipy.ndimage import shift
-from scipy.signal import correlate
 
 torch = pytest.importorskip('torch')
 from planetrecon.backends.torch_registration import TorchRingRegistrationOps
+from planetrecon.backends.torch_surface import TorchRingTracker
 from planetrecon.geometry.model import FieldOnlyModel, render_observed
 from planetrecon.geometry.pose import FramePose
 from planetrecon.pipeline.ring_align import RingRegistration
@@ -16,23 +16,6 @@ cuda = pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA unavailabl
 @pytest.fixture(params=['cpu', pytest.param('cuda:0', marks=cuda)])
 def ops(request):
     return TorchRingRegistrationOps((112,128), request.param)
-
-
-def test_linear_correlations_and_complete_observed_support(ops):
-    rng = np.random.default_rng(132)
-    proxy = rng.normal(size=(112,128)) + 10
-    mask = np.zeros(proxy.shape)
-    mask[21:77, 28:101] = 1
-    mask[34:46, 45:60] = 0
-    template = rng.normal(size=proxy.shape)*mask
-    count, energy = mask.sum(), np.sum(template**2)
-    dot, total, squares, support = [correlate(a,b,mode='full',method='fft') for a,b in (
-        (proxy,template),(proxy,mask),(proxy**2,mask),(np.ones(proxy.shape),mask))]
-    denominator = np.sqrt(energy*np.maximum(squares-total**2/count,0))
-    valid = (support >= count-1e-6) & (denominator > 1e-12)
-    actual = ops.scores(proxy,template,mask,count,energy)
-    np.testing.assert_array_equal(np.isfinite(actual),valid)
-    np.testing.assert_allclose(actual[valid],dot[valid]/denominator[valid],atol=1e-11,rtol=1e-10)
 
 
 def test_field_pulls_match_at_edges_and_fractional_centres(ops):
@@ -50,8 +33,7 @@ def reference():
 
 
 def matcher(image, ops=None):
-    return RingRegistration(image,64,56,15,48,
-        **({} if ops is None else dict(score_provider=ops.scores,renderer=ops.render)))
+    return RingRegistration(image,64,56,15,48) if ops is None else TorchRingTracker(image,64,56,15,48,ops.device)
 
 
 @pytest.mark.parametrize('kind', ['fractional','brightness','field','flat','repeated'])
