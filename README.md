@@ -429,7 +429,8 @@ geometry still prevents stacking. **Preprocess** remains available separately.
 Checkpoint resumes retain their exact settings and do not rebuild caches.
 
 A finished stack reports its **stack quality** under the result (and in the
-command-line output and the result provenance as `stack_quality`):
+command-line output, beneath each capture in the batch queue, and the result
+provenance as `stack_quality`):
 
 - frames stacked out of those screened, the weighting (linear quality or equal),
   and the **effective frame count** (Σw)²/Σw² — the number of equally weighted

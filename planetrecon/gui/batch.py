@@ -9,6 +9,7 @@ class BatchItem:
     output: Path
     status: str = 'queued'
     detail: str = ''
+    quality: str = ''  # Stack quality summary of the completed result.
 
 
 def make_queue(paths, directory, encoding):

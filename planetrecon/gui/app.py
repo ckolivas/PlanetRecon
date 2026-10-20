@@ -84,6 +84,14 @@ class ExportWorker(QThread):
             self.result = None
 
 
+def stack_quality_text(result):
+    """The result's stack quality line, or '' when it has none (e.g. intermediate snapshots)."""
+    quality = result.provenance.get('stack_quality')
+    if not quality:
+        return ''
+    return quality['unavailable'] if 'unavailable' in quality else describe_stack_quality(quality)
+
+
 class SERExportWorker(QThread):
     outcome = Signal(object, object)
     progress = Signal(str, int, int)
@@ -239,7 +247,7 @@ class MainWindow:
         self.quality_plot.layout().addLayout(ser_row)
         self.batch_status = QPlainTextEdit()
         self.batch_status.setReadOnly(True)
-        self.batch_status.setMaximumHeight(100)
+        self.batch_status.setMaximumHeight(160)
         self.batch_status.setToolTip('Batch queue and results. Failed captures are reported here; processing continues with the remaining files. Cancel processing stops the whole queue.')
         self.batch_status.hide()
         layout.addWidget(self.batch_status)
@@ -531,6 +539,7 @@ class MainWindow:
             f'{i + 1}/{len(self.batch_items)} · {item.status} · {item.source}'
             + (f' → {item.output}' if item.status == 'saved' else '')
             + (f' · {item.detail}' if item.detail else '')
+            + (f'\n    Stack quality: {item.quality}' if item.quality else '')
             for i, item in enumerate(self.batch_items)))
 
     def _next_batch(self):
@@ -569,6 +578,7 @@ class MainWindow:
             return
         item = self.batch_current
         if kind == 'completed' and self.last_result is not None and not self.last_result.incomplete:
+            item.quality = stack_quality_text(self.last_result)
             try:
                 self.view.setCurrentText('Result')
                 self._fit_levels()  # Each capture's final full-resolution range.
@@ -997,9 +1007,8 @@ class MainWindow:
             self._fit_levels()
         source = result.provenance.get('source', {}).get('path', 'unknown source')
         epoch = result.reference_epoch if result.reference_epoch is not None else 'not specified'
-        quality = result.provenance.get('stack_quality')
-        quality = ('' if not quality else '\nStack quality: ' + (quality['unavailable'] if 'unavailable' in quality
-                                                               else describe_stack_quality(quality)))
+        quality = stack_quality_text(result)
+        quality = f'\nStack quality: {quality}' if quality else ''
         self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {result.stage} · "
             f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
             f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}{quality}\nResult source: {source}")

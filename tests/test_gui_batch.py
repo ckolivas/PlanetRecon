@@ -36,6 +36,11 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
     assert [i.status for i in win.batch_items] == ['saved', 'failed', 'saved']
     assert 'missing.ser' in win.batch_items[1].detail
+    # Each completed capture lists its stack quality beneath it in the queue.
+    assert '8 of 8 screened frames stacked' in win.batch_items[0].quality
+    assert '12 of 12 screened frames stacked' in win.batch_items[2].quality
+    assert not win.batch_items[1].quality
+    assert win.batch_status.toPlainText().count('Stack quality: ') == 2
     assert win.batch_btn.isEnabled() and win.controls.isEnabled()
     for item, count, epoch in ((win.batch_items[0], 8, .35), (win.batch_items[2], 12, .55)):
         with tifffile.TiffFile(item.output) as image:
