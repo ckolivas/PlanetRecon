@@ -452,8 +452,11 @@ saves them sequentially using the current processing and export settings.
 Each capture gets its own cache, automatic geometry and midpoint; manually
 entered overrides apply to every capture. Filename-based planet selection follows
 each file unless a planet was chosen manually. Batch jobs start fresh without
-accumulator checkpoints. Output names use `<capture stem>-planetrecon.tif` (or
-`.png`); numeric suffixes preserve existing files and distinguish duplicate names.
+accumulator checkpoints. Output names use `<capture stem>-planetrecon-n<frames>-q<quality>-snr<SNR>.tif`
+(or `.png`), from the stack quality: frames stacked (per alignment point when
+used), weighted mean quality and estimated SNR, e.g.
+`jupiter-planetrecon-n2105-q1.215-snr1015.tif`. Numeric suffixes preserve existing
+files and distinguish duplicate names.
 Blank export levels are fitted to each final result. The queue lists saved outputs
 and failures, continues after individual failures, and stops on cancellation.
 

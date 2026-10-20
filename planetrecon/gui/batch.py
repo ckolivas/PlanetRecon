@@ -31,3 +31,32 @@ def make_queue(paths, directory, encoding):
     if not items:
         raise ValueError('Choose at least one capture')
     return items
+
+
+def quality_tag(summary):
+    """Filename tag from a stack quality summary: frames (per alignment point when
+    used), weighted mean quality and estimated SNR; '' without a summary."""
+    if not summary or 'quality' not in summary:
+        return ''
+    points = summary.get('alignment_points')
+    frames = points['frames_per_point']['median'] if points else summary['frames_stacked']
+    quality = points['weighted_quality']['median'] if points else summary['quality']['weighted_mean']
+    tag = f'-n{frames:.0f}-q{quality:.4g}'
+    if 'estimated_snr' in summary:
+        tag += f"-snr{summary['estimated_snr']:.0f}"
+    return tag
+
+
+def with_quality(output, summary, taken=()):
+    """``output`` with the quality tag before its extension, never an existing or taken path."""
+    output = Path(output)
+    tag = quality_tag(summary)
+    if not tag:
+        return output
+    base = output.stem + tag
+    candidate = output.with_name(base + output.suffix)
+    count = 2
+    while candidate in taken or candidate.exists() or candidate.is_symlink():
+        candidate = output.with_name(f'{base}-{count}{output.suffix}')
+        count += 1
+    return candidate

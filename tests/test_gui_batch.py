@@ -41,6 +41,9 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     assert '12 of 12 screened frames stacked' in win.batch_items[2].quality
     assert not win.batch_items[1].quality
     assert win.batch_status.toPlainText().count('Stack quality: ') == 2
+    # Output names carry frames, weighted quality and estimated SNR.
+    assert win.batch_items[0].output.name.startswith('first-planetrecon-n8-q')
+    assert '-snr' in win.batch_items[2].output.name and win.batch_items[2].output.suffix == '.tif'
     assert win.batch_btn.isEnabled() and win.controls.isEnabled()
     for item, count, epoch in ((win.batch_items[0], 8, .35), (win.batch_items[2], 12, .55)):
         with tifffile.TiffFile(item.output) as image:
@@ -54,6 +57,20 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     # Blank export levels are fitted separately, not inherited from the first.
     assert '2 saved, 1 failed' in win.status.text()
     assert win.last_result.n_used == 12
+
+
+def test_quality_tag_never_replaces_existing_or_reserved_outputs(tmp_path):
+    from planetrecon.gui.batch import quality_tag, with_quality
+    summary = {'frames_stacked': 3341, 'quality': {'weighted_mean': 1.19267}, 'estimated_snr': 1014.96,
+               'alignment_points': {'frames_per_point': {'median': 2105.}, 'weighted_quality': {'median': 1.21546}}}
+    assert quality_tag(summary) == '-n2105-q1.215-snr1015'
+    assert quality_tag({**summary, 'alignment_points': None}) == '-n3341-q1.193-snr1015'
+    assert quality_tag({'unavailable': 'old checkpoint'}) == ''
+    output = tmp_path / 'jup-planetrecon.tif'
+    (tmp_path / 'jup-planetrecon-n2105-q1.215-snr1015.tif').write_bytes(b'keep')
+    reserved = {tmp_path / 'jup-planetrecon-n2105-q1.215-snr1015-2.tif'}
+    assert with_quality(output, summary, reserved).name == 'jup-planetrecon-n2105-q1.215-snr1015-3.tif'
+    assert with_quality(output, None) == output
 
 
 def test_queue_duplicate_names_and_existing_outputs(tmp_path):
@@ -109,14 +126,22 @@ def test_batch_clears_automatic_values_but_retains_manual_overrides(gui, tmp_pat
     win._shutdown()
 
 
-def test_batch_export_collision_fails_without_overwriting_and_continues(gui, tmp_path):
+def test_batch_export_collision_fails_without_overwriting_and_continues(gui, tmp_path, monkeypatch):
+    import planetrecon.gui.app as module
     app, win = gui
     first = capture(tmp_path / 'first.ser')
     second = capture(tmp_path / 'second.ser')
     small_frames(win)
+    original = module.export_result
+    raced = []
+    def racing_export(result, path, *args, **kwargs):
+        if not raced:
+            # Another program creates the chosen destination just before publication.
+            path.write_bytes(b'external image')
+            raced.append(path)
+        return original(result, path, *args, **kwargs)
+    monkeypatch.setattr(module, 'export_result', racing_export)
     assert win.start_batch([first, second], tmp_path)
-    # Another program creates the reserved destination while we are processing.
-    win.batch_items[0].output.write_bytes(b'external image')
     pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
     assert [i.status for i in win.batch_items] == ['failed', 'saved']
     assert win.batch_items[0].output.read_bytes() == b'external image'

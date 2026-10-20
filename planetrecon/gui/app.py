@@ -193,7 +193,7 @@ class MainWindow:
         self.stack_btn = QPushButton('Stack')
         self.stack_btn.setToolTip('Stack using the selected Geometry motion model, alignment points and quality selection. Enables cached screening and local alignment; automatically preprocesses when needed. Choose Motion model None for ordinary stacking.')
         self.batch_btn = QPushButton('Batch…')
-        self.batch_btn.setToolTip('Select multiple captures and an output folder, then stack each one as Stack does, with the current settings and export options. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh stacks; existing output files are preserved.')
+        self.batch_btn.setToolTip('Select multiple captures and an output folder, then stack each one as Stack does, with the current settings and export options. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Output names include the frames stacked, weighted quality and estimated SNR. Starts fresh stacks; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
         for b, slot in ((self.open_btn, self._choose), (self.preprocess_btn, self._preprocess),
                         (self.batch_btn, self._choose_batch),
@@ -579,6 +579,9 @@ class MainWindow:
         item = self.batch_current
         if kind == 'completed' and self.last_result is not None and not self.last_result.incomplete:
             item.quality = stack_quality_text(self.last_result)
+            from planetrecon.gui.batch import with_quality
+            item.output = with_quality(item.output, self.last_result.provenance.get('stack_quality'),
+                                       {other.output for other in self.batch_items if other is not item})
             try:
                 self.view.setCurrentText('Result')
                 self._fit_levels()  # Each capture's final full-resolution range.
