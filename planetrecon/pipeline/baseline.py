@@ -273,6 +273,10 @@ def _stack_source(
         reference_index = chosen_reference
     n_used = 0
     n_rejected = 0
+    # Quality of each accumulated frame (NaN otherwise) for the stack summary;
+    # None after resuming a checkpoint that predates the record.
+    frame_quality = np.full(n, np.nan)
+    pending_quality = {}
     warnings = fallback_warnings + list(report.warnings)
     if "warnings" in meta.extras:
         warnings.extend(meta.extras["warnings"].value)
@@ -316,6 +320,7 @@ def _stack_source(
         n_used, n_rejected = restored["n_used"], restored["n_rejected"]
         demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
         next_index = restored["next_index"]
+        frame_quality = restored[resume.FRAME_QUALITY]
         history = restored["execution_history"]
         report.execution_history = history + ([] if history[-1] == backend.name else [backend.name])
         warnings = list(dict.fromkeys(restored["warnings"] + warnings))
@@ -505,6 +510,7 @@ def _stack_source(
         score = selection.measurements[index, 0]
         if not np.isfinite(score):
             return None
+        pending_quality[int(index)] = max(score, 1e-12)
         score = max(score, 1e-12) if config.quality_weighting else 1.
         if local_matcher.use_cuda is False:
             local_matcher.use_cuda = True
@@ -552,6 +558,7 @@ def _stack_source(
         score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(plane), 1e-12)
         if not np.isfinite(score):
             return None
+        pending_quality[int(index)] = score
         if not config.quality_weighting:
             score = 1.
         if local_matcher is not None:
@@ -658,6 +665,7 @@ def _stack_source(
                     # Screening exclusions may have been skipped while filling
                     # the work batch. Account for exactly the consumed prefix.
                     n_rejected += int(index) - (n_used + n_rejected)
+                    quality = pending_quality.pop(int(index), np.nan)
                     if projected is None:
                         n_rejected += 1
                         continue
@@ -665,6 +673,8 @@ def _stack_source(
                         device_sums.add(index, *projected)
                     else:
                         accumulate(projected)
+                    if frame_quality is not None:
+                        frame_quality[int(index)] = quality
                     n_used += 1
             except InterruptedError:
                 if not pool.cancelled():
@@ -681,7 +691,7 @@ def _stack_source(
                     "accum": accum, "weight": weight, "reference": reference,
                     "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
                     "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
-                    "next_index": n_used + n_rejected,
+                    "next_index": n_used + n_rejected, resume.FRAME_QUALITY: frame_quality,
                     "execution_history": report.execution_history, "warnings": warnings})
             emit("baseline", incomplete=True)
             if cancelled:
@@ -710,6 +720,8 @@ def _stack_source(
         }
     if n_used == 0 and not cancelled:
         raise ValueError("no usable frames remain after rejection")
+    provenance["stack_quality"] = _stack_quality(source, calibration, config, frame_quality,
+                                                 reference_selection, local_selection)
     result = ReconstructionResult(
         image=image,
         coverage=cov,
@@ -728,6 +740,19 @@ def _stack_source(
     complete_bayer_rgb(result)
     emit(result.stage, incomplete=result.incomplete)
     return result
+
+
+def _stack_quality(source, calibration, config, frame_quality, screened_selection, local_selection):
+    """Frames, weighting, effective frame count and estimated SNR of a finished stack."""
+    from planetrecon.pipeline.stack_quality import single_frame_snr, summarise
+    if frame_quality is None:
+        return {'unavailable': 'resumed from a checkpoint that predates per-frame quality records'}
+    screened = None
+    if screened_selection is not None:
+        screened = np.where(screened_selection.accepted, screened_selection.measurements[:, 0], np.nan)
+    used = np.flatnonzero(np.isfinite(frame_quality))
+    return summarise(frame_quality, config.quality_weighting, screened=screened, local_selection=local_selection,
+                     frame_snr=single_frame_snr(source, calibration, used))
 
 
 def _normalise_stack(accum: np.ndarray, weight: np.ndarray) -> np.ndarray:

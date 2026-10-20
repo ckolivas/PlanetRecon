@@ -13,6 +13,9 @@ SCHEMA='planetrecon-baseline-state-2'
 GEOMETRY_SCHEMA='planetrecon-geometry-state-1'
 ARRAYS=('accum','weight','reference','demosaic_accum','demosaic_weight')
 GEOMETRY_ARRAYS=ARRAYS+('globe_weight','ring_weight')
+# Per-frame quality of accumulated frames (NaN otherwise), for the stack quality
+# summary. Optional: checkpoints written before it existed still resume.
+FRAME_QUALITY='frame_quality'
 
 
 def identity(source,config,calibration,should_cancel=None):
@@ -73,7 +76,8 @@ def save(path,identity,state,*,geometry=False,should_cancel=None):
     names=GEOMETRY_ARRAYS if geometry else ARRAYS
     metadata={'schema':GEOMETRY_SCHEMA if geometry else SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
-        'arrays':[name for name in names if state[name] is not None],
+        'arrays':[name for name in names if state[name] is not None]
+                 +([FRAME_QUALITY] if state.get(FRAME_QUALITY) is not None else []),
         'execution_history':state.get('execution_history',['cpu']),
         'warnings':state.get('warnings',[])}
     if should_cancel is not None and should_cancel():
@@ -104,9 +108,10 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False):
         names=meta.get('arrays',[])
         required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer else set())
         if geometry:required|={'globe_weight','ring_weight'}
-        if not required.issubset(names) or set(names)-set(allowed_arrays):
+        if not required.issubset(names) or set(names)-set(allowed_arrays)-{FRAME_QUALITY}:
             raise ValueError('state checkpoint arrays are incomplete or unknown')
         state={name:(data[name].copy() if name in names else None) for name in allowed_arrays}
+        state[FRAME_QUALITY]=data[FRAME_QUALITY].copy() if FRAME_QUALITY in names else None
     for key in ('n_used','n_rejected','next_index'):
         value=meta.get(key)
         if type(value) is not int or not 0<=value<=n_frames:
@@ -126,6 +131,10 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False):
         raise ValueError('invalid checkpoint execution history')
     if not isinstance(warnings,list) or any(not isinstance(value,str) for value in warnings):
         raise ValueError('invalid checkpoint warnings')
+    quality=state[FRAME_QUALITY]
+    if quality is not None and (quality.shape!=(n_frames,) or quality.dtype!=np.float64
+            or np.isinf(quality).any() or np.count_nonzero(np.isfinite(quality))!=state['n_used']):
+        raise ValueError('invalid state checkpoint frame quality')
     state['execution_history']=history
     state['warnings']=warnings
     for name,arr in ((name,state[name]) for name in allowed_arrays):

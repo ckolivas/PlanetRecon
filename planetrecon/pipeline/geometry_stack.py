@@ -876,6 +876,9 @@ def stack_source_geometry(
     target_regions = None
     n_used = 0
     n_rejected = 0
+    # Quality of each accumulated frame (NaN otherwise) for the stack summary;
+    # None after resuming a checkpoint that predates the record.
+    frame_quality = np.full(n, np.nan)
     warnings = list(report.warnings) + list(geo_warnings)
     if "warnings" in meta.extras:
         warnings.extend(meta.extras["warnings"].value)
@@ -922,6 +925,7 @@ def stack_source_geometry(
         globe_weight, ring_weight = restored['globe_weight'], restored['ring_weight']
         n_used, n_rejected = restored['n_used'], restored['n_rejected']
         next_index = restored['next_index']
+        frame_quality = restored[resume.FRAME_QUALITY]
         warnings = list(dict.fromkeys(restored['warnings'] + warnings))
         execution_history = restored['execution_history']
         snapshot_provenance['resumed_from_frame'] = next_index
@@ -1019,7 +1023,7 @@ def stack_source_geometry(
         indices = [index for index, _ in members]
         frames = [frame for _, frame in members]
         stacked, rgb, colour_planes, planes = group_planes(frames)
-        kept, frame_poses, scores = [], [], []
+        kept, frame_poses, scores, qualities = [], [], [], []
         for k, (index, (dx, dy)) in enumerate(zip(indices, group_displacements(indices, planes, frames))):
             if not np.isfinite([dx, dy]).all() or max(abs(dx), abs(dy)) > config.max_shift_px:
                 continue
@@ -1029,6 +1033,7 @@ def stack_source_geometry(
                 continue
             kept.append(k)
             frame_poses.append(replace(poses[index], cx=poses[index].cx + dx, cy=poses[index].cy + dy))
+            qualities.append(score)
             scores.append(score if config.quality_weighting else 1.)
         if not kept:
             return 0, len(members)
@@ -1043,6 +1048,10 @@ def stack_source_geometry(
                                                           frame_poses, anchor_pose, renderer.__self__, point_grid)
         covered = gpu_accumulator.add(stacked[chosen], frame_poses, ref_pose, score,
                                       rgb[chosen] if bayer else None, sample_xy)
+        if frame_quality is not None:
+            for k, quality, ok in zip(kept, qualities, covered):
+                if ok:
+                    frame_quality[indices[k]] = quality
         return sum(covered), len(members) - sum(covered)
 
     for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
@@ -1126,6 +1135,7 @@ def stack_source_geometry(
             if not np.isfinite(score):
                 n_rejected += 1
                 continue
+            quality = score
             if not config.quality_weighting:
                 score = 1.
             if local_selection is not None:
@@ -1147,6 +1157,8 @@ def stack_source_geometry(
                     demo = demosaic(calibrated)
                 if gpu_accumulator.add(calibrated if gpu_frame is None else gpu_frame,
                                        pose,ref_pose,score,demo,sample_xy):
+                    if frame_quality is not None:
+                        frame_quality[int(index)] = quality
                     n_used += 1
                 else:
                     n_rejected += 1
@@ -1212,6 +1224,8 @@ def stack_source_geometry(
                 )
                 globe_weight += score * gw
                 ring_weight += score * rw
+            if frame_quality is not None:
+                frame_quality[int(index)] = quality
             n_used += 1
         if members:
             # Frames read before a cancellation still complete, so the checkpoint stays contiguous.
@@ -1225,6 +1239,7 @@ def stack_source_geometry(
                 'globe_weight': globe_weight, 'ring_weight': ring_weight,
                 'reference_index': diagnostics['reference_index'],
                 'n_used': n_used, 'n_rejected': n_rejected, 'next_index': n_used+n_rejected,
+                resume.FRAME_QUALITY: frame_quality,
                 'execution_history': execution_history, 'warnings': warnings}, geometry=True)
         emit("baseline", incomplete=True)
         if cancelled:
@@ -1257,6 +1272,9 @@ def stack_source_geometry(
         }
     if n_used == 0 and not cancelled:
         raise ValueError("no usable frames remain after rejection")
+    from planetrecon.pipeline.baseline import _stack_quality
+    provenance["stack_quality"] = _stack_quality(source, calibration, config, frame_quality,
+                                                 reference_selection, local_selection)
     result = ReconstructionResult(
         image=image,
         coverage=weight,

@@ -499,6 +499,11 @@ def main(argv: list[str] | None = None) -> int:
             except (OSError, ValueError) as exc:
                 parser.error(f"export failed: {exc}; full result retained at {npz}")
             print(f"wrote {report.path} metadata={report.sidecar} counts={report.metadata['counts']}")
+        quality = result.provenance.get("stack_quality")
+        if quality:
+            from planetrecon.pipeline.stack_quality import describe
+            print("stack quality: " + quality.get("unavailable", "") if "unavailable" in quality
+                  else "stack quality: " + describe(quality))
         print(
             f"wrote {npz} backend={result.backend} n_used={result.n_used} "
             f"rejected={result.n_rejected} incomplete={result.incomplete}"

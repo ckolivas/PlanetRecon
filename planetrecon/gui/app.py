@@ -22,6 +22,7 @@ from planetrecon.gui.controls import ConfigControls
 from planetrecon.gui.preview import display_result_preview
 from planetrecon.gui.quality import QualityPlot
 from planetrecon.jobs import JobHandle, result_from_payload, start_stack_job
+from planetrecon.pipeline.stack_quality import describe as describe_stack_quality
 from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits, detected_thread_count
 
@@ -996,9 +997,12 @@ class MainWindow:
             self._fit_levels()
         source = result.provenance.get('source', {}).get('path', 'unknown source')
         epoch = result.reference_epoch if result.reference_epoch is not None else 'not specified'
+        quality = result.provenance.get('stack_quality')
+        quality = ('' if not quality else '\nStack quality: ' + (quality['unavailable'] if 'unavailable' in quality
+                                                               else describe_stack_quality(quality)))
         self.result_label.setText(f"{'Intermediate' if result.incomplete else 'Final'} {result.stage} · "
             f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
-            f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}\nResult source: {source}")
+            f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}{quality}\nResult source: {source}")
         self.details.setPlainText(json.dumps(result.metadata(), indent=2))
         self.warnings.setText('; '.join(result.warnings[:2]) +
                               (' (more in metadata)' if len(result.warnings) > 2 else ''))

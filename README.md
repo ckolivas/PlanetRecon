@@ -428,6 +428,24 @@ Motion runs also refresh geometry estimates when needed; unresolved required
 geometry still prevents stacking. **Preprocess** remains available separately.
 Checkpoint resumes retain their exact settings and do not rebuild caches.
 
+A finished stack reports its **stack quality** under the result (and in the
+command-line output and the result provenance as `stack_quality`):
+
+- frames stacked out of those screened, the weighting (linear quality or equal),
+  and the **effective frame count** (Σw)²/Σw² — the number of equally weighted
+  frames giving the same noise reduction. With alignment points every point
+  stacks its own best frames, so frames, effective frames and quality are
+  reported per point (median, minimum and maximum across points);
+- the mean and weighted mean cached quality of the stacked frames, beside the
+  mean of all screened frames;
+- an **estimated SNR**: single-frame SNR × √(effective frames). The single-frame
+  noise is a robust second-difference estimate over the bright target in up to
+  eight calibrated stacked frames (same-colour samples for Bayer captures), and
+  the signal is the target's mean above the background. Registration
+  interpolation smoothing is not counted, so it describes uncorrelated noise per
+  detector pixel. Use it to compare stacks of the same capture with different
+  frame selections.
+
 **Batch…** selects multiple captures and an output folder, then processes and
 saves them sequentially using the current processing and export settings.
 Each capture gets its own cache, automatic geometry and midpoint; manually
