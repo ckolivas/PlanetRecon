@@ -130,32 +130,24 @@ def test_local_alignment_requires_matching_preprocessing_and_compatible_geometry
             stack_source(source, config())
 
 
-def test_gui_local_alignment_is_optional_and_updates_new_run():
-    from planetrecon.gui.controls import ConfigControls
-    from PySide6.QtWidgets import QApplication
-    app = QApplication.instance() or QApplication([])
-    controls = ConfigControls(ReconstructionConfig())
+def test_gui_always_stacks_with_cached_screening_and_local_alignment(tmp_path, monkeypatch):
+    from planetrecon.gui.app import MainWindow, create_app
+    monkeypatch.setenv('PLANETRECON_SETTINGS_PATH', str(tmp_path/'settings.json'))
+    app = create_app(['local-alignment-default'])
+    win = MainWindow()
     try:
-        edit = controls.fields['local_alignment']
-        assert not edit.isChecked()
-        edit.setChecked(True)
-        assert controls.configuration().local_alignment
-        controls.setEnabled(False)
-        assert controls.configuration().local_alignment  # A busy GUI must not change saved values.
-        controls.setEnabled(True)
-        controls.fields['frame_preselection'].setChecked(False)
-        assert not edit.isEnabled() and not controls.configuration().local_alignment
-        controls.fields['frame_preselection'].setChecked(True)
-        assert controls.configuration().local_alignment
+        controls = win.controls
+        assert 'local_alignment' not in controls.fields and 'frame_preselection' not in controls.fields
+        cfg = controls.configuration()
+        assert cfg.local_alignment and cfg.frame_preselection
         geo = controls.fields['geometry_mode']
         geo.setCurrentIndex(geo.findData('field'))
-        assert not controls.configuration().local_alignment
-        geo.setCurrentIndex(geo.findData('none'))
         assert controls.configuration().local_alignment
-        edit.setChecked(False)
-        assert not controls.configuration().local_alignment
+        assert controls.fields['stack_percent'].isEnabled() and controls.fields['alignment_method'].isEnabled()
     finally:
-        controls.close()
+        win._shutdown()
+        win.window.close()
+        app.processEvents()
 
 
 @pytest.mark.hardware

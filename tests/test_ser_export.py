@@ -265,9 +265,6 @@ def test_gui_exports_graph_selection_without_stacking(tmp_path):
         win._set_preprocessing({**report, 'frame_quality': quality_plot_data(selected)})
         assert win.export_ser_btn.isEnabled()
         assert win.last_result is None
-        win.controls.fields['frame_preselection'].setChecked(False)
-        assert not win.export_ser_btn.isEnabled()
-        win.controls.fields['frame_preselection'].setChecked(True)
         win.controls.fields['frame_selection_mode'].setCurrentIndex(
             win.controls.fields['frame_selection_mode'].findData('quality_range'))
         np.testing.assert_array_equal(np.flatnonzero(win.quality_plot.selected), [0, 3, 5, 6])

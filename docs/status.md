@@ -30,7 +30,7 @@ regressed and remains rejected. A different normalized patch matcher now has
 The final application retains all 3,341 screened Jupiter frames: RMS falls from
 0.005310286 to 0.005297227 (0.246% relative improvement), and fine-detail correlation
 rises from 0.9618749 to 0.9636698. No sharpening or extra frame rejection is used.
-**Local patch alignment (experimental)** is available in GUI/CLI for Motion model
+Local patch alignment is always used by GUI Stack and available from the CLI for Motion model
 none. It uses a cleaner template anchored to the best selected frame, rejects
 ambiguous texture and falls back globally for coordinate folds. The improvement
 is modest and processing is slower; local alignment is now the new-run default

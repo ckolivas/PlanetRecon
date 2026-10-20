@@ -93,8 +93,8 @@ The detected silhouette axes account for tilt, phase and attached rings.
 Recorded SER exposure is read automatically from supported capture-settings
 headers for geometry midpoint calculations. Leave Exposure blank for automatic
 metadata use; manual seconds override it. Frame cadence remains separate.
-The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
-shows exclusion counts before processing. GUI **Stack** validates the cache and performs
+The GUI always stacks with the cached screening decisions (there is no checkbox)
+and shows exclusion counts before processing. GUI **Stack** validates the cache and performs
 preprocessing when needed; startup and capture selection do not start analysis.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
 `stack --no-frame-preselection` uses global alignment and ignores cached decisions. After preprocessing,
@@ -119,12 +119,14 @@ quality cache and uses overlapping circles from coarse to fine, retaining larger
 samples where smaller ones cannot be matched reliably. Batch stacks each capture
 the same way with the currently selected settings. This adds alignment and averaging, without sharpening.
 
-**Local patch alignment (experimental)** is enabled by default and corrects
+Local alignment is always used by GUI **Stack** (there is no checkbox) and corrects
 small seeing distortions using normalized texture patches and an averaged
 registration template anchored to the best selected frame. It preserves the
 selected frame count and adds no sharpening. It requires cached preprocessing
 and Motion model **None**, **Surface**, **Combined** or **Saturn**; ambiguous patches keep global alignment. This
-combination with the upper 50% quality range gave the best result in user testing. Uncheck local alignment or use `--no-local-alignment` for global alignment;
+combination with the upper 50% quality range gave the best result in user testing. A capture too small for any
+local patch, or fewer than four selected frames, falls back to global alignment with a warning. The CLI
+`--no-local-alignment` still selects global alignment;
 set `--stack-percent 100` to retain all screened frames. CLI geometry modes and
 `--no-frame-preselection` disable the implicit local-alignment default.
 

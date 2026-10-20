@@ -31,9 +31,8 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     assert win.start_batch([first, tmp_path / 'missing.ser', second], output)
     assert not win.controls.isEnabled() and not win.encoding.isEnabled()
     assert not win.batch_btn.isEnabled() and win.cancel_btn.isEnabled()
-    # Run is retired: Batch stacks with cached screening and local alignment, as Stack does.
+    # Run is retired; Batch stacks each capture as Stack does.
     assert not hasattr(win, 'run_btn')
-    assert win.batch_controls['fields']['local_alignment'] and win.batch_controls['fields']['frame_preselection']
     pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
     assert [i.status for i in win.batch_items] == ['saved', 'failed', 'saved']
     assert 'missing.ser' in win.batch_items[1].detail

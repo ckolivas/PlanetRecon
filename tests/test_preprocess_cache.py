@@ -169,14 +169,12 @@ def test_gui_separate_preprocess_shows_counts_and_keeps_existing_result(tmp_path
         wait()
         assert win.last_result.n_used == 32
         previous = win.last_result
-        win.controls.fields['frame_preselection'].setChecked(False)
-        assert 'disabled' in win.preprocessing_label.text()
         win._preprocess()
         wait()
         assert win.last_result is previous
         win._run()
         wait()
-        assert win.last_result.n_used == 34
+        assert win.last_result.n_used == 32
     finally:
         win._shutdown()
         win.window.close()

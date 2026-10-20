@@ -125,10 +125,7 @@ def test_gui_keeps_patch_choice_for_saturn_and_surface():
         geometry=controls.fields['geometry_mode']
         for mode in ('saturn','surface','combined','none'):
             geometry.setCurrentIndex(geometry.findData(mode))
-            assert controls.fields['local_alignment'].isEnabled()
             assert controls.configuration().local_alignment
-        controls.fields['local_alignment'].setChecked(False)
-        assert not controls.configuration().local_alignment
     finally:
         controls.close()
 

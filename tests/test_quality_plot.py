@@ -21,7 +21,6 @@ def report(scores=(0, 50, 75, 100, 90, np.nan), accepted=(True, True, True, True
 def test_plot_tracks_threshold_masks_order_and_cache_identity(gui):
     app, win = gui
     fields = win.controls.fields
-    fields['frame_preselection'].setChecked(True)
     fields['frame_selection_mode'].setCurrentIndex(0)
     fields['stack_percent'].setValue(50)
     info = report()
@@ -40,10 +39,6 @@ def test_plot_tracks_threshold_masks_order_and_cache_identity(gui):
     fields['stack_percent'].setValue(100)
     assert plot.cutoff == 0
     assert plot.selected.tolist() == [True, True, True, True, False, False]
-    fields['frame_preselection'].setChecked(False)
-    assert plot.cutoff is None and plot.selected.all()
-    assert 'disabled' in plot.summary.text()
-    fields['frame_preselection'].setChecked(True)
     compact = {key: value for key, value in info.items() if key != 'frame_quality'}
     win._set_preprocessing(compact)
     assert plot.data is info['frame_quality']
@@ -58,7 +53,6 @@ def test_plot_tracks_threshold_masks_order_and_cache_identity(gui):
 def test_flat_scores_count_ties_and_single_frame(gui):
     app, win = gui
     fields = win.controls.fields
-    fields['frame_preselection'].setChecked(True)
     fields['stack_percent'].setValue(50)
     fields['frame_selection_mode'].setCurrentIndex(0)
     win._set_preprocessing(report((7, 7, 7, 7), (True, True, True, True)))
@@ -124,7 +118,6 @@ def test_worker_preprocess_and_inspect_deliver_plot_without_export_bloat(gui, tm
     from test_preprocess_cache import capture
     app, win = gui
     win.path = capture(tmp_path)
-    win.controls.fields['frame_preselection'].setChecked(True)
     win._preprocess()
     pump(app, lambda: win.job is None, timeout=20)
     assert not win.error.text()

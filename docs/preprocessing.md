@@ -39,8 +39,8 @@ differed by at most 3.6e-15. This is local timing evidence, not a universal spee
 guarantee. Replay without changing the capture's existing cache using
 `python -m tools.benchmark_cuda_preprocessing --path capture.ser --full --out report.json`.
 
-The **Use cached preprocessing (quality and shape)** checkbox independently
-controls whether later runs use those decisions (**Stack** always enables it). GUI **Stack** validates the cache
+GUI **Stack** always uses those decisions (the former checkbox was removed;
+the CLI keeps `--no-frame-preselection`). It validates the cache
 and automatically runs preprocessing when it is missing, stale or invalid,
 then applies automatic geometry and midpoint prefills before stacking. Motion
 runs also refresh inapplicable or incomplete geometry estimates once; required
@@ -193,8 +193,7 @@ based on that assumption are also excluded. Switching to Saturn clears an
 automatically assumed latitude and its dependent motion prefills, while preserving
 values you entered yourself, including an explicit zero.
 
-After Preprocess, enable **Local patch alignment (experimental)** in Capture
-(or CLI `stack --local-alignment`). It applies only with cached preprocessing
+GUI **Stack** always uses local alignment (CLI `stack --local-alignment`). It applies only with cached preprocessing
 and Motion model **none**. It keeps the same selected frames and uses the
 highest-quality selected frame as the coordinate anchor. Up to 64 of the
 best selected frames form a cleaner alignment template; input colour samples

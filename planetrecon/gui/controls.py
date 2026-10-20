@@ -52,13 +52,11 @@ class ConfigControls(QTabWidget):
         self._choice(capture, 'endian_convention', 'SER byte-order convention', ['ecosystem', 'spec'])
         self._check(capture, 'recover_complete_frames', 'Recover complete frames')
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
-        self._check(capture, 'frame_preselection', 'Use cached preprocessing (quality and shape)')
         self._check(capture, 'quality_weighting', 'Weight frames by quality')
         self._check(capture, 'normalise_brightness', 'Normalise brightness')
         self._integer(capture, 'normalise_percent', 'Normalise brightness (%)', 1, 100)
         self.fields['normalise_percent'].setEnabled(config.normalise_brightness)
         self.fields['normalise_brightness'].toggled.connect(self.fields['normalise_percent'].setEnabled)
-        self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
         self._choice(capture, 'alignment_method', 'Alignment points',
                      ['square', 'circular_multiscale', 'alignment_points'])
         self.fields['alignment_method'].setItemText(0, 'Fixed square patches')
@@ -69,8 +67,6 @@ class ConfigControls(QTabWidget):
         self.fields['local_patch_size'].setSingleStep(2)
         self._integer(capture, 'ap_size', 'Alignment point size (pixels)', 16, 256)
         self.fields['ap_size'].setSingleStep(8)
-        self.fields['local_alignment'].toggled.connect(self._mode_changed)
-        self.fields['frame_preselection'].toggled.connect(self._mode_changed)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
                      ['quality_range', 'frame_count'])
         mode = self.fields['frame_selection_mode']
@@ -80,9 +76,6 @@ class ConfigControls(QTabWidget):
         self.stack_percent_label = capture.labelForField(self.fields['stack_percent'])
         mode.currentIndexChanged.connect(self._selection_mode_changed)
         self._selection_mode_changed()
-        for key in ('stack_percent', 'frame_selection_mode'):
-            self.fields[key].setEnabled(config.frame_preselection)
-            self.fields['frame_preselection'].toggled.connect(self.fields[key].setEnabled)
         self._integer(capture, 'reference_index', 'Reference frame (0 = automatic)', 0, 2**31-1)
         self._number(capture, 'max_shift_px', 'Maximum shift (px)')
         self._number(capture, 'cadence_s', 'Cadence (s; blank = timestamps)')
@@ -334,18 +327,9 @@ class ConfigControls(QTabWidget):
             # leave dependent auto rates from the old assumption attached.
             self.geometry_auto.pop('sub_obs_lat_rad', None)
             self._set_geometry_help('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
-        self.fields['local_alignment'].setEnabled(
-            self.fields['frame_preselection'].isChecked())
-        self.fields['local_patch_size'].setEnabled(
-            self.fields['local_alignment'].isChecked()
-            and self.fields['frame_preselection'].isChecked()
-            and self.fields['alignment_method'].currentData() == 'square')
-        self.fields['alignment_method'].setEnabled(
-            self.fields['local_alignment'].isChecked()
-            and self.fields['frame_preselection'].isChecked())
-        points = (self.fields['local_alignment'].isChecked() and self.fields['frame_preselection'].isChecked()
-                  and self.fields['alignment_method'].currentData() == 'alignment_points')
-        self.fields['ap_size'].setEnabled(points)
+        method = self.fields['alignment_method'].currentData()
+        self.fields['local_patch_size'].setEnabled(method == 'square')
+        self.fields['ap_size'].setEnabled(method == 'alignment_points')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     def _choose_table(self, edit):
@@ -403,8 +387,6 @@ class ConfigControls(QTabWidget):
         self._selection_mode_changed()
         self.fields['normalise_percent'].setEnabled(self.fields['normalise_brightness'].isChecked())
         self._rotation_changed()
-        for key in ('stack_percent', 'frame_selection_mode'):
-            self.fields[key].setEnabled(self.fields['frame_preselection'].isChecked())
         auto = state.get('geometry_auto', {})
         manual = state.get('geometry_manual', [])
         if not isinstance(auto, dict) or not isinstance(manual, list):
@@ -422,10 +404,10 @@ class ConfigControls(QTabWidget):
         saturn_defaults = dict(ring_inner_radius_px=None, ring_outer_radius_px=None,
             sun_lon_rad=None, sun_lat_rad=None, moon_x=None, moon_y=None, moon_radius_px=None,
             ring_transmission=.35, moon_vx_px_s=0., moon_vy_px_s=0.)
+        # No GUI control: interactive windows always stack with cached screening
+        # and local alignment; a scripted window keeps its explicit configuration.
+        values.update(frame_preselection=self.base.frame_preselection, local_alignment=self.base.local_alignment)
         for key, edit in self.fields.items():
-            if key == 'local_alignment' and not self.fields['frame_preselection'].isChecked():
-                values[key] = False
-                continue
             if not saturn and key in saturn_defaults:
                 values[key] = saturn_defaults[key]
                 continue

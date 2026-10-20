@@ -137,9 +137,6 @@ def test_gui_commits_typed_percentage_for_each_new_run():
     assert controls.configuration().stack_percent == 25
     edit.lineEdit().setText('50')
     assert controls.configuration().stack_percent == 50
-    controls.fields['frame_preselection'].setChecked(False)
-    assert not edit.isEnabled()
-    controls.fields['frame_preselection'].setChecked(True)
     assert edit.isEnabled() and controls.configuration().stack_percent == 50
     assert 'blur' in edit.toolTip()
     controls.close()
@@ -269,8 +266,7 @@ def test_gui_range_counts_and_mode_changes_apply_to_next_run():
         assert win.controls.stack_percent_label.text() == 'Upper quality range (%)'
         percent.setValue(100)
         assert 'all 8 screened frames' in win.preprocessing_label.text()
-        win.controls.fields['frame_preselection'].setChecked(False)
-        assert not mode.isEnabled() and not percent.isEnabled()
+        assert mode.isEnabled() and percent.isEnabled()
     finally:
         win._shutdown()
         win.window.close()

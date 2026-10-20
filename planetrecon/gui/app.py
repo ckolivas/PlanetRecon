@@ -245,7 +245,6 @@ class MainWindow:
         split = QSplitter()
         self.controls = ConfigControls(self.config, dialog_directory=self._dialog_directory,
                                        remember_directory=self._remember_directory)
-        self.controls.fields['frame_preselection'].toggled.connect(self._refresh_preprocessing)
         self.controls.fields['stack_percent'].valueChanged.connect(self._refresh_preprocessing)
         self.controls.fields['frame_selection_mode'].currentIndexChanged.connect(self._refresh_preprocessing)
         for key in ('bayer_override', 'endian_override', 'endian_convention', 'crop',
@@ -641,9 +640,9 @@ class MainWindow:
         self._run()
 
     def _stacking_controls(self):
-        fields = self.controls.fields
-        fields['frame_preselection'].setChecked(True)
-        fields['local_alignment'].setChecked(True)
+        """Stack and Batch always use cached screening and local alignment."""
+        from dataclasses import replace
+        self.controls.base = replace(self.controls.base, frame_preselection=True, local_alignment=True)
 
     def _run(self):
         """Start a job with the current controls; the user entry point is Stack (Run is deprecated)."""
@@ -863,10 +862,9 @@ class MainWindow:
         info = self.preprocessing_info
         self.quality_plot.set_report(
             info, self.controls.fields['stack_percent'].value(),
-            self.controls.fields['frame_selection_mode'].currentData(),
-            self.controls.fields['frame_preselection'].isChecked())
+            self.controls.fields['frame_selection_mode'].currentData(), True)
         if info.get('status') == 'ready':
-            usage = 'Will use cache' if self.controls.fields['frame_preselection'].isChecked() else 'Cache disabled for runs'
+            usage = 'Will use cache'
             percent = self.controls.fields['stack_percent'].value()
             mode = self.controls.fields['frame_selection_mode'].currentData()
             if percent == 100:
@@ -886,10 +884,7 @@ class MainWindow:
                                   f'{selected} frames ({fraction:.1f}% of capture).')
             else:
                 selection_text = ' Reload the capture or Preprocess to refresh quality-range counts.'
-            if self.controls.fields['frame_preselection'].isChecked():
-                selection_text += ' Before registration rejection.'
-            else:
-                selection_text = ''
+            selection_text += ' Before registration rejection.'
             self.preprocessing_label.setText(
                 f"{usage}: {info['quality']} quality / {info['shape']} shape exclusions "
                 f"({info['quality_shape_overlap']} overlap), {info['other']} other; "
@@ -897,8 +892,7 @@ class MainWindow:
                 f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.{selection_text}")
         else:
             reason = info.get('reason', 'No preprocessing cache. Stack will preprocess automatically, or use Preprocess separately.')
-            if (self.controls.fields['frame_preselection'].isChecked()
-                    and self.controls.fields['stack_percent'].value() < 100):
+            if self.controls.fields['stack_percent'].value() < 100:
                 reason += ' Stack will create a matching cache before selecting frames.'
             self.preprocessing_label.setText(reason)
         self._ser_export_buttons()
@@ -907,7 +901,6 @@ class MainWindow:
         ready = (self.path is not None and self.path.suffix.lower() == '.ser'
                  and self.preprocessing_info.get('status') == 'ready'
                  and bool(self.preprocessing_info.get('digest'))
-                 and self.controls.fields['frame_preselection'].isChecked()
                  and self.quality_plot.selection is not None)
         idle = (self.job is None and self.run_stage is None and not self.batch_active
                 and self.export_worker is None and not self.closing)

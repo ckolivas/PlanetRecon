@@ -81,27 +81,31 @@ def test_oversized_patch_is_refused_before_processing(tmp_path, monkeypatch, col
         assert global_result.n_used > 0 and not global_result.incomplete
 
 
-@pytest.mark.parametrize('shape,remedy', [((20, 24), 'Disable Local'), ((38, 45), '15 to 31')])
-def test_small_capture_gives_fitting_size_or_global_guidance(tmp_path, shape, remedy):
+def test_small_capture_gives_a_fitting_size_or_falls_back_visibly(tmp_path):
     from planetrecon.io.ser import write_ser
-    path = write_ser(tmp_path/'small.ser', np.ones((4, *shape), dtype='u2'))
-    with SERSource(path) as source:
-        with pytest.raises(ValueError, match=remedy):
+    frames = np.ones((4, 38, 45), dtype='u2')*100
+    with SERSource(write_ser(tmp_path/'fits.ser', frames)) as source:
+        with pytest.raises(ValueError, match='15 to 31 pixels\\.$'):
             stack_source(source, config())
+    # No patch can fit at all: global alignment with an explicit warning.
+    tiny = np.full((4, 20, 24), 100, dtype='u2')
+    tiny[:, 7:13, 9:15] = 3000
+    with SERSource(write_ser(tmp_path/'tiny.ser', tiny)) as source:
+        preprocess_source(source, config())
+        result = stack_source(source, config())
+        assert any('using global alignment' in w for w in result.warnings)
+        assert result.n_used == 4 and 'local_alignment' not in result.provenance
 
 
-def test_too_few_selected_frames_are_refused(tmp_path, monkeypatch):
+def test_too_few_selected_frames_fall_back_to_global_alignment(tmp_path):
     with SERSource(capture(tmp_path)) as source:
         cfg = config(stack_percent=1, frame_selection_mode='frame_count')
         preprocess_source(source, cfg)
-        with monkeypatch.context() as patch:
-            def backend(*args, **kwargs):
-                pytest.fail('not enough selected frames must fail before starting the stacking backend')
-            patch.setattr('planetrecon.pipeline.baseline.select_backend', backend)
-            with pytest.raises(ValueError, match='at least four selected frames'):
-                stack_source(source, cfg)
-        result = stack_source(source, replace(cfg, local_alignment=False))
-        assert result.n_used == 1
+        result = stack_source(source, cfg)
+        assert result.n_used == 1 and 'local_alignment' not in result.provenance
+        assert any('Fewer than four frames' in w for w in result.warnings)
+        plain = stack_source(source, replace(cfg, local_alignment=False))
+        np.testing.assert_array_equal(result.image, plain.image)
 
 
 def test_exact_minimum_size_and_four_frames_still_run(tmp_path):
@@ -130,9 +134,10 @@ def test_gui_commits_typed_size_and_preserves_disabled_choice():
         controls.setEnabled(False)
         assert controls.configuration().local_patch_size == 49
         controls.setEnabled(True)
-        controls.fields['local_alignment'].setChecked(False)
+        method = controls.fields['alignment_method']
+        method.setCurrentIndex(method.findData('circular_multiscale'))
         assert not size.isEnabled()
-        controls.fields['local_alignment'].setChecked(True)
+        method.setCurrentIndex(method.findData('square'))
         assert size.isEnabled() and size.value() == 49
         size.lineEdit().setText('32')
         with pytest.raises(ValueError, match='odd integer'):

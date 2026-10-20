@@ -132,16 +132,20 @@ def _stack_source(
         raise ValueError(f'unsupported reconstruction color mode {source.color_mode()!r}')
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
+    fallback_warnings = []  # Local alignment that cannot apply at all falls back to global, visibly.
     if config.local_alignment and config.alignment_method == 'square':
         h, w = source.frame_shape()[:2]
         required = config.local_patch_size + 6  # Complete +/-3 pixel search footprint.
         if min(h, w) < required:
             largest = min(255, min(h, w) - 6)
             largest -= (largest + 1) % 2
-            remedy = (f'Choose an odd alignment patch size from 15 to {largest} pixels, or disable Local patch alignment.'
-                      if largest >= 15 else 'Disable Local patch alignment for this capture.')
-            raise ValueError(f'Local patch size {config.local_patch_size} needs frames at least '
-                             f'{required} by {required} pixels; this capture is {w} by {h}. {remedy}')
+            if largest >= 15:
+                raise ValueError(f'Local patch size {config.local_patch_size} needs frames at least '
+                                 f'{required} by {required} pixels; this capture is {w} by {h}. '
+                                 f'Choose an odd alignment patch size from 15 to {largest} pixels.')
+            fallback_warnings.append(f'Capture is {w} by {h} pixels, smaller than the smallest local patch '
+                                     f'search (21 by 21); using global alignment.')
+            config = replace(config, local_alignment=False)
     if (config.local_alignment and config.alignment_method == 'alignment_points'
             and config.geometry_mode != 'none'):
         raise ValueError('Alignment points currently support ordinary stacking only. Choose Motion model None, '
@@ -189,8 +193,9 @@ def _stack_source(
                 raise ValueError('no usable frames remain after preprocessing')
             reference_mask = reference_selection if config.geometry_mode != 'none' else selection
             if config.local_alignment and np.count_nonzero(reference_mask.accepted) < 4:
-                raise ValueError('Local alignment needs at least four selected frames to build its reference. '
-                                 'Select more frames or disable Local patch alignment.')
+                fallback_warnings.append('Fewer than four frames are selected, too few for a local alignment '
+                                         'reference; using global alignment. Select more frames to enable it.')
+                config = replace(config, local_alignment=False)
             if config.reference_index >= len(selection.accepted):
                 raise ValueError('reference_index is outside the capture')
             if config.reference_index and not reference_mask.accepted[config.reference_index]:
@@ -198,7 +203,7 @@ def _stack_source(
     if config.geometry_mode != "none":
         from planetrecon.pipeline.geometry_stack import stack_source_geometry
 
-        return stack_source_geometry(
+        result = stack_source_geometry(
             source,
             config,
             calibration=calibration,
@@ -208,6 +213,8 @@ def _stack_source(
             state_checkpoint=state_checkpoint,
             selection=selection, cache_status=cache_status, reference_selection=reference_selection,
         )
+        result.warnings = fallback_warnings + list(result.warnings)
+        return result
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)
     if budget_error:
@@ -266,7 +273,7 @@ def _stack_source(
         reference_index = chosen_reference
     n_used = 0
     n_rejected = 0
-    warnings = list(report.warnings)
+    warnings = fallback_warnings + list(report.warnings)
     if "warnings" in meta.extras:
         warnings.extend(meta.extras["warnings"].value)
     if report.fallback:
