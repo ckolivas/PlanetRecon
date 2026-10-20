@@ -43,6 +43,7 @@ class ReconstructionConfig:
     alignment_wavelength_nm: float = 550.0
     ap_size: int = 64
     local_quality: bool = True
+    local_quality_pool: float = 2.0
     max_shift_px: float = 32.0
     reference_index: int = 0
     motion_reference: str = "midpoint"
@@ -165,6 +166,9 @@ class ReconstructionConfig:
             raise ValueError('ap_size must be an integer from 16 to 256 pixels')
         if type(self.local_quality) is not bool:
             raise ValueError('local_quality must be a bool')
+        if (isinstance(self.local_quality_pool, bool) or not isinstance(self.local_quality_pool, (int, float))
+                or not math.isfinite(self.local_quality_pool) or not 1 <= self.local_quality_pool <= 100):
+            raise ValueError('local_quality_pool must be a number from 1 to 100')
         for name, low, high in (('sampling_multiplier', .5, 20.),
                                 ('alignment_wavelength_nm', 300., 1500.)):
             value = getattr(self, name)

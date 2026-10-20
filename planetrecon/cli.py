@@ -175,6 +175,8 @@ def main(argv: list[str] | None = None) -> int:
                     help='alignment point width/height in pixels (16-256; default 64); spacing is half the size')
     st.add_argument('--local-quality', action=argparse.BooleanOptionalAction, default=True,
                     help='with alignment points, each point stacks its own best frames by local quality (default on)')
+    st.add_argument('--local-quality-pool', type=float, default=2.0,
+                    help='local quality ranks only the best POOL x selected frames by global quality (1-100; default 2)')
     st.add_argument('--sampling-multiplier', type=float, default=5.,
                     help='capture focal ratio divided by pixel pitch in micrometres (default 5)')
     st.add_argument('--alignment-wavelength-nm', type=float, default=550.,
@@ -441,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
             alignment_method=args.alignment_method,
             ap_size=args.ap_size,
             local_quality=args.local_quality,
+            local_quality_pool=args.local_quality_pool,
             sampling_multiplier=args.sampling_multiplier,
             alignment_wavelength_nm=args.alignment_wavelength_nm,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,

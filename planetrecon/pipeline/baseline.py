@@ -422,6 +422,16 @@ def _stack_source(
             elif config.local_quality:
                 screened = np.flatnonzero(reference_selection.accepted)
                 count = int(np.count_nonzero(selection.accepted))
+                # Only the globally best frames are candidates; outside that pool
+                # a frame is neither ranked nor stacked.
+                pool = min(len(screened), int(np.ceil(config.local_quality_pool * count)))
+                ranked = screened[np.argsort(-selection.measurements[screened, 0], kind='stable')[:pool]]
+                screened = np.sort(ranked)
+            if config.local_quality and local_matcher.layers and len(screened) <= count:
+                # Every candidate would be chosen by every point: identical to global selection.
+                detail['local_quality'] = {'frames_per_point': count, 'ranked_frames': 0,
+                                           'skipped': 'candidate pool does not exceed the selection'}
+            elif config.local_quality and local_matcher.layers:
                 try:
                     local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                      reference, count, selection.accepted.copy(), should_cancel,
@@ -434,6 +444,7 @@ def _stack_source(
                 selection = replace(selection, accepted=local_selection.frames())
                 detail['local_quality'] = {
                     'frames_per_point': count, 'ranked_frames': len(screened),
+                    'candidate_pool': f'best {config.local_quality_pool:g} x selected frames by global quality',
                     'contributing_frames': int(np.count_nonzero(selection.accepted)),
                     'measure': 'squared Laplacian of the 1.5 px smoothed plane, Gaussian-weighted around each '
                                'point, divided by local brightness squared',
