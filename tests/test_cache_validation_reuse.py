@@ -179,3 +179,62 @@ def test_identical_cache_copy_retains_verified_source_proof(tmp_path, monkeypatc
         _, report = cache.load_cache(source, cfg, validation=receipt,
                                      on_progress=lambda done, total: progress.append(done))
         assert report['status'] == 'ready' and not progress
+
+
+def _touch(path):
+    stamp = path.stat()
+    os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1_000_000))
+
+
+def test_display_load_defers_pixel_validation(tmp_path, monkeypatch):
+    path, cfg = capture(tmp_path), config()
+    with SERSource(path) as source:
+        cache.preprocess_source(source, cfg)
+    _touch(path)  # The persisted file-metadata proof no longer holds.
+    identity = cache.identity
+    monkeypatch.setattr(cache, 'identity', lambda *a, **k: pytest.fail('display load scanned pixels'))
+    receipt = cache.CacheValidation()
+    with SERSource(path) as source:
+        selected, report = cache.load_cache(source, cfg, validation=receipt, verify=False)
+        assert selected is not None and report['status'] == 'ready' and report['verified'] is False
+        assert receipt.digest is None
+    with SERSource(path, bayer_override='RGGB') as source:
+        selected, report = cache.load_cache(source, cfg, verify=False)
+        assert selected is None and report['status'] == 'stale'
+    monkeypatch.setattr(cache, 'identity', identity)
+    with SERSource(path) as source:
+        selected, report = cache.load_cache(source, cfg, validation=receipt)
+        assert report['status'] == 'ready' and 'verified' not in report and receipt.digest
+
+
+def test_desktop_open_does_not_validate_until_stack(gui, tmp_path, monkeypatch):
+    from planetrecon.gui import app as module
+    app, win = gui
+    win.path = capture(tmp_path)
+    with SERSource(win.path) as source:
+        cache.preprocess_source(source, win.controls.configuration())
+    _touch(win.path)
+    stages = []
+    start = module.start_stack_job
+    def tracked(*args, **kwargs):
+        handle = start(*args, **kwargs)
+        poll = handle.poll
+        def tracked_poll(*args, **kwargs):
+            events = poll(*args, **kwargs)
+            stages.extend(event.payload.get('stage', '') for event in events if event.kind == 'progress')
+            return events
+        handle.poll = tracked_poll
+        return handle
+    monkeypatch.setattr(module, 'start_stack_job', tracked)
+    win._capture_ready()
+    pump(app, lambda: win.job is None, timeout=30)
+    assert not win.error.text()
+    assert not any('Validating cached preprocessing' in stage for stage in stages)
+    assert win.preprocessing_info['status'] == 'ready' and win.preprocessing_info['verified'] is False
+    assert 'frame_quality' in win.preprocessing_info
+    assert not (win.cache_validation or {}).get('digest')
+    win._stack()
+    pump(app, lambda: win.job is None, timeout=30)
+    assert not win.error.text()
+    assert any('Validating cached preprocessing' in stage for stage in stages)
+    assert win.last_result is not None and win.last_result.n_used > 0

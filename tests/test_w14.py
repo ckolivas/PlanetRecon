@@ -509,7 +509,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     win.checkpoint_path.clear();win.resume_check.setChecked(False)
     win._run()
     assert calls[-1][1] == replace(second, **expected)
-    assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False, 'cache_validation': None}
+    assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False, 'cache_validation': None, 'verify_cache': True}
     win._finish_job()
     win.device.setCurrentText('gpu')
     win.controls.fields['geometry_mode'].setCurrentText('none')
@@ -726,7 +726,7 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
     assert calls[-1][1] == {'preprocess_only': True, 'auto_output_epoch': True, 'cache_validation': None}
     win._finish_job()
     win._start(inspect_only=True)
-    assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True, 'cache_validation': None}
+    assert calls[-1][1] == {'inspect_only': True, 'auto_output_epoch': True, 'cache_validation': None, 'verify_cache': True}
     win._finish_job()
     for key, value in {'sub_obs_lat_rad': '-12', 'equatorial_radius_px': '30',
                        'ring_inner_radius_px': '40', 'ring_outer_radius_px': '60',

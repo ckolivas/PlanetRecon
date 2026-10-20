@@ -313,7 +313,7 @@ class SERWindow:
         layout = QVBoxLayout(root)
         buttons = QHBoxLayout()
         self.open_btn = QPushButton('Open SER…')
-        self.open_btn.setToolTip('Open a SER capture. A preprocessing cache beside the capture is validated and reused. Without a cache, frame quality is measured and cached; a cache that does not match is kept until Preprocess replaces it.')
+        self.open_btn.setToolTip('Open a SER capture. A preprocessing cache beside the capture is loaded for display and validated against the capture when exporting. Without a cache, frame quality is measured and cached; a cache that does not match is kept until Preprocess replaces it.')
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure frame quality and shape, and save the reusable cache beside the capture, replacing an existing cache. After a settings change, a cache that still matches is reused instead.')
         self.cancel_btn = QPushButton('Cancel')
@@ -490,16 +490,21 @@ class SERWindow:
         return self.path.with_name(self.path.name + '.planetrecon-preprocess.npz').is_file()
 
     def _load(self):
-        """Validate a cache beside the capture; measure only when there is none."""
+        """Load a cache beside the capture; measure only when there is none.
+
+        Opening only displays the cache; a batch validates it, as do exports.
+        """
         self._clear_frames()
         self.source_label.setText(str(self.path))
         cached = self._cache_exists()
         self.preprocessing_info = {'status': 'unverified', 'reason': (
-            'Loading cached preprocessing; validating capture data.' if cached
+            ('Loading cached preprocessing; validating capture data.' if self.batch is not None
+             else 'Loading cached preprocessing.') if cached
             else 'No preprocessing cache; measuring frame quality.')}
         self._refresh()
         # A batch applies the current settings, so it replaces an unmatched cache.
-        self._start('inspect' if cached else 'preprocess', measure_after=self.batch is not None)
+        self._start('inspect' if cached else 'preprocess', measure_after=self.batch is not None,
+                    verify=self.batch is not None)
 
     def _preprocess(self):
         if self.path is None:
@@ -511,7 +516,7 @@ class SERWindow:
         else:
             self._start('preprocess')
 
-    def _start(self, stage, *, measure_after=False):
+    def _start(self, stage, *, measure_after=False, verify=True):
         if self._busy() or self.path is None:
             return
         self._close_frame_source()
@@ -524,7 +529,8 @@ class SERWindow:
             cfg = self.controls.configuration()
             handle = start_stack_job(self.path, cfg, emit_previews=False,
                 inspect_only=stage == 'inspect', preprocess_only=stage == 'preprocess',
-                measure_geometry=stage != 'preprocess', cache_validation=self.cache_validation)
+                measure_geometry=stage != 'preprocess', cache_validation=self.cache_validation,
+                verify_cache=verify or stage != 'inspect')
         except (ValueError, TypeError, OSError) as exc:
             self.error.setText(str(exc))
             if self.preprocessing_info.get('status') == 'unverified':
@@ -617,7 +623,8 @@ class SERWindow:
                 self._set_preprocessing(info)
                 self.status.setText(
                     ('Frame quality measured and cached.' if stage == 'preprocess'
-                     else 'Cached frame quality validated.') + ' Click the graph to view a frame.' if ready
+                     else 'Cached frame quality loaded; it is validated when exported.'
+                     if info.get('verified') is False else 'Cached frame quality validated.') + ' Click the graph to view a frame.' if ready
                     else 'No matching preprocessing cache; measuring frame quality.' if measure
                     else 'The existing preprocessing cache was not used.')
                 self.progress.setRange(0, 100)

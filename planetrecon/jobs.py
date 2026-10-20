@@ -125,6 +125,7 @@ def _worker_run(
     preview_frame: int | None = None,
     cache_validation=None,
     measure_geometry: bool = True,
+    verify_cache: bool = True,
 ) -> None:
     apply_thread_limits(config_dict.get("threads"))
     # Spawn imports this module before entering the worker. Keep numerical
@@ -170,7 +171,7 @@ def _worker_run(
             if inspect_only:
                 from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for, quality_plot_data
                 selected, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
-                    validation=cache_validation,
+                    validation=cache_validation, verify=verify_cache,
                     should_cancel=cancel_event.is_set,
                     on_progress=lambda done, total: emit('progress', {
                         'stage': f'Validating cached preprocessing: {done:,}/{total:,} frames',
@@ -455,7 +456,10 @@ def start_stack_job(
     preview_frame: int | None = None,
     cache_validation=None,
     measure_geometry: bool = True,
+    verify_cache: bool = True,
 ) -> JobHandle:
+    """``verify_cache=False`` makes inspection display-only: a cache is shown
+    without scanning the capture, and validated when a processing job uses it."""
     ctx = multiprocessing.get_context("spawn")
     job_id = job_id or f"job-{os.getpid()}-{int(time.time() * 1000)}"
     if preview_frame is not None:
@@ -468,6 +472,8 @@ def start_stack_job(
         raise ValueError('choose inspection or preprocessing')
     if not measure_geometry and not preprocess_only:
         raise ValueError('geometry can only be skipped when preprocessing')
+    if not verify_cache and not inspect_only:
+        raise ValueError('only inspection can defer cache validation')
     if auto_output_epoch and not (inspect_only or preprocess_only):
         raise ValueError('automatic output epoch is only resolved during inspection/preprocessing')
     if (inspect_only or preprocess_only) and (resume_from is not None or state_checkpoint is not None):
@@ -500,6 +506,7 @@ def start_stack_job(
             preview_frame,
             cache_validation,
             measure_geometry,
+            verify_cache,
         ),
         name=f"planetrecon-job-{job_id}",
         daemon=True,

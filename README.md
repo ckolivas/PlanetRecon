@@ -364,7 +364,8 @@ for SER captures only. It reads the capture, measures frame quality and shape
 shows the frame quality graph and the frame clicked on it, and
 exports the selected frames as a lossless filtered SER. It does not stack.
 
-- **Open SER…** validates an existing cache and displays it. With no cache,
+- **Open SER…** loads an existing cache and displays it without rereading the
+  capture; export (and batch processing) validates it first. With no cache,
   frame quality is measured automatically and cached. A cache made with a
   different capture interpretation or calibration is reported and kept;
   **Preprocess** replaces it.
@@ -413,9 +414,11 @@ startup, including inactive controls and the distinction between manual and
 estimated geometry. Checkpoint paths and Resume are not restored automatically.
 Set `PLANETRECON_SETTINGS_PATH` to use a different preferences file.
 Startup does not reopen the previous capture. **Open capture** (or an explicit
-`--path`) automatically loads the preview and validates existing preprocessing.
-Within the desktop session, **Stack** reuses that full validation while
-the capture, interpretation, calibration and cache remain unchanged.
+`--path`) automatically loads the preview and any existing preprocessing for
+display. Opening never runs the full pixel check: a cache whose file-metadata
+record no longer matches is shown as loaded but not validated, and **Stack**
+(or SER export) validates it before use. Within the desktop session, Stack reuses
+a validation while the capture, interpretation, calibration and cache remain unchanged.
 
 The **Run** button has been retired in favour of **Stack**, which enables cached
 screening and local alignment and honours the selected Geometry motion model.

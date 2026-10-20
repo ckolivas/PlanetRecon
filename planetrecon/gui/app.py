@@ -355,7 +355,7 @@ class MainWindow:
         layout.addWidget(self.error)
         self.window.setCentralWidget(root)
         tips = {
-            self.open_btn: 'Open a SER, AVI or observed HDF5 capture. Existing preprocessing is validated automatically and displays the input preview and frame quality. Use Preprocess for new measurements or Stack to process.',
+            self.open_btn: 'Open a SER, AVI or observed HDF5 capture. Existing preprocessing is loaded to display the input preview and frame quality; it is validated against the capture when Stack or SER export uses it. Use Preprocess for new measurements or Stack to process.',
             self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
             self.checkpoint_btn: 'Choose the NPZ file used to save accumulator progress after each batch. To resume, choose an existing file and enable Resume.',
             self.checkpoint_path: 'Optional accumulator checkpoint path. Progress is saved here during processing; leave blank to disable checkpoints.',
@@ -620,12 +620,13 @@ class MainWindow:
         self.controls.suggest_capture_planet(self.path)
         cache = self.path.with_name(self.path.name + '.planetrecon-preprocess.npz')
         self.preprocessing_info = (
-            {'status': 'unverified', 'reason': 'Loading cached preprocessing; validating capture data.'}
+            {'status': 'unverified', 'reason': 'Loading cached preprocessing.'}
             if cache.is_file() else
             {'status': 'missing', 'reason': 'No preprocessing cache. Preprocessing starts when Stack is clicked, or when requested with Preprocess.'})
         self._refresh_preprocessing()
         if cache.is_file():
-            self._start(inspect_only=True)
+            # Display only: processing workflows validate the cache when they use it.
+            self._start(inspect_only=True, verify_cache=False)
         else:
             self.status.setText('Capture selected. Click Preprocess to measure frame quality, or Stack to process.')
 
@@ -687,7 +688,7 @@ class MainWindow:
             self.run_stage = 'stack'
         self._start(inspect_only=False, preprocess_only=self.run_stage == 'preprocess')
 
-    def _start(self, inspect_only, preprocess_only=False):
+    def _start(self, inspect_only, preprocess_only=False, verify_cache=True):
         if self.job is not None or self.path is None or self.closing:
             return
         self._stop_frame_preview()
@@ -721,7 +722,7 @@ class MainWindow:
                     auto_output_epoch=not self.checkpoint_path.text().strip())
             else:
                 handle = (start_stack_job(self.path, cfg, inspect_only=True,
-                    cache_validation=self.cache_validation,
+                    cache_validation=self.cache_validation, verify_cache=verify_cache,
                     auto_output_epoch=not self.checkpoint_path.text().strip() and self.controls.wants_midpoint_epoch()) if inspect_only
                           else start_stack_job(self.path, cfg, emit_previews=False,
                               cache_validation=self.cache_validation, **checkpoint_options))
@@ -870,7 +871,7 @@ class MainWindow:
             info, self.controls.fields['stack_percent'].value(),
             self.controls.fields['frame_selection_mode'].currentData(), True)
         if info.get('status') == 'ready':
-            usage = 'Will use cache'
+            usage = ('Will validate and use cache' if info.get('verified') is False else 'Will use cache')
             percent = self.controls.fields['stack_percent'].value()
             mode = self.controls.fields['frame_selection_mode'].currentData()
             if percent == 100:
@@ -930,7 +931,7 @@ class MainWindow:
         if self.preprocessing_info.get('status') == 'ready':
             self._clear_quality_preview()
             self.preprocessing_info = {'status': 'unverified',
-                'reason': 'Input/calibration settings changed. Reload the capture to validate the cache, or Preprocess again.'}
+                'reason': 'Input/calibration settings changed. Reload the capture to check the cache, or Preprocess again.'}
             self.controls.clear_geometry_estimate()
             self._refresh_preprocessing()
 
@@ -1061,7 +1062,9 @@ class MainWindow:
                 if 'source_metadata' in event.payload:
                     self._set_input(event.payload)
                     ready = self.preprocessing_info.get('status') == 'ready'
-                    self.status.setText('Input preview and frame quality ready. Choose settings, then Stack.' if ready
+                    self.status.setText(('Input preview and cached frame quality loaded. Choose settings, then Stack.'
+                                         if self.preprocessing_info.get('verified') is False else
+                                         'Input preview and frame quality ready. Choose settings, then Stack.') if ready
                                         else 'Input preview loaded. Preprocess to refresh frame quality, or Stack to process.')
                 elif 'preprocessing_cache' in event.payload:
                     self._set_preprocessing(event.payload['preprocessing_cache'],

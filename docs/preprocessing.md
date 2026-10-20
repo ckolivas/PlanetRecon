@@ -52,13 +52,18 @@ Ordinary cache refreshes retain manual edits, and unresolved parameters still
 require supplied values. Cancelling during preparation prevents stacking from starting.
 Checkpoint resumes retain their existing settings and cache.
 
-Opening a cached capture normally uses **fast file-metadata validation**, including
+Processing with a cached capture normally uses **fast file-metadata validation**, including
 across application restarts. After a full check, the cache stores a verification
 record bound to its measurement digest, the capture's path, device/inode, size,
 modification and change times, input interpretation, and calibration contents.
 Matching records avoid rereading the full capture. Changed metadata triggers a
 complete pixel check; unchanged pixels refresh the record, while changed pixels
 invalidate the cache. Geometry applicability is refreshed on every use.
+
+Opening a capture only displays its cache (`load_cache(..., verify=False)`): the
+header, timestamps and calibration are compared, but when the metadata record does
+not match the pixels are not reread. The report then carries `verified: False`, and
+Stack, preprocessing workflows, batches and SER export validate in full before use.
 
 This shortcut applies to concrete SER, AVI and HDF5 adapters. Custom and in-memory
 sources still receive full checks. The desktop also passes validation between

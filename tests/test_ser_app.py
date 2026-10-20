@@ -107,6 +107,30 @@ def test_open_measures_without_geometry_then_reuses_the_cache(tool, tmp_path):
     assert 'validated' in win.status.text()
 
 
+def test_open_displays_a_cache_and_export_validates_it(tool, tmp_path):
+    app, make = tool
+    path = planet(tmp_path)
+    with SERSource(path) as source:
+        preprocess_source(source, make().controls.configuration(), measure_geometry=False)
+    stamp = path.stat()
+    os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1_000_000))  # Breaks the persisted proof.
+    win = make()
+    stages = []
+    progress = win._progress
+    win._progress = lambda payload: (stages.append(payload.get('stage', '')), progress(payload))[1]
+    assert win.open_capture(path)
+    pump(app, lambda: win.job is None)
+    assert not win.error.text()
+    assert not any('Validating' in stage for stage in stages)
+    assert win.preprocessing_info['status'] == 'ready' and win.preprocessing_info['verified'] is False
+    assert 'validated when exported' in win.status.text()
+    assert win.export_btn.isEnabled() and win.quality_plot.selected.any()
+    out = tmp_path/'checked.ser'
+    assert win.export_ser(out)
+    pump(app, lambda: win.export_worker is None)
+    assert out.is_file(), win.export_status.text()
+
+
 def test_selection_modes_set_the_graph_and_the_exported_frames(tool, tmp_path):
     app, make = tool
     path, _, selected = capture(tmp_path)

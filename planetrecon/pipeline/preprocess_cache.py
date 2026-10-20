@@ -249,9 +249,26 @@ def save_cache(path, selection, source, config, *, validation_key=None):
         Path(tmp).unlink(missing_ok=True)
 
 
+def _unhashed_identity(source, config, calibration):
+    """Identity fields that need no pixel scan (header, timestamps, calibration)."""
+    times = source.timestamps()
+    return {'shape': list(source.frame_shape()), 'n_frames': source.n_frames(),
+            'color_mode': source.color_mode(), 'bit_depth': source.metadata().bit_depth,
+            'units': source.metadata().units,
+            'timestamps_sha256': None if times is None else hashlib.sha256(np.ascontiguousarray(times).tobytes()).hexdigest(),
+            'timestamp_scale_s': source.timestamp_scale_s(), 'reject_saturated': config.reject_saturated,
+            'calibration': capture_provenance(source, config, calibration)['calibration']}
+
+
 def load_cache(source, config, calibration=None, *, path=None, should_cancel=None, on_progress=None,
-               validation=None, force_full_validation=False):
-    """Use verified file metadata by default; hash fully on changes or request."""
+               validation=None, force_full_validation=False, verify=True):
+    """Use verified file metadata by default; hash fully on changes or request.
+
+    ``verify=False`` is for display only (opening a capture): a cache whose
+    file-metadata proof does not hold is returned with ``verified: False``
+    instead of scanning the capture's pixels. Processing workflows load the
+    cache again with verification before using it.
+    """
     previous = (validation.source_key, validation.cache_stamp, validation.digest) if validation else None
     if validation is not None:
         validation.clear()
@@ -289,6 +306,11 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
         reused = not force_full_validation and (persisted or
                     key is not None and previous == (key, stamp, selection.digest))
         upgraded = False
+        if not reused and not verify:
+            expected = selection.validation_identity or selection.identity
+            if any(expected.get(k) != v for k, v in _unhashed_identity(source, config, calibration).items()):
+                return None, {'status': 'stale', 'reason': 'Capture interpretation or calibration changed; run Preprocess again.'}
+            return selection, {**cache_report(selection, path, config, source), 'verified': False}
         if not reused:
             expected = selection.validation_identity or selection.identity
             old = {} if 'pixels_hash_method' not in expected else None
