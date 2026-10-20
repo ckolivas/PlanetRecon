@@ -73,7 +73,8 @@ def _cuda_inverse_local_coordinates(shift):
 
 
 def local_coordinates(template_with_support, frame, pose, reference_pose, render, window, use_cuda,
-                      *, method="square", sampling_multiplier=5., wavelength_nm=550., should_cancel=None):
+                      *, method="square", sampling_multiplier=5., wavelength_nm=550., should_cancel=None,
+                      ap_size=64):
     """Predict a fixed, prepared reference; only pose and observations vary."""
     projected = render(template_with_support,pose,reference_pose)
     predicted,support = projected[...,0],projected[...,1]
@@ -84,6 +85,10 @@ def local_coordinates(template_with_support, frame, pose, reference_pose, render
         matcher = CircularMultiscaleRegistration(predicted, sampling_multiplier=sampling_multiplier,
             wavelength_nm=wavelength_nm, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
             should_cancel=should_cancel)
+    elif method == 'alignment_points':
+        from planetrecon.pipeline.ap_align import AlignmentPoints
+        matcher = AlignmentPoints(predicted, size=ap_size, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
+                                  should_cancel=should_cancel)
     elif method == 'square':
         matcher = LocalRegistration(predicted,window=window,step=window//2,use_cuda=use_cuda,
                                     valid_mask=support >= 1.-1e-9)

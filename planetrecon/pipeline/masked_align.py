@@ -5,18 +5,28 @@ from scipy.ndimage import gaussian_filter, map_coordinates, maximum_filter
 from scipy.fft import rfft2, irfft2, next_fast_len
 
 
+def _fft_workers():
+    """The job's configured CPU thread limit (see runtime.apply_thread_limits)."""
+    import os
+    from planetrecon.runtime import default_thread_count
+    limit = os.environ.get('PLANETRECON_THREADS', '')
+    return max(1, int(limit)) if limit.isdigit() else default_thread_count()
+
+
 def observed_correlations(proxy, template, mask):
     """Four linear correlations, sharing the repeated proxy and mask FFTs."""
     full = tuple(2*n-1 for n in proxy.shape)
     shape = tuple(next_fast_len(n, real=True) for n in full)
-    observed = rfft2(proxy, s=shape)
-    kernel = rfft2(mask[::-1,::-1], s=shape)
+    # Multithreaded transforms give the same values; the job's thread limit applies.
+    workers = _fft_workers()
+    observed = rfft2(proxy, s=shape, workers=workers)
+    kernel = rfft2(mask[::-1,::-1], s=shape, workers=workers)
     def inverse(product):
-        return irfft2(product, s=shape)[:full[0],:full[1]]
-    dot = inverse(observed*rfft2(template[::-1,::-1], s=shape))
+        return irfft2(product, s=shape, workers=workers)[:full[0],:full[1]]
+    dot = inverse(observed*rfft2(template[::-1,::-1], s=shape, workers=workers))
     total = inverse(observed*kernel)
-    squares = inverse(rfft2(proxy**2, s=shape)*kernel)
-    support = inverse(rfft2(np.ones(proxy.shape), s=shape)*kernel)
+    squares = inverse(rfft2(proxy**2, s=shape, workers=workers)*kernel)
+    support = inverse(rfft2(np.ones(proxy.shape), s=shape, workers=workers)*kernel)
     return dot,total,squares,support
 
 

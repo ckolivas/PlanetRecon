@@ -76,6 +76,8 @@ def _peak_fit(c):
     inverse = np.where(usable, 1. / np.maximum(evals, 1e-30), 0.)
     g = np.stack([gx, gy], -1)
     delta = np.einsum('nij,nj->ni', evecs, np.einsum('nij,ni->nj', evecs, g) * inverse)
+    # An exact match has no subpixel offset (as in the other matchers).
+    delta[peak >= 1 - 1e-10] = 0.
     ok &= (np.abs(delta) <= 1).all(axis=1)
     offset = np.stack([cx - R, cy - R], -1) + delta
     H = np.einsum('nij,nj,nkj->nik', evecs, evals * usable, evecs) * ok[:, None, None]
@@ -88,7 +90,7 @@ class AlignmentPoints:
     ``displacement`` returns a dense (x, y) sampling field in detector pixels,
     the convention of ``local_align.pull`` and the CUDA backprojection.
     """
-    def __init__(self, reference, *, size=64, search=SEARCH, use_cuda=False, should_cancel=None):
+    def __init__(self, reference, *, size=64, search=SEARCH, use_cuda=False, should_cancel=None, valid_mask=None):
         reference = np.asarray(reference, dtype=np.float64)
         if reference.ndim != 2 or not np.isfinite(reference).all():
             raise ValueError('finite two-dimensional reference required')
@@ -107,12 +109,19 @@ class AlignmentPoints:
         proxy = LocalRegistration.proxy(reference)
         window = np.outer(np.hanning(size), np.hanning(size))
         level = reference.max() * MIN_BRIGHTNESS
+        if valid_mask is not None:
+            valid_mask = np.asarray(valid_mask, dtype=bool)
+            if valid_mask.shape != reference.shape:
+                raise ValueError('alignment point support must match the reference shape')
         centres, templates, energy = [], [], []
         for y in range(margin, h - margin - size % 2, self.spacing):
             for x in range(margin, w - margin - size % 2, self.spacing):
                 section = np.s_[y - half:y - half + size, x - half:x - half + size]
                 if reference[section].mean() < level:
                     continue
+                if valid_mask is not None and not valid_mask[y-margin:y-margin+size+2*search,
+                                                             x-margin:x-margin+size+2*search].all():
+                    continue  # The whole search footprint must be observed (e.g. a predicted reference).
                 t = proxy[section] - (proxy[section] * window).sum() / window.sum()
                 centres.append((y, x))
                 templates.append(t)
@@ -301,15 +310,20 @@ class LocalQuality:
         self.use_cuda = use_cuda
 
     def measure(self, plane, shift):
+        return self.measure_at(plane, self.centres + np.array([float(shift[1]), float(shift[0])]))
+
+    def measure_at(self, plane, centres):
+        """Local quality around explicit (row, column) centres, e.g. after a motion model."""
+        centres = np.asarray(centres, dtype=float)
         if self.use_cuda:
             from planetrecon.backends.torch_ap import local_quality
-            return local_quality(plane, shift, self.centres, self.sigma)
+            return local_quality(plane, (0., 0.), centres, self.sigma)
         smooth = gaussian_filter(np.asarray(plane, dtype=np.float64), QUALITY_SMOOTH_PX, mode='nearest')
         lap = np.zeros_like(smooth)
         lap[1:-1, 1:-1] = (smooth[:-2, 1:-1] + smooth[2:, 1:-1] + smooth[1:-1, :-2]
                            + smooth[1:-1, 2:] - 4 * smooth[1:-1, 1:-1])
-        wy = _gaussians(self.ys, self.centres[:, 0] + float(shift[1]), self.sigma)
-        wx = _gaussians(self.xs, self.centres[:, 1] + float(shift[0]), self.sigma)
+        wy = _gaussians(self.ys, centres[:, 0], self.sigma)
+        wx = _gaussians(self.xs, centres[:, 1], self.sigma)
         # Separable weights: one matrix product per map, not an n x h x w tensor.
         energy = ((wy @ (lap * lap)) * wx).sum(axis=1)
         level = ((wy @ smooth) * wx).sum(axis=1)

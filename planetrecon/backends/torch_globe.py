@@ -126,9 +126,11 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
         values = self.tensor(frame).reshape(self.h*self.w,-1)
         demo = None if demo is None else self.tensor(demo).reshape(-1,3)
         covered = torch.zeros((), dtype=torch.float64, device=self.device)
+        # A per-pixel score (reference geometry) applies at each destination pixel.
+        score_map = score.reshape(-1) if torch.is_tensor(score) else None
         for index, weight in self.sample_corners(pose,ref,sample_xy):
             covered += weight.sum()
-            weighted = weight*score
+            weighted = weight*(score_map[index] if score_map is not None else score)
             if self.channels is not None:
                 dest = index*3+self.channels
                 self.accum.flatten().scatter_add_(0,dest,weighted*values[:,0])

@@ -147,9 +147,9 @@ def _stack_source(
                                      f'search (21 by 21); using global alignment.')
             config = replace(config, local_alignment=False)
     if (config.local_alignment and config.alignment_method == 'alignment_points'
-            and config.geometry_mode != 'none'):
-        raise ValueError('Alignment points currently support ordinary stacking only. Choose Motion model None, '
-                         'or circular/square alignment for a motion model.')
+            and config.geometry_mode not in ('none', 'surface', 'combined')):
+        raise ValueError('Alignment points support Motion model None, Surface or Combined. Choose one of those, '
+                         'or circular/square alignment for Field or Saturn.')
     selection = reference_selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:

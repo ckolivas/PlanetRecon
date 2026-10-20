@@ -40,9 +40,48 @@ The method:
 
 CUDA runs the correlations, field solve, proxy filtering, local quality and
 reference resampling; peak decisions use the shared CPU code. CPU and CUDA
-fields agree to 1e-9 px in the tests. Checkpoints bind the point size and local
-quality setting. Motion models (Field/Surface/Combined/Saturn) are refused with
-alignment points; use circular or square alignment for them.
+fields agree to 1e-9 px in the tests. Checkpoints bind the point size.
+
+## With a motion model (Surface, Combined)
+
+Alignment points combine with the Surface and Combined motion models; Field
+and Saturn are refused (use circular or square alignment for them).
+
+1. **Reference.** Up to 3000 of the best selected frames are predicted into the
+   anchor frame's geometry by the globe model, including each frame's measured
+   camera drift, and averaged; that derotated mean is refined once with
+   alignment points.
+2. **Matching.** For each frame the derotated reference is predicted at the
+   frame's own time and pose, and an alignment-point matcher is built on it,
+   using only points whose whole search footprint is observed (newly rotated-in
+   longitudes are excluded). The measured seeing field is in frame coordinates,
+   so it is inverted directly; composing a field through the model instead
+   fails at the limb, where the model's mapping is discontinuous.
+3. **Stacking.** Each raw sample is scattered once through the model into the
+   reference-epoch geometry, removing rotation and seeing in one resampling.
+4. **Local quality.** Points on the derotated reference are ranked in every
+   screened frame at their predicted positions in that frame; the blend weights
+   sit at the points' reference-epoch positions and apply at each destination
+   pixel of the scatter.
+
+Jupiter (75 s capture, about 2.5 px of rotation at the disc centre over the
+capture), 63%, independent half-stack SNR:
+
+| method | 0.04–0.08 | 0.08–0.12 | 0.12–0.16 | 0.16–0.20 | 0.20–0.25 | 0.25–0.30 |
+|---|---|---|---|---|---|---|
+| None + circular | 633 | 100 | 15.7 | 5.1 | 1.26 | 0.15 |
+| Surface + circular | 1,030 | 133 | 15.3 | 3.8 | 0.94 | 0.13 |
+| None + alignment points | 828 | 133 | 20.4 | 7.1 | 1.86 | 0.15 |
+| Surface + alignment points, no local quality | 1,020 | 141 | 20.9 | 7.3 | 1.79 | 0.19 |
+| Surface + alignment points | 983 | 145 | 21.1 | 7.3 | 1.83 | 0.20 |
+
+Surface derotation improves the coarse scales (+19–23% at 0.04–0.08 over None
+with alignment points) and the finest band (+29% at 0.25–0.30); between 0.12
+and 0.25 cycles/px the two are within a few percent. On this short capture
+local quality adds nothing measurable with Surface. Surface processing is much
+slower: about 0.22 s per frame (drift tracking about 80 ms, a matcher built on
+each frame's predicted reference, and the scatter) against about 0.02 s per
+frame with Motion model None.
 
 ## Why the earlier stacks were poor
 

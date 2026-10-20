@@ -199,7 +199,7 @@ def test_alignment_points_refuse_motion_models_and_validate_settings(tmp_path):
         ReconstructionConfig.from_dict({**points_config().to_dict(), 'local_quality': False})
     with SERSource(capture(tmp_path)) as source:
         cfg = points_config(geometry_mode='field', field_rate_rad_s=0.)
-        with pytest.raises(ValueError, match='ordinary stacking only'):
+        with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface or Combined'):
             stack_source(source, cfg)
     # Settings that only alignment points use do not disturb other checkpoints.
     from planetrecon import resume

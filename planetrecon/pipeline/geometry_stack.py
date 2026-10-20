@@ -676,6 +676,7 @@ def stack_source_geometry(
             if not bayer or colour_retry:
                 raise
     local_template = local_support = local_render = None
+    local_selection = None
     if config.local_alignment:
         from planetrecon.pipeline.motion_local import build_motion_template, local_coordinates
         if selection is None:
@@ -687,7 +688,15 @@ def stack_source_geometry(
         def local_plane(frame):
             return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
-        candidates = np.asarray(reference_plan['template_candidates'], dtype=int)
+        points = config.alignment_method == 'alignment_points'
+        if points:
+            # A low-noise derotated reference from many of the best selected frames.
+            from planetrecon.pipeline.ap_align import REFERENCE_FRAMES
+            chosen = np.flatnonzero(selection.accepted)
+            ranked = chosen[np.argsort(-selection.measurements[chosen, 0], kind='stable')[:REFERENCE_FRAMES]]
+            candidates = np.sort(ranked)
+        else:
+            candidates = np.asarray(reference_plan['template_candidates'], dtype=int)
         def read_aligned(index):
             frame = usable_frame(source.read_raw(index))
             if frame is None:
@@ -710,7 +719,21 @@ def stack_source_geometry(
             projected = local_render(np.stack((colour_plane,np.ones((h,w))),axis=-1),anchor_pose,pose)
             return projected[...,0],projected[...,1]
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
+        local_matcher = None
+        if points:
+            from planetrecon.pipeline.ap_align import AlignmentPoints
+            from planetrecon.pipeline.motion_points import refine_motion_template
+            local_template, local_support = refine_motion_template(
+                local_template, candidates, read_aligned, size=config.ap_size,
+                use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
+            local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
         local_template_with_support = np.stack((local_template,local_support),axis=-1)
+        if points and len(local_matcher.centres):
+            local_selection, selection = _motion_local_quality(
+                local_matcher, selection, reference_selection, source, usable_frame, local_plane,
+                lambda frame: local_plane(frame) if colour_retry else _alignment_plane(frame, color),
+                required_displacement, sampled_displacements, poses, anchor_pose, ref_pose, model, config,
+                use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
         if backend.name == 'cuda':
             import torch
             # The reference stays fixed for this run; avoid rebuilding and
@@ -725,6 +748,23 @@ def stack_source_geometry(
             'composition':'invert residual pull; evaluate geometry; scatter original samples once',
             'registration_proxy':'RGB luminance' if bayer else 'luminance',
         }
+        if points:
+            for key in ('window_px', 'step_px', 'maximum_residual_px', 'template_candidates'):
+                diagnostics['local_alignment'].pop(key)
+            diagnostics['local_alignment'].update(local_matcher.provenance, version=3, template_frames=len(candidates),
+                template='derotated mean of the best selected frames in the anchor geometry, refined once with '
+                         'alignment points',
+                matching='reference predicted at each frame time; alignment points on its fully observed support',
+                composition='invert residual pull; evaluate geometry; scatter original samples once',
+                local_quality_grid='fixed points on the derotated reference')
+            diagnostics['local_alignment'].pop('cuda_execution', None)
+            if local_selection is not None:
+                diagnostics['local_alignment']['local_quality'] = {
+                    'frames_per_point': int(len(local_selection.chosen) and local_selection.chosen.sum(0).max()),
+                    'ranked_frames': len(local_selection.row),
+                    'contributing_frames': int(np.count_nonzero(selection.accepted)),
+                    'measure': 'squared Laplacian of the smoothed plane at each point\'s predicted frame position',
+                    'blending': 'normalised Gaussian footprints at reference-epoch point positions'}
         if config.alignment_method == 'circular_multiscale':
             from planetrecon.pipeline.circular_align import minimum_diameter
             diagnostics['local_alignment'].update(
@@ -929,13 +969,18 @@ def stack_source_geometry(
                 continue
             if not config.quality_weighting:
                 score = 1.
+            if local_selection is not None:
+                # Blend of the alignment points that selected this frame, in reference geometry.
+                score = score * (local_selection.weights_tensor(int(index)) if gpu_accumulator is not None
+                                 else local_selection.weights(int(index)))
             sample_xy = None
             if config.local_alignment:
                 local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)
                 sample_xy = local_coordinates(local_template_with_support,local_image,
                     pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda',
                     method=config.alignment_method, sampling_multiplier=config.sampling_multiplier,
-                    wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel)
+                    wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel,
+                    ap_size=config.ap_size)
             if gpu_accumulator is not None:
                 if bayer and demo is None:
                     demo = demosaic(calibrated)
@@ -968,20 +1013,22 @@ def stack_source_geometry(
                     )
                     rgb_add[..., idx] = a
                     rgb_w[..., idx] = wt
-                accum += score * rgb_add
-                weight += score * rgb_w
+                scale = score[..., None] if np.ndim(score) == 2 else score
+                accum += scale * rgb_add
+                weight += scale * rgb_w
                 frame_coverage = rgb_w
                 if demo is None:
                     demo = demosaic(calibrated)
                 da, dw = push_samples(demo, y_idx, x_idx, (h, w), valid=valid)
-                demosaic_accum += score * da
-                demosaic_weight += score * dw
+                demosaic_accum += scale * da
+                demosaic_weight += scale * dw
             elif rgb:
                 if calibrated.ndim == 2:
                     raise ValueError("RGB source produced a 2-D frame")
                 a, wt = push_samples(calibrated, y_idx, x_idx, (h, w), valid=valid)
-                accum += score * a
-                weight += score * wt
+                scale = score[..., None] if np.ndim(score) == 2 else score
+                accum += scale * a
+                weight += scale * wt
                 frame_coverage = wt
             else:
                 a, wt = push_samples(calibrated, y_idx, x_idx, (h, w), valid=valid)
@@ -1065,6 +1112,53 @@ def stack_source_geometry(
     complete_bayer_rgb(result, target_regions)
     emit(result.stage, incomplete=result.incomplete)
     return result
+
+
+def _motion_local_quality(matcher, selection, reference_selection, source, usable_frame, local_plane,
+                          tracking_plane, required_displacement, sampled_displacements, poses, anchor_pose,
+                          ref_pose, model, config, *, use_cuda, should_cancel):
+    """Per-point local quality with a motion model.
+
+    Points live on the derotated anchor-geometry reference. Each frame is
+    ranked at every point's predicted position in that frame; blend weights
+    are placed at the points' reference-epoch positions for accumulation.
+    """
+    from types import SimpleNamespace
+    from planetrecon.pipeline.ap_align import LocalQuality, LocalSelection
+    screened = np.flatnonzero((reference_selection if reference_selection is not None else selection).accepted)
+    count = int(np.count_nonzero(selection.accepted))
+    if len(screened) <= count:
+        return None, selection
+    quality = LocalQuality(matcher, use_cuda=use_cuda)
+    rows, cols = matcher.centres[:, 0] + .5, matcher.centres[:, 1] + .5   # pixel-centre coordinates
+    scores = np.full((len(screened), len(rows)), -np.inf)
+    for k, index in enumerate(screened):
+        if should_cancel is not None and should_cancel():
+            raise InterruptedError('cancelled while measuring local quality')
+        frame = usable_frame(source.read_raw(int(index)))
+        if frame is None:
+            continue
+        if int(index) not in sampled_displacements:
+            sampled_displacements[int(index)] = required_displacement(int(index), tracking_plane(frame), frame)
+        dx, dy = sampled_displacements[int(index)]
+        if not np.isfinite([dx, dy]).all() or max(abs(dx), abs(dy)) > config.max_shift_px:
+            continue
+        pose = replace(poses[int(index)], cx=poses[int(index)].cx + dx, cy=poses[int(index)].cy + dy)
+        fx, fy, ok = model.src_to_ref(cols, rows, anchor_pose, pose)
+        ok &= np.isfinite(fx) & np.isfinite(fy)
+        centres = np.column_stack([np.where(ok, fy, rows + pose.cy - anchor_pose.cy) - .5,
+                                   np.where(ok, fx, cols + pose.cx - anchor_pose.cx) - .5])
+        scores[k] = quality.measure_at(local_plane(frame), centres)
+    order = np.argsort(-scores, axis=0, kind='stable')[:count]
+    chosen = np.zeros(scores.shape, dtype=bool)
+    np.put_along_axis(chosen, order, True, axis=0)
+    chosen &= np.isfinite(scores)
+    rx, ry, ok = model.src_to_ref(cols, rows, anchor_pose, ref_pose)
+    ok &= np.isfinite(rx) & np.isfinite(ry)
+    placed = SimpleNamespace(shape=matcher.shape, spacing=matcher.spacing,
+                             centres=np.column_stack([np.where(ok, ry, rows) - .5, np.where(ok, rx, cols) - .5]))
+    local = LocalSelection(placed, chosen, screened, selection.accepted.copy())
+    return local, replace(selection, accepted=local.frames())
 
 
 def _reference_pose(poses: list[FramePose], config: ReconstructionConfig) -> FramePose:
