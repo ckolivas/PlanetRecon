@@ -31,6 +31,11 @@ PreviewFn = Callable[[ReconstructionResult, dict], None]
 CancelFn = Callable[[], bool]
 
 
+class SetupProgress:
+    """Lightweight event for setup phases that precede the first stacked frame."""
+    stage = 'setup'
+
+
 def _alignment_plane(frame: np.ndarray, color_mode: str) -> np.ndarray:
     if frame.ndim == 3 and frame.shape[-1] == 3:
         return 0.5 * frame[..., 1] + 0.25 * frame[..., 0] + 0.25 * frame[..., 2]
@@ -79,6 +84,9 @@ def stack_source(
                if config.device != 'cpu' and config.geometry_mode == 'none' else nullcontext(None))
     with cpu_memory_limit(config.max_ram_bytes) as cpu_report, context as memory_report:
         def event(result, info):
+            if result.stage == 'setup':
+                on_event(result, info)
+                return
             if full_scale is not None:
                 normalise_result(result, config.normalise_percent, full_scale)
             if cpu_report is not None:
@@ -306,6 +314,8 @@ def _stack_source(
         warnings = list(dict.fromkeys(restored["warnings"] + warnings))
         snapshot_provenance["resumed_from_frame"] = next_index
 
+    device_sums = None  # Alignment-point CUDA batch sums; CPU arrays stay authoritative.
+
     def cpu_fallback(exc):
         nonlocal backend, reference
         if backend.name != "cuda":
@@ -318,6 +328,18 @@ def _stack_source(
         warnings.append(message)
         if reference is not None:
             reference = backend.prepare_reference(reference)
+        if device_sums is not None and device_sums.pending:
+            try:
+                device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()))
+            except Exception:
+                # Unmerged device sums are lost: recompute exactly those frames on CPU.
+                for index in device_sums.discard():
+                    accumulate(process_frame((index, source.read_raw(index))))
+
+    def setup_progress(phase, done, total):
+        if on_event is not None:
+            on_event(SetupProgress, {'phase': phase, 'n_processed': done, 'n_total': total,
+                                     'backend': backend.name})
 
     def prepare_reference():
         nonlocal reference
@@ -358,16 +380,19 @@ def _stack_source(
 
         def read_plane(index):
             calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+            if points and backend.name == 'cuda':
+                return backend.registration_plane(calibrated, color)
             return alignment_plane(calibrated, color)
         if resume_from is None:
-            build = (partial(refined_reference, size=config.ap_size, use_cuda=backend.name == 'cuda')
-                     if points else build_template)
+            build = (partial(refined_reference, size=config.ap_size, use_cuda=backend.name == 'cuda',
+                             progress=setup_progress) if points else build_template)
             try:
                 reference = build(reference, candidates, read_plane,
                                   backend.phase_correlation, config.max_shift_px, should_cancel=should_cancel)
             except RuntimeError as exc:
                 cpu_fallback(exc)
-                build = partial(refined_reference, size=config.ap_size) if points else build_template
+                build = (partial(refined_reference, size=config.ap_size, progress=setup_progress)
+                         if points else build_template)
                 reference = build(reference, candidates, read_plane,
                                   backend.phase_correlation, config.max_shift_px, should_cancel=should_cancel)
             prepare_reference()
@@ -400,11 +425,12 @@ def _stack_source(
                 try:
                     local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                      reference, count, selection.accepted.copy(), should_cancel,
-                                                     use_cuda=backend.name == 'cuda')
+                                                     use_cuda=backend.name == 'cuda', progress=setup_progress)
                 except RuntimeError as exc:
                     cpu_fallback(exc)
                     local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
-                                                     reference, count, selection.accepted.copy(), should_cancel)
+                                                     reference, count, selection.accepted.copy(), should_cancel,
+                                                     progress=setup_progress)
                 selection = replace(selection, accepted=local_selection.frames())
                 detail['local_quality'] = {
                     'frames_per_point': count, 'ranked_frames': len(screened),
@@ -414,6 +440,9 @@ def _stack_source(
                     'blending': 'normalised Gaussian footprints (sigma 0.6 x spacing); global selection outside points',
                 }
             snapshot_provenance['registration'] += ' + alignment points'
+            if backend.name == 'cuda':
+                from planetrecon.backends.torch_ap import DeviceAccumulator
+                device_sums = DeviceAccumulator()
         else:
             local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
             snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
@@ -451,6 +480,27 @@ def _stack_source(
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
+    def device_frame(index, calibrated):
+        """Alignment points on CUDA: plane, registration and contributions stay on the device."""
+        plane = backend.registration_plane(calibrated, color)
+        # Local quality already registered this frame against the same reference.
+        shift = local_selection.shifts.get(int(index)) if local_selection is not None else None
+        if shift is None:
+            shift = backend.phase_correlation(reference, plane)
+        if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
+            return None
+        score = selection.measurements[index, 0]
+        if not np.isfinite(score):
+            return None
+        score = max(score, 1e-12) if config.quality_weighting else 1.
+        if local_matcher.use_cuda is False:
+            local_matcher.use_cuda = True
+        field = local_matcher.displacement_tensor(plane, shift)
+        projected = backend.backproject_tensors(calibrated, field, color)
+        if local_selection is not None:
+            score = score * local_selection.weights_tensor(index)
+        return (score, *projected)
+
     def process_frame(item):
         nonlocal reference, reference_index
         index, raw = item
@@ -461,6 +511,14 @@ def _stack_source(
         calibrated, cal_info = apply_calibration(raw, calibration)
         if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
             return None
+        if device_sums is not None and backend.name == 'cuda':
+            try:
+                return device_frame(index, calibrated)
+            except RuntimeError as exc:
+                if hasattr(local_matcher, 'release_cuda'):
+                    local_matcher.release_cuda()
+                local_matcher.use_cuda = False
+                cpu_fallback(exc)
         demosaiced = (demosaic(calibrated)
                       if colour_registration and backend.name != 'cuda' else None)
         plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
@@ -532,6 +590,17 @@ def _stack_source(
                       order=1, prefilter=False, mode='grid-constant')
         return score, add, support, None, None
 
+    def accumulate(projected):
+        if projected is None:
+            return
+        score, add, wt, demo, support = projected
+        scale = score[..., None] if np.ndim(score) == 2 and add.ndim == 3 else score
+        accum[...] += scale * add
+        weight[...] += scale * wt
+        if bayer:
+            demosaic_accum[...] += scale * demo
+            demosaic_weight[...] += (score * support)[..., None]
+
     from planetrecon.pipeline.cpu_pool import CPUFramePool, selected_batches
     with CPUFramePool(config, shape, n-next_index, enabled=backend.name == 'cpu',
                       should_cancel=should_cancel) as pool:
@@ -579,18 +648,20 @@ def _stack_source(
                     if projected is None:
                         n_rejected += 1
                         continue
-                    score, add, wt, demo, support = projected
-                    scale = score[..., None] if np.ndim(score) == 2 and add.ndim == 3 else score
-                    accum += scale * add
-                    weight += scale * wt
-                    if bayer:
-                        demosaic_accum += scale * demo
-                        demosaic_weight += (score * support)[..., None]
+                    if device_sums is not None and not isinstance(projected[1], np.ndarray):
+                        device_sums.add(index, *projected)
+                    else:
+                        accumulate(projected)
                     n_used += 1
             except InterruptedError:
                 if not pool.cancelled():
                     raise
                 cancelled = True
+            if device_sums is not None and device_sums.pending:
+                try:
+                    device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()))
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
             cancelled = cancelled or pool.cancelled()
             if state_checkpoint is not None:
                 resume.save(state_checkpoint, state_identity, {

@@ -41,7 +41,13 @@ class TorchBackend(Backend):
             self._correlation_filter = torch.as_tensor(correlation_filter(shape), device='cuda:0')
             self._correlation_shape = shape
         corr = torch.fft.ifft2(cross * self._correlation_filter).real
-        return correlation_peak(corr.cpu().numpy())
+        # Locate the peak on the device; only the two three-point stencils are copied.
+        from planetrecon.pipeline.align import peak_neighbours, peak_offsets
+        py, px = divmod(int(torch.argmax(corr)), shape[1])
+        vertical, horizontal = peak_neighbours(py, px, shape)
+        index = torch.as_tensor([vertical, horizontal], device=corr.device)
+        values = corr[index[:, 0], index[:, 1]].cpu().numpy()
+        return peak_offsets(py, px, shape, values[0], values[1])
 
     def shift(self, image: np.ndarray, shift_xy: tuple[float, float]) -> np.ndarray:
         from scipy.ndimage import shift as ndshift
@@ -116,24 +122,43 @@ class TorchBackend(Backend):
                     dst,src=regions;result[dst]+=image[src]
         return result
 
-    def backproject(self, raw, shift_xy, color):
-        """CUDA mono/RGB/CFA contributions; CPU retains authoritative sums."""
+    def _bayer(self, shape, color):
+        from planetrecon.detector import BAYER_PATTERNS
+        key=(tuple(shape),color)
+        if getattr(self,'_mask_key',None)!=key:
+            tile=torch.tensor([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]],device='cuda:0')
+            y=torch.arange(shape[0],device='cuda:0')[:,None]%2
+            x=torch.arange(shape[1],device='cuda:0')[None,:]%2
+            self._masks=tile[y,x][...,None]==torch.arange(3,device='cuda:0')
+            self._mask_weights=self._masks.to(torch.float64)
+            self._demo_weights=torch.clamp(self._neighbors(self._mask_weights),min=1.)
+            self._mask_key=key
+
+    def _demosaic(self, image, color):
+        self._bayer(image.shape, color)
+        planes=image[...,None]*self._mask_weights
+        return planes,torch.where(self._masks,planes,self._neighbors(planes)/self._demo_weights)
+
+    def registration_plane(self, raw, color):
+        """Device equivalent of the colour registration plane (bilinear RGB luminance)."""
         from planetrecon.detector import BAYER_PATTERNS
         image=torch.as_tensor(raw,device='cuda:0',dtype=torch.float64)
         if color in BAYER_PATTERNS:
-            key=(tuple(raw.shape),color)
-            if getattr(self,'_mask_key',None)!=key:
-                tile=torch.tensor([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]],device='cuda:0')
-                y=torch.arange(raw.shape[0],device='cuda:0')[:,None]%2
-                x=torch.arange(raw.shape[1],device='cuda:0')[None,:]%2
-                self._masks=tile[y,x][...,None]==torch.arange(3,device='cuda:0')
-                self._mask_weights=self._masks.to(torch.float64)
-                self._demo_weights=torch.clamp(self._neighbors(self._mask_weights),min=1.)
-                self._mask_key=key
-            planes=image[...,None]*self._mask_weights
-            demo=torch.where(self._masks,planes,self._neighbors(planes)/self._demo_weights)
-            add,weight,demo,support=self._pull_many(
-                (planes,self._mask_weights,demo,torch.ones_like(image)),shift_xy)
-            return tuple(v.cpu().numpy() for v in (add,weight,demo,support))
+            return self._demosaic(image,color)[1]@torch.tensor([.25,.5,.25],device='cuda:0',dtype=torch.float64)
+        if image.ndim==3:
+            return .5*image[...,1]+.25*image[...,0]+.25*image[...,2]
+        return image
+
+    def backproject_tensors(self, raw, shift_xy, color):
+        """Device contributions (signal, weight, demosaic comparison, support)."""
+        from planetrecon.detector import BAYER_PATTERNS
+        image=torch.as_tensor(raw,device='cuda:0',dtype=torch.float64)
+        if color in BAYER_PATTERNS:
+            planes,demo=self._demosaic(image,color)
+            return tuple(self._pull_many((planes,self._mask_weights,demo,torch.ones_like(image)),shift_xy))
         add,support=self._pull_many((image,torch.ones_like(image)),shift_xy)
-        return add.cpu().numpy(),support.cpu().numpy(),None,None
+        return add,support,None,None
+
+    def backproject(self, raw, shift_xy, color):
+        """CUDA mono/RGB/CFA contributions; CPU retains authoritative sums."""
+        return tuple(None if v is None else v.cpu().numpy() for v in self.backproject_tensors(raw, shift_xy, color))

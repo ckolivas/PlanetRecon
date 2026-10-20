@@ -126,3 +126,74 @@ class TorchAlignmentPoints:
         field[0] += gx
         field[1] += gy
         return field
+
+
+def device_template(reference, indices, read_plane, correlate, max_shift, *, should_cancel=None, progress=None):
+    """Device equivalent of ``local_align.build_template`` (planes may be tensors)."""
+    ref = torch.tensor(np.asarray(reference, dtype=np.float64), device='cuda:0')
+    h, w = ref.shape
+    yy, xx = torch.meshgrid(torch.arange(h, device='cuda:0', dtype=torch.float64),
+                            torch.arange(w, device='cuda:0', dtype=torch.float64), indexing='ij')
+    total = torch.zeros_like(ref)
+    weight = torch.zeros_like(ref)
+    ones = torch.ones_like(ref)
+    used = 0
+    for step, index in enumerate(indices, 1):
+        if should_cancel is not None and should_cancel():
+            raise InterruptedError('cancelled while building the alignment template')
+        if progress is not None:
+            progress(step)
+        frame = torch.as_tensor(read_plane(int(index)), device='cuda:0', dtype=torch.float64)
+        shift = correlate(reference, frame)
+        if not np.isfinite(shift).all() or max(abs(v) for v in shift) > max_shift:
+            continue
+        total.add_(sample(frame, yy + shift[1], xx + shift[0]))
+        weight.add_(sample(ones, yy + shift[1], xx + shift[0]))
+        used += 1
+    if used < 4:
+        raise ValueError('Local alignment needs four valid aligned template frames; use global alignment.')
+    template = torch.where(weight > 0, total / weight.clamp_min(1e-300), ref)
+    origin = correlate(reference, template)
+    if not np.isfinite(origin).all() or max(abs(v) for v in origin) > max_shift:
+        raise ValueError('Local template origin is unreliable; use global alignment.')
+    observed = (weight > 0).to(torch.float64)
+    anchored = sample(template * observed, yy + origin[1], xx + origin[0])
+    support = sample(observed, yy + origin[1], xx + origin[0])
+    return torch.where(support > 0, anchored / support.clamp_min(1e-300), ref).cpu().numpy()
+
+
+class DeviceAccumulator:
+    """Weighted sums kept on the GPU for one batch, then merged into CPU sums.
+
+    The CPU arrays stay authoritative for checkpoints and fallback; ``pending``
+    lists the capture indices whose contributions have not been merged yet.
+    """
+    def __init__(self):
+        self.sums = None
+        self.pending = []
+
+    def add(self, index, weight, add, wt, demo, support):
+        if not torch.is_tensor(weight):
+            weight = torch.tensor(float(weight), device=add.device, dtype=torch.float64)
+        scale = weight[..., None] if weight.ndim == 2 and add.ndim == 3 else weight
+        parts = [scale * add, scale * wt]
+        if demo is not None:
+            parts += [scale * demo, (weight * support)[..., None]]
+        if self.sums is None:
+            self.sums = parts
+        else:
+            for total, part in zip(self.sums, parts):
+                total.add_(part)
+        self.pending.append(int(index))
+
+    def flush(self, *targets):
+        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight])."""
+        if self.sums is not None:
+            for total, target in zip(self.sums, targets):
+                target += total.cpu().numpy()
+        self.sums = None
+        self.pending = []
+
+    def discard(self):
+        pending, self.sums, self.pending = self.pending, None, []
+        return pending

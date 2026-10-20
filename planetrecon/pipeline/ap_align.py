@@ -213,7 +213,7 @@ class AlignmentPoints:
             self._cuda = TorchAlignmentPoints(self)
             self.provenance['cuda_execution'].update(used=True, precision='float64',
                 matching='grouped GPU correlations and field solve; CPU peak fits')
-        return self._cuda.displacement(np.asarray(frame, dtype=np.float64), global_shift)
+        return self._cuda.displacement(frame, global_shift)
 
     def release_cuda(self):
         self._cuda = None
@@ -223,13 +223,30 @@ class AlignmentPoints:
 
 
 def refined_reference(reference, indices, read_plane, correlate, max_shift, *, size, use_cuda=False,
-                      should_cancel=None):
+                      should_cancel=None, progress=None):
     """Average many frames twice: globally aligned, then locally aligned to that mean.
 
-    A low-noise reference limits imprinting its noise on the matches.
+    A low-noise reference limits imprinting its noise on the matches. With CUDA,
+    ``read_plane`` may return device tensors; the result is a NumPy array.
     """
     from planetrecon.pipeline.local_align import build_template, pull
-    template = build_template(reference, indices, read_plane, correlate, max_shift, should_cancel)
+    total_steps = 2 * len(indices)
+
+    def report(step):
+        if progress is not None and (step % 25 == 0 or step == total_steps):
+            progress('Building alignment reference', step, total_steps)
+    if use_cuda:
+        from planetrecon.backends.torch_ap import device_template
+        template = device_template(reference, indices, read_plane, correlate, max_shift,
+                                   should_cancel=should_cancel, progress=report)
+    else:
+        seen = [0]
+
+        def counted(index):
+            seen[0] += 1
+            report(seen[0])
+            return read_plane(index)
+        template = build_template(reference, indices, counted, correlate, max_shift, should_cancel)
     matcher = AlignmentPoints(template, size=size, use_cuda=use_cuda, should_cancel=should_cancel)
     if not len(matcher.centres):
         return template
@@ -255,9 +272,10 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
         def add(plane, field):
             total.__iadd__(pull(plane, field))
             weight.__iadd__(pull(ones, field))
-    for index in indices:
+    for step, index in enumerate(indices, len(indices) + 1):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while building the alignment reference')
+        report(step)
         plane = read_plane(int(index))
         shift = correlate(template, plane)
         if not np.isfinite(shift).all() or max(abs(v) for v in shift) > max_shift:
@@ -301,8 +319,11 @@ class LocalQuality:
 
 class LocalSelection:
     """Per-AP best frames and their blended per-pixel weights."""
-    def __init__(self, matcher, chosen, frames, global_mask):
-        """chosen: (n_frames, n_ap) bool for ``frames`` capture indices."""
+    def __init__(self, matcher, chosen, frames, global_mask, shifts=None):
+        """chosen: (n_frames, n_ap) bool for ``frames`` capture indices.
+
+        ``shifts`` optionally keeps each frame's global registration for reuse.
+        """
         h, w = matcher.shape
         ys, xs = np.arange(h, dtype=float), np.arange(w, dtype=float)
         sigma = .6 * matcher.spacing
@@ -315,6 +336,7 @@ class LocalSelection:
         self.row = {int(f): k for k, f in enumerate(frames)}
         self.chosen = chosen
         self.global_mask = global_mask
+        self.shifts = {} if shifts is None else dict(zip((int(f) for f in frames), shifts))
 
     def frames(self):
         """Capture indices with any nonzero weight."""
@@ -329,19 +351,35 @@ class LocalSelection:
         local = (self.wy.T * selected) @ self.wx * self.scale
         return local + self.rest * float(self.global_mask[index])
 
+    def weights_tensor(self, index, device='cuda:0'):
+        """Device equivalent of ``weights``."""
+        import torch
+        if getattr(self, '_device', None) is None:
+            self._device = [torch.as_tensor(a, device=device, dtype=torch.float64)
+                            for a in (self.wy.T, self.wx, self.scale, self.rest)]
+        wyT, wx, scale, rest = self._device
+        k = self.row.get(int(index))
+        selected = torch.as_tensor(self.chosen[k] if k is not None else np.zeros(wyT.shape[1], bool),
+                                   device=device, dtype=torch.float64)
+        return (wyT * selected) @ wx * scale + rest * float(self.global_mask[index])
+
 
 def select_locally(matcher, frames, read_plane, correlate, reference, count, global_mask, should_cancel=None,
-                   use_cuda=False):
+                   use_cuda=False, progress=None):
     """Measure local quality for ``frames`` and keep each AP's best ``count``."""
     quality = LocalQuality(matcher, use_cuda=use_cuda)
     scores = np.zeros((len(frames), len(matcher.centres)))
+    shifts = []
     for k, index in enumerate(frames):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while measuring local quality')
+        if progress is not None and (k % 50 == 0 or k == len(frames) - 1):
+            progress('Ranking frames by local quality', k + 1, len(frames))
         plane = read_plane(int(index))
-        scores[k] = quality.measure(plane, correlate(reference, plane))
+        shifts.append(tuple(correlate(reference, plane)))
+        scores[k] = quality.measure(plane, shifts[-1])
     count = max(1, min(int(count), len(frames)))
     order = np.argsort(-scores, axis=0, kind='stable')[:count]
     chosen = np.zeros(scores.shape, dtype=bool)
     np.put_along_axis(chosen, order, True, axis=0)
-    return LocalSelection(matcher, chosen, frames, global_mask)
+    return LocalSelection(matcher, chosen, frames, global_mask, shifts)

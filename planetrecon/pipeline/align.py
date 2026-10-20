@@ -17,21 +17,29 @@ def correlation_filter(shape):
     return np.exp(-4 * np.pi**2 * 1.5**2 * (fx*fx + fy*fy))
 
 
-def correlation_peak(corr):
-    """Frame displacement (x, y), with a three-point subpixel peak fit."""
-    py, px = np.unravel_index(int(np.argmax(corr)), corr.shape)
+def peak_neighbours(py, px, shape):
+    """Wrapped (rows, columns) of the vertical and horizontal three-point stencils."""
+    h, w = shape
+    return ([(py-1) % h, py, (py+1) % h], [px]*3), ([py]*3, [(px-1) % w, px, (px+1) % w])
+
+
+def peak_offsets(py, px, shape, vertical, horizontal):
+    """Displacement (x, y) from the integer peak and its two three-point stencils."""
     offsets = []
-    for axis, p in enumerate((py, px)):
-        if axis == 0:
-            a, b, c = corr[[(p-1) % corr.shape[0], p, (p+1) % corr.shape[0]], px]
-        else:
-            a, b, c = corr[py, [(p-1) % corr.shape[1], p, (p+1) % corr.shape[1]]]
+    for axis, (p, (a, b, c)) in enumerate(((py, vertical), (px, horizontal))):
         curvature = a - 2*b + c
         delta = float(np.clip(.5*(a-c)/curvature, -.5, .5)) if curvature < 0 else 0.
         if abs(delta) < 1e-10:
             delta = 0.
-        offsets.append(float(p if p < corr.shape[axis]/2 else p-corr.shape[axis]) + delta)
+        offsets.append(float(p if p < shape[axis]/2 else p-shape[axis]) + delta)
     return offsets[1], offsets[0]
+
+
+def correlation_peak(corr):
+    """Frame displacement (x, y), with a three-point subpixel peak fit."""
+    py, px = np.unravel_index(int(np.argmax(corr)), corr.shape)
+    vertical, horizontal = peak_neighbours(py, px, corr.shape)
+    return peak_offsets(py, px, corr.shape, corr[vertical], corr[horizontal])
 
 
 def phase_correlation_shift(reference: np.ndarray, frame: np.ndarray, *, reference_spectrum=None) -> tuple[float, float]:

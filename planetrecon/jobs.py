@@ -208,6 +208,10 @@ def _worker_run(
                               "device_report": {"reason": "Pose estimation uses CPU; stacking uses the selected supported backend"}})
 
         def on_event(result: ReconstructionResult, info: dict) -> None:
+            if result.stage == 'setup':
+                emit('progress', {'stage': info['phase'], 'n_used': 0, 'backend': info.get('backend'),
+                                  'fraction': info['n_processed'] / max(info['n_total'], 1)})
+                return
             if result.stage == 'cache_ready':
                 emit('preprocessing_cache', result.provenance.get('preprocessing_cache', {}))
                 return

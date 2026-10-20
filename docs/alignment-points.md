@@ -130,9 +130,23 @@ Further checks:
   local quality are much closer to the AS4 stacks than the previous method:
   sharper ring edges, limb and belt structure, and far less mottling on Saturn R.
 
-## Cost
+## Cost and progress
 
-On the RTX 5070, Jupiter (3,749 frames, 63%) stacks in 148 s with circular
-alignment, 183 s with alignment points and 340 s with alignment points and
-local quality, which ranks and then stacks every screened frame. CPU
-demosaicing of the registration plane (~17 ms/frame) is now the main cost.
+With CUDA the whole per-frame path stays on the device: registration-plane
+demosaic, global correlation (only the peak stencil is copied back), proxy
+filtering, point correlations, field solve, local quality, backprojection and
+the weighted sums. Sums are merged into the authoritative CPU accumulators at
+the end of every batch; if CUDA fails, unmerged frames are recomputed on CPU.
+The global shifts measured while ranking local quality are reused for stacking.
+
+The setup phases report progress: **Building alignment reference** (two passes
+over up to 3000 frames) and **Ranking frames by local quality** (every
+screened frame). Local quality then stacks nearly every screened frame, because
+each point keeps its own best frames.
+
+Measured on the RTX 5070 for a 47,708-frame 1124x466 colour Saturn capture
+(about 45,000 screened, 50% quality range): reference 56 s, local-quality ranking
+236 s (5.2 ms/frame), stacking about 14 ms/frame, roughly 15 minutes in total.
+Without local quality only the selected frames are stacked. Before these
+optimisations the same capture needed about 36 ms/frame for ranking and 80 ms/frame
+for stacking, mostly CPU demosaicing and CPU accumulation.

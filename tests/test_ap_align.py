@@ -169,7 +169,7 @@ def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):
 
         def event(result, info):
             nonlocal stop
-            stop = info['n_processed'] >= 8
+            stop = stop or (result.stage != 'setup' and info['n_processed'] >= 8)
         checkpoint = tmp_path/'points.npz'
         partial = stack_source(source, cfg, state_checkpoint=checkpoint, on_event=event,
                                should_cancel=lambda: stop)
@@ -216,3 +216,27 @@ def test_cli_alignment_point_inputs_reach_the_config(tmp_path, monkeypatch):
                   '--no-local-quality'])
     cfg = seen['config']
     assert (cfg.alignment_method, cfg.ap_size, cfg.local_quality) == ('alignment_points', 40, False)
+
+
+@pytest.mark.parametrize('color_id', [0, 8])
+def test_cuda_stacking_matches_cpu_and_reports_setup_progress(tmp_path, color_id):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    with SERSource(capture(tmp_path, color_id=color_id)) as source:
+        cfg = points_config()
+        preprocess_source(source, cfg)
+        cpu = stack_source(source, cfg)
+        phases = []
+
+        def event(result, info):
+            if result.stage == 'setup':
+                phases.append((info['phase'], info['n_processed'], info['n_total']))
+        gpu = stack_source(source, replace(cfg, device='gpu'), on_event=event)
+        assert gpu.backend == 'cuda' and gpu.provenance['local_alignment']['cuda_execution']['used']
+        assert gpu.n_used == cpu.n_used
+        np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-7*cpu.image.max())
+        np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
+        names = {name for name, _, _ in phases}
+        assert names == {'Building alignment reference', 'Ranking frames by local quality'}
+        assert all(done == total for name, done, total in phases[-1:])
