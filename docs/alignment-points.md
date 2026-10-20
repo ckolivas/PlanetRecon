@@ -100,8 +100,9 @@ sharpened crops are indistinguishable. Each point's ±6 px search already
 follows the local displacement that rotation causes, so on this capture
 derotation adds little. Local quality matters much more here than on Jupiter
 (each half used about 12,000 of 13,800 screened frames instead of 2,675).
-Saturn with alignment points takes about 6 minutes per half on the RTX 5070,
-against about 2 minutes for None.
+Saturn with alignment points took about 6 minutes per half on the RTX 5070,
+against about 2 minutes for None; grouped device execution (below) has since
+cut the whole capture from 581 s to 218 s.
 
 With CUDA the Surface path runs on the device: registration planes (green
 proxy, demosaic, luminance), camera-drift tracking (predicted reference,
@@ -154,6 +155,7 @@ The CPU path remains the reference. Against the per-frame GPU path of commit
 |---|---|---|
 | Jupiter, Surface + AP, 63%, whole capture | 111 s | 43 s |
 | Saturn R, Saturn + AP, 21%, first 3,000 frames | 68 s | 28 s |
+| Saturn R, Saturn + AP, 21%, whole capture (24,125 frames stacked) | 581 s | 218 s |
 
 ## Why the earlier stacks were poor
 
