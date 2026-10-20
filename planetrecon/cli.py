@@ -168,8 +168,13 @@ def main(argv: list[str] | None = None) -> int:
                     help='normalized local patch alignment (default with cached preprocessing and no geometry motion model); --no-local-alignment uses global alignment')
     st.add_argument('--local-patch-size', type=int, default=65,
                     help='local patch width/height in pixels (odd 15-255; default 65); spacing is half the size rounded down')
-    st.add_argument('--alignment-method', choices=('square', 'circular_multiscale'), default='square',
-                    help='local matching method; circular_multiscale uses sampling-sized circular regions')
+    st.add_argument('--alignment-method', choices=('square', 'circular_multiscale', 'alignment_points'), default='square',
+                    help='local matching method; circular_multiscale uses sampling-sized circular regions; '
+                         'alignment_points uses an AutoStakkert-style AP grid with a many-frame reference')
+    st.add_argument('--ap-size', type=int, default=64,
+                    help='alignment point width/height in pixels (16-256; default 64); spacing is half the size')
+    st.add_argument('--local-quality', action=argparse.BooleanOptionalAction, default=True,
+                    help='with alignment points, each point stacks its own best frames by local quality (default on)')
     st.add_argument('--sampling-multiplier', type=float, default=5.,
                     help='capture focal ratio divided by pixel pitch in micrometres (default 5)')
     st.add_argument('--alignment-wavelength-nm', type=float, default=550.,
@@ -434,6 +439,8 @@ def main(argv: list[str] | None = None) -> int:
                              else not args.no_frame_preselection and args.geometry == 'none'),
             local_patch_size=args.local_patch_size,
             alignment_method=args.alignment_method,
+            ap_size=args.ap_size,
+            local_quality=args.local_quality,
             sampling_multiplier=args.sampling_multiplier,
             alignment_wavelength_nm=args.alignment_wavelength_nm,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,

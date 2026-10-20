@@ -44,6 +44,11 @@ def identity(source,config,calibration,should_cancel=None):
             capture['config'].pop(key)
     # The established 65-pixel matcher is unchanged. Preserve its checkpoints;
     # custom sizes remain bound to the identity so accumulators cannot be mixed.
+    # Alignment point settings only bind jobs that use alignment points.
+    if config.alignment_method != 'alignment_points':
+        for key in ('ap_size', 'local_quality'):
+            settings.pop(key)
+            capture['config'].pop(key)
     if config.local_patch_size == 65:
         settings.pop('local_patch_size')
         capture['config'].pop('local_patch_size')

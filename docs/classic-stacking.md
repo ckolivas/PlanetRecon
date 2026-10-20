@@ -11,7 +11,7 @@ approximation for colour alignment. Set the effective filter wavelength for
 monochrome captures, including infrared. The displayed minimum circle diameter
 updates as either value changes.
 
-Click **Stack** for ordinary stacking with circular multiscale alignment. This
+Click **Stack** for ordinary stacking with the selected alignment method; [AutoStakkert-style alignment points](alignment-points.md) give the strongest local correction for ordinary stacking. With circular multiscale alignment: This
 selects Motion model None, cached preprocessing and local alignment. It preserves
 the current quality-range/count selection and calibration settings. It validates
 or builds preprocessing automatically, then stacks the selected frames. At least

@@ -59,12 +59,17 @@ class ConfigControls(QTabWidget):
         self.fields['normalise_percent'].setEnabled(config.normalise_brightness)
         self.fields['normalise_brightness'].toggled.connect(self.fields['normalise_percent'].setEnabled)
         self._check(capture, 'local_alignment', 'Local patch alignment (experimental)')
-        self._choice(capture, 'alignment_method', 'Alignment points', ['square', 'circular_multiscale'])
+        self._choice(capture, 'alignment_method', 'Alignment points',
+                     ['square', 'circular_multiscale', 'alignment_points'])
         self.fields['alignment_method'].setItemText(0, 'Fixed square patches')
         self.fields['alignment_method'].setItemText(1, 'Circular, automatic multiscale')
+        self.fields['alignment_method'].setItemText(2, 'AutoStakkert-style alignment points')
         self.fields['alignment_method'].currentIndexChanged.connect(self._mode_changed)
         self._integer(capture, 'local_patch_size', 'Alignment patch size (odd pixels)', 15, 255)
         self.fields['local_patch_size'].setSingleStep(2)
+        self._integer(capture, 'ap_size', 'Alignment point size (pixels)', 16, 256)
+        self.fields['ap_size'].setSingleStep(8)
+        self._check(capture, 'local_quality', 'Local quality (each point stacks its own best frames)')
         self.fields['local_alignment'].toggled.connect(self._mode_changed)
         self.fields['frame_preselection'].toggled.connect(self._mode_changed)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
@@ -339,6 +344,10 @@ class ConfigControls(QTabWidget):
         self.fields['alignment_method'].setEnabled(
             self.fields['local_alignment'].isChecked()
             and self.fields['frame_preselection'].isChecked())
+        points = (self.fields['local_alignment'].isChecked() and self.fields['frame_preselection'].isChecked()
+                  and self.fields['alignment_method'].currentData() == 'alignment_points')
+        self.fields['ap_size'].setEnabled(points)
+        self.fields['local_quality'].setEnabled(points)
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     def _choose_table(self, edit):

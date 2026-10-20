@@ -41,6 +41,8 @@ class ReconstructionConfig:
     alignment_method: str = 'square'
     sampling_multiplier: float = 5.0
     alignment_wavelength_nm: float = 550.0
+    ap_size: int = 64
+    local_quality: bool = True
     max_shift_px: float = 32.0
     reference_index: int = 0
     motion_reference: str = "midpoint"
@@ -157,8 +159,12 @@ class ReconstructionConfig:
             raise ValueError('unknown frame_selection_mode')
         if type(self.local_alignment) is not bool:
             raise ValueError('local_alignment must be a bool')
-        if self.alignment_method not in ('square', 'circular_multiscale'):
+        if self.alignment_method not in ('square', 'circular_multiscale', 'alignment_points'):
             raise ValueError('unknown alignment_method')
+        if type(self.ap_size) is not int or not 16 <= self.ap_size <= 256:
+            raise ValueError('ap_size must be an integer from 16 to 256 pixels')
+        if type(self.local_quality) is not bool:
+            raise ValueError('local_quality must be a bool')
         for name, low, high in (('sampling_multiplier', .5, 20.),
                                 ('alignment_wavelength_nm', 300., 1500.)):
             value = getattr(self, name)

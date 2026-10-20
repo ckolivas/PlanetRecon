@@ -107,6 +107,11 @@ evaluate the aim of improving reconstruction using more frames; they do not
 replace that aim with conventional frame rejection.
 
 **Stack** now provides [classic circular multiscale alignment](docs/classic-stacking.md).
+For results closest to AutoStakkert!4, choose **Alignment points → AutoStakkert-style
+alignment points** (CLI `--alignment-method alignment_points`): a many-frame
+reference, a full-strength alignment-point field and per-point local quality
+selection. See [alignment points](docs/alignment-points.md) for the method,
+the causes of the earlier soft stacks and the measurements. Motion model **None** only.
 Enter the capture's **Sampling multiplier** (focal ratio / pixel pitch in µm;
 default 5) and alignment wavelength (default 550 nm) in the Capture tab. The
 minimum circle diameter is shown immediately. Stack automatically prepares the
