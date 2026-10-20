@@ -73,7 +73,7 @@ def _refine_groups(template, matcher, indices, read_group, group, should_cancel,
     import torch
     from planetrecon.backends.torch_ap import PointGrid, gaussian_proxy, sample_frames
     grid = PointGrid(template.shape, matcher.size, search=matcher.search)
-    points, templates = grid.fixed(matcher)
+    points = templates = None
     total = torch.zeros(template.shape, device='cuda:0', dtype=torch.float64)
     weight = torch.zeros_like(total)
     for begin in range(0, len(indices), group):
@@ -87,6 +87,9 @@ def _refine_groups(template, matcher, indices, read_group, group, should_cancel,
             continue
         images = torch.stack([a[0] for a in aligned])
         supports = torch.stack([a[1] for a in aligned])
+        if templates is None:
+            # Matching runs in the precision of the planes read; sums stay float64.
+            points, templates = grid.fixed(matcher, images.dtype)
         field, _ = grid.fixed_fields(gaussian_proxy(images), points, templates)
         total += sample_frames(images, field).sum(0)
         weight += sample_frames(supports, field).sum(0)

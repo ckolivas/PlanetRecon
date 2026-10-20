@@ -22,6 +22,23 @@ def isolated_preferences(tmp_path_factory, monkeypatch):
     monkeypatch.setenv('PLANETRECON_SER_SETTINGS_PATH', str(directory/'ser-settings.json'))
 
 
+@pytest.fixture(autouse=True)
+def float64_registration(request, monkeypatch):
+    """Device stacks are compared with the CPU reference at float64.
+
+    Production registration runs in float32 (backends.precision); tests
+    marked ``registration_precision`` keep that setting.
+    """
+    if request.node.get_closest_marker('registration_precision') is not None:
+        return
+    try:
+        import torch
+        import planetrecon.backends.precision as precision
+    except ImportError:
+        return
+    monkeypatch.setattr(precision, 'REGISTRATION', torch.float64)
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-slow",
@@ -49,6 +66,9 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "hardware: GPU or release-hardware tests (not in the default suite)"
+    )
+    config.addinivalue_line(
+        "markers", "registration_precision: keep production float32 device registration"
     )
 
 

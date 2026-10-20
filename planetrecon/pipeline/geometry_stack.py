@@ -702,11 +702,14 @@ def stack_source_geometry(
         group = FRAME_GROUP
 
     def group_planes(frames):
-        """Upload frames together: raw tensor, bilinear RGB (Bayer), colour and tracking planes."""
+        """Upload frames together: raw float64 tensor, then bilinear RGB (Bayer), colour and
+        tracking planes in registration precision."""
+        from planetrecon.backends.precision import REGISTRATION
         stacked = gpu_planes.upload(np.stack(frames))
-        rgb = gpu_planes.demosaic(stacked) if bayer else None
-        colour_planes = gpu_planes.luminance(stacked, rgb)
-        return stacked, rgb, colour_planes, colour_planes if colour_retry else gpu_planes.tracking(stacked)
+        planes = stacked.to(REGISTRATION)
+        rgb = gpu_planes.demosaic(planes) if bayer else None
+        colour_planes = gpu_planes.luminance(planes, rgb)
+        return stacked, rgb, colour_planes, colour_planes if colour_retry else gpu_planes.tracking(planes)
 
     def group_displacements(indices, planes, frames):
         """Required drift per frame; drift not yet known is measured together on the device."""
@@ -762,6 +765,10 @@ def stack_source_geometry(
                 observed[k] = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy), colour_planes[j]
         return observed
 
+    registration_precision = 'float64'
+    if gpu_planes is not None:
+        from planetrecon.backends.precision import REGISTRATION
+        registration_precision = str(REGISTRATION).removeprefix('torch.')
     if config.local_alignment:
         from planetrecon.pipeline.motion_local import build_motion_template, local_coordinates
         if selection is None:
@@ -828,6 +835,8 @@ def stack_source_geometry(
             # uploading both planes at every observation time.
             local_template_with_support = torch.as_tensor(
                 local_template_with_support,device='cuda:0',dtype=torch.float64)
+            if gpu_planes is not None:
+                local_template_with_support = local_template_with_support.to(REGISTRATION)
         diagnostics['local_alignment'] = {
             'version': 2, 'enabled': True, 'method': config.alignment_method, 'window_px':config.local_patch_size,
             'step_px':config.local_patch_size//2, 'maximum_residual_px':3,
@@ -929,6 +938,7 @@ def stack_source_geometry(
         'local_patch_correlations': backend.name if config.local_alignment else 'unused',
         'local_reference_prediction': backend.name if config.local_alignment else 'unused',
         'local_residual_inversion': backend.name if config.local_alignment else 'unused',
+        'registration_precision': registration_precision,
         'accumulator_precision': 'float64',
     }
     gpu_accumulator = None
@@ -1310,8 +1320,8 @@ def _motion_local_quality(matcher, selection, reference_selection, observe, grou
             import torch
             from planetrecon.backends.torch_ap import local_quality_batch
             scores[measured] = local_quality_batch(
-                torch.stack([torch.as_tensor(p, device='cuda:0', dtype=torch.float64) for p in planes]),
-                np.stack(centres), quality.sigma)
+                torch.stack([p if torch.is_tensor(p) else torch.as_tensor(p, device='cuda:0', dtype=torch.float64)
+                             for p in planes]), np.stack(centres), quality.sigma)
         else:
             for k, plane, c in zip(measured, planes, centres):
                 scores[k] = quality.measure_at(plane, c)

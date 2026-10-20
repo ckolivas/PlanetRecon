@@ -224,3 +224,31 @@ def test_cuda_surface_alignment_point_stack_matches_cpu(tmp_path, colour):
     assert gpu.backend == 'cuda' and gpu.n_used == cpu.n_used
     np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-6*cpu.image.max())
     np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
+
+
+@pytest.mark.registration_precision
+@pytest.mark.parametrize('kind', ['surface', 'saturn'])
+def test_float32_registration_stays_close_to_float64(tmp_path, kind):
+    """Production device registration (float32) moves stacks far less than their noise."""
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.baseline import stack_source
+    import planetrecon.backends.precision as precision
+    assert precision.REGISTRATION == torch.float32
+    if kind == 'surface':
+        path, cfg = seeing_capture(tmp_path), points_config()
+    else:
+        path, cfg = saturn_seeing_capture(tmp_path)
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        cpu = stack_source(src, cfg, preprocessing=selection)
+        gpu = stack_source(src, replace(cfg, device='gpu'), preprocessing=selection)
+    assert gpu.provenance['geometry_execution']['registration_precision'] == 'float32'
+    assert gpu.provenance['geometry_execution']['accumulator_precision'] == 'float64'
+    assert gpu.n_used == cpu.n_used
+    difference = np.abs(gpu.image - cpu.image)
+    assert difference.max() <= 1e-4 * cpu.image.max()
+    # Coverage sums bilinear weights at float32 sample positions.
+    np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-4, atol=1e-6)

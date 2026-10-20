@@ -62,13 +62,24 @@ class TorchPlanes:
         return torch.as_tensor(np.asarray(frame) if not torch.is_tensor(frame) else frame,
                                device=self.device, dtype=torch.float64)
 
+    def constant(self, name, dtype):
+        """A precomputed float64 constant in the precision of the planes it meets."""
+        value = getattr(self, name)
+        if value.dtype == dtype:
+            return value
+        cache = self.__dict__.setdefault('_cast', {})
+        if (name, dtype) not in cache:
+            cache[name, dtype] = value.to(dtype)
+        return cache[name, dtype]
+
     def demosaic(self, image):
-        """Bilinear RGB of raw Bayer frames (optionally with a leading batch axis)."""
+        """Bilinear RGB of raw Bayer frames (optionally with a leading batch axis), in their precision."""
         h, w = image.shape[-2:]
-        planes = (image.reshape(-1, 1, h, w) * self.planar_weights)
+        c = lambda name: self.constant(name, image.dtype)
+        planes = (image.reshape(-1, 1, h, w) * c('planar_weights'))
         # Sum of the eight neighbours: a 3x3 box (two separable passes) less the centre.
-        box = F.conv2d(F.conv2d(F.pad(planes, (1, 1, 1, 1)), self.row_box, groups=3), self.column_box, groups=3)
-        filled = torch.where(self.planar_masks, planes, (box - planes) / self.planar_divisors)
+        box = F.conv2d(F.conv2d(F.pad(planes, (1, 1, 1, 1)), c('row_box'), groups=3), c('column_box'), groups=3)
+        filled = torch.where(self.planar_masks, planes, (box - planes) / c('planar_divisors'))
         return filled.movedim(1, -1).reshape(*image.shape, 3)
 
     def tracking(self, image):
@@ -77,7 +88,8 @@ class TorchPlanes:
             return .5 * image[..., 1] + .25 * image[..., 0] + .25 * image[..., 2]
         if self.bayer:
             green = torch.where(self.green, image, torch.zeros_like(image))
-            return torch.where(self.green, green, _shifted_sum(green, FOUR, image.ndim - 2) / self.green_divisor)
+            return torch.where(self.green, green, _shifted_sum(green, FOUR, image.ndim - 2)
+                               / self.constant('green_divisor', image.dtype))
         return image
 
     def luminance(self, image, demosaiced=None):
@@ -94,13 +106,13 @@ class TorchSurfaceTracker:
     The reference globe support is fixed for the run and prepared once.
     """
 
-    def __init__(self, warp, reference, reference_pose):
+    def __init__(self, warp, reference, reference_pose, dtype=torch.float64):
         from planetrecon.geometry.globe import field_rotate_sky, sky_to_body
         self.warp = warp
         self.model = warp.model
         self.device = warp.device
         self.reference_pose = reference_pose
-        self.reference = torch.as_tensor(np.asarray(reference, dtype=np.float64), device=self.device)
+        self.reference = torch.as_tensor(np.asarray(reference, dtype=np.float64), device=self.device).to(dtype)
         h, w = self.reference.shape
         y, x = np.indices((h, w))
         rx, ry = x + .5 - reference_pose.cx, reference_pose.cy - y - .5
@@ -108,8 +120,8 @@ class TorchSurfaceTracker:
             rx, ry = field_rotate_sky(rx, ry, -reference_pose.field_angle_rad)
         _, _, reference_globe, _ = sky_to_body(rx, ry, self.model.globe, reference_pose.t_s)
         support = minimum_filter(reference_globe, size=3, mode='constant', cval=0)
-        self.reference_support = torch.as_tensor(support.astype(np.float64), device=self.device)
-        self.matcher = MaskedMatcher((h, w), self.device)
+        self.reference_support = torch.as_tensor(support.astype(np.float64), device=self.device).to(dtype)
+        self.matcher = MaskedMatcher((h, w), self.device, dtype)
 
     def on_globe(self, pose):
         """Visible near-side globe pixels at a frame pose, or a batch (geometry.globe.globe_hit)."""
@@ -164,7 +176,7 @@ def masked_templates(reference, mask):
 
     Returns device templates, pixel counts and energies; a count below 32 has no energy.
     """
-    maskf = mask.to(torch.float64)
+    maskf = mask.to(reference.dtype)
     count = maskf.sum((-2, -1))
     smooth = _gaussian(reference, 1.5)
     mean = (smooth * maskf).sum((-2, -1)) / count.clamp_min(1.)
@@ -189,8 +201,8 @@ class MaskedMatcher:
 
     MEMORY = 1 << 29   # bytes of correlation workspace per chunk of frames
 
-    def __init__(self, shape, device='cuda:0'):
-        self.device = device
+    def __init__(self, shape, device='cuda:0', dtype=torch.float64):
+        self.device, self.dtype = device, dtype
         self.shape = tuple(shape)
         h, w = self.shape
         self.full = (2 * h - 1, 2 * w - 1)
@@ -199,7 +211,7 @@ class MaskedMatcher:
 
     def tensor(self, value):
         return torch.as_tensor(value if torch.is_tensor(value) else np.asarray(value), device=self.device,
-                               dtype=torch.float64)
+                               dtype=self.dtype)
 
     def __call__(self, template, mask, count, energy, proxy, min_improvement=0.):
         return self.batch(template[None], mask[None], [count], [energy], proxy[None], [min_improvement])[0]
@@ -244,8 +256,12 @@ class MaskedMatcher:
     def _chunk(self, template, mask, count, energy, proxy, gate):
         h, w = self.shape
         H, W = self.full
-        maskf = mask.to(torch.float64)
+        maskf = mask.to(self.dtype)
         (low_y, low_x), (high_y, high_x), (start_y, start_x), (size_y, size_x) = self._windows(mask)
+        if self.dtype != torch.float64:
+            # Zero-mean templates make the scores independent of a constant offset; removing each
+            # frame's mean keeps the reduced-precision variance sums from cancelling.
+            proxy = proxy - proxy.mean((-2, -1), keepdim=True)
         observed_fft = torch.fft.rfft2(torch.stack((proxy, proxy.square()), 1), s=self.fft)
         kernels = torch.fft.rfft2(torch.stack((template, maskf), 1).flip((-2, -1)), s=self.fft)
         products = torch.stack((observed_fft[:, 0] * kernels[:, 0], observed_fft[:, 0] * kernels[:, 1],
@@ -265,7 +281,8 @@ class MaskedMatcher:
         counts = self.tensor(count)[:, None, None]
         variance = (squares - total.square() / counts).clamp_min(0.)
         denominator = (self.tensor(energy)[:, None, None] * variance).sqrt()
-        scores = torch.where(inside & (denominator > 1e-12), dot / denominator.clamp_min(1e-300), -torch.inf)
+        scores = torch.where(inside & (denominator > 1e-12), dot / denominator.clamp_min(torch.finfo(self.dtype).tiny),
+                             -torch.inf)
         flat = scores.flatten(1)
         best = flat.argmax(1)
         peak = flat.gather(1, best[:, None])[:, 0]
@@ -280,8 +297,8 @@ class MaskedMatcher:
         nx = (wx[:, None] + torch.arange(-1, 2, device=self.device)).clamp(0, size_x - 1)
         neighbours = scores[frames, ny[:, :, None], nx[:, None, :]].flatten(1)
         centre = scores[frames[:, 0, 0], h - 1 - tensor(start_y), w - 1 - tensor(start_x)]
-        host = torch.cat((torch.stack((peak, rival, centre, wy.to(torch.float64), wx.to(torch.float64)), 1),
-                          neighbours), 1).cpu().numpy()
+        host = torch.cat((torch.stack((peak, rival, centre, wy.to(self.dtype), wx.to(self.dtype)), 1),
+                          neighbours), 1).double().cpu().numpy()
         host[:, 3] += start_y
         host[:, 4] += start_x
         offsets = [self._subpixel(row) for row in host]
@@ -289,14 +306,15 @@ class MaskedMatcher:
         gated = [k for k, o in enumerate(offsets) if o is not None and gate[k] > 0]
         if gated:
             # Measured improvement over no drift must exceed the interpolation loss.
+            # The gate compares small differences: evaluate it in float64.
             g = torch.as_tensor(gated, device=self.device)
-            shift = self.tensor(np.array([offsets[k] for k in gated]))
+            shift = torch.as_tensor(np.array([offsets[k] for k in gated]), device=self.device, dtype=torch.float64)
             yy = torch.arange(h, device=self.device, dtype=torch.float64)[:, None]
             xx = torch.arange(w, device=self.device, dtype=torch.float64)[None, :]
-            moved = _bilinear_constant(proxy[g], yy + shift[:, 0, None, None], xx + shift[:, 1, None, None])
-            m = maskf[g]
-            moved = (moved - (moved * m).sum((-2, -1), keepdim=True) / counts[g]) * m
-            sums = torch.stack(((template[g] * moved).sum((-2, -1)), moved.square().sum((-2, -1))), 1)
+            moved = _bilinear_constant(proxy[g].double(), yy + shift[:, 0, None, None], xx + shift[:, 1, None, None])
+            m = maskf[g].double()
+            moved = (moved - (moved * m).sum((-2, -1), keepdim=True) / counts[g].double()) * m
+            sums = torch.stack(((template[g].double() * moved).sum((-2, -1)), moved.square().sum((-2, -1))), 1)
             for k, (product, square) in zip(gated, sums.cpu().numpy()):
                 norm = np.sqrt(energy[k] * square)
                 gain = product / norm - host[k, 2] if norm > 0 else -np.inf
@@ -352,10 +370,10 @@ class TorchRingTracker:
     scalars return to the host, once per batch of frames.
     """
 
-    def __init__(self, reference, cx, cy, globe_radius, ring_radius, device='cuda:0'):
+    def __init__(self, reference, cx, cy, globe_radius, ring_radius, device='cuda:0', dtype=torch.float64):
         from planetrecon.backends.torch_registration import TorchRingRegistrationOps
         self.ops = TorchRingRegistrationOps(np.shape(reference), device)
-        self.matcher = MaskedMatcher(np.shape(reference), device)
+        self.matcher = MaskedMatcher(np.shape(reference), device, dtype)
         self.reference = self.matcher.tensor(reference)
         self.globe_radius, self.ring_radius = globe_radius, ring_radius
         self.mask = self._mask(cx, cy)
@@ -392,16 +410,17 @@ class TorchRingTracker:
                                            poses, reference_pose)
         predicted, support = projected[..., 0], projected[..., 1]
         roundtrip = self.ops.render_tensor(predicted, reference_pose, poses, per_pose=True)
+        # The interpolation loss is a small difference: measure it in float64.
         maskf = self.mask.to(torch.float64)
-        smooth = _gaussian(roundtrip, 1.5)
+        smooth = _gaussian(roundtrip, 1.5).double()
         values = (smooth - (smooth * maskf).sum((-2, -1), keepdim=True) / max(self.count, 1)) * maskf
         # Rotation may expose pixels outside the original capture.
         cx = torch.as_tensor([p.cx for p in poses], device=self.ops.device, dtype=torch.float64)
         cy = torch.as_tensor([p.cy for p in poses], device=self.ops.device, dtype=torch.float64)
         mask = self._mask(cx[:, None, None], cy[:, None, None], _eroded(support >= 1. - 1e-12))
         template, count, energy = masked_templates(predicted, mask)
-        host = torch.stack(((self.template * values).sum((-2, -1)), values.square().sum((-2, -1)),
-                            count, energy), 1).cpu().numpy()
+        host = torch.stack(((self.template.double() * values).sum((-2, -1)), values.square().sum((-2, -1)),
+                            count.double(), energy.double()), 1).cpu().numpy()
         norm = np.sqrt(self.energy * host[:, 1])
         usable = (norm > 1e-12) & (host[:, 3] > 1e-12)
         loss = np.maximum(1e-12, 1. - host[:, 0] / np.where(usable, norm, 1.))

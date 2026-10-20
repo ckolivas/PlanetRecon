@@ -57,7 +57,8 @@ def pull(image, x, y, valid, per_pose):
     image = image.contiguous()
     x, y = x.contiguous(), y.contiguous()
     valid = valid.expand(x.shape).contiguous().to(torch.uint8)
-    out = torch.empty((*lead, h, w, channels), device=x.device, dtype=torch.float64)
+    # Weights follow the float64 coordinates; values keep the image precision.
+    out = torch.empty((*lead, h, w, channels), device=x.device, dtype=image.dtype)
     total, block = x.numel(), 256
     _pull[(triton.cdiv(total, block),)](x, y, valid, image, out, total, h * w,
                                         h * w * channels if per_pose else 0,
@@ -179,8 +180,8 @@ def _globe_map(x_ptr, y_ptr, params_ptr, constants_ptr, out_x, out_y, out_valid,
     c2 = tl.load(constants_ptr + 3)
     taper = tl.load(constants_ptr + 4)
     if EXPLICIT:
-        x = tl.load(x_ptr + i, inside, other=0.)
-        y = tl.load(y_ptr + i, inside, other=0.)
+        x = tl.load(x_ptr + i, inside, other=0.).to(tl.float64)
+        y = tl.load(y_ptr + i, inside, other=0.).to(tl.float64)
     else:
         pixel = i % plane
         x = (pixel % W).to(tl.float64) + .5
@@ -303,8 +304,9 @@ def _invert(field_ptr, qx_ptr, qy_ptr, error_ptr, total, H: tl.constexpr, W: tl.
     inside = i < total
     frame = i // (H * W)
     pixel = i % (H * W)
-    x = (pixel % W).to(tl.float64)
-    y = (pixel // W).to(tl.float64)
+    dtype = field_ptr.dtype.element_ty
+    x = (pixel % W).to(dtype)
+    y = (pixel // W).to(dtype)
     ux = field_ptr + frame * (2 * H * W)
     uy = ux + H * W
     qx = x
@@ -327,10 +329,10 @@ def _invert(field_ptr, qx_ptr, qy_ptr, error_ptr, total, H: tl.constexpr, W: tl.
 
 
 def invert(field, steps=8):
-    """Fixed-point inverse of pull fields (B, 2, h, w): positions qx, qy and residual errors (B, h, w)."""
+    """Fixed-point inverse of pull fields (B, 2, h, w) in their precision: positions qx, qy and residuals."""
     n, _, h, w = field.shape
     field = field.contiguous()
-    qx = torch.empty((n, h, w), device=field.device, dtype=torch.float64)
+    qx = torch.empty((n, h, w), device=field.device, dtype=field.dtype)
     qy, error = torch.empty_like(qx), torch.empty_like(qx)
     total, block = n * h * w, 256
     _invert[(triton.cdiv(total, block),)](field, qx, qy, error, total, H=h, W=w, STEPS=steps, BLOCK=block,

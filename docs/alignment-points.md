@@ -157,6 +157,37 @@ The CPU path remains the reference. Against the per-frame GPU path of commit
 | Saturn R, Saturn + AP, 21%, first 3,000 frames | 68 s | 28 s |
 | Saturn R, Saturn + AP, 21%, whole capture (24,125 frames stacked) | 581 s | 218 s |
 
+### Mixed precision
+
+Registration in the grouped path runs in float32 (`backends.precision`):
+the demosaiced, colour and tracking planes, Gaussian proxies, resampled
+reference planes, alignment-point sections and correlations, local quality,
+and the residual-field inversion. Float64 is kept wherever float32 measurably
+matters or saves nothing: geometry coordinates (the pull and scatter weights
+come from float64 positions), peak fits and the field solve, raw frames and
+every accumulated sum.
+
+Camera-drift tracking also stays float64. In float32, Jupiter's globe drift moved
+by 7e-3 px median and up to 0.06 px (Saturn's ring drift by up to 3e-3 px)
+for under 1 ms per frame, and drift is a whole-frame shift.
+
+Float32 was measured per stage on these captures: geometry, if it were float32,
+would err by about 1e-5 px (0.06 px at a few limb-grazing pixels, another
+reason it stays float64). Alignment-point correlations changed no acceptance
+decision; the displacement fields moved by 2e-4 px rms (8.5e-3 px worst)
+against 0.38 px rms of seeing. Independent half-stack detail SNR, float64 →
+float32 registration:
+
+| band (cycles/px) | 0.08-0.12 | 0.12-0.16 | 0.16-0.20 | 0.20-0.25 | 0.25-0.30 |
+|---|---|---|---|---|---|
+| Saturn R, Saturn + AP, 21% | 2,780 → 2,790 | 444 → 445 | 133 → 132 | 11.7 → 11.6 | 0.599 → 0.613 |
+| Jupiter, Surface + AP, 63% | 145 → 145 | 21.1 → 21.1 | 7.27 → 7.26 | 1.83 → 1.83 | 0.199 → 0.198 |
+
+The differences are within the measurement's scatter. Half-stack time fell
+from 235 to 203 s for Saturn R and 44 to 34 s for Jupiter. Tests compare the
+device path with the CPU at float64 (`tests/conftest.py`) and check the
+float32 setting separately.
+
 ## Why the earlier stacks were poor
 
 The investigation compared PlanetRecon with the AutoStakkert!4 stacks in the

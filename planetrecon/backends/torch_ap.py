@@ -1,7 +1,9 @@
 """CUDA alignment points: grouped correlations, peak fits and field solve.
 
-Mirrors ``pipeline.ap_align.AlignmentPoints`` in float64; the CPU matcher
-remains the reference implementation. The field stays on the device.
+Mirrors ``pipeline.ap_align.AlignmentPoints``; the CPU matcher remains the
+reference implementation. Batched matching runs in the planes' precision
+(``backends.precision``); peak fits and field solves are float64. The field
+stays on the device.
 """
 import numpy as np
 import torch
@@ -11,11 +13,11 @@ from planetrecon.backends.torch_circular import sample
 from planetrecon.pipeline import ap_align
 
 
-def _gaussian_kernel(sigma, device):
+def _gaussian_kernel(sigma, device, dtype=torch.float64):
     radius = int(4. * sigma + .5)
     x = torch.arange(-radius, radius + 1, device=device, dtype=torch.float64)
     kernel = torch.exp(-.5 * (x / sigma) ** 2)
-    return kernel / kernel.sum(), radius
+    return (kernel / kernel.sum()).to(dtype), radius
 
 
 def _reflected(n, radius, device):
@@ -26,7 +28,7 @@ def _reflected(n, radius, device):
 
 def _gaussian(image, sigma):
     """SciPy ``gaussian_filter`` (mode 'reflect', truncate 4) over the last two axes, rows first."""
-    kernel, radius = _gaussian_kernel(sigma, image.device)
+    kernel, radius = _gaussian_kernel(sigma, image.device, image.dtype)
     h, w = image.shape[-2:]
     out = image.reshape(-1, 1, h, w).index_select(-2, _reflected(h, radius, image.device))
     out = F.conv2d(out, kernel.view(1, 1, -1, 1)).index_select(-1, _reflected(w, radius, image.device))
@@ -46,14 +48,14 @@ def local_quality(plane, shift, centres, sigma, device='cuda:0'):
 
 
 def local_quality_batch(planes, centres, sigma):
-    """Local quality of frames (B, h, w), each around its own (n, 2) row/column centres: (B, n) host array."""
-    device = planes.device
+    """Local quality of frames (B, h, w), each around its own (n, 2) row/column centres: (B, n) host array.
+
+    Computed in the planes' precision.
+    """
+    device, dtype = planes.device, planes.dtype
     h, w = planes.shape[-2:]
     # SciPy mode 'nearest' at the detector edge.
-    radius = int(4. * ap_align.QUALITY_SMOOTH_PX + .5)
-    x = torch.arange(-radius, radius + 1, device=device, dtype=torch.float64)
-    kernel = torch.exp(-.5 * (x / ap_align.QUALITY_SMOOTH_PX) ** 2)
-    kernel = (kernel / kernel.sum())
+    kernel, radius = _gaussian_kernel(ap_align.QUALITY_SMOOTH_PX, device, dtype)
     padded = F.pad(planes[:, None], (radius, radius, radius, radius), mode='replicate')
     smooth = F.conv2d(F.conv2d(padded, kernel[None, None, None, :]), kernel[None, None, :, None])[:, 0]
     lap = torch.zeros_like(smooth)
@@ -62,11 +64,11 @@ def local_quality_batch(planes, centres, sigma):
     c = torch.as_tensor(np.asarray(centres, dtype=np.float64), device=device)
     ys = torch.arange(h, device=device, dtype=torch.float64)
     xs = torch.arange(w, device=device, dtype=torch.float64)
-    wy = torch.exp(-.5 * ((ys - c[..., 0:1]) / sigma) ** 2)
-    wx = torch.exp(-.5 * ((xs - c[..., 1:2]) / sigma) ** 2)
-    energy = ((wy @ (lap * lap)) * wx).sum(-1)
-    level = ((wy @ smooth) * wx).sum(-1)
-    norm = wy.sum(-1) * wx.sum(-1)
+    wy = torch.exp(-.5 * ((ys - c[..., 0:1]) / sigma) ** 2).to(dtype)
+    wx = torch.exp(-.5 * ((xs - c[..., 1:2]) / sigma) ** 2).to(dtype)
+    energy = ((wy @ (lap * lap)) * wx).double().sum(-1)
+    level = ((wy @ smooth) * wx).double().sum(-1)
+    norm = wy.double().sum(-1) * wx.double().sum(-1)
     return ((energy / norm) / ((level / norm) ** 2).clamp_min(1e-30)).cpu().numpy()
 
 
@@ -212,7 +214,9 @@ class PointGrid:
     ``AlignmentPoints`` places points on this grid. A
     batch of references keeps the points each would choose; fields for all
     frames are solved together with zero information at unused points, which
-    leaves each frame's least-squares solution unchanged.
+    leaves each frame's least-squares solution unchanged. Sections and
+    correlations run in the precision of the planes given; peak fits and the
+    field solve are float64.
     """
 
     def __init__(self, shape, size, *, search=ap_align.SEARCH, device='cuda:0'):
@@ -250,8 +254,9 @@ class PointGrid:
         """Points each reference keeps (``AlignmentPoints`` placement): frame and point indices, zero-mean templates."""
         if not len(self.centres):
             empty = torch.zeros(0, dtype=torch.long, device=self.device)
-            return empty, empty, torch.zeros((0, self.size, self.size), device=self.device, dtype=torch.float64)
+            return empty, empty, torch.zeros((0, self.size, self.size), device=self.device, dtype=references.dtype)
         n = len(references)
+        window = self.window.to(references.dtype)
         peak = references.amax((-2, -1))
         keep = self.sections(references).mean((-1, -2)) >= (peak * ap_align.MIN_BRIGHTNESS)[:, None, None]
         if valid is not None:
@@ -264,9 +269,10 @@ class PointGrid:
                      - invalid[:, y0 + span, x0] + invalid[:, y0, x0])
             keep &= count == 0
         t = self.sections(gaussian_proxy(references))
-        t = t - (t * self.window).sum((-1, -2), keepdim=True) / self.window.sum()
-        energy = ((t * t * self.window).sum((-1, -2)) / self.window.sum()).sqrt()
-        host = torch.cat((energy.flatten(1), keep.flatten(1).to(torch.float64), peak[:, None]), 1).cpu().numpy()
+        t = t - (t * window).sum((-1, -2), keepdim=True) / window.sum()
+        energy = ((t * t * window).sum((-1, -2)) / window.sum()).sqrt()
+        host = torch.cat((energy.flatten(1).double(), keep.flatten(1).double(), peak[:, None].double()),
+                         1).cpu().numpy()
         points = len(self.centres)
         frames, chosen = [], []
         for b in range(n):
@@ -302,13 +308,13 @@ class PointGrid:
         Hd = torch.zeros((n, len(self.centres), 2), device=self.device, dtype=torch.float64)
         lam = np.full(n, ap_align.PRIOR)
         if len(frame_index):
-            m = len(frame_index)
             tiles = proxies[frame_index[:, None, None], self.tile_rows[point_index][:, :, None],
                             self.tile_cols[point_index][:, None, :]]
-            norm = (templates.square() * self.window).sum((-1, -2)).sqrt().clamp_min(1e-15)
-            num, s1, s2 = self.correlate(tiles, templates * self.window)
-            var = (s2 - s1 * s1 / self.window.sum()).clamp_min(1e-12)
-            ncc = (num / (var.sqrt() * norm[:, None, None])).cpu().numpy()
+            window, templates = self.window.to(proxies.dtype), templates.to(proxies.dtype)
+            norm = (templates.square() * window).sum((-1, -2)).sqrt().clamp_min(1e-15)
+            num, s1, s2 = self.correlate(tiles, templates * window)
+            var = (s2 - s1 * s1 / window.sum()).clamp_min(1e-12)
+            ncc = (num / (var.sqrt() * norm[:, None, None])).double().cpu().numpy()
             # Peak decisions are tiny (m x 13 x 13); reuse the CPU reference logic.
             offset, information, ok, _ = ap_align._peak_fit(ncc)
             frames = frame_index.cpu().numpy()
@@ -345,19 +351,19 @@ class PointGrid:
         """
         m = len(tiles)
         num = F.conv2d(tiles[None], weighted[:, None], groups=m)[0]
-        hann = torch.as_tensor(np.hanning(self.size), device=self.device, dtype=torch.float64)
+        hann = torch.as_tensor(np.hanning(self.size), device=self.device, dtype=tiles.dtype)
 
         def window_sum(image):
             rows = F.conv2d(image[:, None], hann.view(1, 1, 1, -1))
             return F.conv2d(rows, hann.view(1, 1, -1, 1))[:, 0]
         return num, window_sum(tiles), window_sum(tiles * tiles)
 
-    def fixed(self, matcher):
+    def fixed(self, matcher, dtype=torch.float64):
         """Grid indices and device templates of a fixed-reference ``AlignmentPoints``."""
         lookup = {tuple(c): k for k, c in enumerate(self.centres.tolist())}
         index = torch.as_tensor([lookup[tuple(c)] for c in matcher.centres.tolist()], device=self.device,
                                 dtype=torch.long)
-        templates = torch.as_tensor(np.asarray(matcher.templates), device=self.device, dtype=torch.float64)
+        templates = torch.as_tensor(np.asarray(matcher.templates), device=self.device, dtype=dtype)
         return index, templates
 
     def fixed_fields(self, proxies, index, templates, shifts=None):
@@ -372,22 +378,24 @@ def predicted_local_coordinates_batch(template_with_support, frames, poses, refe
 
     The fixed anchor-geometry reference is predicted at each pose, points are
     chosen on its fully observed support, and the inverted residual fields
-    are returned as sampling positions (qx, qy) of shape (B, h, w).
+    are returned as sampling positions (qx, qy) of shape (B, h, w). Matching
+    and inversion run in the frames' precision.
     """
     from planetrecon.pipeline.motion_local import cuda_inverse_local_coordinates
-    projected = warp.render_tensor(template_with_support, list(poses), reference_pose)
+    projected = warp.render_tensor(template_with_support.to(frames.dtype), list(poses), reference_pose)
     predicted, support = projected[..., 0], projected[..., 1]
     frame_index, point_index, templates = grid.choose(predicted, support >= 1. - 1e-9)
-    proxies = gaussian_proxy(frames.to(device=warp.device, dtype=torch.float64))
+    proxies = gaussian_proxy(frames.to(device=warp.device))
     field, _ = grid.fields(proxies, frame_index, point_index, templates)
-    return cuda_inverse_local_coordinates(field, tensors=True)
+    return cuda_inverse_local_coordinates(field.to(frames.dtype), tensors=True)
 
 
 def sample_frames(images, field):
     """``torch_circular.sample`` pull of each image (B, h, w) through its own (B, 2, h, w) field."""
     n, h, w = images.shape
-    yy = torch.arange(h, device=images.device, dtype=torch.float64)[:, None]
-    xx = torch.arange(w, device=images.device, dtype=torch.float64)[None, :]
+    yy = torch.arange(h, device=images.device, dtype=images.dtype)[:, None]
+    xx = torch.arange(w, device=images.device, dtype=images.dtype)[None, :]
+    field = field.to(images.dtype)
     y, x = yy + field[:, 1], xx + field[:, 0]
     iy, ix = torch.floor(y).long(), torch.floor(x).long()
     fy, fx = y - iy, x - ix

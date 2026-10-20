@@ -65,14 +65,15 @@ def cuda_inverse_local_coordinates(shift, *, tensors=False):
     import torch
     import torch.nn.functional as functional
     if torch.is_tensor(shift):
-        field = shift.to(device='cuda:0', dtype=torch.float64)
+        # Tensors keep their precision (float32 registration fields stay float32).
+        field = shift.to(device='cuda:0')
     else:
         field = torch.as_tensor(np.stack(shift), dtype=torch.float64, device='cuda:0')
     batch = field.ndim == 4
     field = field if batch else field[None]
     h,w = field.shape[-2:]
-    y,x = torch.meshgrid(torch.arange(h, dtype=torch.float64, device='cuda:0'),
-                         torch.arange(w, dtype=torch.float64, device='cuda:0'), indexing='ij')
+    y,x = torch.meshgrid(torch.arange(h, dtype=field.dtype, device='cuda:0'),
+                         torch.arange(w, dtype=field.dtype, device='cuda:0'), indexing='ij')
     try:
         from planetrecon.backends.triton_warp import invert
     except ImportError:
