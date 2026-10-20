@@ -21,6 +21,8 @@ class TorchGlobeWarp:
             torch.arange(self.w, dtype=torch.float64, device=device)+.5, indexing='ij')
 
     def tensor(self, value):
+        if torch.is_tensor(value):
+            return value.to(device=self.device, dtype=torch.float64)
         return torch.tensor(np.ascontiguousarray(value), dtype=torch.float64, device=self.device)
 
     @staticmethod
@@ -93,14 +95,17 @@ class TorchGlobeWarp:
                 keep = valid & (xx >= 0) & (xx < self.w) & (yy >= 0) & (yy < self.h)
                 yield (yy.clamp(0,self.h-1)*self.w+xx.clamp(0,self.w-1)).flatten(), (wy*wx*keep).flatten()
 
-    def render(self, image, src, ref):
+    def render_tensor(self, image, src, ref):
         image = self.tensor(image) if not isinstance(image,torch.Tensor) else image
         x, y, valid = self.map(src, ref)
         flat = image.reshape(self.h*self.w,-1)
         out = torch.zeros_like(flat)
         for index, weight in self.corners(x,y,valid):
             out += flat[index]*weight[:,None]
-        return out.reshape(image.shape).cpu().numpy()
+        return out.reshape(image.shape)
+
+    def render(self, image, src, ref):
+        return self.render_tensor(image, src, ref).cpu().numpy()
 
 
 class TorchGlobeAccumulator(TorchGlobeWarp):

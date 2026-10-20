@@ -126,3 +126,29 @@ def test_alignment_points_refuse_field_and_saturn_motion(tmp_path):
         for mode in ('field', 'saturn'):
             with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface or Combined'):
                 stack_source(src, points_config(geometry_mode=mode))
+
+
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_cuda_surface_alignment_point_stack_matches_cpu(tmp_path, colour):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    from planetrecon.io.ser import SERSource, write_ser, NAME_TO_COLOR
+    from planetrecon.pipeline.baseline import stack_source
+    from planetrecon.detector import cfa_labels
+    path = seeing_capture(tmp_path)
+    if colour == 'RGGB':
+        with SERSource(path) as src:
+            frames = np.stack([src.read_raw(i) for i in range(src.n_frames())]).astype(float)
+        labels = cfa_labels(128, 128, colour)
+        frames *= np.where(labels == 'R', .8, np.where(labels == 'B', .6, 1.))
+        path = write_ser(tmp_path/'colour.ser', frames.astype('u2'), color_id=NAME_TO_COLOR[colour],
+                         timestamps=np.arange(len(frames))*10000000)
+    cfg = points_config()
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        cpu = stack_source(src, cfg, preprocessing=selection)
+        gpu = stack_source(src, replace(cfg, device='gpu'), preprocessing=selection)
+    assert gpu.backend == 'cuda' and gpu.n_used == cpu.n_used
+    np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-6*cpu.image.max())
+    np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)

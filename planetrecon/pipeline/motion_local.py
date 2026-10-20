@@ -33,7 +33,7 @@ def inverse_local_coordinates(shift, *, use_cuda=False):
     offset at the observed pixel is biased for spatially varying distortion.
     """
     if use_cuda:
-        return _cuda_inverse_local_coordinates(shift)
+        return cuda_inverse_local_coordinates(shift)
     ux,uy = shift
     y,x = np.indices(ux.shape,dtype=float)
     qx,qy = x.copy(),y.copy()
@@ -48,12 +48,15 @@ def inverse_local_coordinates(shift, *, use_cuda=False):
     return qx+.5,qy+.5
 
 
-def _cuda_inverse_local_coordinates(shift):
+def cuda_inverse_local_coordinates(shift, *, tensors=False):
     """Same eight fixed-point steps and residual guard on the selected GPU."""
     import torch
     import torch.nn.functional as functional
-    field = torch.as_tensor(np.stack(shift), dtype=torch.float64, device='cuda:0')[None]
-    h,w = shift[0].shape
+    if torch.is_tensor(shift):
+        field = shift.to(device='cuda:0', dtype=torch.float64)[None]
+    else:
+        field = torch.as_tensor(np.stack(shift), dtype=torch.float64, device='cuda:0')[None]
+    h,w = field.shape[-2:]
     y,x = torch.meshgrid(torch.arange(h, dtype=torch.float64, device='cuda:0'),
                          torch.arange(w, dtype=torch.float64, device='cuda:0'), indexing='ij')
     qx,qy = x,y
@@ -68,6 +71,8 @@ def _cuda_inverse_local_coordinates(shift):
     error = torch.maximum((qx+dx-x).abs(), (qy+dy-y).abs())
     if not bool(torch.isfinite(error).all()) or float(error.max()) > .01:
         qx,qy = x,y
+    if tensors:
+        return qx+.5, qy+.5
     output = torch.stack((qx+.5,qy+.5)).cpu().numpy()
     return output[0],output[1]
 

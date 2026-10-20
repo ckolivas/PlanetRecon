@@ -78,10 +78,18 @@ capture), 63%, independent half-stack SNR:
 Surface derotation improves the coarse scales (+19–23% at 0.04–0.08 over None
 with alignment points) and the finest band (+29% at 0.25–0.30); between 0.12
 and 0.25 cycles/px the two are within a few percent. On this short capture
-local quality adds nothing measurable with Surface. Surface processing is much
-slower: about 0.22 s per frame (drift tracking about 80 ms, a matcher built on
-each frame's predicted reference, and the scatter) against about 0.02 s per
-frame with Motion model None.
+local quality adds nothing measurable with Surface.
+
+With CUDA the Surface path runs on the device: registration planes (green
+proxy, demosaic, luminance), camera-drift tracking (predicted reference,
+support and visibility mask, erosion, masked correlation and the distinct-peak
+scan; only the final 3x3 neighbourhood returns for the shared subpixel step),
+alignment points built directly on each frame's predicted reference, the field
+inversion and the scatter. Results match the CPU path to about 1e-11 px in drift
+and 2e-14 of full scale in the Jupiter stack. Jupiter at 63% went from about
+6 minutes to about 70 s per 1,670-frame half (about 42 ms per frame including
+local-quality ranking); drift tracking alone fell from about 80-100 ms to 14 ms
+per frame and also speeds up Surface runs with circular or square alignment.
 
 ## Why the earlier stacks were poor
 

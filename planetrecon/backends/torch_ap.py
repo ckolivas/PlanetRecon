@@ -72,7 +72,10 @@ class TorchAlignmentPoints:
         self.shape = matcher.shape
         self.size, self.search = matcher.size, matcher.search
         self.centres = matcher.centres
-        tensor = lambda a: torch.as_tensor(np.ascontiguousarray(a), device=device, dtype=torch.float64)
+        def tensor(a):
+            if torch.is_tensor(a):
+                return a.to(device=device, dtype=torch.float64)
+            return torch.as_tensor(np.ascontiguousarray(a), device=device, dtype=torch.float64)
         self.window = tensor(matcher.window)
         self.weighted = tensor(matcher.weighted)
         self.norm = tensor(matcher.norm).clamp_min(1e-15)
@@ -197,3 +200,68 @@ class DeviceAccumulator:
     def discard(self):
         pending, self.sums, self.pending = self.pending, None, []
         return pending
+
+
+def build_points(reference, size, *, search=ap_align.SEARCH, valid_mask=None, device='cuda:0'):
+    """Device equivalent of ``ap_align.AlignmentPoints`` placement on a reference tensor.
+
+    Returns a matcher description for ``TorchAlignmentPoints`` (same centres,
+    templates and field weights as the CPU class for the same reference).
+    """
+    from types import SimpleNamespace
+    reference = torch.as_tensor(reference, device=device, dtype=torch.float64)
+    h, w = reference.shape
+    half, spacing = size // 2, size // 2
+    margin = half + search
+    ys = np.arange(margin, h - margin - size % 2, spacing)
+    xs = np.arange(margin, w - margin - size % 2, spacing)
+    window = np.outer(np.hanning(size), np.hanning(size))
+    empty = SimpleNamespace(shape=(h, w), size=size, search=search, spacing=spacing,
+                            centres=np.zeros((0, 2), dtype=np.int64), accepted=[])
+    if not len(ys) or not len(xs):
+        return empty
+    ar = torch.arange(size, device=device)
+    rows = torch.as_tensor(ys - half, device=device)[:, None] + ar
+    cols = torch.as_tensor(xs - half, device=device)[:, None] + ar
+
+    def sections(image):
+        return image[rows[:, None, :, None], cols[None, :, None, :]]   # (ny, nx, size, size)
+    keep = sections(reference).mean(dim=(-1, -2)) >= float(reference.max()) * ap_align.MIN_BRIGHTNESS
+    if valid_mask is not None:
+        invalid = F.pad((~torch.as_tensor(valid_mask, device=device)).long().cumsum(0).cumsum(1), (1, 0, 1, 0))
+        span = size + 2 * search
+        y0 = torch.as_tensor(ys - margin, device=device)[:, None]
+        x0 = torch.as_tensor(xs - margin, device=device)[None, :]
+        count = invalid[y0 + span, x0 + span] - invalid[y0, x0 + span] - invalid[y0 + span, x0] + invalid[y0, x0]
+        keep &= count == 0
+    win = torch.as_tensor(window, device=device, dtype=torch.float64)
+    t = sections(gaussian_proxy(reference))[keep]
+    t = t - (t * win).sum(dim=(-1, -2), keepdim=True) / win.sum()
+    energy = ((t * t * win).sum(dim=(-1, -2)) / win.sum()).sqrt().cpu().numpy()
+    grid = np.argwhere(keep.cpu().numpy())
+    if not len(energy):
+        return empty
+    chosen = (energy >= .1 * np.median(energy)) & (energy > 1e-4 * abs(float(reference.max())))
+    centres = np.column_stack([ys[grid[:, 0]], xs[grid[:, 1]]])[chosen]
+    templates = t[torch.as_tensor(chosen, device=device)]
+    gy, gx = ap_align._grid(h, ap_align.FIELD_STEP), ap_align._grid(w, ap_align.FIELD_STEP)
+    sigma = .6 * spacing
+    return SimpleNamespace(shape=(h, w), size=size, search=search, spacing=spacing, centres=centres,
+                           window=win, weighted=templates * win,
+                           norm=(templates.square() * win).sum(dim=(-1, -2)).sqrt(),
+                           wy=ap_align._gaussians(gy, centres[:, 0].astype(float), sigma),
+                           wx=ap_align._gaussians(gx, centres[:, 1].astype(float), sigma), accepted=[])
+
+
+def predicted_local_coordinates(template_with_support, frame, pose, reference_pose, warp, size):
+    """Device equivalent of motion_local.local_coordinates with alignment points (tensors in and out)."""
+    from planetrecon.pipeline.motion_local import cuda_inverse_local_coordinates
+    projected = warp.render_tensor(template_with_support, pose, reference_pose)
+    predicted, support = projected[..., 0], projected[..., 1]
+    matcher = build_points(predicted, size, valid_mask=support >= 1. - 1e-9, device=warp.device)
+    frame = torch.as_tensor(frame, device=warp.device, dtype=torch.float64)
+    if not len(matcher.centres):
+        field = torch.zeros((2, *frame.shape), device=warp.device, dtype=torch.float64)
+    else:
+        field = TorchAlignmentPoints(matcher, device=warp.device).displacement(frame, (0., 0.))
+    return cuda_inverse_local_coordinates(field, tensors=True)

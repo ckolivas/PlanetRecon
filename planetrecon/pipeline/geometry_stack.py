@@ -572,6 +572,11 @@ def stack_source_geometry(
             anchor_index = diagnostics['reference_index']
             anchor_plane = sample_planes[sample_idx.index(anchor_index)]
             anchor_pose = poses[anchor_index]
+            surface_tracker = None
+            if renderer is not None and isinstance(model, OblateGlobeModel):
+                # Device camera-drift tracking; same decisions as surface_displacement.
+                from planetrecon.backends.torch_surface import TorchSurfaceTracker
+                surface_tracker = TorchSurfaceTracker(renderer.__self__, anchor_plane, anchor_pose)
             static_attitude = (diagnostics['surface_rate_rad_s'] == 0 or config.geometry_mode == 'field') and (
                 diagnostics['field_rate_rad_s'] == 0 or config.geometry_mode == 'surface')
             # Whole-frame Saturn predictions have visibility holes during rotation.
@@ -639,10 +644,13 @@ def stack_source_geometry(
                     feature = 'shared observed field'
                 else:
                     from planetrecon.pipeline.globe_align import surface_displacement
-                    displacement = surface_displacement(anchor_plane, plane, model, pose, anchor_pose,
-                                                        **({'renderer':renderer} if renderer is not None else {}))
+                    displacement = (surface_tracker.displacement(plane, pose) if surface_tracker is not None else
+                                    surface_displacement(anchor_plane, plane, model, pose, anchor_pose,
+                                                         **({'renderer':renderer} if renderer is not None else {})))
                     feature = 'shared visible surface'
                 if displacement is None and bayer and not colour_retry and frame is not None:
+                    if hasattr(frame, 'cpu'):
+                        frame = frame.cpu().numpy()
                     if colour_anchor is None:
                         anchor_frame = sample_frames[sample_idx.index(anchor_index)]
                         colour_anchor = _alignment_plane(demosaic(anchor_frame), 'RGB')
@@ -677,6 +685,12 @@ def stack_source_geometry(
                 raise
     local_template = local_support = local_render = None
     local_selection = None
+    points = config.local_alignment and config.alignment_method == 'alignment_points'
+    # Device registration planes when surface drift is tracked on CUDA.
+    gpu_planes = None
+    if surface_tracker is not None and track_surface:
+        from planetrecon.backends.torch_surface import TorchPlanes
+        gpu_planes = TorchPlanes((h, w), color)
     if config.local_alignment:
         from planetrecon.pipeline.motion_local import build_motion_template, local_coordinates
         if selection is None:
@@ -688,7 +702,6 @@ def stack_source_geometry(
         def local_plane(frame):
             return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
-        points = config.alignment_method == 'alignment_points'
         if points:
             # A low-noise derotated reference from many of the best selected frames.
             from planetrecon.pipeline.ap_align import REFERENCE_FRAMES
@@ -701,8 +714,13 @@ def stack_source_geometry(
             frame = usable_frame(source.read_raw(index))
             if frame is None:
                 return None
-            colour_plane = local_plane(frame)
-            plane = colour_plane if colour_retry else _alignment_plane(frame,color)
+            if gpu_planes is not None:
+                frame = gpu_planes.upload(frame)
+                colour_plane = gpu_planes.luminance(frame)
+                plane = colour_plane if colour_retry else gpu_planes.tracking(frame)
+            else:
+                colour_plane = local_plane(frame)
+                plane = colour_plane if colour_retry else _alignment_plane(frame,color)
             pose = poses[index]
             if ring_registration is not None or track_surface or track_field:
                 if index not in sampled_displacements:
@@ -716,7 +734,12 @@ def stack_source_geometry(
             if not np.isfinite([dx,dy]).all() or max(abs(dx),abs(dy)) > config.max_shift_px:
                 return None
             pose = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy)
-            projected = local_render(np.stack((colour_plane,np.ones((h,w))),axis=-1),anchor_pose,pose)
+            if gpu_planes is not None:
+                import torch
+                stacked = torch.stack((colour_plane, torch.ones_like(colour_plane)), dim=-1)
+            else:
+                stacked = np.stack((colour_plane,np.ones((h,w))),axis=-1)
+            projected = local_render(stacked,anchor_pose,pose)
             return projected[...,0],projected[...,1]
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
         local_matcher = None
@@ -729,9 +752,16 @@ def stack_source_geometry(
             local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
         local_template_with_support = np.stack((local_template,local_support),axis=-1)
         if points and len(local_matcher.centres):
+            if gpu_planes is not None:
+                quality_plane_of = lambda frame: gpu_planes.luminance(gpu_planes.upload(frame))
+                tracking_plane_of = lambda frame: (gpu_planes.luminance if colour_retry else gpu_planes.tracking)(
+                    gpu_planes.upload(frame))
+            else:
+                quality_plane_of = local_plane
+                tracking_plane_of = lambda frame: local_plane(frame) if colour_retry else _alignment_plane(frame, color)
             local_selection, selection = _motion_local_quality(
-                local_matcher, selection, reference_selection, source, usable_frame, local_plane,
-                lambda frame: local_plane(frame) if colour_retry else _alignment_plane(frame, color),
+                local_matcher, selection, reference_selection, source, usable_frame, quality_plane_of,
+                tracking_plane_of,
                 required_displacement, sampled_displacements, poses, anchor_pose, ref_pose, model, config,
                 use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
         if backend.name == 'cuda':
@@ -920,10 +950,16 @@ def stack_source_geometry(
             if calibrated is None:
                 n_rejected += 1
                 continue
-            quality_plane = _alignment_plane(calibrated, color)
-            demo = demosaic(calibrated) if bayer and (colour_retry or config.local_alignment) else None
-            plane = (_alignment_plane(demo, 'RGB')
-                     if colour_retry else quality_plane)
+            gpu_frame = gpu_planes.upload(calibrated) if gpu_planes is not None else None
+            if gpu_frame is not None:
+                quality_plane = None
+                demo = gpu_planes.demosaic(gpu_frame) if bayer else None
+                plane = gpu_planes.luminance(gpu_frame) if colour_retry else gpu_planes.tracking(gpu_frame)
+            else:
+                quality_plane = _alignment_plane(calibrated, color)
+                demo = demosaic(calibrated) if bayer and (colour_retry or config.local_alignment) else None
+                plane = (_alignment_plane(demo, 'RGB')
+                         if colour_retry else quality_plane)
             pose = poses[int(index)]
             if ring_registration is not None or track_surface or track_field:
                 dx, dy = (sampled_displacements[int(index)] if int(index) in sampled_displacements
@@ -963,6 +999,8 @@ def stack_source_geometry(
                 score = max(selection.measurements[index, 0], 1e-12) if selection is not None else (
                     max(float(np.mean(lap[score_mask] ** 2)), 1e-12) if score_mask.any() else 1e-12)
             else:
+                if selection is None and quality_plane is None:
+                    quality_plane = _alignment_plane(calibrated, color)
                 score = max(selection.measurements[index, 0] if selection is not None else laplacian_score(quality_plane), 1e-12)
             if not np.isfinite(score):
                 n_rejected += 1
@@ -974,8 +1012,13 @@ def stack_source_geometry(
                 score = score * (local_selection.weights_tensor(int(index)) if gpu_accumulator is not None
                                  else local_selection.weights(int(index)))
             sample_xy = None
-            if config.local_alignment:
-                local_image = _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated)
+            if config.local_alignment and gpu_frame is not None and points:
+                from planetrecon.backends.torch_ap import predicted_local_coordinates
+                sample_xy = predicted_local_coordinates(local_template_with_support, gpu_planes.luminance(gpu_frame),
+                                                        pose, anchor_pose, renderer.__self__, config.ap_size)
+            elif config.local_alignment:
+                local_image = (gpu_planes.luminance(gpu_frame).cpu().numpy() if gpu_frame is not None else
+                               _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated))
                 sample_xy = local_coordinates(local_template_with_support,local_image,
                     pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda',
                     method=config.alignment_method, sampling_multiplier=config.sampling_multiplier,
@@ -984,7 +1027,8 @@ def stack_source_geometry(
             if gpu_accumulator is not None:
                 if bayer and demo is None:
                     demo = demosaic(calibrated)
-                if gpu_accumulator.add(calibrated,pose,ref_pose,score,demo,sample_xy):
+                if gpu_accumulator.add(calibrated if gpu_frame is None else gpu_frame,
+                                       pose,ref_pose,score,demo,sample_xy):
                     n_used += 1
                 else:
                     n_rejected += 1
