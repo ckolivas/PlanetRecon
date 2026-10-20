@@ -94,7 +94,7 @@ Recorded SER exposure is read automatically from supported capture-settings
 headers for geometry midpoint calculations. Leave Exposure blank for automatic
 metadata use; manual seconds override it. Frame cadence remains separate.
 The **Use cached preprocessing** checkbox controls reuse on later runs and the GUI
-shows exclusion counts before processing. GUI Run validates the cache and performs
+shows exclusion counts before processing. GUI **Stack** validates the cache and performs
 preprocessing when needed; startup and capture selection do not start analysis.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
 `stack --no-frame-preselection` uses global alignment and ignores cached decisions. After preprocessing,
@@ -116,8 +116,8 @@ Enter the capture's **Sampling multiplier** (focal ratio / pixel pitch in µm;
 default 5) and alignment wavelength (default 550 nm) in the Capture tab. The
 minimum circle diameter is shown immediately. Stack automatically prepares the
 quality cache and uses overlapping circles from coarse to fine, retaining larger
-samples where smaller ones cannot be matched reliably. Run and Batch use the
-currently selected settings. This adds alignment and averaging, without sharpening.
+samples where smaller ones cannot be matched reliably. Batch stacks each capture
+the same way with the currently selected settings. This adds alignment and averaging, without sharpening.
 
 **Local patch alignment (experimental)** is enabled by default and corrects
 small seeing distortions using normalized texture patches and an averaged
@@ -395,7 +395,7 @@ batch. Double-click a listed capture to open it afterwards.
 
 Caches are shared with the reconstruction application in both directions.
 The SER tool measures quality and shape only; it records that geometry was
-not estimated, so a later motion-compensated **Run** in the reconstruction
+not estimated, so a later motion-compensated **Stack** in the reconstruction
 application preprocesses again while ordinary stacking reuses the cache.
 Preferences are stored separately in `PlanetRecon/ser-settings.json`
 (`PLANETRECON_SER_SETTINGS_PATH` overrides the location). Frozen bundles
@@ -412,10 +412,12 @@ estimated geometry. Checkpoint paths and Resume are not restored automatically.
 Set `PLANETRECON_SETTINGS_PATH` to use a different preferences file.
 Startup does not reopen the previous capture. **Open capture** (or an explicit
 `--path`) automatically loads the preview and validates existing preprocessing.
-Within the desktop session, **Run** and **Stack** reuse that full validation while
+Within the desktop session, **Stack** reuses that full validation while
 the capture, interpretation, calibration and cache remain unchanged.
 
-**Run** validates the capture's preprocessing cache and automatically preprocesses
+The **Run** button has been retired in favour of **Stack**, which enables cached
+screening and local alignment and honours the selected Geometry motion model.
+**Stack** validates the capture's preprocessing cache and automatically preprocesses
 if it is missing, stale or unusable, then stacks with the resulting prefills.
 Motion runs also refresh geometry estimates when needed; unresolved required
 geometry still prevents stacking. **Preprocess** remains available separately.
@@ -451,7 +453,7 @@ The four settings tabs expose:
 - **Saturn:** ring radii/transmission, illumination and moon masks. Preprocessing
   can supply resolved globe/ring radii; viewing latitude uses SER UTC or an override.
 
-Run uses an owned process. Controls lock while processing; progress distinguishes
+Stack uses an owned process. Controls lock while processing; progress distinguishes
 unknown pose-estimation work from accumulation and reaches 100% only on completion.
 The UI receives at most one unacknowledged full-resolution snapshot at a time,
 with a bounded event queue. Result, input, coverage, validity and named Saturn
@@ -853,7 +855,7 @@ Current bundle hashes and local acceptance results are in
 `results/releases/native-local-2026-09-07.json`; earlier reports remain historical.
 
 
-Each GUI Run snapshots the current controls, including typed integer edits,
+Each GUI Stack snapshots the current controls, including typed integer edits,
 calibration paths and checkpoint options. The run-device line shows the requested
 device separately from the actual backend and reports CPU fallback reasons.
 After a restart, the retained image is labelled **Previous result** until the new

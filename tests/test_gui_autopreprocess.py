@@ -42,7 +42,7 @@ def test_cancel_automatic_preparation_does_not_start_stack(gui, tmp_path):
     pump(app, lambda: win.job is None)
     assert win.run_stage is None
     assert win.last_result is None
-    assert win.run_btn.isEnabled()
+    assert win.stack_btn.isEnabled()
 
 
 @pytest.mark.parametrize('entry', ['startup', 'restored', 'open'])
@@ -92,7 +92,7 @@ def test_loading_capture_automatically_displays_cached_quality(monkeypatch, tmp_
             assert win.path is None and win.job is None and win.frame_job is None
             assert not calls and win.input_image is None
             assert win.quality_plot.selection is None
-            assert not win.cancel_btn.isEnabled() and not win.run_btn.isEnabled()
+            assert not win.cancel_btn.isEnabled() and not win.stack_btn.isEnabled()
             assert win.open_btn.isEnabled()
             if cache.exists():
                 assert cache.stat().st_mtime_ns == stamp
@@ -101,7 +101,7 @@ def test_loading_capture_automatically_displays_cached_quality(monkeypatch, tmp_
             assert win.job is not None and win.cancel_btn.isEnabled()
         pump(app, lambda: win.job is None, timeout=20)
         assert win.path == capture and win.run_stage is None
-        assert win.last_result is None and win.run_btn.isEnabled()
+        assert win.last_result is None and win.stack_btn.isEnabled()
         assert not win.cancel_btn.isEnabled()
         assert not hasattr(win, 'inspect_btn')
         assert win.preprocessing_info['status'] == {'valid': 'ready', 'invalid': 'invalid', 'missing': 'missing'}[cached]
@@ -130,7 +130,7 @@ def test_cancel_automatic_cache_loading_returns_idle(gui, tmp_path):
     win._cancel()
     pump(app, lambda: win.job is None)
     assert win.run_stage is None and not win.cancel_btn.isEnabled()
-    assert win.run_btn.isEnabled() and win.last_result is None
+    assert win.stack_btn.isEnabled() and win.last_result is None
 
 
 @pytest.mark.parametrize('event_kind', ['source', 'completed'])

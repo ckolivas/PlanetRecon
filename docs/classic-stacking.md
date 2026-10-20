@@ -15,9 +15,9 @@ Click **Stack** for ordinary stacking with the selected alignment method; [AutoS
 selects Motion model None, cached preprocessing and local alignment. It preserves
 the current quality-range/count selection and calibration settings. It validates
 or builds preprocessing automatically, then stacks the selected frames. At least
-four selected frames are required for the averaged alignment reference. **Run**
-and **Batch** use the selected controls; fixed square alignment remains available
-for the existing geometry-compensated processing paths.
+four selected frames are required for the averaged alignment reference. **Batch**
+stacks each capture the same way. The former **Run** button is retired; fixed
+square alignment remains available for the geometry-compensated motion models.
 
 The starting diameter is eight diffraction PSF FWHMs:
 

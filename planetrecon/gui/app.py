@@ -181,15 +181,14 @@ class MainWindow:
         self.open_btn = QPushButton('Open capture…')
         self.preprocess_btn = QPushButton('Preprocess')
         self.preprocess_btn.setToolTip('Measure quality, shape and geometry independently, then save a reusable cache beside the capture. Replaces only this capture’s preprocessing cache; does not reconstruct an image.')
-        self.run_btn = QPushButton('Run')
         self.stack_btn = QPushButton('Stack')
         self.stack_btn.setToolTip('Stack using the selected Geometry motion model, alignment points and quality selection. Enables cached screening and local alignment; automatically preprocesses when needed. Choose Motion model None for ordinary stacking.')
         self.batch_btn = QPushButton('Batch…')
-        self.batch_btn.setToolTip('Select multiple captures and an output folder, then run the current processing and export settings on each. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh runs; existing output files are preserved.')
+        self.batch_btn.setToolTip('Select multiple captures and an output folder, then stack each one as Stack does, with the current settings and export options. Each capture gets its own preprocessing and automatic geometry. Manual overrides apply to every file. Starts fresh stacks; existing output files are preserved.')
         self.cancel_btn = QPushButton('Cancel processing')
         for b, slot in ((self.open_btn, self._choose), (self.preprocess_btn, self._preprocess),
                         (self.batch_btn, self._choose_batch),
-                        (self.stack_btn, self._stack), (self.run_btn, self._run), (self.cancel_btn, self._cancel)):
+                        (self.stack_btn, self._stack), (self.cancel_btn, self._cancel)):
             b.clicked.connect(slot)
             buttons.addWidget(b)
         buttons.addStretch()
@@ -355,8 +354,7 @@ class MainWindow:
         layout.addWidget(self.error)
         self.window.setCentralWidget(root)
         tips = {
-            self.open_btn: 'Open a SER, AVI or observed HDF5 capture. Existing preprocessing is validated automatically and displays the input preview and frame quality. Use Preprocess for new measurements or Run to stack.',
-            self.run_btn: 'Validate the preprocessing cache, measure quality and geometry automatically when needed, then reconstruct with the current settings. Resume continues the selected checkpoint unchanged.',
+            self.open_btn: 'Open a SER, AVI or observed HDF5 capture. Existing preprocessing is validated automatically and displays the input preview and frame quality. Use Preprocess for new measurements or Stack to process.',
             self.cancel_btn: 'Request cancellation of processing. The last received result remains available for viewing and saving.',
             self.checkpoint_btn: 'Choose the NPZ file used to save accumulator progress after each batch. To resume, choose an existing file and enable Resume.',
             self.checkpoint_path: 'Optional accumulator checkpoint path. Progress is saved here during processing; leave blank to disable checkpoints.',
@@ -474,7 +472,6 @@ class MainWindow:
         self.open_btn.setEnabled(not busy and not self.closing)
         self.batch_btn.setEnabled(not busy and self.export_worker is None and not self.closing)
         self.preprocess_btn.setEnabled(not busy and self.path is not None and not self.closing)
-        self.run_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.stack_btn.setEnabled(not busy and self.path is not None and not self.closing)
         self.controls.setEnabled(not busy and not self.closing)
         for control in (self.checkpoint_path, self.checkpoint_btn, self.resume_check):
@@ -505,6 +502,7 @@ class MainWindow:
             return False
         from planetrecon.gui.batch import make_queue
         try:
+            self._stacking_controls()  # Batch stacks each capture exactly as Stack does.
             self.controls.configuration()  # Validate typed settings before accepting the queue.
             self._export_config()
             items = make_queue(paths, directory, self.encoding.currentText())
@@ -619,12 +617,12 @@ class MainWindow:
         self.preprocessing_info = (
             {'status': 'unverified', 'reason': 'Loading cached preprocessing; validating capture data.'}
             if cache.is_file() else
-            {'status': 'missing', 'reason': 'No preprocessing cache. Preprocessing starts when Run is clicked, or when requested with Preprocess.'})
+            {'status': 'missing', 'reason': 'No preprocessing cache. Preprocessing starts when Stack is clicked, or when requested with Preprocess.'})
         self._refresh_preprocessing()
         if cache.is_file():
             self._start(inspect_only=True)
         else:
-            self.status.setText('Capture selected. Click Preprocess to measure frame quality, or Run to process.')
+            self.status.setText('Capture selected. Click Preprocess to measure frame quality, or Stack to process.')
 
     def _preprocess(self):
         self._start(inspect_only=False, preprocess_only=True)
@@ -639,12 +637,16 @@ class MainWindow:
     def _stack(self):
         if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
             return
+        self._stacking_controls()
+        self._run()
+
+    def _stacking_controls(self):
         fields = self.controls.fields
         fields['frame_preselection'].setChecked(True)
         fields['local_alignment'].setChecked(True)
-        self._run()
 
     def _run(self):
+        """Start a job with the current controls; the user entry point is Stack (Run is deprecated)."""
         if self.job is not None or self.run_stage is not None or self.path is None or self.closing:
             return
         # Resume must use exactly the saved configuration/cache. A fresh run
@@ -894,10 +896,10 @@ class MainWindow:
                 f"{info['excluded']} excluded total, {info['accepted']}/{info['n_total']} retained. "
                 f"Best reference frame (from 0): {info.get('best_reference_index', 'unavailable')}.{selection_text}")
         else:
-            reason = info.get('reason', 'No preprocessing cache. Run will preprocess automatically, or use Preprocess separately.')
+            reason = info.get('reason', 'No preprocessing cache. Stack will preprocess automatically, or use Preprocess separately.')
             if (self.controls.fields['frame_preselection'].isChecked()
                     and self.controls.fields['stack_percent'].value() < 100):
-                reason += ' Run will create a matching cache before selecting frames.'
+                reason += ' Stack will create a matching cache before selecting frames.'
             self.preprocessing_label.setText(reason)
         self._ser_export_buttons()
 
@@ -1060,12 +1062,12 @@ class MainWindow:
                 if 'source_metadata' in event.payload:
                     self._set_input(event.payload)
                     ready = self.preprocessing_info.get('status') == 'ready'
-                    self.status.setText('Input preview and frame quality ready. Choose settings, then Run.' if ready
-                                        else 'Input preview loaded. Preprocess to refresh frame quality, or Run to process.')
+                    self.status.setText('Input preview and frame quality ready. Choose settings, then Stack.' if ready
+                                        else 'Input preview loaded. Preprocess to refresh frame quality, or Stack to process.')
                 elif 'preprocessing_cache' in event.payload:
                     self._set_preprocessing(event.payload['preprocessing_cache'],
                         replace_manual=event.payload.get('preprocessing_completed', False))
-                    self.status.setText('Frame quality ready. Choose settings, then Run.')
+                    self.status.setText('Frame quality ready. Choose settings, then Stack.')
                 else:
                     self._accept_result(event.payload)
                     self.status.setText('Processing complete; scientific result is ready to save.')

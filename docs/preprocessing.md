@@ -40,7 +40,7 @@ guarantee. Replay without changing the capture's existing cache using
 `python -m tools.benchmark_cuda_preprocessing --path capture.ser --full --out report.json`.
 
 The **Use cached preprocessing (quality and shape)** checkbox independently
-controls whether later runs use those decisions. GUI **Run** validates the cache
+controls whether later runs use those decisions (**Stack** always enables it). GUI **Stack** validates the cache
 and automatically runs preprocessing when it is missing, stale or invalid,
 then applies automatic geometry and midpoint prefills before stacking. Motion
 runs also refresh inapplicable or incomplete geometry estimates once; required
@@ -183,7 +183,7 @@ requires manual **Signed observer latitude** and **Globe equatorial radius**
 in Geometry, plus **Inner ring radius** and **Outer ring radius** in Saturn.
 GUI angles are in degrees and radii in detector pixels. Ring detection is
 diagnostic; an ellipse alone does not determine the signed viewing orientation,
-and preprocessing does not supply a complete physical Saturn setup. Run now
+and preprocessing does not supply a complete physical Saturn setup. Stack
 lists all missing values together and opens the first required field. Inspect
 and Preprocess remain available before those values are supplied. Do not enter
 zero simply to bypass the check: zero means an edge-on ring plane.
@@ -562,7 +562,7 @@ the previous capture; a capture explicitly passed as a launch argument is opened
 Validation reports frame progress and can be cancelled. A missing or incompatible cache
 can be refreshed with **Preprocess**, which also loads the preview and graph
 when it finishes. There is no separate inspection button. These actions do not
-start stacking; **Run** starts the stack.
+start stacking; **Stack** starts the stack.
 
 Switch between capture order and descending quality rank. The vertical axis
 maps the capture's worst and best finite measured qualities to 0 and 100;

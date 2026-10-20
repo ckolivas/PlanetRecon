@@ -2,8 +2,9 @@
 
 Stack now honours the Geometry tab's None, Field, Surface, Combined or Saturn
 selection. It enables screening and local alignment, retaining the chosen
-square or circular multiscale alignment points. Run still honours the local
-alignment toggle. Required geometry must be resolved or supplied; an unresolved
+square or circular multiscale alignment points (AutoStakkert-style alignment
+points support Motion model None only). The former Run button, which honoured
+the local alignment toggle, is retired. Required geometry must be resolved or supplied; an unresolved
 motion model is never silently replaced with ordinary stacking.
 
 The new **Automatic motion reference** choice defaults to **Good frames near

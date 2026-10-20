@@ -8,6 +8,11 @@ from planetrecon.export import parse_tiff_description
 from test_w14 import gui, pump
 
 
+def small_frames(win):
+    # Batch stacks like Stack (local alignment on); these 48 px captures need a small patch.
+    win.controls.fields['local_patch_size'].setValue(31)
+
+
 def capture(path, scale=1000, n=8):
     y, x = np.indices((48, 48))
     frame = (scale*np.exp(-((x-24)**2+(y-24)**2)/90)*(1+.1*np.cos(x))).astype('u2')
@@ -22,9 +27,13 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     output.mkdir()
     win.controls.fields['cadence_s'].setText('0.1')
     win.controls.fields['gain_e_per_adu'].setText('2')
+    small_frames(win)
     assert win.start_batch([first, tmp_path / 'missing.ser', second], output)
     assert not win.controls.isEnabled() and not win.encoding.isEnabled()
     assert not win.batch_btn.isEnabled() and win.cancel_btn.isEnabled()
+    # Run is retired: Batch stacks with cached screening and local alignment, as Stack does.
+    assert not hasattr(win, 'run_btn')
+    assert win.batch_controls['fields']['local_alignment'] and win.batch_controls['fields']['frame_preselection']
     pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
     assert [i.status for i in win.batch_items] == ['saved', 'failed', 'saved']
     assert 'missing.ser' in win.batch_items[1].detail
@@ -56,6 +65,7 @@ def test_cancel_stops_pending_batch_files(gui, tmp_path):
     app, win = gui
     first = capture(tmp_path / 'first.ser')
     second = capture(tmp_path / 'second.ser')
+    small_frames(win)
     assert win.start_batch([first, second], tmp_path)
     win._cancel()
     pump(app, lambda: win.job is None)
@@ -79,6 +89,7 @@ def test_batch_clears_automatic_values_but_retains_manual_overrides(gui, tmp_pat
     win.controls.fields['reference_epoch_s'].setText('45')
     win.controls.geometry_auto['reference_epoch_s'] = '45'
     win.controls.suggest_capture_planet('old-Jup.ser')
+    small_frames(win)
     assert win.start_batch([tmp_path / 'Sat.ser', tmp_path / 'Mars.ser'], tmp_path)
     assert calls[-1].equatorial_radius_px is None
     assert calls[-1].reference_epoch_s == 0
@@ -98,6 +109,7 @@ def test_batch_export_collision_fails_without_overwriting_and_continues(gui, tmp
     app, win = gui
     first = capture(tmp_path / 'first.ser')
     second = capture(tmp_path / 'second.ser')
+    small_frames(win)
     assert win.start_batch([first, second], tmp_path)
     # Another program creates the reserved destination while we are processing.
     win.batch_items[0].output.write_bytes(b'external image')
@@ -120,6 +132,7 @@ def test_cancel_during_batch_export_stops_the_queue(gui, tmp_path, monkeypatch):
     monkeypatch.setattr(module, 'export_result', blocked_export)
     paths = [capture(tmp_path / 'first.ser'), capture(tmp_path / 'second.ser')]
     try:
+        small_frames(win)
         assert win.start_batch(paths, tmp_path)
         pump(app, entered.is_set, timeout=20)
         assert win.batch_saving and win.batch_items[0].status == 'saving'
