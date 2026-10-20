@@ -457,6 +457,13 @@ accumulator checkpoints. Output names use `<capture stem>-planetrecon-n<frames>-
 used), weighted mean quality and estimated SNR, e.g.
 `jupiter-planetrecon-n2105-q1.215-snr1015.tif`. Numeric suffixes preserve existing
 files and distinguish duplicate names.
+
+If a GPU fault stops a job — for example `CUDA error: the launch timed out`, raised
+when the display driver's watchdog (about 7 s on a GPU that also drives the
+desktop) stops a stalled GPU — the desktop restarts that job once in a new worker,
+because the failed worker's device context cannot recover. The result's warnings
+and the batch queue note the recovery; a second fault in the same request fails
+it as before. Memory exhaustion is not retried.
 Blank export levels are fitted to each final result. The queue lists saved outputs
 and failures, continues after individual failures, and stops on cancellation.
 

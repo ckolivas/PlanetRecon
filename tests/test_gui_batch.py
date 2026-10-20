@@ -173,3 +173,49 @@ def test_cancel_during_batch_export_stops_the_queue(gui, tmp_path, monkeypatch):
         assert not any(i.output.exists() for i in win.batch_items)
     finally:
         release.set()
+
+
+def faulting_starts(monkeypatch, faults):
+    """The first ``faults`` stack workers fail with a CUDA launch timeout."""
+    import threading
+    from types import SimpleNamespace
+    import planetrecon.gui.app as module
+    from planetrecon.jobs import JobEvent
+    real, stacks = module.start_stack_job, []
+
+    def start(*args, **kwargs):
+        if kwargs.get('inspect_only') or kwargs.get('preprocess_only'):
+            return real(*args, **kwargs)
+        stacks.append(kwargs)
+        if len(stacks) > faults:
+            return real(*args, **kwargs)
+        message = ('CUDA error: the launch timed out and was terminated\n'
+                   "Search for `cudaErrorLaunchTimeout' in the CUDA runtime documentation.")
+        return SimpleNamespace(job_id='fault', snapshot_request=threading.Event(), cancel_event=threading.Event(),
+                               process=SimpleNamespace(is_alive=lambda: False), close=lambda: None,
+                               poll=lambda timeout=0.: [JobEvent('fault', 1, 'error', {'message': message})])
+    monkeypatch.setattr(module, 'start_stack_job', start)
+    return stacks
+
+
+def test_gpu_fault_restarts_the_stack_once_in_a_new_worker(gui, tmp_path, monkeypatch):
+    app, win = gui
+    stacks = faulting_starts(monkeypatch, faults=1)
+    small_frames(win)
+    assert win.start_batch([capture(tmp_path / 'first.ser')], tmp_path)
+    pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
+    item = win.batch_items[0]
+    assert item.status == 'saved' and len(stacks) == 2
+    assert 'recovered from a GPU fault (CUDA error: the launch timed out' in item.detail
+    assert 'Recovered from a GPU fault' in win.warnings.text() and not win.error.text()
+
+
+def test_repeated_gpu_fault_fails_the_capture(gui, tmp_path, monkeypatch):
+    app, win = gui
+    stacks = faulting_starts(monkeypatch, faults=2)
+    small_frames(win)
+    assert win.start_batch([capture(tmp_path / 'first.ser'), capture(tmp_path / 'second.ser')], tmp_path)
+    pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
+    # One restart per capture: the first fails after two faults, the second retries afresh.
+    assert [i.status for i in win.batch_items] == ['failed', 'saved'] and len(stacks) == 3
+    assert 'launch timed out' in win.batch_items[0].detail

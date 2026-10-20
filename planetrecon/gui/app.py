@@ -153,6 +153,10 @@ class MainWindow:
         self.inspecting = False
         self.started = None
         self.run_stage = None
+        # One automatic restart per user request after a CUDA fault (the
+        # worker's device context cannot recover; a new worker gets a fresh one).
+        self.last_start = None
+        self.gpu_retry = None
         self.batch_active = False
         self.batch_items = []
         self.batch_current = None
@@ -640,11 +644,13 @@ class MainWindow:
         self._refresh_preprocessing()
         if cache.is_file():
             # Display only: processing workflows validate the cache when they use it.
+            self.gpu_retry = None
             self._start(inspect_only=True, verify_cache=False)
         else:
             self.status.setText('Capture selected. Click Preprocess to measure frame quality, or Stack to process.')
 
     def _preprocess(self):
+        self.gpu_retry = None
         self._start(inspect_only=False, preprocess_only=True)
 
     def _choose_checkpoint(self):
@@ -673,6 +679,7 @@ class MainWindow:
         # refreshes cache/geometry metadata; unchanged inputs reuse the session's
         # full validation instead of scanning the capture again.
         self.run_stage = 'stack' if self.resume_check.isChecked() else 'inspect'
+        self.gpu_retry = None
         self._start(inspect_only=self.run_stage == 'inspect')
 
     def _advance_run(self, kind):
@@ -749,6 +756,7 @@ class MainWindow:
         self.config = cfg
         self._save_settings()
         self.job = handle
+        self.last_start = (inspect_only, preprocess_only, verify_cache)
         handle.snapshot_request.set()
         self.inspecting = inspect_only or preprocess_only
         self.cancel_started = None
@@ -1016,7 +1024,8 @@ class MainWindow:
             f"{result.image.shape[1]}×{result.image.shape[0]} · {result.n_used} used / {result.n_rejected} rejected · "
             f"{result.units} · epoch {epoch} · {result.backend}/{result.precision}{quality}\nResult source: {source}")
         self.details.setPlainText(json.dumps(result.metadata(), indent=2))
-        self.warnings.setText('; '.join(result.warnings[:2]) +
+        recovered = [f'Recovered from a GPU fault by restarting processing ({self.gpu_retry})'] if self.gpu_retry else []
+        self.warnings.setText('; '.join(recovered + result.warnings[:2]) +
                               (' (more in metadata)' if len(result.warnings) > 2 else ''))
         self._draw()
         self._buttons()
@@ -1072,6 +1081,7 @@ class MainWindow:
 
     def _complete_event(self, event):
         kind = event.kind
+        retry = False
         try:
             if kind == 'completed':
                 self.cache_validation = event.payload.get('cache_validation')
@@ -1091,6 +1101,8 @@ class MainWindow:
                     self.status.setText('Processing complete; scientific result is ready to save.')
                 self.progress.setRange(0, 100)
                 self.progress.setValue(100)
+            elif kind == 'error' and self._retry_after_gpu_fault(event.payload.get('message', '')):
+                retry = True
             elif kind == 'error':
                 self.error.setText('Processing failed: ' + event.payload.get('message', 'unknown error'))
                 self.status.setText('Last received result remains inspectable and saveable.')
@@ -1104,8 +1116,23 @@ class MainWindow:
             self.status.setText('Processing stopped. Reload the capture or retry Preprocess.')
         finally:
             self._finish_job(continue_run=True)
-        if self.run_stage is not None:
+        if retry:
+            QTimer.singleShot(0, lambda: self._start(*self.last_start))
+        elif self.run_stage is not None:
             self._advance_run(kind)
+
+    def _retry_after_gpu_fault(self, message):
+        """Restart the failed job once in a new worker after a CUDA fault.
+
+        A launch timeout (the display watchdog stopping a stalled GPU) or another
+        CUDA error poisons that worker's device context; a new process gets a
+        fresh one. Memory exhaustion is not retried.
+        """
+        if 'CUDA error' not in message or self.gpu_retry is not None or self.last_start is None or self.closing:
+            return False
+        self.gpu_retry = message.splitlines()[0]
+        self.status.setText(f'GPU fault ({self.gpu_retry}); restarting processing in a new worker.')
+        return True
 
     def _finish_job(self, *, continue_run=False):
         if not continue_run:
@@ -1365,7 +1392,8 @@ class MainWindow:
         if self.batch_saving and self.batch_current is not None:
             self.batch_current.status = ('cancelled' if isinstance(error, ExportCancelled) else
                                          'failed' if error is not None else 'saved')
-            self.batch_current.detail = str(error) if error is not None else ''
+            self.batch_current.detail = (str(error) if error is not None else
+                                         f'recovered from a GPU fault ({self.gpu_retry})' if self.gpu_retry else '')
             self._batch_display()
         if error is not None:
             self.save_status.setText('Save cancelled.' if isinstance(error, ExportCancelled) else f'Save failed: {error}')
