@@ -27,6 +27,10 @@ from planetrecon.pipeline.colour import complete_bayer_rgb
 from planetrecon.pipeline.align import phase_correlation_shift
 
 
+# Frames per device group: drift, alignment points and accumulation share kernel launches.
+FRAME_GROUP = 8
+
+
 class _UnresolvedMotion(ValueError):
     """A geometry or tracking estimate cannot yet authorize accumulation."""
 
@@ -688,10 +692,76 @@ def stack_source_geometry(
     local_selection = None
     points = config.local_alignment and config.alignment_method == 'alignment_points'
     # Device registration planes when surface or ring drift is tracked on CUDA.
+    # Frames then move through drift, matching and accumulation in groups that
+    # share each kernel launch; every decision is still made per frame.
     gpu_planes = None
+    group = 1
     if (surface_tracker is not None and track_surface) or ring_on_device:
         from planetrecon.backends.torch_surface import TorchPlanes
         gpu_planes = TorchPlanes((h, w), color)
+        group = FRAME_GROUP
+
+    def group_planes(frames):
+        """Upload frames together: raw tensor, bilinear RGB (Bayer), colour and tracking planes."""
+        stacked = gpu_planes.upload(np.stack(frames))
+        rgb = gpu_planes.demosaic(stacked) if bayer else None
+        colour_planes = gpu_planes.luminance(stacked, rgb)
+        return stacked, rgb, colour_planes, colour_planes if colour_retry else gpu_planes.tracking(stacked)
+
+    def group_displacements(indices, planes, frames):
+        """Required drift per frame; drift not yet known is measured together on the device."""
+        todo = [k for k, index in enumerate(indices) if index not in sampled_displacements and index != anchor_index]
+        if todo:
+            import torch
+            chosen = planes[torch.as_tensor(todo, device=planes.device)]
+            frame_poses = [poses[indices[k]] for k in todo]
+            if ring_registration is not None:
+                found = (ring_registration.displacements(chosen) if diagnostics['field_rate_rad_s'] == 0 else
+                         ring_registration.displacements_at_poses(chosen, frame_poses, anchor_pose))
+            else:
+                found = surface_tracker.displacements(chosen, frame_poses)
+            for k, displacement in zip(todo, found):
+                # An unresolved green match retries RGB luminance or stops the run, frame by frame.
+                sampled_displacements[indices[k]] = (displacement if displacement is not None else
+                                                     required_displacement(indices[k], planes[k], frames[k]))
+        return [sampled_displacements.get(index, (0., 0.)) for index in indices]
+
+    def observe(indices):
+        """Drift-corrected pose and colour plane per index; None for unusable or out-of-range frames."""
+        frames = [usable_frame(source.read_raw(int(index))) for index in indices]
+        kept = [k for k, frame in enumerate(frames) if frame is not None]
+        observed = [None] * len(indices)
+        if not kept:
+            return observed
+        if gpu_planes is not None:
+            usable = [frames[k] for k in kept]
+            _, _, colour_planes, planes = group_planes(usable)
+            shifts = group_displacements([int(indices[k]) for k in kept], planes, usable)
+        else:
+            colour_planes, shifts = [], []
+            for k in kept:
+                index, frame = int(indices[k]), frames[k]
+                colour_plane = local_plane(frame)
+                plane = colour_plane if colour_retry else _alignment_plane(frame,color)
+                pose = poses[index]
+                if ring_registration is not None or track_surface or track_field:
+                    if index not in sampled_displacements:
+                        sampled_displacements[index] = required_displacement(index,plane,frame)
+                    shift = sampled_displacements[index]
+                elif track_translation:
+                    predicted = (anchor_plane if static_attitude or index == anchor_index else
+                                 local_render(anchor_plane,pose,anchor_pose))
+                    shift = phase_correlation_shift(predicted,plane)
+                else:
+                    shift = 0.,0.
+                colour_planes.append(colour_plane)
+                shifts.append(shift)
+        for j, (k, (dx, dy)) in enumerate(zip(kept, shifts)):
+            if np.isfinite([dx,dy]).all() and max(abs(dx),abs(dy)) <= config.max_shift_px:
+                pose = poses[int(indices[k])]
+                observed[k] = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy), colour_planes[j]
+        return observed
+
     if config.local_alignment:
         from planetrecon.pipeline.motion_local import build_motion_template, local_coordinates
         if selection is None:
@@ -711,59 +781,46 @@ def stack_source_geometry(
             candidates = np.sort(ranked)
         else:
             candidates = np.asarray(reference_plan['template_candidates'], dtype=int)
+
         def read_aligned(index):
-            frame = usable_frame(source.read_raw(index))
-            if frame is None:
+            observed = observe([index])[0]
+            if observed is None:
                 return None
-            if gpu_planes is not None:
-                frame = gpu_planes.upload(frame)
-                colour_plane = gpu_planes.luminance(frame)
-                plane = colour_plane if colour_retry else gpu_planes.tracking(frame)
-            else:
-                colour_plane = local_plane(frame)
-                plane = colour_plane if colour_retry else _alignment_plane(frame,color)
-            pose = poses[index]
-            if ring_registration is not None or track_surface or track_field:
-                if index not in sampled_displacements:
-                    sampled_displacements[index] = required_displacement(index,plane,frame)
-                dx,dy = sampled_displacements[index]
-            elif track_translation:
-                predicted = anchor_plane if static_attitude or index == anchor_index else local_render(anchor_plane,pose,anchor_pose)
-                dx,dy = phase_correlation_shift(predicted,plane)
-            else:
-                dx,dy = 0.,0.
-            if not np.isfinite([dx,dy]).all() or max(abs(dx),abs(dy)) > config.max_shift_px:
-                return None
-            pose = replace(pose,cx=pose.cx+dx,cy=pose.cy+dy)
-            if gpu_planes is not None:
-                import torch
-                stacked = torch.stack((colour_plane, torch.ones_like(colour_plane)), dim=-1)
-            else:
-                stacked = np.stack((colour_plane,np.ones((h,w))),axis=-1)
+            pose, colour_plane = observed
+            stacked = np.stack((colour_plane,np.ones((h,w))),axis=-1)
             projected = local_render(stacked,anchor_pose,pose)
             return projected[...,0],projected[...,1]
-        local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel)
+
+        read_group = None
+        if gpu_planes is not None:
+            def read_group(indices):
+                """read_aligned for several frames, rendered together on the device."""
+                import torch
+                observed = observe(indices)
+                kept = [k for k, o in enumerate(observed) if o is not None]
+                aligned = [None] * len(indices)
+                if kept:
+                    planes = torch.stack([observed[k][1] for k in kept])
+                    projected = renderer.__self__.render_tensor(
+                        torch.stack((planes, torch.ones_like(planes)), -1), anchor_pose,
+                        [observed[k][0] for k in kept], per_pose=True)
+                    for j, k in enumerate(kept):
+                        aligned[k] = projected[j, ..., 0], projected[j, ..., 1]
+                return aligned
+        local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel,
+                                                             read_group=read_group,group=group)
         local_matcher = None
         if points:
             from planetrecon.pipeline.ap_align import AlignmentPoints
             from planetrecon.pipeline.motion_points import refine_motion_template
             local_template, local_support = refine_motion_template(
                 local_template, candidates, read_aligned, size=config.ap_size,
-                use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
+                use_cuda=backend.name == 'cuda', should_cancel=should_cancel, read_group=read_group, group=group)
             local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
         local_template_with_support = np.stack((local_template,local_support),axis=-1)
         if points and len(local_matcher.centres):
-            if gpu_planes is not None:
-                quality_plane_of = lambda frame: gpu_planes.luminance(gpu_planes.upload(frame))
-                tracking_plane_of = lambda frame: (gpu_planes.luminance if colour_retry else gpu_planes.tracking)(
-                    gpu_planes.upload(frame))
-            else:
-                quality_plane_of = local_plane
-                tracking_plane_of = lambda frame: local_plane(frame) if colour_retry else _alignment_plane(frame, color)
             local_selection, selection = _motion_local_quality(
-                local_matcher, selection, reference_selection, source, usable_frame, quality_plane_of,
-                tracking_plane_of,
-                required_displacement, sampled_displacements, poses, anchor_pose, ref_pose, model, config,
+                local_matcher, selection, reference_selection, observe, group, anchor_pose, ref_pose, model,
                 use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
         if backend.name == 'cuda':
             import torch
@@ -937,10 +994,52 @@ def stack_source_geometry(
 
     if config.frame_preselection:
         emit("cache_ready", incomplete=True)
+    # Device groups whenever drift is tracked on CUDA and every per-frame step has a batched form.
+    grouped = (gpu_planes is not None and gpu_accumulator is not None
+               and (selection is not None or not isinstance(model, SaturnSceneModel))
+               and (not config.local_alignment or points))
+    point_grid = None
+    if grouped and config.local_alignment:
+        from planetrecon.backends.torch_ap import PointGrid, predicted_local_coordinates_batch
+        point_grid = PointGrid((h, w), config.ap_size)
+
+    def stack_group(members):
+        """Accumulate (index, calibrated) frames together; returns (used, rejected)."""
+        import torch
+        indices = [index for index, _ in members]
+        frames = [frame for _, frame in members]
+        stacked, rgb, colour_planes, planes = group_planes(frames)
+        kept, frame_poses, scores = [], [], []
+        for k, (index, (dx, dy)) in enumerate(zip(indices, group_displacements(indices, planes, frames))):
+            if not np.isfinite([dx, dy]).all() or max(abs(dx), abs(dy)) > config.max_shift_px:
+                continue
+            score = max(selection.measurements[index, 0] if selection is not None else
+                        laplacian_score(_alignment_plane(frames[k], color)), 1e-12)
+            if not np.isfinite(score):
+                continue
+            kept.append(k)
+            frame_poses.append(replace(poses[index], cx=poses[index].cx + dx, cy=poses[index].cy + dy))
+            scores.append(score if config.quality_weighting else 1.)
+        if not kept:
+            return 0, len(members)
+        chosen = torch.as_tensor(kept, device=stacked.device)
+        score = torch.as_tensor(scores, device=stacked.device, dtype=torch.float64)
+        if local_selection is not None:
+            # Blend of the alignment points that selected each frame, in reference geometry.
+            score = score[:, None, None] * torch.stack([local_selection.weights_tensor(indices[k]) for k in kept])
+        sample_xy = None
+        if config.local_alignment:
+            sample_xy = predicted_local_coordinates_batch(local_template_with_support, colour_planes[chosen],
+                                                          frame_poses, anchor_pose, renderer.__self__, point_grid)
+        covered = gpu_accumulator.add(stacked[chosen], frame_poses, ref_pose, score,
+                                      rgb[chosen] if bayer else None, sample_xy)
+        return sum(covered), len(members) - sum(covered)
+
     for indices, batch in source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel):
         if should_cancel is not None and should_cancel():
             cancelled = True
             break
+        members = []
         for local, index in enumerate(indices):
             if should_cancel is not None and should_cancel():
                 cancelled = True
@@ -951,6 +1050,12 @@ def stack_source_geometry(
             calibrated = usable_frame(batch[local])
             if calibrated is None:
                 n_rejected += 1
+                continue
+            if grouped:
+                members.append((int(index), calibrated))
+                if len(members) == group:
+                    used, rejected = stack_group(members)
+                    n_used, n_rejected, members = n_used + used, n_rejected + rejected, []
                 continue
             gpu_frame = gpu_planes.upload(calibrated) if gpu_planes is not None else None
             if gpu_frame is not None:
@@ -1018,11 +1123,8 @@ def stack_source_geometry(
                 score = score * (local_selection.weights_tensor(int(index)) if gpu_accumulator is not None
                                  else local_selection.weights(int(index)))
             sample_xy = None
-            if config.local_alignment and gpu_frame is not None and points:
-                from planetrecon.backends.torch_ap import predicted_local_coordinates
-                sample_xy = predicted_local_coordinates(local_template_with_support, gpu_planes.luminance(gpu_frame),
-                                                        pose, anchor_pose, renderer.__self__, config.ap_size)
-            elif config.local_alignment:
+            # Alignment points with device drift tracking always stack in groups (stack_group).
+            if config.local_alignment:
                 local_image = (gpu_planes.luminance(gpu_frame).cpu().numpy() if gpu_frame is not None else
                                _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated))
                 sample_xy = local_coordinates(local_template_with_support,local_image,
@@ -1101,6 +1203,10 @@ def stack_source_geometry(
                 globe_weight += score * gw
                 ring_weight += score * rw
             n_used += 1
+        if members:
+            # Frames read before a cancellation still complete, so the checkpoint stays contiguous.
+            used, rejected = stack_group(members)
+            n_used, n_rejected = n_used + used, n_rejected + rejected
         if state_checkpoint is not None:
             sync_sums()
             resume.save(state_checkpoint, state_identity, {
@@ -1164,14 +1270,15 @@ def stack_source_geometry(
     return result
 
 
-def _motion_local_quality(matcher, selection, reference_selection, source, usable_frame, local_plane,
-                          tracking_plane, required_displacement, sampled_displacements, poses, anchor_pose,
-                          ref_pose, model, config, *, use_cuda, should_cancel):
+def _motion_local_quality(matcher, selection, reference_selection, observe, group, anchor_pose, ref_pose, model, *,
+                          use_cuda, should_cancel):
     """Per-point local quality with a motion model.
 
     Points live on the derotated anchor-geometry reference. Each frame is
     ranked at every point's predicted position in that frame; blend weights
     are placed at the points' reference-epoch positions for accumulation.
+    ``observe`` returns drift-corrected poses and colour planes for ``group``
+    frames at a time (device planes are measured together).
     """
     from types import SimpleNamespace
     from planetrecon.pipeline.ap_align import LocalQuality, LocalSelection
@@ -1182,23 +1289,32 @@ def _motion_local_quality(matcher, selection, reference_selection, source, usabl
     quality = LocalQuality(matcher, use_cuda=use_cuda)
     rows, cols = matcher.centres[:, 0] + .5, matcher.centres[:, 1] + .5   # pixel-centre coordinates
     scores = np.full((len(screened), len(rows)), -np.inf)
-    for k, index in enumerate(screened):
+    for begin in range(0, len(screened), group):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while measuring local quality')
-        frame = usable_frame(source.read_raw(int(index)))
-        if frame is None:
+        part = screened[begin:begin + group]
+        measured, planes, centres = [], [], []
+        for k, observed in enumerate(observe([int(i) for i in part])):
+            if observed is None:
+                continue
+            pose, plane = observed
+            fx, fy, ok = model.src_to_ref(cols, rows, anchor_pose, pose)
+            ok &= np.isfinite(fx) & np.isfinite(fy)
+            measured.append(begin + k)
+            planes.append(plane)
+            centres.append(np.column_stack([np.where(ok, fy, rows + pose.cy - anchor_pose.cy) - .5,
+                                            np.where(ok, fx, cols + pose.cx - anchor_pose.cx) - .5]))
+        if not measured:
             continue
-        if int(index) not in sampled_displacements:
-            sampled_displacements[int(index)] = required_displacement(int(index), tracking_plane(frame), frame)
-        dx, dy = sampled_displacements[int(index)]
-        if not np.isfinite([dx, dy]).all() or max(abs(dx), abs(dy)) > config.max_shift_px:
-            continue
-        pose = replace(poses[int(index)], cx=poses[int(index)].cx + dx, cy=poses[int(index)].cy + dy)
-        fx, fy, ok = model.src_to_ref(cols, rows, anchor_pose, pose)
-        ok &= np.isfinite(fx) & np.isfinite(fy)
-        centres = np.column_stack([np.where(ok, fy, rows + pose.cy - anchor_pose.cy) - .5,
-                                   np.where(ok, fx, cols + pose.cx - anchor_pose.cx) - .5])
-        scores[k] = quality.measure_at(local_plane(frame), centres)
+        if use_cuda and len(measured) > 1:
+            import torch
+            from planetrecon.backends.torch_ap import local_quality_batch
+            scores[measured] = local_quality_batch(
+                torch.stack([torch.as_tensor(p, device='cuda:0', dtype=torch.float64) for p in planes]),
+                np.stack(centres), quality.sigma)
+        else:
+            for k, plane, c in zip(measured, planes, centres):
+                scores[k] = quality.measure_at(plane, c)
     order = np.argsort(-scores, axis=0, kind='stable')[:count]
     chosen = np.zeros(scores.shape, dtype=bool)
     np.put_along_axis(chosen, order, True, axis=0)

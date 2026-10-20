@@ -58,3 +58,22 @@ def test_alignment_and_refusal_match_cpu(ops,kind):
     else:
         assert expected is not None and actual is not None
         np.testing.assert_allclose(actual,expected,atol=2e-10,rtol=0)
+
+
+def test_batched_tracking_matches_single_frames(ops):
+    image = reference()
+    tracker = matcher(image, ops)
+    ref = FramePose(0, 0, 64, 56)
+    poses = [FramePose(k, .006 * k, 64 + .2 * k, 56 - .1 * k) for k in range(5)]
+    frames = [shift(render_observed(image, FieldOnlyModel(), p, ref), (.3 * k - .5, .2 - .1 * k), order=3)
+              for k, p in enumerate(poses)]
+    frames[3] = np.ones_like(image)   # unconstrained: refused within the batch
+    stacked = torch.as_tensor(np.stack(frames), device=ops.device)
+    for batched, single in ((tracker.displacements_at_poses(stacked, poses, ref),
+                             [tracker.displacement_at_pose(f, p, ref) for f, p in zip(frames, poses)]),
+                            (tracker.displacements(stacked), [tracker.displacement(f) for f in frames])):
+        assert [b is None for b in batched] == [s is None for s in single]
+        assert batched[3] is None
+        for b, s in zip(batched, single):
+            if s is not None:
+                np.testing.assert_allclose(b, s, atol=1e-12, rtol=0)

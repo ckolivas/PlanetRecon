@@ -5,20 +5,29 @@ from scipy.ndimage import map_coordinates
 from planetrecon.pipeline.local_align import LocalRegistration
 
 
-def build_motion_template(reference, indices, read_aligned, should_cancel=None):
-    """Average observed proxies in the selected anchor geometry and detector origin."""
+def build_motion_template(reference, indices, read_aligned, should_cancel=None, *, read_group=None, group=1):
+    """Average observed proxies in the selected anchor geometry and detector origin.
+
+    ``read_group`` reads ``group`` indices at once; its planes may be device tensors.
+    """
     total, weight = np.zeros_like(reference), np.zeros_like(reference)
     used = 0
-    for index in indices:
+    if read_group is not None:
+        import torch
+        total, weight = (torch.as_tensor(a, device='cuda:0') for a in (total, weight))
+    for begin in range(0, len(indices), group):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while building motion alignment reference')
-        aligned = read_aligned(int(index))
-        if aligned is None:
-            continue
-        image, support = aligned
-        total += image
-        weight += support
-        used += 1
+        part = [int(i) for i in indices[begin:begin + group]]
+        for aligned in (read_group(part) if read_group is not None else map(read_aligned, part)):
+            if aligned is None:
+                continue
+            image, support = aligned
+            total += image
+            weight += support
+            used += 1
+    if read_group is not None:
+        total, weight = total.cpu().numpy(), weight.cpu().numpy()
     if used < 4:
         raise ValueError('Local motion alignment requires four usable reference frames; disable Local patch alignment.')
     template = np.divide(total,weight,out=reference.copy(),where=weight > 1e-12)
@@ -49,28 +58,45 @@ def inverse_local_coordinates(shift, *, use_cuda=False):
 
 
 def cuda_inverse_local_coordinates(shift, *, tensors=False):
-    """Same eight fixed-point steps and residual guard on the selected GPU."""
+    """Same eight fixed-point steps and residual guard on the selected GPU.
+
+    ``shift`` is (2, h, w), or (B, 2, h, w) for a batch with a guard per frame.
+    """
     import torch
     import torch.nn.functional as functional
     if torch.is_tensor(shift):
-        field = shift.to(device='cuda:0', dtype=torch.float64)[None]
+        field = shift.to(device='cuda:0', dtype=torch.float64)
     else:
-        field = torch.as_tensor(np.stack(shift), dtype=torch.float64, device='cuda:0')[None]
+        field = torch.as_tensor(np.stack(shift), dtype=torch.float64, device='cuda:0')
+    batch = field.ndim == 4
+    field = field if batch else field[None]
     h,w = field.shape[-2:]
     y,x = torch.meshgrid(torch.arange(h, dtype=torch.float64, device='cuda:0'),
                          torch.arange(w, dtype=torch.float64, device='cuda:0'), indexing='ij')
-    qx,qy = x,y
-    def sample():
-        grid = torch.stack((2*qx/max(w-1,1)-1, 2*qy/max(h-1,1)-1), dim=-1)[None]
-        return functional.grid_sample(field, grid, mode='bilinear', padding_mode='border',
-                                      align_corners=True)[0]
-    for _ in range(8):
+    try:
+        from planetrecon.backends.triton_warp import invert
+    except ImportError:
+        invert = None
+    if invert is not None:
+        # All eight steps per pixel in one kernel, sampling at pixel coordinates as the CPU does.
+        qx,qy,error = invert(field)
+        error = error.flatten(1)
+    else:
+        qx,qy = x.expand(len(field),h,w),y.expand(len(field),h,w)
+        def sample():
+            grid = torch.stack((2*qx/max(w-1,1)-1, 2*qy/max(h-1,1)-1), dim=-1)
+            return functional.grid_sample(field, grid, mode='bilinear', padding_mode='border',
+                                          align_corners=True).unbind(1)
+        for _ in range(8):
+            dx,dy = sample()
+            qx,qy = x-dx,y-dy
         dx,dy = sample()
-        qx,qy = x-dx,y-dy
-    dx,dy = sample()
-    error = torch.maximum((qx+dx-x).abs(), (qy+dy-y).abs())
-    if not bool(torch.isfinite(error).all()) or float(error.max()) > .01:
-        qx,qy = x,y
+        error = torch.maximum((qx+dx-x).abs(), (qy+dy-y).abs()).flatten(1)
+    # Unreliable deformation retains global motion.
+    bad = (~torch.isfinite(error).all(1) | (error.amax(1) > .01))[:, None, None]
+    qx,qy = torch.where(bad,x,qx),torch.where(bad,y,qy)
+    if not batch:
+        qx,qy = qx[0],qy[0]
     if tensors:
         return qx+.5, qy+.5
     output = torch.stack((qx+.5,qy+.5)).cpu().numpy()

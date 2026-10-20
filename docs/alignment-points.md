@@ -118,6 +118,43 @@ its interpolation-loss gate) runs the same way, matching the CPU to about
 7e-12 px at about 11 ms per frame, against 52 ms when only the correlations
 ran on the GPU.
 
+### Grouped device execution
+
+Once a run tracks drift on CUDA (Surface, Combined, Saturn), frames move
+through drift tracking, alignment points and accumulation in groups of eight
+(`geometry_stack.FRAME_GROUP`), so one kernel launch and one small host
+transfer serve the whole group. The reference build, its refinement,
+local-quality ranking and the stacking pass all read frames through the same
+grouped `observe` step. Every decision is still made per frame:
+
+- **Pose geometry.** The globe, Saturn and field warps accept a pose sequence
+  and return a leading batch axis; per-pose scalars are computed on the host
+  exactly as for a single pose.
+- **Drift matching.** A shift is scored only if the whole mask stays inside
+  the frame. For those shifts a circular correlation of the detector size is
+  exact, so the transforms are about a quarter of the padded size, and
+  validity follows from the mask's bounding box. Peaks are decided in a window
+  around the valid shifts, indexed as the full correlation.
+- **Alignment points.** `PointGrid` holds every point position for the
+  detector. Each predicted reference keeps the points `AlignmentPoints` would
+  place; all frames' fields are solved together with zero information at
+  unused points, which leaves each least-squares solution unchanged. The Hann
+  window sums use its separability.
+- **Fused kernels** (`backends/triton_warp.py`, float64, no fused
+  multiply-adds, float64 constants): the bilinear pull and scatter with the
+  CPU operator's snapping and support rules, the rotating-globe mapping and
+  the eight-step field inversion. The globe mapping writes the CPU's
+  longitude/latitude round trip as the radial projection onto the ellipsoid
+  that it equals, avoiding float64 transcendentals.
+
+The CPU path remains the reference. Against the per-frame GPU path of commit
+`f56ee8c`, stacks agree to 1.5e-13 of full scale.
+
+| run (RTX 5070, otherwise idle) | before | grouped |
+|---|---|---|
+| Jupiter, Surface + AP, 63%, whole capture | 111 s | 43 s |
+| Saturn R, Saturn + AP, 21%, first 3,000 frames | 68 s | 28 s |
+
 ## Why the earlier stacks were poor
 
 The investigation compared PlanetRecon with the AutoStakkert!4 stacks in the

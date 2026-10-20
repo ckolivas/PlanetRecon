@@ -11,10 +11,16 @@ from planetrecon.pipeline.local_align import pull
 
 
 def refine_motion_template(template, indices, read_aligned, *, size, use_cuda=False, should_cancel=None,
-                           progress=None):
-    """Average the anchor-geometry frames again after alignment points align them to ``template``."""
+                           progress=None, read_group=None, group=1):
+    """Average the anchor-geometry frames again after alignment points align them to ``template``.
+
+    ``read_group`` reads several indices at once (device planes); frames are
+    then matched and pulled ``group`` at a time.
+    """
     from planetrecon.pipeline.ap_align import AlignmentPoints
     matcher = AlignmentPoints(template, size=size, use_cuda=use_cuda, should_cancel=should_cancel)
+    if use_cuda and len(matcher.centres) and read_group is not None:
+        return _refine_groups(template, matcher, indices, read_group, group, should_cancel, progress)
     if use_cuda and len(matcher.centres):
         return _refine_on_device(template, matcher, indices, read_aligned, should_cancel, progress)
     total = np.zeros_like(template)
@@ -57,6 +63,33 @@ def _refine_on_device(template, matcher, indices, read_aligned, should_cancel, p
         field = matcher.displacement_tensor(image, (0., 0.))
         total.add_(sample(image, yy + field[1], xx + field[0]))
         weight.add_(sample(support, yy + field[1], xx + field[0]))
+    total, weight = total.cpu().numpy(), weight.cpu().numpy()
+    refined = np.divide(total, weight, out=template.copy(), where=weight > 1e-12)
+    return refined, weight >= 4. - 1e-9
+
+
+def _refine_groups(template, matcher, indices, read_group, group, should_cancel, progress):
+    """Device refinement with frames matched and pulled together."""
+    import torch
+    from planetrecon.backends.torch_ap import PointGrid, gaussian_proxy, sample_frames
+    grid = PointGrid(template.shape, matcher.size, search=matcher.search)
+    points, templates = grid.fixed(matcher)
+    total = torch.zeros(template.shape, device='cuda:0', dtype=torch.float64)
+    weight = torch.zeros_like(total)
+    for begin in range(0, len(indices), group):
+        if should_cancel is not None and should_cancel():
+            raise InterruptedError('cancelled while refining the motion alignment reference')
+        part = indices[begin:begin + group]
+        if progress is not None:
+            progress(begin + len(part))
+        aligned = [a for a in read_group([int(i) for i in part]) if a is not None]
+        if not aligned:
+            continue
+        images = torch.stack([a[0] for a in aligned])
+        supports = torch.stack([a[1] for a in aligned])
+        field, _ = grid.fixed_fields(gaussian_proxy(images), points, templates)
+        total += sample_frames(images, field).sum(0)
+        weight += sample_frames(supports, field).sum(0)
     total, weight = total.cpu().numpy(), weight.cpu().numpy()
     refined = np.divide(total, weight, out=template.copy(), where=weight > 1e-12)
     return refined, weight >= 4. - 1e-9

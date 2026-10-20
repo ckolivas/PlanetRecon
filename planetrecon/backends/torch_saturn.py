@@ -1,4 +1,5 @@
 """CUDA Saturn geometry with the CPU model's disjoint-layer support rules."""
+import numpy as np
 import torch
 
 from planetrecon.backends.torch_globe import TorchGlobeAccumulator, TorchGlobeWarp
@@ -15,24 +16,29 @@ class TorchSaturnWarp(TorchGlobeWarp):
         self.normal = ring_normal_obs(g)
         self.sun = sun_direction_obs(g,model.rings)
 
-    def classify(self, pose, x=None, y=None, *, mask_moon=True):
+    def classify(self, pose, x=None, y=None, *, mask_moon=True, motion_only=False):
+        """Layer labels and regions at one pose, or a batch (leading axis) for a pose sequence.
+
+        ``motion_only`` returns just labels, motion labels and exclusions (no shadows or regions).
+        """
         x, y = (self.x,self.y) if x is None else (x,y)
         model, g, rings = self.model, self.model.globe, self.model.rings
-        sx, sy = x-pose.cx, pose.cy-y
+        P = self.poses(pose, pose)
+        sx, sy = x-P([p.cx for p in P.srcs]), P([p.cy for p in P.srcs])-y
         if model.apply_field:
-            sx, sy = self.rotate(sx,sy,-pose.field_angle_rad)
-        t_s = pose.t_s if model.apply_surface else g.reference_epoch_s
-        r = body_to_obs_matrix(g.pole_pa_rad,g.sub_obs_lat_rad,g.sub_obs_lon(t_s))
+            sx, sy = self.rotate(sx,sy,P.angles([-p.field_angle_rad for p in P.srcs]))
+        times = [p.t_s if model.apply_surface else g.reference_epoch_s for p in P.srcs]
+        r = P.matrices([g.sub_obs_lon(t_s) for t_s in times], g)
         ia, ic = 1/g.equatorial_radius_px**2, 1/g.polar_radius_px**2
-        q = [r[0,i]*sx+r[1,i]*sy for i in range(3)]
-        d = r[2]
-        aa = (d[0]**2+d[1]**2)*ia+d[2]**2*ic
+        q = [P(r[:,0,i])*sx+P(r[:,1,i])*sy for i in range(3)]
+        d = [P(r[:,2,i]) for i in range(3)]
+        aa = (r[:,2,0]**2+r[:,2,1]**2)*ia+r[:,2,2]**2*ic
         bb = 2*((q[0]*d[0]+q[1]*d[1])*ia+q[2]*d[2]*ic)
         cc = (q[0]**2+q[1]**2)*ia+q[2]**2*ic-1
-        disc = bb*bb-4*aa*cc
-        tg = torch.where(disc >= 0,(-bb+disc.clamp_min(0).sqrt())/max(2*aa,1e-30),torch.nan)
+        disc = bb*bb-4*P(aa)*cc
+        tg = torch.where(disc >= 0,(-bb+disc.clamp_min(0).sqrt())/P(np.maximum(2*aa,1e-30)),torch.nan)
         xb,yb,zb = [q[i]+tg*d[i] for i in range(3)]
-        nz = r[2,0]*(xb*ia)+r[2,1]*(yb*ia)+r[2,2]*(zb*ic)
+        nz = P(r[:,2,0])*(xb*ia)+P(r[:,2,1])*(yb*ia)+P(r[:,2,2])*(zb*ic)
         on_globe = (disc >= 0) & torch.isfinite(tg) & (nz >= -1e-12)
         tg = torch.where(on_globe,tg,torch.nan)
         n, rt = self.normal, self.ring_matrix.T
@@ -52,40 +58,44 @@ class TorchSaturnWarp(TorchGlobeWarp):
         labels = torch.where(on_globe,LAYER_GLOBE,labels)
         labels = torch.where(near,LAYER_NEAR_RING,labels)
 
-        # A ray from each ring point toward the Sun intersects the oblate globe.
-        pb = [rt[i,0]*sx+rt[i,1]*sy+rt[i,2]*tr for i in range(3)]
-        db = rt @ self.sun
-        aa = (db[0]**2+db[1]**2)*ia+db[2]**2*ic
-        bb = 2*((pb[0]*db[0]+pb[1]*db[1])*ia+pb[2]*db[2]*ic)
-        cc = (pb[0]**2+pb[1]**2)*ia+pb[2]**2*ic-1
-        disc = bb*bb-4*aa*cc
-        root = disc.clamp_min(0).sqrt()
-        u1,u2 = (-bb-root)/max(2*aa,1e-30),(-bb+root)/max(2*aa,1e-30)
-        globe_shadow = on_ring & (disc >= 0) & ((u1 > 1e-4) | (u2 > 1e-4))
-        # The reverse shadow test intersects globe-to-Sun rays with the annulus.
-        denom = float(n @ self.sun)
-        ring_shadow = torch.zeros_like(on_globe)
-        if abs(denom) >= EDGE_ON_MU:
-            u = -(n[0]*sx+n[1]*sy+n[2]*tg)/denom
-            px,py,pz = sx+u*self.sun[0],sy+u*self.sun[1],tg+u*self.sun[2]
-            xb = rt[0,0]*px+rt[0,1]*py+rt[0,2]*pz
-            yb = rt[1,0]*px+rt[1,1]*py+rt[1,2]*pz
-            radius = torch.hypot(xb,yb)
-            ring_shadow = on_globe & (u > 1e-4) & (radius >= rings.inner_radius_px) & (radius <= rings.outer_radius_px)
+        if not motion_only:
+            # A ray from each ring point toward the Sun intersects the oblate globe.
+            pb = [rt[i,0]*sx+rt[i,1]*sy+rt[i,2]*tr for i in range(3)]
+            db = rt @ self.sun
+            aa = (db[0]**2+db[1]**2)*ia+db[2]**2*ic
+            bb = 2*((pb[0]*db[0]+pb[1]*db[1])*ia+pb[2]*db[2]*ic)
+            cc = (pb[0]**2+pb[1]**2)*ia+pb[2]**2*ic-1
+            disc = bb*bb-4*aa*cc
+            root = disc.clamp_min(0).sqrt()
+            u1,u2 = (-bb-root)/max(2*aa,1e-30),(-bb+root)/max(2*aa,1e-30)
+            globe_shadow = on_ring & (disc >= 0) & ((u1 > 1e-4) | (u2 > 1e-4))
+            # The reverse shadow test intersects globe-to-Sun rays with the annulus.
+            denom = float(n @ self.sun)
+            ring_shadow = torch.zeros_like(on_globe)
+            if abs(denom) >= EDGE_ON_MU:
+                u = -(n[0]*sx+n[1]*sy+n[2]*tg)/denom
+                px,py,pz = sx+u*self.sun[0],sy+u*self.sun[1],tg+u*self.sun[2]
+                xb = rt[0,0]*px+rt[0,1]*py+rt[0,2]*pz
+                yb = rt[1,0]*px+rt[1,1]*py+rt[1,2]*pz
+                radius = torch.hypot(xb,yb)
+                ring_shadow = on_globe & (u > 1e-4) & (radius >= rings.inner_radius_px) & (radius <= rings.outer_radius_px)
 
         invalid = torch.zeros_like(on_globe)
         if model.edge_on:
             invalid |= ((n[0]*sx+n[1]*sy).abs() <= rings.outer_radius_px*abs(n[2])+.5) & (torch.hypot(sx,sy) <= rings.outer_radius_px+.5)
         moon = model.moon
         if moon is not None and mask_moon:
-            dt = pose.t_s-g.reference_epoch_s
-            mx,my = moon.x+moon.vx_px_s*dt-pose.cx,pose.cy-moon.y-moon.vy_px_s*dt
+            dt = np.array([p.t_s-g.reference_epoch_s for p in P.srcs])
+            cx, cy = np.array([p.cx for p in P.srcs]), np.array([p.cy for p in P.srcs])
+            mx,my = P(moon.x+moon.vx_px_s*dt-cx),P(cy-moon.y-moon.vy_px_s*dt)
             mx,my = self.rotate(mx,my,-model.field_angle0_rad if model.apply_field else 0.)
-            mx,my = self.rotate(mx,my,pose.field_angle_rad if model.apply_field else 0.)
-            moon_mask = torch.hypot(x-(mx+pose.cx),y-(pose.cy-my)) <= moon.radius_px
+            mx,my = self.rotate(mx,my,P.angles([p.field_angle_rad if model.apply_field else 0. for p in P.srcs]))
+            moon_mask = torch.hypot(x-(mx+P(cx)),y-(P(cy)-my)) <= moon.radius_px
             labels = torch.where(moon_mask,LAYER_MOON,labels)
             invalid |= moon_mask
         motion_labels = torch.where(on_globe & (labels != LAYER_MOON),LAYER_GLOBE,labels)
+        if motion_only:
+            return {'labels':labels,'motion_labels':motion_labels,'invalid':invalid}
         regions = torch.zeros_like(labels)
         regions = torch.where(motion_labels == LAYER_GLOBE,torch.where(ring_shadow,3,1),regions)
         regions = torch.where((motion_labels == LAYER_NEAR_RING) | (motion_labels == LAYER_FAR_RING),
@@ -101,7 +111,8 @@ class TorchSaturnWarp(TorchGlobeWarp):
         # The continuous warp only consumes exclusions, not ring/shadow labels.
         # Classification is still performed for scoring and layer coverage.
         needs_mask = self.model.moon is not None or self.model.edge_on
-        mapped_info = (self.classify(src,x,y) if x is not None or info is None else info) if needs_mask else None
+        mapped_info = ((self.classify(src,x,y,motion_only=True) if x is not None or info is None else info)
+                       if needs_mask else None)
         x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y)
         if mapped_info is not None:
             valid &= ~mapped_info['invalid']
@@ -127,12 +138,16 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
         self.prepared_pose = pose
         return self.source_info['quality_regions'].cpu().numpy()
 
-    def sample_corners(self, pose, ref, sample_xy=None):
+    def sample_map(self, pose, ref, sample_xy=None):
         if self.prepared_pose != pose:
             # Scoring regions only return to the host when prepare_source is asked.
-            self.source_info, self.prepared_pose = self.classify(pose), pose
+            self.source_info, self.prepared_pose = self.classify(pose, motion_only=True), pose
         coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
-        yield from self.corners(*self.map(pose,ref,self.source_info,**coords))
+        return self.map(pose,ref,self.source_info,**coords)
+
+    def layer_labels(self):
+        return (self.source_info['motion_labels'], (LAYER_GLOBE, LAYER_NEAR_RING, LAYER_FAR_RING),
+                (self.globe_weight.view(-1), self.ring_weight.view(-1)))
 
     def add_layer_coverage(self, index, weighted):
         labels = self.source_info['motion_labels'].flatten()

@@ -11,26 +11,26 @@ from planetrecon.backends.torch_circular import sample
 from planetrecon.pipeline import ap_align
 
 
-def _gaussian(image, sigma):
-    """SciPy ``gaussian_filter`` (mode 'reflect', truncate 4) on the device."""
+def _gaussian_kernel(sigma, device):
     radius = int(4. * sigma + .5)
-    x = torch.arange(-radius, radius + 1, device=image.device, dtype=torch.float64)
+    x = torch.arange(-radius, radius + 1, device=device, dtype=torch.float64)
     kernel = torch.exp(-.5 * (x / sigma) ** 2)
-    kernel = kernel / kernel.sum()
-    out = image
-    for axis in (0, 1):
-        n = out.shape[axis]
-        # Symmetric (edge-inclusive) reflection, repeated for kernels longer than the axis.
-        index = torch.arange(-radius, n + radius, device=image.device)
-        period = 2 * n
-        index = torch.remainder(index, period)
-        index = torch.where(index >= n, period - 1 - index, index)
-        padded = out.index_select(axis, index)
-        moved = padded.movedim(axis, -1)[None, None] if axis == 1 else padded.T[None, None]
-        filtered = F.conv1d(moved.reshape(-1, 1, moved.shape[-1]), kernel[None, None]).reshape(
-            moved.shape[2], -1)
-        out = filtered if axis == 1 else filtered.T
-    return out
+    return kernel / kernel.sum(), radius
+
+
+def _reflected(n, radius, device):
+    """Symmetric (edge-inclusive) reflection indices, repeated for kernels longer than the axis."""
+    index = torch.remainder(torch.arange(-radius, n + radius, device=device), 2 * n)
+    return torch.where(index >= n, 2 * n - 1 - index, index)
+
+
+def _gaussian(image, sigma):
+    """SciPy ``gaussian_filter`` (mode 'reflect', truncate 4) over the last two axes, rows first."""
+    kernel, radius = _gaussian_kernel(sigma, image.device)
+    h, w = image.shape[-2:]
+    out = image.reshape(-1, 1, h, w).index_select(-2, _reflected(h, radius, image.device))
+    out = F.conv2d(out, kernel.view(1, 1, -1, 1)).index_select(-1, _reflected(w, radius, image.device))
+    return F.conv2d(out, kernel.view(1, 1, 1, -1)).reshape(image.shape)
 
 
 def gaussian_proxy(image):
@@ -41,28 +41,32 @@ def gaussian_proxy(image):
 
 def local_quality(plane, shift, centres, sigma, device='cuda:0'):
     """Device equivalent of ``ap_align.LocalQuality.measure``."""
-    image = torch.as_tensor(plane, device=device, dtype=torch.float64)
-    h, w = image.shape
-    if (h, w) != getattr(local_quality, 'shape', None):
-        local_quality.ys = torch.arange(h, device=device, dtype=torch.float64)
-        local_quality.xs = torch.arange(w, device=device, dtype=torch.float64)
-        local_quality.shape = (h, w)
+    c = np.asarray(centres, dtype=np.float64) + np.array([float(shift[1]), float(shift[0])])
+    return local_quality_batch(torch.as_tensor(plane, device=device, dtype=torch.float64)[None], c[None], sigma)[0]
+
+
+def local_quality_batch(planes, centres, sigma):
+    """Local quality of frames (B, h, w), each around its own (n, 2) row/column centres: (B, n) host array."""
+    device = planes.device
+    h, w = planes.shape[-2:]
     # SciPy mode 'nearest' at the detector edge.
     radius = int(4. * ap_align.QUALITY_SMOOTH_PX + .5)
     x = torch.arange(-radius, radius + 1, device=device, dtype=torch.float64)
     kernel = torch.exp(-.5 * (x / ap_align.QUALITY_SMOOTH_PX) ** 2)
     kernel = (kernel / kernel.sum())
-    padded = F.pad(image[None, None], (radius, radius, radius, radius), mode='replicate')
-    smooth = F.conv2d(F.conv2d(padded, kernel[None, None, None, :]), kernel[None, None, :, None])[0, 0]
+    padded = F.pad(planes[:, None], (radius, radius, radius, radius), mode='replicate')
+    smooth = F.conv2d(F.conv2d(padded, kernel[None, None, None, :]), kernel[None, None, :, None])[:, 0]
     lap = torch.zeros_like(smooth)
-    lap[1:-1, 1:-1] = (smooth[:-2, 1:-1] + smooth[2:, 1:-1] + smooth[1:-1, :-2]
-                       + smooth[1:-1, 2:] - 4 * smooth[1:-1, 1:-1])
-    c = torch.as_tensor(centres, device=device, dtype=torch.float64)
-    wy = torch.exp(-.5 * ((local_quality.ys[None, :] - c[:, 0:1] - float(shift[1])) / sigma) ** 2)
-    wx = torch.exp(-.5 * ((local_quality.xs[None, :] - c[:, 1:2] - float(shift[0])) / sigma) ** 2)
-    energy = ((wy @ (lap * lap)) * wx).sum(dim=1)
-    level = ((wy @ smooth) * wx).sum(dim=1)
-    norm = wy.sum(1) * wx.sum(1)
+    lap[:, 1:-1, 1:-1] = (smooth[:, :-2, 1:-1] + smooth[:, 2:, 1:-1] + smooth[:, 1:-1, :-2]
+                          + smooth[:, 1:-1, 2:] - 4 * smooth[:, 1:-1, 1:-1])
+    c = torch.as_tensor(np.asarray(centres, dtype=np.float64), device=device)
+    ys = torch.arange(h, device=device, dtype=torch.float64)
+    xs = torch.arange(w, device=device, dtype=torch.float64)
+    wy = torch.exp(-.5 * ((ys - c[..., 0:1]) / sigma) ** 2)
+    wx = torch.exp(-.5 * ((xs - c[..., 1:2]) / sigma) ** 2)
+    energy = ((wy @ (lap * lap)) * wx).sum(-1)
+    level = ((wy @ smooth) * wx).sum(-1)
+    norm = wy.sum(-1) * wx.sum(-1)
     return ((energy / norm) / ((level / norm) ** 2).clamp_min(1e-30)).cpu().numpy()
 
 
@@ -202,66 +206,197 @@ class DeviceAccumulator:
         return pending
 
 
-def build_points(reference, size, *, search=ap_align.SEARCH, valid_mask=None, device='cuda:0'):
-    """Device equivalent of ``ap_align.AlignmentPoints`` placement on a reference tensor.
+class PointGrid:
+    """Every alignment-point position for one detector shape and point size.
 
-    Returns a matcher description for ``TorchAlignmentPoints`` (same centres,
-    templates and field weights as the CPU class for the same reference).
+    ``AlignmentPoints`` places points on this grid. A
+    batch of references keeps the points each would choose; fields for all
+    frames are solved together with zero information at unused points, which
+    leaves each frame's least-squares solution unchanged.
     """
-    from types import SimpleNamespace
-    reference = torch.as_tensor(reference, device=device, dtype=torch.float64)
-    h, w = reference.shape
-    half, spacing = size // 2, size // 2
-    margin = half + search
-    ys = np.arange(margin, h - margin - size % 2, spacing)
-    xs = np.arange(margin, w - margin - size % 2, spacing)
-    window = np.outer(np.hanning(size), np.hanning(size))
-    empty = SimpleNamespace(shape=(h, w), size=size, search=search, spacing=spacing,
-                            centres=np.zeros((0, 2), dtype=np.int64), accepted=[])
-    if not len(ys) or not len(xs):
-        return empty
-    ar = torch.arange(size, device=device)
-    rows = torch.as_tensor(ys - half, device=device)[:, None] + ar
-    cols = torch.as_tensor(xs - half, device=device)[:, None] + ar
 
-    def sections(image):
-        return image[rows[:, None, :, None], cols[None, :, None, :]]   # (ny, nx, size, size)
-    keep = sections(reference).mean(dim=(-1, -2)) >= float(reference.max()) * ap_align.MIN_BRIGHTNESS
-    if valid_mask is not None:
-        invalid = F.pad((~torch.as_tensor(valid_mask, device=device)).long().cumsum(0).cumsum(1), (1, 0, 1, 0))
+    def __init__(self, shape, size, *, search=ap_align.SEARCH, device='cuda:0'):
+        self.shape, self.size, self.search, self.device = tuple(shape), size, search, device
+        h, w = self.shape
+        half, spacing = size // 2, size // 2
+        margin = half + search
+        ys = np.arange(margin, h - margin - size % 2, spacing)
+        xs = np.arange(margin, w - margin - size % 2, spacing)
+        self.grid = (len(ys), len(xs))
+        self.centres = np.stack(np.meshgrid(ys, xs, indexing='ij'), -1).reshape(-1, 2)
+        self.window = torch.as_tensor(np.outer(np.hanning(size), np.hanning(size)), device=device,
+                                      dtype=torch.float64)
+        ar = torch.arange(size, device=device)
+        self.rows = torch.as_tensor(ys - half, device=device)[:, None] + ar
+        self.cols = torch.as_tensor(xs - half, device=device)[:, None] + ar
+        self.ys, self.xs, self.margin = ys, xs, margin
         span = size + 2 * search
-        y0 = torch.as_tensor(ys - margin, device=device)[:, None]
-        x0 = torch.as_tensor(xs - margin, device=device)[None, :]
-        count = invalid[y0 + span, x0 + span] - invalid[y0, x0 + span] - invalid[y0 + span, x0] + invalid[y0, x0]
-        keep &= count == 0
-    win = torch.as_tensor(window, device=device, dtype=torch.float64)
-    t = sections(gaussian_proxy(reference))[keep]
-    t = t - (t * win).sum(dim=(-1, -2), keepdim=True) / win.sum()
-    energy = ((t * t * win).sum(dim=(-1, -2)) / win.sum()).sqrt().cpu().numpy()
-    grid = np.argwhere(keep.cpu().numpy())
-    if not len(energy):
-        return empty
-    chosen = (energy >= .1 * np.median(energy)) & (energy > 1e-4 * abs(float(reference.max())))
-    centres = np.column_stack([ys[grid[:, 0]], xs[grid[:, 1]]])[chosen]
-    templates = t[torch.as_tensor(chosen, device=device)]
-    gy, gx = ap_align._grid(h, ap_align.FIELD_STEP), ap_align._grid(w, ap_align.FIELD_STEP)
-    sigma = .6 * spacing
-    return SimpleNamespace(shape=(h, w), size=size, search=search, spacing=spacing, centres=centres,
-                           window=win, weighted=templates * win,
-                           norm=(templates.square() * win).sum(dim=(-1, -2)).sqrt(),
-                           wy=ap_align._gaussians(gy, centres[:, 0].astype(float), sigma),
-                           wx=ap_align._gaussians(gx, centres[:, 1].astype(float), sigma), accepted=[])
+        ar = torch.arange(span, device=device)
+        c = torch.as_tensor(self.centres, device=device)
+        self.tile_rows = (c[:, 0] - half - search)[:, None] + ar
+        self.tile_cols = (c[:, 1] - half - search)[:, None] + ar
+        gy, gx = ap_align._grid(h, ap_align.FIELD_STEP), ap_align._grid(w, ap_align.FIELD_STEP)
+        sigma = .6 * spacing
+        self.wy = torch.as_tensor(ap_align._gaussians(gy, self.centres[:, 0].astype(float), sigma), device=device)
+        self.wx = torch.as_tensor(ap_align._gaussians(gx, self.centres[:, 1].astype(float), sigma), device=device)
+
+    def sections(self, images):
+        """(B, ny, nx, size, size) point sections of (B, h, w) images, as a strided view."""
+        start, step = self.margin - self.size // 2, self.size // 2
+        view = images[:, start:, start:].unfold(1, self.size, step).unfold(2, self.size, step)
+        return view[:, :self.grid[0], :self.grid[1]]
+
+    def choose(self, references, valid=None):
+        """Points each reference keeps (``AlignmentPoints`` placement): frame and point indices, zero-mean templates."""
+        if not len(self.centres):
+            empty = torch.zeros(0, dtype=torch.long, device=self.device)
+            return empty, empty, torch.zeros((0, self.size, self.size), device=self.device, dtype=torch.float64)
+        n = len(references)
+        peak = references.amax((-2, -1))
+        keep = self.sections(references).mean((-1, -2)) >= (peak * ap_align.MIN_BRIGHTNESS)[:, None, None]
+        if valid is not None:
+            # The whole search footprint must be observed (e.g. a predicted reference).
+            invalid = F.pad((~valid).long().cumsum(-2).cumsum(-1), (1, 0, 1, 0))
+            span = self.size + 2 * self.search
+            y0 = torch.as_tensor(self.ys - self.margin, device=self.device)[:, None]
+            x0 = torch.as_tensor(self.xs - self.margin, device=self.device)[None, :]
+            count = (invalid[:, y0 + span, x0 + span] - invalid[:, y0, x0 + span]
+                     - invalid[:, y0 + span, x0] + invalid[:, y0, x0])
+            keep &= count == 0
+        t = self.sections(gaussian_proxy(references))
+        t = t - (t * self.window).sum((-1, -2), keepdim=True) / self.window.sum()
+        energy = ((t * t * self.window).sum((-1, -2)) / self.window.sum()).sqrt()
+        host = torch.cat((energy.flatten(1), keep.flatten(1).to(torch.float64), peak[:, None]), 1).cpu().numpy()
+        points = len(self.centres)
+        frames, chosen = [], []
+        for b in range(n):
+            e, kept = host[b, :points], host[b, points:2 * points] > 0
+            index = np.flatnonzero(kept)
+            if not len(index):
+                continue
+            # Relative to the typical point, with an absolute floor for blank regions.
+            e = e[index]
+            index = index[(e >= .1 * np.median(e)) & (e > 1e-4 * abs(host[b, -1]))]
+            frames.append(np.full(len(index), b)), chosen.append(index)
+        if not frames:
+            return self.choose(references[:0])
+        frame_index = torch.as_tensor(np.concatenate(frames), device=self.device)
+        point_index = torch.as_tensor(np.concatenate(chosen), device=self.device)
+        return frame_index, point_index, t.flatten(1, 2)[frame_index, point_index]
+
+    def fields(self, proxies, frame_index, point_index, templates, shifts=None):
+        """Dense (x, y) fields (B, 2, h, w) for proxies matched against per-pair templates.
+
+        ``shifts`` optionally gives each frame's global (dx, dy), applied as in
+        ``TorchAlignmentPoints.displacement``. Returns fields and per-frame acceptance.
+        """
+        n = len(proxies)
+        h, w = self.shape
+        acceptance = [None] * n
+        if shifts is not None and np.any(shifts):
+            yy = torch.arange(h, device=self.device, dtype=torch.float64)[:, None]
+            xx = torch.arange(w, device=self.device, dtype=torch.float64)[None, :]
+            s = torch.as_tensor(np.asarray(shifts, dtype=np.float64), device=self.device)
+            proxies = sample(proxies, yy + s[:, 1, None, None], xx + s[:, 0, None, None])
+        H = torch.zeros((n, len(self.centres), 2, 2), device=self.device, dtype=torch.float64)
+        Hd = torch.zeros((n, len(self.centres), 2), device=self.device, dtype=torch.float64)
+        lam = np.full(n, ap_align.PRIOR)
+        if len(frame_index):
+            m = len(frame_index)
+            tiles = proxies[frame_index[:, None, None], self.tile_rows[point_index][:, :, None],
+                            self.tile_cols[point_index][:, None, :]]
+            norm = (templates.square() * self.window).sum((-1, -2)).sqrt().clamp_min(1e-15)
+            num, s1, s2 = self.correlate(tiles, templates * self.window)
+            var = (s2 - s1 * s1 / self.window.sum()).clamp_min(1e-12)
+            ncc = (num / (var.sqrt() * norm[:, None, None])).cpu().numpy()
+            # Peak decisions are tiny (m x 13 x 13); reuse the CPU reference logic.
+            offset, information, ok, _ = ap_align._peak_fit(ncc)
+            frames = frame_index.cpu().numpy()
+            trace = information[:, 0, 0] + information[:, 1, 1]
+            for b in range(n):
+                mine = frames == b
+                if mine.any():
+                    acceptance[b] = float(ok[mine].mean())
+                    accepted = trace[mine & ok]
+                    lam[b] = ap_align.PRIOR * (float(np.median(accepted)) if len(accepted) else 1.)
+            information = torch.as_tensor(information, device=self.device)
+            H[frame_index, point_index] = information
+            Hd[frame_index, point_index] = torch.einsum(
+                'nij,nj->ni', information, torch.as_tensor(offset, device=self.device))
+        A = torch.einsum('ky,kx,bkij->byxij', self.wy, self.wx, H)
+        b = torch.einsum('ky,kx,bki->byxi', self.wy, self.wx, Hd)
+        lam = torch.as_tensor(lam, device=self.device)[:, None, None]
+        A[..., 0, 0] += lam
+        A[..., 1, 1] += lam
+        det = A[..., 0, 0] * A[..., 1, 1] - A[..., 0, 1] * A[..., 1, 0]
+        u = torch.stack([(A[..., 1, 1] * b[..., 0] - A[..., 0, 1] * b[..., 1]) / det,
+                         (A[..., 0, 0] * b[..., 1] - A[..., 1, 0] * b[..., 0]) / det], 1)
+        # Coarse samples include both detector edges, so align_corners maps exactly.
+        field = F.interpolate(u, size=self.shape, mode='bilinear', align_corners=True)
+        if shifts is not None:
+            field = field + torch.as_tensor(np.asarray(shifts, dtype=np.float64), device=self.device)[:, :, None, None]
+        return field, acceptance
+
+    def correlate(self, tiles, weighted):
+        """Search-window correlations of tiles (m, span, span) with weighted templates and the window.
+
+        The template term is a grouped convolution; the window sums use the
+        Hann window's separability (rows, then columns) instead of full 2-D sums.
+        """
+        m = len(tiles)
+        num = F.conv2d(tiles[None], weighted[:, None], groups=m)[0]
+        hann = torch.as_tensor(np.hanning(self.size), device=self.device, dtype=torch.float64)
+
+        def window_sum(image):
+            rows = F.conv2d(image[:, None], hann.view(1, 1, 1, -1))
+            return F.conv2d(rows, hann.view(1, 1, -1, 1))[:, 0]
+        return num, window_sum(tiles), window_sum(tiles * tiles)
+
+    def fixed(self, matcher):
+        """Grid indices and device templates of a fixed-reference ``AlignmentPoints``."""
+        lookup = {tuple(c): k for k, c in enumerate(self.centres.tolist())}
+        index = torch.as_tensor([lookup[tuple(c)] for c in matcher.centres.tolist()], device=self.device,
+                                dtype=torch.long)
+        templates = torch.as_tensor(np.asarray(matcher.templates), device=self.device, dtype=torch.float64)
+        return index, templates
+
+    def fixed_fields(self, proxies, index, templates, shifts=None):
+        """Fields for frames all matched against one reference's points."""
+        n, k = len(proxies), len(index)
+        frame_index = torch.arange(n, device=self.device).repeat_interleave(k)
+        return self.fields(proxies, frame_index, index.repeat(n), templates.repeat(n, 1, 1), shifts)
 
 
-def predicted_local_coordinates(template_with_support, frame, pose, reference_pose, warp, size):
-    """Device equivalent of motion_local.local_coordinates with alignment points (tensors in and out)."""
+def predicted_local_coordinates_batch(template_with_support, frames, poses, reference_pose, warp, grid):
+    """motion_local.local_coordinates with alignment points for frames (B, h, w) at their poses.
+
+    The fixed anchor-geometry reference is predicted at each pose, points are
+    chosen on its fully observed support, and the inverted residual fields
+    are returned as sampling positions (qx, qy) of shape (B, h, w).
+    """
     from planetrecon.pipeline.motion_local import cuda_inverse_local_coordinates
-    projected = warp.render_tensor(template_with_support, pose, reference_pose)
+    projected = warp.render_tensor(template_with_support, list(poses), reference_pose)
     predicted, support = projected[..., 0], projected[..., 1]
-    matcher = build_points(predicted, size, valid_mask=support >= 1. - 1e-9, device=warp.device)
-    frame = torch.as_tensor(frame, device=warp.device, dtype=torch.float64)
-    if not len(matcher.centres):
-        field = torch.zeros((2, *frame.shape), device=warp.device, dtype=torch.float64)
-    else:
-        field = TorchAlignmentPoints(matcher, device=warp.device).displacement(frame, (0., 0.))
+    frame_index, point_index, templates = grid.choose(predicted, support >= 1. - 1e-9)
+    proxies = gaussian_proxy(frames.to(device=warp.device, dtype=torch.float64))
+    field, _ = grid.fields(proxies, frame_index, point_index, templates)
     return cuda_inverse_local_coordinates(field, tensors=True)
+
+
+def sample_frames(images, field):
+    """``torch_circular.sample`` pull of each image (B, h, w) through its own (B, 2, h, w) field."""
+    n, h, w = images.shape
+    yy = torch.arange(h, device=images.device, dtype=torch.float64)[:, None]
+    xx = torch.arange(w, device=images.device, dtype=torch.float64)[None, :]
+    y, x = yy + field[:, 1], xx + field[:, 0]
+    iy, ix = torch.floor(y).long(), torch.floor(x).long()
+    fy, fx = y - iy, x - ix
+    flat = images.reshape(n, -1)
+    result = torch.zeros_like(images)
+    for dy, wy in ((0, 1 - fy), (1, fy)):
+        for dx, wx in ((0, 1 - fx), (1, fx)):
+            sy, sx = iy + dy, ix + dx
+            weight = wy * wx * ((sy >= 0) & (sy < h) & (sx >= 0) & (sx < w))
+            index = (sy.clamp(0, h - 1) * w + sx.clamp(0, w - 1)).reshape(n, -1)
+            result += flat.gather(1, index).reshape(n, h, w) * weight
+    return result

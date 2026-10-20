@@ -12,6 +12,8 @@ class TorchRingRegistrationOps(TorchGlobeWarp):
         super().__init__(shape, None, device)
 
     def map(self, src, ref):
-        x, y = self.rotate(self.x-src.cx, src.cy-self.y, ref.field_angle_rad-src.field_angle_rad)
-        x, y = x+ref.cx, ref.cy-y
+        P = self.poses(src, ref)
+        x, y = self.rotate(self.x-P([s.cx for s in P.srcs]), P([s.cy for s in P.srcs])-self.y,
+                           P.angles([r.field_angle_rad-s.field_angle_rad for s, r in zip(P.srcs, P.refs)]))
+        x, y = x+P([r.cx for r in P.refs]), P([r.cy for r in P.refs])-y
         return x, y, torch.isfinite(x) & torch.isfinite(y)
