@@ -43,6 +43,8 @@ class ExportConfig:
     black: float | None = None
     white: float | None = None
     display_gamma: float | None = None
+    # Debug companion: validity, coverage and layer-coverage planes.
+    coverage: bool = False
 
     def __post_init__(self):
         if self.encoding not in ("png16", "tiff16", "tiff32", "tiff32_raw"):
@@ -297,20 +299,21 @@ def export_result(result: ReconstructionResult, path: Path, config: ExportConfig
     check_cancel()
     generation = uuid.uuid4().hex
     sidecar = path.with_name(f"{path.name}.{generation}.json")
-    masks = path.with_name(f"{path.name}.{generation}.coverage.tif")
+    masks = path.with_name(f"{path.name}.{generation}.coverage.tif") if config.coverage else None
     metadata.update(export_id=generation, sidecar=sidecar.name,
-                    coverage_file=masks.name,
+                    coverage_file=None if masks is None else masks.name,
                     encoder={"png": "PlanetRecon PNG16 1.0 / zlib", "tiff": f"tifffile {tifffile.__version__}"})
     # Validate serialization before creating files.
     _json(metadata)
     staged, companions = [], []
     committed = False
     try:
-        temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata, check_cancel))
-        staged.append(temp)
-        check_cancel()
-        _publish(temp, masks)
-        companions.append(masks)
+        if masks is not None:
+            temp = _staged_file(masks, lambda s: _write_tiff(s, None, valid, coverage, layers, metadata, check_cancel))
+            staged.append(temp)
+            check_cancel()
+            _publish(temp, masks)
+            companions.append(masks)
         write = (lambda s: _write_png(s, pixels, metadata, check_cancel)) if config.encoding == "png16" else (
             lambda s: _write_tiff(s, pixels, None, None, None, metadata, check_cancel))
         image_temp = _staged_file(path, write)

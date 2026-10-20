@@ -8,7 +8,7 @@ import numpy as np
 import tifffile
 from PySide6.QtCore import QTimer
 
-from planetrecon.export import parse_tiff_description
+from planetrecon.export import ExportConfig, parse_tiff_description
 from planetrecon.gui.app import MainWindow, create_app
 from planetrecon.io.ser import write_ser, COLOR_RGGB
 from planetrecon.reconstruction import ReconstructionConfig
@@ -76,7 +76,7 @@ def run_smoke(directory: Path, device: str = "cpu") -> int:
                     assert win.last_result.backend == 'cuda'
                 outcome['checkpoint_resume'] = True
                 phase = 'save'
-                win.save_result(dest)
+                win.save_result(dest, ExportConfig(coverage=True))
             elif phase == 'save' and win.export_worker is None:
                 with tifffile.TiffFile(dest) as tf:
                     actual = tf.pages[0].asarray()

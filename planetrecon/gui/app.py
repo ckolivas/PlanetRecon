@@ -321,11 +321,13 @@ class MainWindow:
         self.save_white.setPlaceholderText('White (display white if empty)')
         self.save_gamma = QLineEdit()
         self.save_gamma.setPlaceholderText('Display gamma (optional)')
+        self.save_coverage = QCheckBox('Coverage TIFF')
         self.save_btn = QPushButton('Save result…')
         self.save_btn.clicked.connect(self._choose_save)
         self.cancel_save_btn = QPushButton('Cancel save')
         self.cancel_save_btn.clicked.connect(self._cancel_save)
-        for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_btn, self.cancel_save_btn):
+        for widget in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_coverage,
+                       self.save_btn, self.cancel_save_btn):
             save_row.addWidget(widget)
         body.addLayout(save_row)
         self.save_status = QLabel('TIFF32 uses reversible levels and a colour profile matching the preview; tiff32_raw keeps original units. Blank black/white boxes use display levels.')
@@ -367,6 +369,7 @@ class MainWindow:
             self.save_black: 'Intensity mapped to zero in TIFF32 or integer PNG/TIFF. Leave blank to use display black. Ignored for TIFF32_raw.',
             self.save_white: 'Intensity mapped to 1 in TIFF32 or 65535 in integer PNG/TIFF. Leave blank to use display white. Ignored for TIFF32_raw.',
             self.save_gamma: 'Optional display gamma for integer export. Leave blank for linear output. Ignored for float TIFF.',
+            self.save_coverage: 'Also write a debug companion TIFF (image.<id>.coverage.tif) holding validity, accumulation coverage and layer coverage planes.',
             self.save_btn: 'Save the latest full-resolution result in the selected format, with provenance and coverage companions. Partial results are labelled incomplete.',
             self.cancel_save_btn: 'Request cancellation of the active export. Cancellation can wait for the current encoding operation to finish.',
         }
@@ -406,6 +409,8 @@ class MainWindow:
                     value = saved.get(key)
                     if isinstance(value, str):
                         getattr(self, key).setText(value)
+                if isinstance(saved.get('save_coverage'), bool):
+                    self.save_coverage.setChecked(saved['save_coverage'])
             except (KeyError, TypeError, ValueError) as exc:
                 settings_error = f'Could not fully restore settings: {exc}'
         if self.path is not None:
@@ -417,7 +422,7 @@ class MainWindow:
         self.settings_timer.setInterval(500)
         self.settings_timer.timeout.connect(self._save_settings)
         for edit in (*self.controls.fields.values(), self.encoding, self.zoom, self.channel,
-                     self.save_black, self.save_white, self.save_gamma,
+                     self.save_black, self.save_white, self.save_gamma, self.save_coverage,
                      self.ser_quality_check, self.ser_min_quality,
                      self.quality_plot.absolute_control, self.quality_plot.log_control):
             signal = (edit.currentIndexChanged if isinstance(edit, QComboBox) else
@@ -449,7 +454,8 @@ class MainWindow:
                 last_directory=self.last_directory,
                 encoding=self.encoding.currentText(), zoom=self.zoom.currentText(),
                 channel=self.channel.currentText(), save_black=self.save_black.text(),
-                save_white=self.save_white.text(), save_gamma=self.save_gamma.text()))
+                save_white=self.save_white.text(), save_gamma=self.save_gamma.text(),
+                save_coverage=self.save_coverage.isChecked()))
         except (OSError, ValueError) as exc:
             self.error.setText(f'Could not save settings: {exc}')
 
@@ -480,7 +486,7 @@ class MainWindow:
                                  and not self.batch_active)
         self.cancel_save_btn.setEnabled(self.export_worker is not None)
         self._ser_export_buttons()
-        for edit in (self.encoding, self.save_black, self.save_white, self.save_gamma):
+        for edit in (self.encoding, self.save_black, self.save_white, self.save_gamma, self.save_coverage):
             edit.setEnabled(not self.batch_active and not self.batch_saving)
         if not self.batch_active and not self.batch_saving:
             self._export_options()
@@ -1225,11 +1231,12 @@ class MainWindow:
     def _export_config(self):
         encoding = self.encoding.currentText()
         if encoding == 'tiff32_raw':
-            return ExportConfig('tiff32_raw')
+            return ExportConfig('tiff32_raw', coverage=self.save_coverage.isChecked())
         return ExportConfig(encoding,
             self._parse_save_number(self.save_black.text(), 'Export black', self.black.value()),
             self._parse_save_number(self.save_white.text(), 'Export white', self.white.value()),
-            self._parse_save_number(self.save_gamma.text(), 'Display gamma') if encoding != 'tiff32' else None)
+            self._parse_save_number(self.save_gamma.text(), 'Display gamma') if encoding != 'tiff32' else None,
+            self.save_coverage.isChecked())
 
     def _choose_save(self):
         if self.last_result is None or self.export_worker is not None:

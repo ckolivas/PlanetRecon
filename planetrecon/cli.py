@@ -244,6 +244,8 @@ def main(argv: list[str] | None = None) -> int:
         command.add_argument("--display-gamma", type=float, default=None,
                              help="label as display-rendered and apply power 1/gamma (integer only)")
         command.add_argument("--overwrite", action="store_true", help="allow replacement of an existing exported image")
+        command.add_argument("--coverage-tif", action="store_true",
+                             help="also write the debug validity/coverage companion TIFF")
 
     prb = sub.add_parser("probe-device", help="probe CPU/GPU backends and print the selection")
     prb.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
@@ -268,11 +270,13 @@ def main(argv: list[str] | None = None) -> int:
         encoding = args.encoding if args.cmd == "export" else args.export
         if encoding:
             try:
-                export_config = ExportConfig(encoding, args.black, args.white, args.display_gamma)
+                export_config = ExportConfig(encoding, args.black, args.white, args.display_gamma,
+                                             args.coverage_tif)
             except ValueError as exc:
                 parser.error(str(exc))
-        elif any(v is not None for v in (args.black, args.white, args.display_gamma)) or args.overwrite:
-            parser.error("export mapping and overwrite options require --export")
+        elif (any(v is not None for v in (args.black, args.white, args.display_gamma))
+              or args.overwrite or args.coverage_tif):
+            parser.error("export mapping, overwrite and coverage options require --export")
         if args.cmd == "stack" and args.checkpoint:
             if args.checkpoint.suffix.lower() != ".npz":
                 parser.error("--checkpoint must name an NPZ snapshot")

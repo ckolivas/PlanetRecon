@@ -542,14 +542,15 @@ in ImageDescription. Linear output is the default.
 Invalid, non-finite or zero-coverage samples become NaN in float TIFF and zero
 in integer output. The effective validity mask distinguishes invalid zeros from
 real black pixels. The image file is a single TIFF/PNG page so ordinary viewers
-are not asked to convert extra 64-bit coverage planes. A companion coverage TIFF
-(`image.tif.<id>.coverage.tif`) holds uint8 validity, float64 coverage, then named
+are not asked to convert extra 64-bit coverage planes. An optional debug coverage
+TIFF (`image.tif.<id>.coverage.tif`, off by default; `--coverage-tif` or the GUI
+**Coverage TIFF** box) holds uint8 validity, float64 coverage, then named
 spatial layer coverage. Replicated RGB mask planes are stored spatially.
 Coverage means accumulation weight, not calibrated uncertainty. RGB validity remains
 per channel when the channels actually differ.
 
 The image embeds JSON metadata and names an immutable generation-specific JSON
-sidecar (`image.tif.<id>.json`) plus the coverage TIFF. Keep these companions
+sidecar (`image.tif.<id>.json`) plus the coverage TIFF when written. Keep these companions
 with the image. The sidecar includes an image SHA256. TIFF ImageDescription starts
 with `PlanetRecon` then JSON, and the JSON uses `image_shape` rather than a top-level
 `shape` key, so tifffile does not treat the file as a shaped series.

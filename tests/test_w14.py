@@ -385,7 +385,8 @@ def test_gui_saturn_geometry_and_layer_export(gui, tmp_path):
     win.view.setCurrentText('Ring coverage')
     assert win._view_data()[0].max() > 0
     dest = tmp_path/'saturn.tif'
-    win.save_result(dest)
+    win.save_coverage.setChecked(True)
+    win.save_result(dest, win._export_config())
     pump(app, lambda: win.export_worker is None)
     with tifffile.TiffFile(dest) as tf:
         assert len(tf.pages) == 1

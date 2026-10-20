@@ -91,6 +91,13 @@ def collapse_replicated_rgb(array):
     return array
 
 
+def test_coverage_tiff_is_opt_in(tmp_path):
+    report = export_result(result(np.array([[1., 2., 3.]])), tmp_path/'plain.tif')
+    assert report.coverage_path is None
+    assert json.loads(report.sidecar.read_text())['coverage_file'] is None
+    assert sorted(p.name for p in tmp_path.iterdir()) == sorted(['plain.tif', report.sidecar.name])
+
+
 @pytest.mark.parametrize('rgb', [False, True])
 @pytest.mark.parametrize('encoding', ['png16', 'tiff16', 'tiff32', 'tiff32_raw'])
 def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
@@ -99,7 +106,7 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
         a = np.stack([a, a[:, ::-1], a / 2], axis=-1)
     r = result(a)
     p = tmp_path / ('科学.png' if encoding == 'png16' else '科学.tiff')
-    cfg = ExportConfig(encoding, *([] if encoding in ('tiff32', 'tiff32_raw') else [0., 65535.]))
+    cfg = ExportConfig(encoding, *([] if encoding in ('tiff32', 'tiff32_raw') else [0., 65535.]), coverage=True)
     report = export_result(r, p, cfg)
     expected = ((a / 100100).astype(np.float32) if encoding == 'tiff32' else
                 a.astype(np.float32) if encoding == 'tiff32_raw' else
@@ -234,7 +241,7 @@ def test_bad_shapes_and_float_overflow_never_publish(tmp_path):
 @pytest.mark.parametrize('failure', ['encoder', 'mask', 'sidecar', 'commit'])
 def test_failed_replacement_keeps_old_image_companions_and_result(tmp_path, monkeypatch, failure):
     p = tmp_path / 'x.png'
-    cfg = ExportConfig('png16', 0, 10)
+    cfg = ExportConfig('png16', 0, 10, coverage=True)
     r = result([[2., 8.]])
     old = export_result(r, p, cfg)
     before = {f.name:f.read_bytes() for f in tmp_path.iterdir()}
