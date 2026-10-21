@@ -1,8 +1,9 @@
 # AutoStakkert-style alignment points
 
-Choose **Alignment points → AutoStakkert-style alignment points** on the Capture
-tab (CLI `--local-alignment --alignment-method alignment_points`), then **Stack**
-with Motion model **None**. Settings:
+**Stack** and **Batch** always use alignment points; they are the only local
+alignment method (the CLI uses them whenever cached preprocessing is used;
+`--no-local-alignment` selects global alignment). They work with every Geometry
+motion model. Settings:
 
 - **Alignment point size** (`--ap-size`, default 64 px). Points are placed every
   half size on regions whose reference mean is at least 10% of the reference
@@ -42,14 +43,16 @@ CUDA runs the correlations, field solve, proxy filtering, local quality and
 reference resampling; peak decisions use the shared CPU code. CPU and CUDA
 fields agree to 1e-9 px in the tests. Checkpoints bind the point size.
 
-## With a motion model (Surface, Combined, Saturn)
+## With a motion model (Field, Surface, Combined, Saturn)
 
-Alignment points combine with the Surface, Combined and Saturn motion models;
-Field is refused (use circular or square alignment for it). Saturn uses the
+Alignment points combine with every motion model. Field (whole-image rotation,
+run on the CPU) predicts the reference by rotation alone and corrects seeing as
+well as with Motion model None in a synthetic test with known truth. Saturn uses the
 same steps with its layered model: the globe spins, the rings stay fixed, and
 camera drift is measured on the exposed rings.
 
-1. **Reference.** Up to 3000 of the best selected frames are predicted into the
+1. **Reference.** Up to 3000 of the best selected frames (the best screened
+   frames when fewer than four are selected) are predicted into the
    anchor frame's geometry by the globe model, including each frame's measured
    camera drift, and averaged; that derotated mean is refined once with
    alignment points.

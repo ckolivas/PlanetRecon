@@ -9,8 +9,24 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from planetrecon.backends.torch_circular import sample
 from planetrecon.pipeline import ap_align
+
+
+def sample(image, y, x, *, nearest=False):
+    """Pixel-coordinate bilinear sampling, matching SciPy's order-one pull."""
+    h, w = image.shape[-2:]
+    if nearest:
+        y, x = y.clamp(0, h-1), x.clamp(0, w-1)
+    iy, ix = torch.floor(y).long(), torch.floor(x).long()
+    fy, fx = y-iy, x-ix
+    result = torch.zeros((*image.shape[:-2], *torch.broadcast_shapes(y.shape, x.shape)),
+                         dtype=image.dtype, device=image.device)
+    for dy, wy in ((0, 1-fy), (1, fy)):
+        for dx, wx in ((0, 1-fx), (1, fx)):
+            sy, sx = iy+dy, ix+dx
+            weight = wy*wx*((sy >= 0) & (sy < h) & (sx >= 0) & (sx < w))
+            result += image[..., sy.clamp(0, h-1), sx.clamp(0, w-1)]*weight
+    return result
 
 
 def _gaussian_kernel(sigma, device, dtype=torch.float64):
@@ -36,7 +52,7 @@ def _gaussian(image, sigma):
 
 
 def gaussian_proxy(image):
-    """Device equivalent of ``LocalRegistration.proxy``."""
+    """Device equivalent of ``local_align.proxy``."""
     a = _gaussian(image, 1.5)
     return a - _gaussian(a, 8.0)
 
@@ -391,7 +407,7 @@ def predicted_local_coordinates_batch(template_with_support, frames, poses, refe
 
 
 def sample_frames(images, field):
-    """``torch_circular.sample`` pull of each image (B, h, w) through its own (B, 2, h, w) field."""
+    """``sample`` pull of each image (B, h, w) through its own (B, 2, h, w) field."""
     n, h, w = images.shape
     yy = torch.arange(h, device=images.device, dtype=images.dtype)[:, None]
     xx = torch.arange(w, device=images.device, dtype=images.dtype)[None, :]

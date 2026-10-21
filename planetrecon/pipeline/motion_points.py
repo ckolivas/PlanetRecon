@@ -45,7 +45,7 @@ def refine_motion_template(template, indices, read_aligned, *, size, use_cuda=Fa
 def _refine_on_device(template, matcher, indices, read_aligned, should_cancel, progress):
     """Same refinement with fields and resampling kept on the GPU."""
     import torch
-    from planetrecon.backends.torch_circular import sample
+    from planetrecon.backends.torch_ap import sample
     h, w = template.shape
     yy, xx = torch.meshgrid(torch.arange(h, device='cuda:0', dtype=torch.float64),
                             torch.arange(w, device='cuda:0', dtype=torch.float64), indexing='ij')

@@ -20,7 +20,7 @@ from __future__ import annotations
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from planetrecon.pipeline.local_align import LocalRegistration
+from planetrecon.pipeline.local_align import proxy as registration_proxy
 
 SEARCH = 6
 MIN_NCC = 0.5
@@ -106,7 +106,7 @@ class AlignmentPoints:
         h, w = self.shape
         half = size // 2
         margin = half + search
-        proxy = LocalRegistration.proxy(reference)
+        proxy = registration_proxy(reference)
         window = np.outer(np.hanning(size), np.hanning(size))
         level = reference.max() * MIN_BRIGHTNESS
         if valid_mask is not None:
@@ -155,7 +155,7 @@ class AlignmentPoints:
 
     @property
     def layers(self):
-        """Compatibility with the circular matcher's 'no usable points' check."""
+        """[self] when any point is usable, else empty."""
         return [self] if len(self.centres) else []
 
     def _check_cancel(self):
@@ -209,7 +209,7 @@ class AlignmentPoints:
             return tuple(np.full(self.shape, float(v)) for v in global_shift)
         self._check_cancel()
         from planetrecon.pipeline.local_align import pull
-        image = pull(LocalRegistration.proxy(frame), tuple(float(v) for v in global_shift))
+        image = pull(registration_proxy(frame), tuple(float(v) for v in global_shift))
         offset, H, ok, _ = _peak_fit(self._ncc(image))
         self.accepted.append(float(ok.mean()))
         return self._solve(offset, H, ok, np.asarray(global_shift, dtype=float))
@@ -261,7 +261,7 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
         return template
     if use_cuda:
         import torch
-        from planetrecon.backends.torch_circular import sample
+        from planetrecon.backends.torch_ap import sample
         h, w = template.shape
         yy, xx = torch.meshgrid(torch.arange(h, device='cuda:0', dtype=torch.float64),
                                 torch.arange(w, device='cuda:0', dtype=torch.float64), indexing='ij')

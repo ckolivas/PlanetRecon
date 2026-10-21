@@ -47,27 +47,6 @@ def test_multi_patch_axes_remain_unchanged(length):
     np.testing.assert_array_equal(patch_centres(length,65,32),np.arange(35,length-35,32))
 
 
-def test_precentering_checkpoint_is_refused(tmp_path):
-    from test_local_alignment import capture,config
-    from planetrecon.io.ser import SERSource
-    from planetrecon.pipeline.baseline import stack_source
-    from planetrecon.pipeline.preprocess_cache import preprocess_source
-    with SERSource(capture(tmp_path)) as source:
-        cfg=config();preprocess_source(source,cfg)
-        checkpoint=tmp_path/'new.npz'
-        whole=stack_source(source,cfg,state_checkpoint=checkpoint)
-        assert whole.provenance['local_alignment']['patch_grid']=='singleton axes centred'
-        with np.load(checkpoint) as data:payload={key:data[key].copy() for key in data.files}
-        metadata=json.loads(str(payload['metadata']))
-        assert metadata['identity'].pop('local_patch_grid')=='singleton axes centred'
-        payload['metadata']=json.dumps(metadata)
-        old=tmp_path/'old.npz';np.savez_compressed(old,**payload)
-        with pytest.raises(ValueError,match='identity'):
-            stack_source(source,cfg,resume_from=old)
-        resumed=stack_source(source,cfg,resume_from=checkpoint)
-        np.testing.assert_array_equal(resumed.image,whole.image)
-
-
 @pytest.mark.hardware
 @pytest.mark.parametrize('shape', [(97,97),(97,160),(160,97)])
 def test_offset_cuda_tiles_match_cpu(shape):

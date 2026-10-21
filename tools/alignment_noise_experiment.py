@@ -77,10 +77,12 @@ def main():
     torch.set_num_threads(8)
     pixels, text = read_png(args.export)
     metadata = json.loads(text)
-    config = replace(ReconstructionConfig.from_dict(metadata['result']['provenance']['config']),
-                     device='gpu', threads=8)
-    if not config.local_alignment or config.alignment_method != 'circular_multiscale':
+    saved = metadata['result']['provenance']['config']
+    if not saved.get('local_alignment') or saved.get('alignment_method') != 'circular_multiscale':
         raise ValueError('Supply an export made with circular multiscale alignment')
+    # The application no longer runs circular alignment; keep the export's other settings.
+    config = replace(ReconstructionConfig.from_dict({**saved, 'local_alignment': False}),
+                     device='gpu', threads=8)
     mapping = metadata['mapping']
     assert mapping['gamma'] == 1
     names = ('local', 'global_subpixel', 'global_integer')

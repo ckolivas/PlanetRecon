@@ -120,39 +120,3 @@ def test_fused_correlations_across_window_sizes(torch_runtime, window):
     expected = np.stack([_costs(image, cy, cx, layer.templates[k], layer.weight, layer.strength[k])
                          for k, (cy, cx) in enumerate(zip(y, x))])
     np.testing.assert_allclose(actual, expected, atol=1e-12, rtol=1e-10)
-
-
-@pytest.mark.hardware
-@pytest.mark.parametrize('color', [0, 8, 100])
-@pytest.mark.parametrize('failure_stage', ['matching', 'backprojection'])
-def test_gpu_stack_and_midrun_fallback_preserve_output(torch_runtime, tmp_path, monkeypatch, color, failure_stage):
-    if not torch_runtime.cuda.is_available():
-        pytest.skip('CUDA unavailable')
-    from planetrecon.io.ser import SERSource
-    from planetrecon.pipeline.baseline import stack_source
-    from planetrecon.pipeline.preprocess_cache import preprocess_source
-    from planetrecon.backends.torch_accel import TorchBackend
-    from planetrecon.backends.torch_circular import TorchCircularRegistration
-    with SERSource(capture(tmp_path, color)) as source:
-        cpu_cfg = config(alignment_method='circular_multiscale')
-        preprocess_source(source, cpu_cfg)
-        cpu = stack_source(source, cpu_cfg)
-        gpu = stack_source(source, replace(cpu_cfg, device='gpu'))
-        assert gpu.backend == 'cuda'
-        np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-9, atol=1e-8)
-        np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-9, atol=1e-8)
-        target, name = ((TorchBackend, 'backproject') if failure_stage == 'backprojection'
-                        else (TorchCircularRegistration, 'displacement'))
-        original = getattr(target, name)
-        calls = 0
-        def failure(self, *args):
-            nonlocal calls
-            calls += 1
-            if calls == 3:
-                raise RuntimeError('injected CUDA failure')
-            return original(self, *args)
-        monkeypatch.setattr(target, name, failure)
-        fallback = stack_source(source, replace(cpu_cfg, device='gpu'))
-        assert fallback.backend == 'cpu' and any('injected CUDA' in w for w in fallback.warnings)
-        np.testing.assert_allclose(fallback.image, cpu.image, rtol=1e-9, atol=1e-8)
-        np.testing.assert_allclose(fallback.coverage, cpu.coverage, rtol=1e-9, atol=1e-8)

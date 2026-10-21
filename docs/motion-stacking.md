@@ -1,10 +1,9 @@
 # Motion compensation in Stack
 
 Stack now honours the Geometry tab's None, Field, Surface, Combined or Saturn
-selection. It enables screening and local alignment, retaining the chosen
-square or circular multiscale alignment points (AutoStakkert-style alignment
-points support Motion model None only). The former Run button, which honoured
-the local alignment toggle, is retired. Required geometry must be resolved or supplied; an unresolved
+selection. It enables screening and AutoStakkert-style
+[alignment points](alignment-points.md), which work with every motion model.
+The former Run button, which honoured the local alignment toggle, is retired. Required geometry must be resolved or supplied; an unresolved
 motion model is never silently replaced with ordinary stacking.
 
 The new **Automatic motion reference** choice defaults to **Good frames near
@@ -15,13 +14,12 @@ frames fall in that window, it expands to the four nearest available frames.
 Without timestamps or supplied cadence, frame position determines the anchor;
 physical rotation rates still require a real time scale.
 
-The local reference averages up to 64 quality-ranked observations from this
-window, motion-aligned into the anchor's geometry. Reference frames come from
-the screened capture **before** the optional stack percentage/quality cutoff.
-Consequently, changing that cutoff does not change the geometry origin. Those
-reference observations do not add extra contributions to the output stack.
-One selected output frame is permitted when four screened reference frames
-are available.
+The anchor fixes the geometry origin, so changing the optional stack
+percentage/quality cutoff does not move it. The alignment-point reference
+averages up to 3000 of the best selected frames, motion-aligned into the
+anchor's geometry (the best screened frames when fewer than four are
+selected). Those reference observations do not add extra contributions to the
+output stack.
 
 **Best frames across capture** restores the previous automatic anchor policy.
 A nonzero manual reference frame overrides the automatic anchor and centres
@@ -38,20 +36,23 @@ retain their quality measurements, but geometry measured at the old anchor is
 marked for refresh. Motion checkpoint identity includes the reference pool
 and policy, preventing continuation with incompatible sums.
 
-At each observation time, the model predicts the averaged reference. Square
-or circular APs measure residual seeing against that prediction, using only
+At each observation time, the model predicts the averaged reference. Alignment
+points measure residual seeing against that prediction, using only
 fully observed reference/search footprints. The residual field is inverted and
 composed with the geometric mapping before the original detector samples are
 scattered once. Missing or unreliable AP measurements retain the model motion.
 There is no added output filter or per-frame brightness normalization. Cached
 quality weights, or equal weights when disabled, apply to motion stacking too.
 
-Surface, Combined and Saturn retain CUDA projection/accumulation and now support
-CUDA circular matching. Field-only motion currently runs on CPU. The reference
+Surface, Combined and Saturn run projection, accumulation and alignment points
+on CUDA. Field-only motion currently runs on CPU. The reference
 prediction changes with each frame, so motion stacking does more work than the
 fixed-reference ordinary stacker; this change makes no performance claim.
 
 ## Verification
+
+The record below predates the removal of the square and circular matchers;
+the tests now exercise alignment points with every motion model.
 
 `tests/test_motion_stacking.py` covers elapsed-time midpoint selection with
 irregular timestamps, rejected frames, sparse reference pools, manual anchors,

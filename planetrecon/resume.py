@@ -39,22 +39,10 @@ def identity(source,config,calibration,should_cancel=None):
     if config.quality_weighting:
         settings.pop('quality_weighting')
         capture['config'].pop('quality_weighting')
-    # Sampling does not affect the established square matcher. Retain its
-    # existing checkpoint identity; circular jobs bind all three new inputs.
-    if config.alignment_method == 'square':
-        for key in ('alignment_method', 'sampling_multiplier', 'alignment_wavelength_nm'):
-            settings.pop(key)
-            capture['config'].pop(key)
-    # The established 65-pixel matcher is unchanged. Preserve its checkpoints;
-    # custom sizes remain bound to the identity so accumulators cannot be mixed.
     # Alignment point settings only bind jobs that use alignment points.
-    if config.alignment_method != 'alignment_points':
-        for key in ('ap_size',):
-            settings.pop(key)
-            capture['config'].pop(key)
-    if config.local_patch_size == 65:
-        settings.pop('local_patch_size')
-        capture['config'].pop('local_patch_size')
+    if not config.local_alignment:
+        settings.pop('ap_size')
+        capture['config'].pop('ap_size')
     if config.rotation_planet is None and not config.reverse_rotation:
         for key in ('rotation_planet', 'reverse_rotation'):
             settings.pop(key)

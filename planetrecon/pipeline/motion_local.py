@@ -2,8 +2,6 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
 
-from planetrecon.pipeline.local_align import LocalRegistration
-
 
 def build_motion_template(reference, indices, read_aligned, should_cancel=None, *, read_group=None, group=1):
     """Average observed proxies in the selected anchor geometry and detector origin.
@@ -29,7 +27,7 @@ def build_motion_template(reference, indices, read_aligned, should_cancel=None, 
     if read_group is not None:
         total, weight = total.cpu().numpy(), weight.cpu().numpy()
     if used < 4:
-        raise ValueError('Local motion alignment requires four usable reference frames; disable Local patch alignment.')
+        raise ValueError('Local motion alignment requires four usable reference frames; use global alignment.')
     template = np.divide(total,weight,out=reference.copy(),where=weight > 1e-12)
     return template, weight >= 4.-1e-9
 
@@ -37,7 +35,7 @@ def build_motion_template(reference, indices, read_aligned, should_cancel=None, 
 def inverse_local_coordinates(shift, *, use_cuda=False):
     """Invert the observed pull field, so each raw sample is scattered once.
 
-    LocalRegistration measures predicted -> observed offsets. The geometry
+    Alignment points measure predicted -> observed offsets. The geometry
     operator needs observed -> predicted positions; simply subtracting the
     offset at the observed pixel is biased for spatially varying distortion.
     """
@@ -104,27 +102,15 @@ def cuda_inverse_local_coordinates(shift, *, tensors=False):
     return output[0],output[1]
 
 
-def local_coordinates(template_with_support, frame, pose, reference_pose, render, window, use_cuda,
-                      *, method="square", sampling_multiplier=5., wavelength_nm=550., should_cancel=None,
-                      ap_size=64):
+def local_coordinates(template_with_support, frame, pose, reference_pose, render, use_cuda,
+                      *, should_cancel=None, ap_size=64):
     """Predict a fixed, prepared reference; only pose and observations vary."""
+    from planetrecon.pipeline.ap_align import AlignmentPoints
     projected = render(template_with_support,pose,reference_pose)
     predicted,support = projected[...,0],projected[...,1]
     if should_cancel and should_cancel():
         raise InterruptedError('cancelled during local motion alignment')
-    if method == 'circular_multiscale':
-        from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
-        matcher = CircularMultiscaleRegistration(predicted, sampling_multiplier=sampling_multiplier,
-            wavelength_nm=wavelength_nm, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
-            should_cancel=should_cancel)
-    elif method == 'alignment_points':
-        from planetrecon.pipeline.ap_align import AlignmentPoints
-        matcher = AlignmentPoints(predicted, size=ap_size, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
-                                  should_cancel=should_cancel)
-    elif method == 'square':
-        matcher = LocalRegistration(predicted,window=window,step=window//2,use_cuda=use_cuda,
-                                    valid_mask=support >= 1.-1e-9)
-    else:
-        raise ValueError('unknown local motion alignment method')
+    matcher = AlignmentPoints(predicted, size=ap_size, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
+                              should_cancel=should_cancel)
     shift = matcher.displacement(frame,(0.,0.))
     return inverse_local_coordinates(shift, use_cuda=use_cuda)

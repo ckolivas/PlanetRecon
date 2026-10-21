@@ -5,7 +5,7 @@ import pytest
 from scipy.ndimage import gaussian_filter,map_coordinates
 
 from planetrecon.pipeline.motion_local import inverse_local_coordinates,local_coordinates
-from planetrecon.pipeline.local_align import LocalRegistration
+from planetrecon.pipeline.ap_align import AlignmentPoints
 from planetrecon.geometry.globe import GlobeParams
 from planetrecon.geometry.rings import RingParams
 from planetrecon.geometry.saturn import SaturnSceneModel
@@ -23,9 +23,9 @@ def test_inverse_residual_composes_spatially_varying_motion():
     assert np.max(abs((x-ux)+map_coordinates(ux,[y-uy,x-ux],order=1,mode='nearest')-x)) > .03
 
 
-def test_unobserved_prediction_does_not_create_patch_motion():
+def test_unobserved_prediction_does_not_create_point_motion():
     ref=gaussian_filter(np.random.default_rng(7).normal(size=(100,120)),1.)
-    shift=LocalRegistration(ref,window=33,step=16,valid_mask=np.zeros(ref.shape,bool)).displacement(np.roll(ref,2,axis=1),(0.,0.))
+    shift=AlignmentPoints(ref,size=32,valid_mask=np.zeros(ref.shape,bool)).displacement(np.roll(ref,2,axis=1),(0.,0.))
     assert all(not np.any(axis) for axis in shift)
 
 
@@ -37,12 +37,12 @@ def test_predicted_rotation_is_retained_while_local_seeing_is_corrected():
     render=lambda image,src,ref:render_observed(image,model,src,ref)
     predicted=render(template,pose,anchor)
     prepared=np.stack((template,np.ones(shape,bool)),axis=-1)
-    identity=local_coordinates(prepared,predicted,pose,anchor,render,33,False)
+    identity=local_coordinates(prepared,predicted,pose,anchor,render,False,ap_size=32)
     np.testing.assert_allclose(identity[0],x+.5,atol=1e-10)
     np.testing.assert_allclose(identity[1],y+.5,atol=1e-10)
     flow=1.5*np.sin(y/25)*np.sin(x/45)
     observed=map_coordinates(predicted,[y,x-flow],order=3,mode='reflect')
-    qx,qy=local_coordinates(prepared,observed,pose,anchor,render,33,False)
+    qx,qy=local_coordinates(prepared,observed,pose,anchor,render,False,ap_size=32)
     total,weight=bilinear_push(observed,qy-.5,qx-.5,shape)
     corrected=np.divide(total,weight,out=np.zeros_like(total),where=weight>0)
     roi=np.s_[48:-48,48:-48]
@@ -78,7 +78,7 @@ def test_pipeline_local_motion_changes_samples_and_resumes(tmp_path,mode,colour)
         if colour=='RGGB':
             labels=cfa_labels(128,128,colour);frames*=np.where(labels=='R',.8,np.where(labels=='B',.6,1.))
     path=write_ser(tmp_path/'motion.ser',frames.astype('u2'),color_id=NAME_TO_COLOR[colour],timestamps=np.arange(4)*10000000)
-    cfg=replace(cfg,frame_preselection=True,local_alignment=True,local_patch_size=33,stack_percent=100,exposure_s=0.,batch_frames=2)
+    cfg=replace(cfg,frame_preselection=True,local_alignment=True,ap_size=32,stack_percent=100,exposure_s=0.,batch_frames=2)
     state=tmp_path/'state.npz'
     with SERSource(path) as src:
         selection=selected(src,cfg)
@@ -96,7 +96,7 @@ def test_pipeline_local_motion_changes_samples_and_resumes(tmp_path,mode,colour)
         np.testing.assert_array_equal(resumed.image,whole.image)
         np.testing.assert_array_equal(resumed.coverage,whole.coverage)
         with pytest.raises(ValueError,match='identity/configuration mismatch'):
-            stack_source(src,replace(cfg,local_patch_size=49),preprocessing=selection,resume_from=state)
+            stack_source(src,replace(cfg,ap_size=48),preprocessing=selection,resume_from=state)
 
 
 @pytest.mark.parametrize('colour',['mono','RGB','RGGB'])
@@ -108,14 +108,14 @@ def test_cuda_motion_local_matches_cpu(colour,moon):
     from test_cuda_saturn import capture,equal_result
     from planetrecon.pipeline.baseline import stack_source
     src,cfg=capture(colour,moon=moon)
-    cfg=replace(cfg,frame_preselection=True,local_alignment=True,local_patch_size=33,stack_percent=100)
+    cfg=replace(cfg,frame_preselection=True,local_alignment=True,ap_size=32,stack_percent=100)
     selection=selected(src,cfg)
     cpu=stack_source(src,cfg,preprocessing=selection)
     gpu=stack_source(src,replace(cfg,device='gpu'),preprocessing=selection)
     equal_result(gpu,cpu)
 
 
-def test_gui_keeps_patch_choice_for_saturn_and_surface():
+def test_gui_keeps_local_alignment_for_every_motion_model():
     from PySide6.QtWidgets import QApplication
     from planetrecon.gui.controls import ConfigControls
     from planetrecon.reconstruction import ReconstructionConfig
@@ -123,7 +123,7 @@ def test_gui_keeps_patch_choice_for_saturn_and_surface():
     controls=ConfigControls(ReconstructionConfig(local_alignment=True))
     try:
         geometry=controls.fields['geometry_mode']
-        for mode in ('saturn','surface','combined','none'):
+        for mode in ('saturn','surface','combined','field','none'):
             geometry.setCurrentIndex(geometry.findData(mode))
             assert controls.configuration().local_alignment
     finally:
@@ -141,7 +141,7 @@ def test_cuda_local_resume_can_continue_on_cpu(tmp_path,monkeypatch):
     arrays,cfg=capture('RGGB')
     path=write_ser(tmp_path/'local.ser',np.stack([arrays.read_raw(i) for i in range(4)]).astype('u2'),
         color_id=NAME_TO_COLOR['RGGB'],timestamps=np.arange(4)*10000000)
-    cfg=replace(cfg,device='auto',frame_preselection=True,local_alignment=True,local_patch_size=33,stack_percent=100)
+    cfg=replace(cfg,device='auto',frame_preselection=True,local_alignment=True,ap_size=32,stack_percent=100)
     with SERSource(path) as source:
         selection=selected(source,cfg)
         whole=stack_source(source,cfg,preprocessing=selection)
@@ -169,7 +169,7 @@ def test_each_run_reuses_its_own_prepared_motion_reference(monkeypatch,device):
         torch=pytest.importorskip('torch')
         if not torch.cuda.is_available():pytest.skip('CUDA unavailable')
     src,cfg=capture('RGGB')
-    cfg=replace(cfg,device=device,frame_preselection=True,local_alignment=True,local_patch_size=33,stack_percent=100)
+    cfg=replace(cfg,device=device,frame_preselection=True,local_alignment=True,ap_size=32,stack_percent=100)
     selection=selected(src,cfg)
     references=[]
     original=motion.local_coordinates

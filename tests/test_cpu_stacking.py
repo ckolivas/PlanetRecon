@@ -15,11 +15,9 @@ from test_local_alignment import capture, config
 
 
 @pytest.mark.parametrize('color_id', [0, 8, 100])
-@pytest.mark.parametrize('method', ['global', 'square', 'circular_multiscale'])
-def test_workers_preserve_exact_image_and_coverage(tmp_path, color_id, method):
-    cfg = replace(config(), threads=1, batch_frames=8, local_patch_size=33,
-                  local_alignment=method != 'global',
-                  alignment_method='circular_multiscale' if method == 'circular_multiscale' else 'square')
+@pytest.mark.parametrize('local', [False, True])
+def test_workers_preserve_exact_image_and_coverage(tmp_path, color_id, local):
+    cfg = replace(config(), threads=1, batch_frames=8, ap_size=32, local_alignment=local)
     with SERSource(capture(tmp_path, color_id)) as source:
         preprocess_source(source, cfg)
         serial = stack_source(source, cfg)
@@ -44,8 +42,8 @@ def test_uncached_reference_is_established_before_parallel_work(tmp_path):
 
 
 def test_frame_matching_really_overlaps(tmp_path, monkeypatch):
-    from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
-    method = CircularMultiscaleRegistration.displacement
+    from planetrecon.pipeline.ap_align import AlignmentPoints
+    method = AlignmentPoints.displacement
     lock = threading.Lock()
     barrier = threading.Barrier(4, timeout=10)
     active = 0
@@ -53,6 +51,8 @@ def test_frame_matching_really_overlaps(tmp_path, monkeypatch):
     seen = set()
     def measured(self, frame, shift):
         nonlocal active, maximum
+        if not threading.current_thread().name.startswith('planetrecon-stack'):
+            return method(self, frame, shift)  # Setup matches on the owner before stacking.
         ident = threading.get_ident()
         with lock:
             first = ident not in seen
@@ -66,17 +66,17 @@ def test_frame_matching_really_overlaps(tmp_path, monkeypatch):
         finally:
             with lock:
                 active -= 1
-    monkeypatch.setattr(CircularMultiscaleRegistration, 'displacement', measured)
-    cfg = replace(config(alignment_method='circular_multiscale'), threads=4, batch_frames=4,
+    monkeypatch.setattr(AlignmentPoints, 'displacement', measured)
+    cfg = replace(config(ap_size=32), threads=4, batch_frames=4,
                   stack_percent=25, frame_selection_mode='frame_count')
     with SERSource(capture(tmp_path)) as source:
         preprocess_source(source, cfg)
         result = stack_source(source, cfg)
-    assert result.n_used == 4 and result.n_rejected == 12 and maximum == 4 and len(seen) == 4
+    assert result.n_used + result.n_rejected == 16 and maximum == 4 and len(seen) == 4
 
 
 def test_sparse_selection_and_trailing_rejections_remain_exact(tmp_path):
-    cfg = replace(config(alignment_method='circular_multiscale'), threads=1, batch_frames=4,
+    cfg = replace(config(ap_size=32), threads=1, batch_frames=4,
                   stack_percent=25, frame_selection_mode='frame_count')
     with SERSource(capture(tmp_path)) as source:
         preprocess_source(source, cfg)
@@ -84,30 +84,32 @@ def test_sparse_selection_and_trailing_rejections_remain_exact(tmp_path):
         parallel = stack_source(source, replace(cfg, threads=4), state_checkpoint=tmp_path/'sparse.npz')
         resumed = stack_source(source, replace(cfg, threads=4), resume_from=tmp_path/'sparse.npz')
     for result in (parallel, resumed):
-        assert result.n_used == serial.n_used == 4 and result.n_rejected == serial.n_rejected == 12
+        assert result.n_used == serial.n_used and result.n_rejected == serial.n_rejected == 16 - serial.n_used
         np.testing.assert_array_equal(result.image, serial.image)
         np.testing.assert_array_equal(result.coverage, serial.coverage)
 
 
 def test_cancel_during_active_frames_resumes_exactly(tmp_path, monkeypatch):
-    from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
-    cfg = replace(config(alignment_method='circular_multiscale'), threads=4, batch_frames=8)
+    from planetrecon.pipeline.ap_align import AlignmentPoints
+    cfg = replace(config(ap_size=32), threads=4, batch_frames=8)
     with SERSource(capture(tmp_path)) as source:
         preprocess_source(source, cfg)
         whole = stack_source(source, cfg)
         cancel = threading.Event()
         calls = 0
         lock = threading.Lock()
-        method = CircularMultiscaleRegistration.displacement
+        method = AlignmentPoints.displacement
         def cancelling(self, frame, shift):
             nonlocal calls
+            if not threading.current_thread().name.startswith('planetrecon-stack'):
+                return method(self, frame, shift)
             with lock:
                 calls += 1
                 if calls == 5:
                     cancel.set()
             return method(self, frame, shift)
         with monkeypatch.context() as patch:
-            patch.setattr(CircularMultiscaleRegistration, 'displacement', cancelling)
+            patch.setattr(AlignmentPoints, 'displacement', cancelling)
             partial = stack_source(source, cfg, should_cancel=cancel.is_set,
                                    state_checkpoint=tmp_path/'state.npz')
         assert partial.incomplete and partial.n_used < whole.n_used

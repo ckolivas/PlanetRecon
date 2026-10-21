@@ -28,14 +28,6 @@ class ConfigControls(QTabWidget):
         self.planet_choice_manual = config.rotation_planet is not None
         self.setting_capture_planet = False
         capture = self._tab('Capture')
-        self._number(capture, 'sampling_multiplier', 'Sampling multiplier (×)')
-        self._number(capture, 'alignment_wavelength_nm', 'Alignment wavelength (nm)')
-        self.alignment_size_label = QLabel()
-        self.alignment_size_label.setWordWrap(True)
-        capture.addRow(self.alignment_size_label)
-        for key in ('sampling_multiplier', 'alignment_wavelength_nm'):
-            self.fields[key].textChanged.connect(self._sampling_changed)
-        self._sampling_changed()
         self._choice(capture, 'device', 'Device', ['auto', 'cpu', 'gpu'])
         self._integer(capture, 'threads', 'CPU threads', 1, 32)
         self._integer(capture, 'batch_frames', 'Frames per batch', 1, 4096)
@@ -57,14 +49,6 @@ class ConfigControls(QTabWidget):
         self._integer(capture, 'normalise_percent', 'Normalise brightness (%)', 1, 100)
         self.fields['normalise_percent'].setEnabled(config.normalise_brightness)
         self.fields['normalise_brightness'].toggled.connect(self.fields['normalise_percent'].setEnabled)
-        self._choice(capture, 'alignment_method', 'Alignment points',
-                     ['square', 'circular_multiscale', 'alignment_points'])
-        self.fields['alignment_method'].setItemText(0, 'Fixed square patches')
-        self.fields['alignment_method'].setItemText(1, 'Circular, automatic multiscale')
-        self.fields['alignment_method'].setItemText(2, 'AutoStakkert-style alignment points')
-        self.fields['alignment_method'].currentIndexChanged.connect(self._mode_changed)
-        self._integer(capture, 'local_patch_size', 'Alignment patch size (odd pixels)', 15, 255)
-        self.fields['local_patch_size'].setSingleStep(2)
         self._integer(capture, 'ap_size', 'Alignment point size (pixels)', 16, 256)
         self.fields['ap_size'].setSingleStep(8)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
@@ -299,18 +283,6 @@ class ConfigControls(QTabWidget):
         self.fields[key] = edit
         form.addRow(label, edit)
 
-    def _sampling_changed(self):
-        from planetrecon.pipeline.circular_align import minimum_diameter
-        try:
-            multiple = float(self.fields['sampling_multiplier'].text())
-            wavelength = float(self.fields['alignment_wavelength_nm'].text())
-            if not .5 <= multiple <= 20 or not 300 <= wavelength <= 1500:
-                raise ValueError
-            size = minimum_diameter(multiple, wavelength)
-            self.alignment_size_label.setText(f'Circular alignment: minimum diameter {size} px, with larger overlapping samples.')
-        except (ValueError, OverflowError):
-            self.alignment_size_label.setText('Enter sampling 0.5–20× and wavelength 300–1500 nm.')
-
     def _mode_changed(self):
         if (self.fields['geometry_mode'].currentData() == 'saturn'
                 and 'sub_obs_lat_rad' in self.geometry_auto):
@@ -327,9 +299,6 @@ class ConfigControls(QTabWidget):
             # leave dependent auto rates from the old assumption attached.
             self.geometry_auto.pop('sub_obs_lat_rad', None)
             self._set_geometry_help('Saturn uses automatic viewing latitude from SER UTC, or a manual override; the assumed equator-on view and dependent motion prefills were cleared. User edits are preserved.')
-        method = self.fields['alignment_method'].currentData()
-        self.fields['local_patch_size'].setEnabled(method == 'square')
-        self.fields['ap_size'].setEnabled(method == 'alignment_points')
         self.saturn_page.setEnabled(self.fields['geometry_mode'].currentData() == 'saturn')
 
     def _choose_table(self, edit):
@@ -383,7 +352,6 @@ class ConfigControls(QTabWidget):
             finally:
                 edit.blockSignals(False)
         self._mode_changed()
-        self._sampling_changed()
         self._selection_mode_changed()
         self.fields['normalise_percent'].setEnabled(self.fields['normalise_brightness'].isChecked())
         self._rotation_changed()

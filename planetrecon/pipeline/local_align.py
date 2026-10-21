@@ -33,7 +33,14 @@ def pull(image, shift_xy):
         return map_coordinates(image, coordinates, order=1, mode='grid-constant', prefilter=False)
     return np.stack([map_coordinates(image[..., c], coordinates, order=1, mode='grid-constant', prefilter=False) for c in range(image.shape[2])], axis=-1)
 
+def proxy(frame):
+    """Registration proxy: 1.5 px smoothing minus the 8 px background."""
+    a = gaussian_filter(np.asarray(frame, dtype=float), 1.5)
+    return a - gaussian_filter(a, 8.0)
+
+
 class LocalRegistration:
+    """Square patch matcher, retained for the research tools; the stacker uses alignment points."""
 
     def __init__(self, reference, *, window=65, step=32, max_shift=3, use_cuda=False, valid_mask=None,
                  circular=False):
@@ -84,10 +91,7 @@ class LocalRegistration:
         self.templates = np.asarray(self.templates)
         self.strength = np.asarray(self.strength)
 
-    @staticmethod
-    def proxy(frame):
-        a = gaussian_filter(np.asarray(frame, dtype=float), 1.5)
-        return a - gaussian_filter(a, 8.0)
+    proxy = staticmethod(proxy)
 
     def displacement(self, frame, global_shift):
         frame = np.asarray(frame, dtype=np.float64)

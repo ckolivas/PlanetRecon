@@ -64,8 +64,10 @@ def test_cpu_prepared_reference_removes_repeated_forward_transforms(monkeypatch)
     assert len(calls) == 6  # One fixed reference, then one forward transform per frame.
 
 
-@pytest.mark.parametrize('fail_at', [1, 2])
-def test_reference_preparation_failure_keeps_cpu_stack_and_template(monkeypatch, tmp_path, fail_at):
+def test_reference_preparation_failure_keeps_cpu_stack_and_template(monkeypatch, tmp_path):
+    # The first preparation precedes the alignment-point setup; later CUDA stages
+    # need a real device (test_ap_align::test_midrun_cuda_failure_continues_on_cpu).
+    fail_at = 1
     import planetrecon.pipeline.baseline as baseline
     from planetrecon.pipeline.preprocess_cache import preprocess_source
     from planetrecon.io.ser import SERSource

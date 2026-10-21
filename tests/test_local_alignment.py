@@ -108,7 +108,7 @@ def test_application_keeps_frames_reuses_cache_and_resumes_exactly(tmp_path):
         stop = False
         def event(result, info):
             nonlocal stop
-            if info['n_processed'] >= 4:
+            if result.stage != 'setup' and info['n_processed'] >= 4:
                 stop = True
         checkpoint = tmp_path/'state.npz'
         partial = stack_source(source, cfg, should_cancel=lambda: stop, on_event=event, state_checkpoint=checkpoint)
@@ -120,11 +120,9 @@ def test_application_keeps_frames_reuses_cache_and_resumes_exactly(tmp_path):
             stack_source(source, replace(cfg, local_alignment=False), resume_from=checkpoint)
 
 
-def test_local_alignment_requires_matching_preprocessing_and_compatible_geometry(tmp_path):
+def test_local_alignment_requires_matching_preprocessing(tmp_path):
     with pytest.raises(ValueError, match='local alignment'):
         config(frame_preselection=False)
-    with pytest.raises(ValueError, match='local alignment'):
-        config(geometry_mode='field')
     with SERSource(capture(tmp_path)) as source:
         with pytest.raises(ValueError, match='Preprocess'):
             stack_source(source, config())
@@ -143,7 +141,7 @@ def test_gui_always_stacks_with_cached_screening_and_local_alignment(tmp_path, m
         geo = controls.fields['geometry_mode']
         geo.setCurrentIndex(geo.findData('field'))
         assert controls.configuration().local_alignment
-        assert controls.fields['stack_percent'].isEnabled() and controls.fields['alignment_method'].isEnabled()
+        assert controls.fields['stack_percent'].isEnabled() and 'alignment_method' not in controls.fields
     finally:
         win._shutdown()
         win.window.close()
@@ -223,12 +221,12 @@ def test_cuda_failure_during_matching_keeps_cpu_local_alignment(tmp_path, monkey
         expected = stack_source(source, cfg)
         class FakeCUDA(CPUBackend):
             name = 'cuda'
+
+            def registration_plane(self, *args):
+                raise RuntimeError('simulated CUDA alignment point memory failure')
         backend = FakeCUDA(threads=2)
         monkeypatch.setattr(baseline, 'select_backend', lambda *args, **kwargs:
                             (backend, DeviceReport('gpu', 'cuda', ['cpu', 'gpu'], False)))
-        def fail(*args):
-            raise RuntimeError('simulated CUDA patch memory failure')
-        monkeypatch.setattr(LocalRegistration, '_cuda_costs', fail)
         actual = stack_source(source, replace(cfg, device='gpu'))
         assert actual.backend == 'cpu'
         assert actual.provenance['device_report']['execution_history'] == ['cuda', 'cpu']

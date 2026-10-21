@@ -690,7 +690,6 @@ def stack_source_geometry(
                 raise
     local_template = local_support = local_render = None
     local_selection = None
-    points = config.local_alignment and config.alignment_method == 'alignment_points'
     # Device registration planes when surface or ring drift is tracked on CUDA.
     # Frames then move through drift, matching and accumulation in groups that
     # share each kernel launch; every decision is still made per frame.
@@ -780,14 +779,14 @@ def stack_source_geometry(
         def local_plane(frame):
             return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
-        if points:
-            # A low-noise derotated reference from many of the best selected frames.
-            from planetrecon.pipeline.ap_align import REFERENCE_FRAMES
-            chosen = np.flatnonzero(selection.accepted)
-            ranked = chosen[np.argsort(-selection.measurements[chosen, 0], kind='stable')[:REFERENCE_FRAMES]]
-            candidates = np.sort(ranked)
-        else:
-            candidates = np.asarray(reference_plan['template_candidates'], dtype=int)
+        # A low-noise derotated reference from many of the best selected frames;
+        # the best screened frames when too few are selected to form one.
+        from planetrecon.pipeline.ap_align import REFERENCE_FRAMES
+        chosen = np.flatnonzero(selection.accepted)
+        if len(chosen) < 4 and reference_selection is not None:
+            chosen = np.flatnonzero(reference_selection.accepted)
+        ranked = chosen[np.argsort(-selection.measurements[chosen, 0], kind='stable')[:REFERENCE_FRAMES]]
+        candidates = np.sort(ranked)
 
         def read_aligned(index):
             observed = observe([index])[0]
@@ -816,16 +815,14 @@ def stack_source_geometry(
                 return aligned
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel,
                                                              read_group=read_group,group=group)
-        local_matcher = None
-        if points:
-            from planetrecon.pipeline.ap_align import AlignmentPoints
-            from planetrecon.pipeline.motion_points import refine_motion_template
-            local_template, local_support = refine_motion_template(
-                local_template, candidates, read_aligned, size=config.ap_size,
-                use_cuda=backend.name == 'cuda', should_cancel=should_cancel, read_group=read_group, group=group)
-            local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
+        from planetrecon.pipeline.ap_align import AlignmentPoints
+        from planetrecon.pipeline.motion_points import refine_motion_template
+        local_template, local_support = refine_motion_template(
+            local_template, candidates, read_aligned, size=config.ap_size,
+            use_cuda=backend.name == 'cuda', should_cancel=should_cancel, read_group=read_group, group=group)
+        local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
         local_template_with_support = np.stack((local_template,local_support),axis=-1)
-        if points and len(local_matcher.centres):
+        if len(local_matcher.centres):
             local_selection, selection = _motion_local_quality(
                 local_matcher, selection, reference_selection, observe, group, anchor_pose, ref_pose, model,
                 use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
@@ -838,38 +835,23 @@ def stack_source_geometry(
             if gpu_planes is not None:
                 local_template_with_support = local_template_with_support.to(REGISTRATION)
         diagnostics['local_alignment'] = {
-            'version': 2, 'enabled': True, 'method': config.alignment_method, 'window_px':config.local_patch_size,
-            'step_px':config.local_patch_size//2, 'maximum_residual_px':3,
-            'template_candidates':candidates.tolist(), 'anchor_index':anchor_index,
-            'template':'observed mean in selected anchor geometry; predicted at each frame time',
-            'composition':'invert residual pull; evaluate geometry; scatter original samples once',
-            'registration_proxy':'RGB luminance' if bayer else 'luminance',
+            'version': 3, 'enabled': True, 'anchor_index': anchor_index,
+            'registration_proxy': 'RGB luminance' if bayer else 'luminance',
+            **local_matcher.provenance, 'template_frames': len(candidates),
+            'template': 'derotated mean of the best selected frames in the anchor geometry, refined once with '
+                        'alignment points',
+            'matching': 'reference predicted at each frame time; alignment points on its fully observed support',
+            'composition': 'invert residual pull; evaluate geometry; scatter original samples once',
+            'local_quality_grid': 'fixed points on the derotated reference',
         }
-        if points:
-            for key in ('window_px', 'step_px', 'maximum_residual_px', 'template_candidates'):
-                diagnostics['local_alignment'].pop(key)
-            diagnostics['local_alignment'].update(local_matcher.provenance, version=3, template_frames=len(candidates),
-                template='derotated mean of the best selected frames in the anchor geometry, refined once with '
-                         'alignment points',
-                matching='reference predicted at each frame time; alignment points on its fully observed support',
-                composition='invert residual pull; evaluate geometry; scatter original samples once',
-                local_quality_grid='fixed points on the derotated reference')
-            diagnostics['local_alignment'].pop('cuda_execution', None)
-            if local_selection is not None:
-                diagnostics['local_alignment']['local_quality'] = {
-                    'frames_per_point': int(len(local_selection.chosen) and local_selection.chosen.sum(0).max()),
-                    'ranked_frames': len(local_selection.row),
-                    'contributing_frames': int(np.count_nonzero(selection.accepted)),
-                    'measure': 'squared Laplacian of the smoothed plane at each point\'s predicted frame position',
-                    'blending': 'normalised Gaussian footprints at reference-epoch point positions'}
-        if config.alignment_method == 'circular_multiscale':
-            from planetrecon.pipeline.circular_align import minimum_diameter
-            diagnostics['local_alignment'].update(
-                minimum_diameter_px=minimum_diameter(config.sampling_multiplier, config.alignment_wavelength_nm),
-                sampling_multiplier=config.sampling_multiplier, wavelength_nm=config.alignment_wavelength_nm,
-                maximum_residual_px=6)
-            diagnostics['local_alignment'].pop('window_px')
-            diagnostics['local_alignment'].pop('step_px')
+        diagnostics['local_alignment'].pop('cuda_execution', None)
+        if local_selection is not None:
+            diagnostics['local_alignment']['local_quality'] = {
+                'frames_per_point': int(len(local_selection.chosen) and local_selection.chosen.sum(0).max()),
+                'ranked_frames': len(local_selection.row),
+                'contributing_frames': int(np.count_nonzero(selection.accepted)),
+                'measure': 'squared Laplacian of the smoothed plane at each point\'s predicted frame position',
+                'blending': 'normalised Gaussian footprints at reference-epoch point positions'}
     xg, yg = detector_xy_grids(h, w)
     # Optical blur crosses globe/ring/shadow boundaries. Keep full bilinear
     # footprints and CFA completion; classification is for scoring/diagnostics.
@@ -939,7 +921,7 @@ def stack_source_geometry(
         'ring_reference_warps_and_correlations': backend.name if ring_registration is not None else 'unused',
         'drift_peak_acceptance': 'cuda with cpu subpixel solve' if ring_on_device or surface_tracker is not None
                                  else 'cpu',
-        'local_patch_correlations': backend.name if config.local_alignment else 'unused',
+        'alignment_point_correlations': backend.name if config.local_alignment else 'unused',
         'local_reference_prediction': backend.name if config.local_alignment else 'unused',
         'local_residual_inversion': backend.name if config.local_alignment else 'unused',
         'registration_precision': registration_precision,
@@ -1010,8 +992,7 @@ def stack_source_geometry(
         emit("cache_ready", incomplete=True)
     # Device groups whenever drift is tracked on CUDA and every per-frame step has a batched form.
     grouped = (gpu_planes is not None and gpu_accumulator is not None
-               and (selection is not None or not isinstance(model, SaturnSceneModel))
-               and (not config.local_alignment or points))
+               and (selection is not None or not isinstance(model, SaturnSceneModel)))
     point_grid = None
     if grouped and config.local_alignment:
         from planetrecon.backends.torch_ap import PointGrid, predicted_local_coordinates_batch
@@ -1148,10 +1129,8 @@ def stack_source_geometry(
                 local_image = (gpu_planes.luminance(gpu_frame).cpu().numpy() if gpu_frame is not None else
                                _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated))
                 sample_xy = local_coordinates(local_template_with_support,local_image,
-                    pose,anchor_pose,local_render,config.local_patch_size,backend.name == 'cuda',
-                    method=config.alignment_method, sampling_multiplier=config.sampling_multiplier,
-                    wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel,
-                    ap_size=config.ap_size)
+                    pose,anchor_pose,local_render,backend.name == 'cuda',
+                    should_cancel=should_cancel,ap_size=config.ap_size)
             if gpu_accumulator is not None:
                 if bayer and demo is None:
                     demo = demosaic(calibrated)

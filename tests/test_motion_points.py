@@ -33,14 +33,12 @@ def test_rotated_frame_seeing_is_corrected_in_frame_coordinates():
     render = lambda image, src, ref: render_observed(image, model, src, ref)
     predicted = render(template, pose, anchor)        # seeing-free frame at its own time
     prepared = np.stack((template, np.ones(shape)), axis=-1)
-    identity = local_coordinates(prepared, predicted, pose, anchor, render, 33, False, method='alignment_points',
-                                 ap_size=32)
+    identity = local_coordinates(prepared, predicted, pose, anchor, render, False, ap_size=32)
     np.testing.assert_allclose(identity[0], x + .5, atol=1e-6)
     np.testing.assert_allclose(identity[1], y + .5, atol=1e-6)
     ux, uy = smooth_field(shape, 5, 1.6, sigma=25)
     observed = map_coordinates(predicted, [y + uy, x + ux], order=3, mode='constant')
-    qx, qy = local_coordinates(prepared, observed, pose, anchor, render, 33, False, method='alignment_points',
-                               ap_size=32)
+    qx, qy = local_coordinates(prepared, observed, pose, anchor, render, False, ap_size=32)
     total, weight = bilinear_push(observed, qy - .5, qx - .5, shape)
     corrected = np.divide(total, weight, out=np.zeros(shape), where=weight > 0)
     roi = np.hypot(y - 80, x - 96) < 40
@@ -64,9 +62,9 @@ def test_cuda_alignment_point_motion_matches_cpu():
     ux, uy = smooth_field(shape, 3, 1.2, sigma=20)
     observed = map_coordinates(render(template, pose, anchor), [y + uy, x + ux], order=3, mode='constant')
     prepared = np.stack((template, np.ones(shape)), axis=-1)
-    args = (prepared, observed, pose, anchor, render, 33)
-    cpu = local_coordinates(*args, False, method='alignment_points', ap_size=32)
-    gpu = local_coordinates(*args, True, method='alignment_points', ap_size=32)
+    args = (prepared, observed, pose, anchor, render)
+    cpu = local_coordinates(*args, False, ap_size=32)
+    gpu = local_coordinates(*args, True, ap_size=32)
     for a, b in zip(cpu, gpu):
         np.testing.assert_allclose(a, b, atol=1e-8)
 
@@ -84,7 +82,7 @@ def seeing_capture(tmp_path, n=8):
 
 def points_config(**kwargs):
     return replace(config(rate=.04), frame_preselection=True, local_alignment=True,
-                   alignment_method='alignment_points', ap_size=32, stack_percent=50,
+                   ap_size=32, stack_percent=50,
                    frame_selection_mode='frame_count', exposure_s=0., batch_frames=2, **kwargs)
 
 
@@ -119,12 +117,40 @@ def test_surface_alignment_points_correct_seeing_with_local_quality_and_resume(t
             stack_source(src, replace(cfg, ap_size=48), preprocessing=selection, resume_from=state)
 
 
-def test_alignment_points_refuse_field_motion(tmp_path):
-    from planetrecon.io.ser import SERSource
+def test_field_alignment_points_correct_seeing_against_derotated_truth(tmp_path):
+    from planetrecon.io.ser import SERSource, write_ser
     from planetrecon.pipeline.baseline import stack_source
-    with SERSource(seeing_capture(tmp_path)) as src:
-        with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface, Combined or Saturn'):
-            stack_source(src, points_config(geometry_mode='field'))
+    rate, n = .03, 8
+    y, x = np.indices((128, 128), dtype=float)
+    texture = gaussian_filter(np.random.default_rng(2).normal(size=(128, 128)), 1.5)
+    disc = gaussian_filter((np.hypot(x + .5 - 64, y + .5 - 64) < 44)*(300 + 150*texture/texture.std()), .7)
+
+    def rotated(t):
+        # Field rotation about the centre with the model's sign convention.
+        a, sx, sy = rate*t, x + .5 - 64, 64 - y - .5
+        u, v = np.cos(a)*sx + np.sin(a)*sy, -np.sin(a)*sx + np.cos(a)*sy
+        return map_coordinates(disc, [64 - v - .5, u + 64 - .5], order=3, mode='constant')
+    frames = []
+    for i in range(n):
+        # Paired opposite seeing fields keep the mean geometry undistorted.
+        ux, uy = smooth_field((128, 128), 60 + i//2, 1.5, sigma=10)
+        sign = 1 if i % 2 == 0 else -1
+        frames.append(map_coordinates(rotated(i), [y + sign*uy, x + sign*ux], order=3, mode='constant'))
+    path = write_ser(tmp_path/'field.ser', np.clip(np.stack(frames)*10, 0, 65535).astype('u2'),
+                     timestamps=np.arange(n)*10000000)
+    cfg = replace(points_config(), geometry_mode='field', field_rate_rad_s=rate, surface_rate_rad_s=None,
+                  equatorial_radius_px=None, stack_percent=100, quality_weighting=False)
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        points = stack_source(src, cfg, preprocessing=selection)
+        ordinary = stack_source(src, replace(cfg, local_alignment=False), preprocessing=selection)
+    assert points.provenance['local_alignment']['points'] > 2 and points.n_used == ordinary.n_used == n
+    truth = 10*rotated(float(points.reference_epoch))
+    roi = np.hypot(x + .5 - 64, y + .5 - 64) < 36
+
+    def error(result):
+        return np.sqrt(np.mean((result.image[roi] - truth[roi])**2))
+    assert error(points) < .92*error(ordinary)
 
 
 def saturn_seeing_capture(tmp_path, n=8):
@@ -148,7 +174,7 @@ def saturn_seeing_capture(tmp_path, n=8):
         frames.append(map_coordinates(image, [y + uy, x + ux], order=3, mode='constant'))
     frames = np.clip(np.stack(frames)*1000, 0, 65535).astype('u2')
     path = write_ser(tmp_path/'saturn.ser', frames, timestamps=np.arange(n)*5000000)
-    return path, replace(cfg, frame_preselection=True, local_alignment=True, alignment_method='alignment_points',
+    return path, replace(cfg, frame_preselection=True, local_alignment=True,
                          ap_size=24, stack_percent=50, frame_selection_mode='frame_count')
 
 

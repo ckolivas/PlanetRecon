@@ -133,23 +133,6 @@ def _stack_source(
     if source.metadata().units == 'e-' and calibration and calibration.gain_e_per_adu is not None:
         raise ValueError('gain calibration cannot be applied to observations already in electrons')
     fallback_warnings = []  # Local alignment that cannot apply at all falls back to global, visibly.
-    if config.local_alignment and config.alignment_method == 'square':
-        h, w = source.frame_shape()[:2]
-        required = config.local_patch_size + 6  # Complete +/-3 pixel search footprint.
-        if min(h, w) < required:
-            largest = min(255, min(h, w) - 6)
-            largest -= (largest + 1) % 2
-            if largest >= 15:
-                raise ValueError(f'Local patch size {config.local_patch_size} needs frames at least '
-                                 f'{required} by {required} pixels; this capture is {w} by {h}. '
-                                 f'Choose an odd alignment patch size from 15 to {largest} pixels.')
-            fallback_warnings.append(f'Capture is {w} by {h} pixels, smaller than the smallest local patch '
-                                     f'search (21 by 21); using global alignment.')
-            config = replace(config, local_alignment=False)
-    if (config.local_alignment and config.alignment_method == 'alignment_points'
-            and config.geometry_mode == 'field'):
-        raise ValueError('Alignment points support Motion model None, Surface, Combined or Saturn. Choose one of '
-                         'those, or circular/square alignment for Field.')
     selection = reference_selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
@@ -236,15 +219,8 @@ def _stack_source(
         raise ValueError("gain calibration cannot be applied to observations already in electrons")
     bayer = is_bayer(color)
     demosaic = PreparedBilinearDemosaic((h, w), color) if bayer else None
-    # Only the eligible experimental local path changes its registration proxy.
-    # It requires cached screening, so scalar quality weights stay unchanged.
-    local_window = config.local_patch_size
-    local_step = local_window // 2
-    centred_local_axis = False
-    if config.local_alignment and config.alignment_method == 'square':
-        from planetrecon.pipeline.local_align import patch_centres
-        axes = [patch_centres(length, local_window, local_step) for length in (h, w)]
-        centred_local_axis = any(len(axis) == 1 and axis[0] != local_window//2+3 for axis in axes)
+    # Alignment points register Bayer captures on bilinear RGB luminance. They
+    # require cached screening, so scalar quality weights stay unchanged.
     colour_registration = config.local_alignment and bayer
     alignment_plane = partial(_colour_registration_plane, demosaic=demosaic) if colour_registration else _alignment_plane
     rgb = color in ("RGB", "BGR") or bayer
@@ -302,17 +278,9 @@ def _stack_source(
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
         state_identity["preprocessing_digest"] = reconstruction_digest(selection) if selection is not None else None
         if config.local_alignment:
-            if config.alignment_method == 'circular_multiscale':
-                state_identity['circular_registration_version'] = 1
-            if config.alignment_method == 'alignment_points':
-                state_identity['ap_registration_version'] = 1
+            state_identity['ap_registration_version'] = 1
             state_identity['local_registration_version'] = 2 if colour_registration else 1
-            state_identity['local_patch_support'] = 'complete observed search footprint'
-            state_identity['local_patch_boundary'] = 'one grid interval taper to global'
-            state_identity['local_patch_peak'] = 'joint two-dimensional quadratic'
             state_identity['local_template_boundary'] = 'normalised support; best-frame fill'
-            if centred_local_axis:
-                state_identity['local_patch_grid'] = 'singleton axes centred'
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
         accum, weight = restored["accum"], restored["weight"]
@@ -366,104 +334,72 @@ def _stack_source(
     local_matcher = None
     local_selection = None
     if config.local_alignment:
-        from planetrecon.pipeline.local_align import LocalRegistration, build_template, cpu_backproject
-        points = config.alignment_method == 'alignment_points'
+        from planetrecon.pipeline.ap_align import (REFERENCE_FRAMES, AlignmentPoints, refined_reference,
+                                                   select_locally)
+        from planetrecon.pipeline.local_align import cpu_backproject
         accepted = np.flatnonzero(selection.accepted)
         order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
-        if points:
-            from planetrecon.pipeline.ap_align import REFERENCE_FRAMES, refined_reference
-            candidates = accepted[order[:REFERENCE_FRAMES]]
-        else:
-            candidates = accepted[order[:64]]
+        candidates = accepted[order[:REFERENCE_FRAMES]]
         snapshot_provenance['local_alignment'] = {
-            'version': 2 if colour_registration else 1, 'enabled': True, 'template_candidates': candidates.tolist(),
-            'window_px': local_window, 'step_px': local_step, 'maximum_residual_px': 3,
-            'anchor_index': reference_index,
-            'patch_support': 'complete observed search footprint',
-            'patch_boundary': 'one grid interval taper to global',
-            'patch_peak': 'joint two-dimensional quadratic',
-            'template': 'mean of valid aligned candidates, origin anchored to the selected best frame',
-            'template_boundary': 'normalised support; best-frame fill',
+            'version': 2 if colour_registration else 1, 'enabled': True, 'anchor_index': reference_index,
         }
         if colour_registration:
             snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'
-        if centred_local_axis:
-            snapshot_provenance['local_alignment']['patch_grid'] = 'singleton axes centred'
 
         def read_plane(index):
             calibrated, _ = apply_calibration(source.read_raw(index), calibration)
-            if points and backend.name == 'cuda':
+            if backend.name == 'cuda':
                 return backend.registration_plane(calibrated, color)
             return alignment_plane(calibrated, color)
         if resume_from is None:
-            build = (partial(refined_reference, size=config.ap_size, use_cuda=backend.name == 'cuda',
-                             progress=setup_progress) if points else build_template)
             try:
-                reference = build(reference, candidates, read_plane,
-                                  backend.phase_correlation, config.max_shift_px, should_cancel=should_cancel)
+                reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
+                                              config.max_shift_px, size=config.ap_size,
+                                              use_cuda=backend.name == 'cuda', should_cancel=should_cancel,
+                                              progress=setup_progress)
             except RuntimeError as exc:
                 cpu_fallback(exc)
-                build = (partial(refined_reference, size=config.ap_size, progress=setup_progress)
-                         if points else build_template)
-                reference = build(reference, candidates, read_plane,
-                                  backend.phase_correlation, config.max_shift_px, should_cancel=should_cancel)
+                reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
+                                              config.max_shift_px, size=config.ap_size,
+                                              should_cancel=should_cancel, progress=setup_progress)
             prepare_reference()
         detail = snapshot_provenance['local_alignment']
-        if config.alignment_method == 'circular_multiscale':
-            from planetrecon.pipeline.circular_align import CircularMultiscaleRegistration
-            local_matcher = CircularMultiscaleRegistration(reference,
-                sampling_multiplier=config.sampling_multiplier,
-                wavelength_nm=config.alignment_wavelength_nm, should_cancel=should_cancel)
-            for key in ('window_px', 'step_px', 'patch_boundary', 'maximum_residual_px', 'patch_grid'):
-                detail.pop(key, None)
-            detail.update(local_matcher.provenance)
-            if not local_matcher.layers:
-                warnings.append('Capture is smaller than the sampling-derived alignment diameter plus search margin; using global alignment.')
-            snapshot_provenance['registration'] += ' + circular multiscale local alignment'
-        elif points:
-            from planetrecon.pipeline.ap_align import AlignmentPoints, select_locally
-            local_matcher = AlignmentPoints(reference, size=config.ap_size, should_cancel=should_cancel)
-            for key in ('window_px', 'step_px', 'patch_boundary', 'maximum_residual_px', 'patch_grid',
-                        'patch_support', 'patch_peak', 'template_boundary', 'template_candidates'):
-                detail.pop(key, None)
-            detail.update(local_matcher.provenance, template_frames=len(candidates),
-                          template='best selected frames averaged after global alignment, then again after '
-                                   'alignment-point registration to that mean; origin anchored to the best frame')
-            if not local_matcher.layers:
-                warnings.append('No bright, textured region fits an alignment point; using global alignment.')
-            screened = np.flatnonzero(reference_selection.accepted)
-            count = int(np.count_nonzero(selection.accepted))
-            if local_matcher.layers and len(screened) <= count:
-                # Every screened frame is selected (e.g. 100%): each point would
-                # choose every frame, so ranking cannot change the result.
-                detail['local_quality'] = {'frames_per_point': count, 'ranked_frames': 0,
-                                           'skipped': 'every screened frame is selected'}
-            elif local_matcher.layers:
-                try:
-                    local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
-                                                     reference, count, selection.accepted.copy(), should_cancel,
-                                                     use_cuda=backend.name == 'cuda', progress=setup_progress)
-                except RuntimeError as exc:
-                    cpu_fallback(exc)
-                    local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
-                                                     reference, count, selection.accepted.copy(), should_cancel,
-                                                     progress=setup_progress)
-                selection = replace(selection, accepted=local_selection.frames())
-                detail['local_quality'] = {
-                    'frames_per_point': count, 'ranked_frames': len(screened),
-                    'candidates': 'every screened frame',
-                    'contributing_frames': int(np.count_nonzero(selection.accepted)),
-                    'measure': 'squared Laplacian of the 1.5 px smoothed plane, Gaussian-weighted around each '
-                               'point, divided by local brightness squared',
-                    'blending': 'normalised Gaussian footprints (sigma 0.6 x spacing); global selection outside points',
-                }
-            snapshot_provenance['registration'] += ' + alignment points'
-            if backend.name == 'cuda':
-                from planetrecon.backends.torch_ap import DeviceAccumulator
-                device_sums = DeviceAccumulator()
-        else:
-            local_matcher = LocalRegistration(reference, window=local_window, step=local_step)
-            snapshot_provenance['registration'] += ' + confidence-gated normalized local patches'
+        local_matcher = AlignmentPoints(reference, size=config.ap_size, should_cancel=should_cancel)
+        detail.update(local_matcher.provenance, template_frames=len(candidates),
+                      template='best selected frames averaged after global alignment, then again after '
+                               'alignment-point registration to that mean; origin anchored to the best frame')
+        if not local_matcher.layers:
+            warnings.append('No bright, textured region fits an alignment point; using global alignment.')
+        screened = np.flatnonzero(reference_selection.accepted)
+        count = int(np.count_nonzero(selection.accepted))
+        if local_matcher.layers and len(screened) <= count:
+            # Every screened frame is selected (e.g. 100%): each point would
+            # choose every frame, so ranking cannot change the result.
+            detail['local_quality'] = {'frames_per_point': count, 'ranked_frames': 0,
+                                       'skipped': 'every screened frame is selected'}
+        elif local_matcher.layers:
+            try:
+                local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
+                                                 reference, count, selection.accepted.copy(), should_cancel,
+                                                 use_cuda=backend.name == 'cuda', progress=setup_progress)
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+                local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
+                                                 reference, count, selection.accepted.copy(), should_cancel,
+                                                 progress=setup_progress)
+            selection = replace(selection, accepted=local_selection.frames())
+            detail['local_quality'] = {
+                'frames_per_point': count, 'ranked_frames': len(screened),
+                'candidates': 'every screened frame',
+                'contributing_frames': int(np.count_nonzero(selection.accepted)),
+                'measure': 'squared Laplacian of the 1.5 px smoothed plane, Gaussian-weighted around each '
+                           'point, divided by local brightness squared',
+                'blending': 'normalised Gaussian footprints (sigma 0.6 x spacing); global selection outside points',
+            }
+        snapshot_provenance['registration'] += ' + alignment points'
+        if backend.name == 'cuda':
+            from planetrecon.backends.torch_ap import DeviceAccumulator
+            device_sums = DeviceAccumulator()
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -566,8 +502,7 @@ def _stack_source(
                 local_matcher.use_cuda = backend.name == 'cuda'
             try:
                 global_shift = shift
-                shift = (local_matcher.displacement_tensor(plane, shift)
-                         if backend.name == 'cuda' and config.alignment_method != 'square'
+                shift = (local_matcher.displacement_tensor(plane, shift) if backend.name == 'cuda'
                          else local_matcher.displacement(plane, shift))
             except RuntimeError as exc:
                 if hasattr(local_matcher, 'release_cuda'):
@@ -630,7 +565,7 @@ def _stack_source(
             'scratch_budget_bytes': pool.scratch_budget_bytes,
             'estimated_frame_bytes': pool.estimated_frame_bytes,
             'accumulation': 'capture order; float64; no frame brightness normalisation'}
-        if local_matcher is not None and config.alignment_method == 'circular_multiscale' and pool.workers > 1:
+        if local_matcher is not None and pool.workers > 1:
             # Only the owner polls the caller; workers observe a thread-safe flag.
             local_matcher.should_cancel = pool.stop.is_set
         if config.frame_preselection:

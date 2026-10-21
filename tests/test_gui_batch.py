@@ -9,8 +9,8 @@ from test_w14 import gui, pump
 
 
 def small_frames(win):
-    # Batch stacks like Stack (local alignment on); these 48 px captures need a small patch.
-    win.controls.fields['local_patch_size'].setValue(31)
+    # Batch stacks like Stack (alignment points on); these 48 px captures need small points.
+    win.controls.fields['ap_size'].setValue(24)
 
 
 def capture(path, scale=1000, n=8):

@@ -35,11 +35,11 @@ def test_colour_template_resume_is_exact_and_rejects_green_template_state(tmp_pa
         cache=path.with_name(path.name+'.planetrecon-preprocess.npz');before=cache.read_bytes()
         whole=baseline.stack_source(source,cfg)
         assert whole.n_used==selected.accepted.sum()
-        assert whole.provenance['local_alignment']['version']==2
+        assert whole.provenance['local_alignment']['registration_proxy'].startswith('bilinear RGB luminance')
         stop=False
         def event(result,info):
             nonlocal stop
-            stop=info['n_processed']>=4
+            stop=stop or (result.stage!='setup' and info['n_processed']>=4)
         checkpoint=tmp_path/'state.npz'
         partial=baseline.stack_source(source,cfg,on_event=event,should_cancel=lambda:stop,state_checkpoint=checkpoint)
         assert partial.incomplete
@@ -58,18 +58,20 @@ def test_colour_template_resume_is_exact_and_rejects_green_template_state(tmp_pa
             baseline.stack_source(source,cfg,resume_from=tmp_path/'old-state.npz')
 
 @pytest.mark.parametrize('local,shape',[(False,(96,112)),(True,(64,64))])
-def test_global_registration_and_small_capture_patch_refusal(tmp_path,monkeypatch,local,shape):
+def test_global_registration_and_small_capture_fallback(tmp_path,monkeypatch,local,shape):
     path=capture(tmp_path/'fallback.ser',shape);cfg=config(local_alignment=local)
     with SERSource(path) as source:
         selected=preprocess_source(source,cfg);assert selected.accepted.sum()>=4
         expected=baseline.stack_source(source,config())
+        if local:
+            # No 64 px alignment point and its search fit; stacking continues globally, visibly.
+            actual=baseline.stack_source(source,cfg)
+            assert actual.n_used==selected.accepted.sum()
+            assert any('No bright, textured region fits an alignment point' in w for w in actual.warnings)
+            return
         def forbidden(*args, **kwargs):
             pytest.fail('colour proxy must not alter ordinary global registration')
         monkeypatch.setattr(baseline,'_colour_registration_plane',forbidden)
-        if local:
-            with pytest.raises(ValueError, match='Local patch size 65 needs frames at least 71'):
-                baseline.stack_source(source,cfg)
-            return
         actual=baseline.stack_source(source,cfg)
         np.testing.assert_array_equal(actual.image,expected.image)
         np.testing.assert_array_equal(actual.coverage,expected.coverage)

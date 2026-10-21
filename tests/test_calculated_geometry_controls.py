@@ -35,13 +35,13 @@ def test_one_button_restores_all_calculated_values_and_disables_itself(gui):
         edit(c, key, '123')
         assert c.calculated_values_button.isEnabled(), key
     # Capture controls are outside this action.
-    edit(c, 'sampling_multiplier', '7')
+    edit(c, 'cadence_s', '7')
     edit(c, 'max_shift_px', '2')
     c.calculated_values_button.click()
     assert all(c.fields[key].text() == text for key, text in calculated.items())
     assert not c.geometry_manual.intersection(calculated)
     assert not c.calculated_values_button.isEnabled()
-    assert c.fields['sampling_multiplier'].text() == '7'
+    assert c.fields['cadence_s'].text() == '7'
     assert c.fields['max_shift_px'].text() == '2'
     assert c.configuration().reference_epoch_s == 180.
 
@@ -67,7 +67,7 @@ def test_fresh_preprocessing_replaces_saved_manual_values_and_pole_flip(gui):
 def test_non_geometry_edits_do_not_enable_calculated_values(gui):
     _, win = gui
     win._set_preprocessing(report(), replace_manual=True)
-    for key in ('gain_e_per_adu', 'sampling_multiplier', 'max_shift_px'):
+    for key in ('gain_e_per_adu', 'max_shift_px'):
         edit(win.controls, key, '5')
     assert not win.controls.calculated_values_button.isEnabled()
 

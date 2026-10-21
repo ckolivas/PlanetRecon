@@ -54,7 +54,7 @@ def main():
         config = ReconstructionConfig.from_dict(json.loads(str(data['config'])))
         measurements = data['measurements'][indices].copy()
     config = replace(config, frame_preselection=True, local_alignment=True,
-                     local_patch_size=65, threads=args.threads, reference_index=0,
+                     threads=args.threads, reference_index=0,
                      geometry_mode=args.mode, device=args.device, stack_percent=100,
                      **(dict(ring_inner_radius_px=None, ring_outer_radius_px=None)
                         if args.mode != 'saturn' else {}))

@@ -1,5 +1,12 @@
 # Classic circular multiscale stacking
 
+> **Removed from the application on 2026-10-21.** Stack, Batch and the CLI now
+> use only [AutoStakkert-style alignment points](alignment-points.md), which
+> matched or exceeded AutoStakkert!4. The Sampling multiplier, Alignment
+> wavelength, alignment method and patch size controls are gone. The circular
+> and square matchers remain in the package only for the research tools in
+> `tools/`. This page is kept as a record of the method.
+
 Set **Sampling multiplier** on the Capture tab to the actual focal ratio divided
 by the sensor pixel pitch in micrometres. The default is **5**: a 3.75 µm camera
 at f/18.75. At f/26.25, enter 7. For binned or resized input, account for the

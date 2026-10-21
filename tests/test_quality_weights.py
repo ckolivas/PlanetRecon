@@ -71,7 +71,7 @@ def test_standard_checkpoint_resumes_and_rejects_legacy_squared_sums(tmp_path, w
         stop = False
         def event(result, info):
             nonlocal stop
-            stop = info['n_processed'] >= 4
+            stop = stop or (result.stage != 'setup' and info['n_processed'] >= 4)
         checkpoint = tmp_path/'state.npz'
         partial = baseline.stack_source(source, cfg, on_event=event,
                                         should_cancel=lambda: stop, state_checkpoint=checkpoint)

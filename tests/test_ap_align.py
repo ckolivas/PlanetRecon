@@ -137,7 +137,7 @@ def capture(tmp_path, n=24, color_id=0):
 
 def points_config(**kwargs):
     return ReconstructionConfig(**{**dict(device='cpu', threads=2, batch_frames=4, local_alignment=True,
-                                          alignment_method='alignment_points', ap_size=32,
+                                          ap_size=32,
                                           stack_percent=50, frame_selection_mode='frame_count'), **kwargs})
 
 
@@ -182,12 +182,12 @@ def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):
         resumed = stack_source(source, cfg, resume_from=checkpoint)
         np.testing.assert_array_equal(resumed.image, whole.image)
         np.testing.assert_array_equal(resumed.coverage, whole.coverage)
-        for changed in (replace(cfg, ap_size=48), replace(cfg, alignment_method='circular_multiscale')):
+        for changed in (replace(cfg, ap_size=48), replace(cfg, local_alignment=False)):
             with pytest.raises(ValueError, match='identity'):
                 stack_source(source, changed, resume_from=checkpoint)
 
 
-def test_alignment_points_refuse_motion_models_and_validate_settings(tmp_path):
+def test_alignment_point_settings_and_saved_jobs(tmp_path):
     with pytest.raises(ValueError, match='ap_size'):
         points_config(ap_size=300)
     # Saved jobs from before local quality became unconditional still load,
@@ -197,13 +197,22 @@ def test_alignment_points_refuse_motion_models_and_validate_settings(tmp_path):
     assert loaded == points_config()
     with pytest.raises(ValueError, match='local quality was removed'):
         ReconstructionConfig.from_dict({**points_config().to_dict(), 'local_quality': False})
-    with SERSource(capture(tmp_path)) as source:
-        cfg = points_config(geometry_mode='field', field_rate_rad_s=0.)
-        with pytest.raises(ValueError, match='Alignment points support Motion model None, Surface, Combined or Saturn'):
-            stack_source(source, cfg)
-    # Settings that only alignment points use do not disturb other checkpoints.
+    # Saved jobs naming alignment points (or no local alignment) load without the
+    # removed matcher settings; jobs that chose a removed matcher are refused.
+    removed = dict(alignment_method='square', local_patch_size=65, sampling_multiplier=5.,
+                   alignment_wavelength_nm=550.)
+    for method in ('alignment_points', 'square', 'circular_multiscale'):
+        saved = {**points_config().to_dict(), **removed, 'alignment_method': method}
+        if method == 'alignment_points':
+            assert ReconstructionConfig.from_dict(saved) == points_config()
+        else:
+            with pytest.raises(ValueError, match='Square and circular local alignment were removed'):
+                ReconstructionConfig.from_dict(saved)
+            plain = ReconstructionConfig.from_dict({**saved, 'local_alignment': False})
+            assert plain == replace(points_config(), local_alignment=False)
+    # Settings that only alignment points use do not disturb global-alignment checkpoints.
     from planetrecon import resume
-    other = ReconstructionConfig(device='cpu', local_alignment=True, alignment_method='circular_multiscale')
+    other = ReconstructionConfig(device='cpu')
     with SERSource(capture(tmp_path)) as source:
         assert 'ap_size' not in resume.identity(source, other, None)['config']
 
@@ -221,9 +230,9 @@ def test_cli_alignment_point_inputs_reach_the_config(tmp_path, monkeypatch):
         preprocess_source(source, points_config())
     with pytest.raises(SystemExit):
         cli.main(['stack', '--path', str(path), '--device', 'cpu', '--out', str(tmp_path/'out'),
-                  '--local-alignment', '--alignment-method', 'alignment_points', '--ap-size', '40'])
+                  '--ap-size', '40'])
     cfg = seen['config']
-    assert (cfg.alignment_method, cfg.ap_size) == ('alignment_points', 40)
+    assert cfg.local_alignment and cfg.ap_size == 40
 
 
 @pytest.mark.parametrize('color_id', [0, 8])
@@ -248,3 +257,36 @@ def test_cuda_stacking_matches_cpu_and_reports_setup_progress(tmp_path, color_id
         names = {name for name, _, _ in phases}
         assert names == {'Building alignment reference', 'Ranking frames by local quality'}
         assert all(done == total for name, done, total in phases[-1:])
+
+
+@pytest.mark.hardware
+@pytest.mark.parametrize('color_id', [0, 8])
+@pytest.mark.parametrize('failure_stage', ['matching', 'backprojection'])
+def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, failure_stage):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    from planetrecon.backends.torch_accel import TorchBackend
+    from planetrecon.backends.torch_ap import TorchAlignmentPoints
+    with SERSource(capture(tmp_path, color_id=color_id)) as source:
+        cfg = points_config()
+        preprocess_source(source, cfg)
+        cpu = stack_source(source, cfg)
+        target, name = ((TorchBackend, 'backproject_tensors') if failure_stage == 'backprojection'
+                        else (TorchAlignmentPoints, 'displacement'))
+        original = getattr(target, name)
+        calls = 0
+
+        def failure(self, *args):
+            nonlocal calls
+            calls += 1
+            if calls == 3:
+                raise RuntimeError('injected CUDA failure')
+            return original(self, *args)
+        monkeypatch.setattr(target, name, failure)
+        fallback = stack_source(source, replace(cfg, device='gpu'))
+    assert calls >= 3
+    assert fallback.backend == 'cpu' and any('injected CUDA' in w for w in fallback.warnings)
+    assert fallback.n_used == cpu.n_used
+    np.testing.assert_allclose(fallback.image, cpu.image, rtol=1e-7, atol=1e-7*cpu.image.max())
+    np.testing.assert_allclose(fallback.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)

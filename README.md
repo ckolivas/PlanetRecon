@@ -106,44 +106,26 @@ Neither repeats preprocessing nor adds sharpening. These optional controls help
 evaluate the aim of improving reconstruction using more frames; they do not
 replace that aim with conventional frame rejection.
 
-**Stack** now provides [classic circular multiscale alignment](docs/classic-stacking.md).
-For results closest to AutoStakkert!4, choose **Alignment points → AutoStakkert-style
-alignment points** (CLI `--alignment-method alignment_points`): a many-frame
-reference, a full-strength alignment-point field and per-point local quality
-selection. See [alignment points](docs/alignment-points.md) for the method,
-the causes of the earlier soft stacks and the measurements. Motion model **None** only.
-Enter the capture's **Sampling multiplier** (focal ratio / pixel pitch in µm;
-default 5) and alignment wavelength (default 550 nm) in the Capture tab. The
-minimum circle diameter is shown immediately. Stack automatically prepares the
-quality cache and uses overlapping circles from coarse to fine, retaining larger
-samples where smaller ones cannot be matched reliably. Batch stacks each capture
-the same way with the currently selected settings. This adds alignment and averaging, without sharpening.
+**Stack** and **Batch** align with AutoStakkert-style alignment points, the
+only local alignment method: a many-frame reference, a full-strength
+alignment-point field and per-point local quality selection. See
+[alignment points](docs/alignment-points.md) for the method, the causes of the
+earlier soft stacks and the measurements. It works with every Geometry motion
+model: with a motion model the reference is derotated and each frame is matched
+against it predicted at the frame time. **Alignment point size** in the Capture
+tab (CLI `--ap-size`, default 64) is the only alignment setting. Stack
+automatically prepares the quality cache, and Batch stacks each capture the same
+way with the currently selected settings. This adds alignment and averaging,
+without sharpening. The earlier square-patch and circular multiscale methods were
+removed once alignment points matched or exceeded AutoStakkert!4; saved jobs and
+checkpoints that used them must be restarted.
 
-Local alignment is always used by GUI **Stack** (there is no checkbox) and corrects
-small seeing distortions using normalized texture patches and an averaged
-registration template anchored to the best selected frame. It preserves the
-selected frame count and adds no sharpening. It requires cached preprocessing
-and Motion model **None**, **Surface**, **Combined** or **Saturn**; ambiguous patches keep global alignment. This
-combination with the upper 50% quality range gave the best result in user testing. A capture too small for any
-local patch, or fewer than four selected frames, falls back to global alignment with a warning. The CLI
-`--no-local-alignment` still selects global alignment;
-set `--stack-percent 100` to retain all screened frames. CLI geometry modes and
-`--no-frame-preselection` disable the implicit local-alignment default.
-
-**Alignment patch size** in the Capture tab (CLI `--local-patch-size`) accepts
-odd widths from 15 to 255 detector pixels, with the existing 65-pixel default.
-Patch spacing follows at half the width, rounded down. Smaller patches can follow
-finer distortions but require sufficient texture; larger patches combine more
-detail and can average over local motion. Size is chosen manually, not estimated
-automatically. A new run uses the edited size with the same preprocessing cache;
-resuming a checkpoint requires its original size. Frames smaller than the size
-plus six pixels cannot support that local matcher: the run stops and offers a
-fitting size or explicit global alignment. Local alignment also requires at least
-four selected frames. These checks prevent running a different alignment method
-from the one selected.
-When only one row or column of patches fits, that axis is centred on the detector.
-Checkpoints made before this placement correction must be restarted for affected
-small captures; grids with multiple patches on both axes are unchanged.
+Alignment points require cached preprocessing. A capture with no bright,
+textured region that fits a point, or fewer than four selected frames, falls back
+to global alignment with a warning. The CLI uses alignment points whenever cached
+preprocessing is used; `--no-local-alignment` selects global alignment, and
+`--no-frame-preselection` disables cached decisions and so local alignment. Set
+`--stack-percent 100` to retain all screened frames.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER
