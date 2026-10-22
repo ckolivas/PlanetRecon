@@ -99,6 +99,19 @@ compress nothing. Viewing-geometry ring asymmetries (the A ring's
 azimuthal brightness pattern) are smooth enough that a few degrees of turn
 does not affect them.
 
+**On 2026-10-14 12:11.8 (Saturn L3, 6 minutes, 52382 frames,** alignment
+points, Fourier weighting, output epoch at the capture midpoint, sharpened with
+the same wavelet batch): the band-pass brightness just inside the left and
+right limbs differed by -0.33 per mille of the globe with the earlier Saturn
+model, -0.21 with limb-darkening compensation (fitted p = 0.52) and ring
+motion, and -0.10 without a motion model. Stacked to an epoch at the capture
+start instead (frames 0-6 minutes away), the earlier model's difference grew
+to -2.34 and the compensated model's to -0.45. Ring motion showed no measurable
+effect on the faint spoke: its depth was 1.50% (ring motion), 1.53% (rings held
+still) and 1.76% (no motion model) against 0.5% profile noise. Preprocessing's
+ring-axis slope from three samples, -1.4e-5 rad/s (formerly suggested as the
+field rate), now fails the significance test and the field stays fixed.
+
 **Field rotation.** The rotation estimated from sampled ring or field angles
 (a least-squares slope; ring angles folded to one half turn, since rings look
 the same turned by 180 degrees) is applied only when significant at 95%
