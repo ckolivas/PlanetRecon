@@ -466,6 +466,10 @@ def stack_source_geometry(
     demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     globe_weight = np.zeros((h, w), dtype=np.float64)
     ring_weight = np.zeros((h, w), dtype=np.float64)
+    # Fourier weighting keeps one accumulator pair per local-quality rank bin and half.
+    from planetrecon.pipeline import fourier_weights
+    rank_bins = (fourier_weights.rank_bins(int(np.count_nonzero(selection.accepted)))
+                 if config.fourier_active and selection is not None else 0)
 
     def cancelled_before_geometry():
         result = ReconstructionResult(
@@ -825,7 +829,7 @@ def stack_source_geometry(
         if len(local_matcher.centres):
             local_selection, selection = _motion_local_quality(
                 local_matcher, selection, reference_selection, observe, group, anchor_pose, ref_pose, model,
-                use_cuda=backend.name == 'cuda', should_cancel=should_cancel)
+                use_cuda=backend.name == 'cuda', should_cancel=should_cancel, n_bins=rank_bins)
         if backend.name == 'cuda':
             import torch
             # The reference stays fixed for this run; avoid rebuilding and
@@ -852,6 +856,12 @@ def stack_source_geometry(
                 'contributing_frames': int(np.count_nonzero(selection.accepted)),
                 'measure': 'squared Laplacian of the smoothed plane at each point\'s predicted frame position',
                 'blending': 'normalised Gaussian footprints at reference-epoch point positions'}
+    if rank_bins and local_selection is None:
+        geo_warnings.append('Fourier weighting needs alignment points; using ordinary weights.')
+        rank_bins = 0
+    n_bins = 2 * rank_bins
+    bin_accum = np.zeros((n_bins,) + accum.shape) if n_bins else None
+    bin_weight = np.zeros((n_bins,) + weight.shape) if n_bins else None
     xg, yg = detector_xy_grids(h, w)
     # Optical blur crosses globe/ring/shadow boundaries. Keep full bilinear
     # footprints and CFA completion; classification is for scoring/diagnostics.
@@ -900,9 +910,12 @@ def stack_source_geometry(
             pose_hash.update(json.dumps(asdict(pose), sort_keys=True).encode())
         state_identity['geometry'] = diagnostics
         state_identity['poses_sha256'] = pose_hash.hexdigest()
+        if n_bins:
+            state_identity['fourier_bins'] = n_bins
     if resume_from is not None:
-        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer, geometry=True)
+        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer, geometry=True, bins=n_bins)
         accum, weight = restored['accum'], restored['weight']
+        bin_accum, bin_weight = restored['bin_accum'], restored['bin_weight']
         demosaic_accum, demosaic_weight = restored['demosaic_accum'], restored['demosaic_weight']
         globe_weight, ring_weight = restored['globe_weight'], restored['ring_weight']
         n_used, n_rejected = restored['n_used'], restored['n_rejected']
@@ -937,14 +950,25 @@ def stack_source_geometry(
             from planetrecon.backends.torch_globe import TorchGlobeAccumulator
             gpu_accumulator = TorchGlobeAccumulator((h,w),model,color,accum,weight,
                                                    demosaic_accum,demosaic_weight)
+        if n_bins:
+            gpu_accumulator.enable_bins(bin_accum, bin_weight)
 
     def sync_sums():
-        nonlocal accum, weight, demosaic_accum, demosaic_weight, globe_weight, ring_weight
+        nonlocal accum, weight, demosaic_accum, demosaic_weight, globe_weight, ring_weight, bin_accum, bin_weight
         if gpu_accumulator is not None:
             sums = gpu_accumulator.download()
             accum, weight, demosaic_accum, demosaic_weight = sums[:4]
             if isinstance(model, SaturnSceneModel):
                 globe_weight,ring_weight = sums[4:]
+            if n_bins:
+                bin_accum, bin_weight = gpu_accumulator.download_bins()
+
+    def frame_bins(index, score, device):
+        """Fourier weighting's [(accumulator, weight map)] for one frame, or None."""
+        if not n_bins:
+            return None
+        weights = local_selection.bin_weights_tensor if device else local_selection.bin_weights
+        return [(2*b + fourier_weights.half(index), score * m) for b, m in weights(int(index))]
 
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
@@ -1019,6 +1043,7 @@ def stack_source_geometry(
         if not kept:
             return 0, len(members)
         chosen = torch.as_tensor(kept, device=stacked.device)
+        bins = [frame_bins(indices[k], s, True) for k, s in zip(kept, scores)] if n_bins else None
         score = torch.as_tensor(scores, device=stacked.device, dtype=torch.float64)
         if local_selection is not None:
             # Blend of the alignment points that selected each frame, in reference geometry.
@@ -1028,7 +1053,7 @@ def stack_source_geometry(
             sample_xy = predicted_local_coordinates_batch(local_template_with_support, colour_planes[chosen],
                                                           frame_poses, anchor_pose, renderer.__self__, point_grid)
         covered = gpu_accumulator.add(stacked[chosen], frame_poses, ref_pose, score,
-                                      rgb[chosen] if bayer else None, sample_xy)
+                                      rgb[chosen] if bayer else None, sample_xy, bins=bins)
         if frame_quality is not None:
             for k, quality, ok in zip(kept, qualities, covered):
                 if ok:
@@ -1119,6 +1144,7 @@ def stack_source_geometry(
             quality = score
             if not config.quality_weighting:
                 score = 1.
+            bins = frame_bins(index, score, gpu_accumulator is not None)
             if local_selection is not None:
                 # Blend of the alignment points that selected this frame, in reference geometry.
                 score = score * (local_selection.weights_tensor(int(index)) if gpu_accumulator is not None
@@ -1135,7 +1161,7 @@ def stack_source_geometry(
                 if bayer and demo is None:
                     demo = demosaic(calibrated)
                 if gpu_accumulator.add(calibrated if gpu_frame is None else gpu_frame,
-                                       pose,ref_pose,score,demo,sample_xy):
+                                       pose,ref_pose,score,demo,sample_xy,bins=bins):
                     if frame_quality is not None:
                         frame_quality[int(index)] = quality
                     n_used += 1
@@ -1191,6 +1217,11 @@ def stack_source_geometry(
             if not np.any(frame_coverage > 0):
                 n_rejected += 1
                 continue
+            frame_sum = rgb_add if bayer else a
+            for k, m in bins or ():
+                m = m[..., None] if frame_sum.ndim == 3 else m
+                bin_accum[k] += m * frame_sum
+                bin_weight[k] += m * frame_coverage
             if layer_labels is not None:
                 ones = np.ones((h, w), dtype=np.float64)
                 _ga, gw = push_samples(
@@ -1216,6 +1247,7 @@ def stack_source_geometry(
                 'accum': accum, 'weight': weight, 'reference': None,
                 'demosaic_accum': demosaic_accum, 'demosaic_weight': demosaic_weight,
                 'globe_weight': globe_weight, 'ring_weight': ring_weight,
+                'bin_accum': bin_accum, 'bin_weight': bin_weight,
                 'reference_index': diagnostics['reference_index'],
                 'n_used': n_used, 'n_rejected': n_rejected, 'next_index': n_used+n_rejected,
                 resume.FRAME_QUALITY: frame_quality,
@@ -1227,6 +1259,9 @@ def stack_source_geometry(
     cancelled = cancelled or bool(should_cancel is not None and should_cancel())
     sync_sums()
     image = _normalise_stack(accum, weight)
+    fourier_detail = None
+    if n_bins and n_used:
+        image, fourier_detail = fourier_weights.apply(bin_accum, bin_weight, config.fourier_power)
     provenance = {
         **snapshot_provenance,
         "device_report": report.__dict__,
@@ -1252,8 +1287,10 @@ def stack_source_geometry(
     if n_used == 0 and not cancelled:
         raise ValueError("no usable frames remain after rejection")
     from planetrecon.pipeline.baseline import _stack_quality
+    if fourier_detail is not None:
+        provenance['fourier_weighting'] = fourier_detail
     provenance["stack_quality"] = _stack_quality(source, calibration, config, frame_quality,
-                                                 reference_selection, local_selection)
+                                                 reference_selection, local_selection, fourier_detail is not None)
     result = ReconstructionResult(
         image=image,
         coverage=weight,
@@ -1278,20 +1315,22 @@ def stack_source_geometry(
 
 
 def _motion_local_quality(matcher, selection, reference_selection, observe, group, anchor_pose, ref_pose, model, *,
-                          use_cuda, should_cancel):
+                          use_cuda, should_cancel, n_bins=0):
     """Per-point local quality with a motion model.
 
     Points live on the derotated anchor-geometry reference. Each frame is
     ranked at every point's predicted position in that frame; blend weights
     are placed at the points' reference-epoch positions for accumulation.
     ``observe`` returns drift-corrected poses and colour planes for ``group``
-    frames at a time (device planes are measured together).
+    frames at a time (device planes are measured together). With ``n_bins``
+    (Fourier weighting) each point's frames are also split into rank bins, and
+    ranking runs even when every screened frame is selected.
     """
     from types import SimpleNamespace
     from planetrecon.pipeline.ap_align import LocalQuality, LocalSelection
     screened = np.flatnonzero((reference_selection if reference_selection is not None else selection).accepted)
     count = int(np.count_nonzero(selection.accepted))
-    if len(screened) <= count:
+    if len(screened) <= count and not n_bins:
         return None, selection
     quality = LocalQuality(matcher, use_cuda=use_cuda)
     rows, cols = matcher.centres[:, 0] + .5, matcher.centres[:, 1] + .5   # pixel-centre coordinates
@@ -1330,7 +1369,11 @@ def _motion_local_quality(matcher, selection, reference_selection, observe, grou
     ok &= np.isfinite(rx) & np.isfinite(ry)
     placed = SimpleNamespace(shape=matcher.shape, spacing=matcher.spacing,
                              centres=np.column_stack([np.where(ok, ry, rows) - .5, np.where(ok, rx, cols) - .5]))
-    local = LocalSelection(placed, chosen, screened, selection.accepted.copy())
+    bins = global_bins = None
+    if n_bins:
+        from planetrecon.pipeline.ap_align import assign_bins
+        bins, global_bins = assign_bins(order, chosen, n_bins, selection.accepted, selection.measurements[:, 0])
+    local = LocalSelection(placed, chosen, screened, selection.accepted.copy(), bins=bins, global_bins=global_bins)
     return local, replace(selection, accepted=local.frames())
 
 

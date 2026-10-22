@@ -145,8 +145,8 @@ class ReconstructionConfig:
 
     @property
     def fourier_active(self) -> bool:
-        """Fourier weighting applies to alignment-point stacks without a motion model."""
-        return self.fourier_weighting and self.local_alignment and self.geometry_mode == 'none'
+        """Fourier weighting applies to every alignment-point stack."""
+        return self.fourier_weighting and self.local_alignment
 
     def __post_init__(self) -> None:
         if type(self.normalise_brightness) is not bool:

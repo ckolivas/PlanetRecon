@@ -68,7 +68,7 @@ def validate_destination(path,source,config):
 
 def save(path,identity,state,*,geometry=False,should_cancel=None):
     path=Path(path)
-    names=GEOMETRY_ARRAYS if geometry else ARRAYS+BIN_ARRAYS
+    names=(GEOMETRY_ARRAYS if geometry else ARRAYS)+BIN_ARRAYS
     metadata={'schema':GEOMETRY_SCHEMA if geometry else SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
         'arrays':[name for name in names if state.get(name) is not None]
@@ -92,7 +92,7 @@ def save(path,identity,state,*,geometry=False,should_cancel=None):
 
 def load(path,expected,shape,n_frames,bayer,*,geometry=False,bins=0):
     """``bins``: number of quality-bin accumulators a Fourier-weighted job keeps (0 for none)."""
-    allowed_arrays=GEOMETRY_ARRAYS if geometry else ARRAYS+BIN_ARRAYS
+    allowed_arrays=(GEOMETRY_ARRAYS if geometry else ARRAYS)+BIN_ARRAYS
     with np.load(path,allow_pickle=False) as data:
         meta=json.loads(str(data['metadata']))
         schema=meta.get('schema')

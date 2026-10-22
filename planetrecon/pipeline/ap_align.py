@@ -417,6 +417,24 @@ def rank_bins(count, n_bins):
     return np.minimum(np.arange(count) * n_bins // max(count, 1), n_bins - 1)
 
 
+def assign_bins(order, chosen, n_bins, global_mask, global_scores):
+    """Rank bins per point and outside the points, for Fourier weighting.
+
+    ``order`` (count, n_ap) lists each point's best frames first; ``chosen``
+    marks the frames each point stacks. Returns (bins, global_bins): each
+    chosen frame's bin at every point (-1 otherwise), and each globally
+    selected capture frame's bin by ``global_scores``.
+    """
+    bins = np.full(chosen.shape, -1, dtype=np.int64)
+    np.put_along_axis(bins, order, rank_bins(len(order), n_bins)[:, None], axis=0)
+    bins[~chosen] = -1
+    selected = np.flatnonzero(global_mask)
+    ranked = selected[np.argsort(-global_scores[selected], kind='stable')]
+    global_bins = np.full(len(global_mask), -1, dtype=np.int64)
+    global_bins[ranked] = rank_bins(len(ranked), n_bins)
+    return bins, global_bins
+
+
 def select_locally(matcher, frames, read_plane, correlate, reference, count, global_mask, should_cancel=None,
                    use_cuda=False, progress=None, n_bins=0, global_scores=None):
     """Measure local quality for ``frames`` and keep each AP's best ``count``.
@@ -442,10 +460,5 @@ def select_locally(matcher, frames, read_plane, correlate, reference, count, glo
     np.put_along_axis(chosen, order, True, axis=0)
     bins = global_bins = None
     if n_bins:
-        bins = np.full(scores.shape, -1, dtype=np.int64)
-        np.put_along_axis(bins, order, rank_bins(count, n_bins)[:, None], axis=0)
-        selected = np.flatnonzero(global_mask)
-        ranked = selected[np.argsort(-global_scores[selected], kind='stable')]
-        global_bins = np.full(len(global_mask), -1, dtype=np.int64)
-        global_bins[ranked] = rank_bins(len(ranked), n_bins)
+        bins, global_bins = assign_bins(order, chosen, n_bins, global_mask, global_scores)
     return LocalSelection(matcher, chosen, frames, global_mask, shifts, bins, global_bins)

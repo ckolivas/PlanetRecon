@@ -171,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--ap-size', type=int, default=64,
                     help='alignment point width/height in pixels (16-256; default 64); spacing is half the size')
     st.add_argument('--fourier-weighting', action=argparse.BooleanOptionalAction, default=True,
-                    help='frequency-domain lucky imaging (default with alignment points and no motion model): each '
+                    help='frequency-domain lucky imaging (default with alignment points, with or without a motion model): each '
                          'alignment point splits its frames into local-quality rank bins weighted separately at every '
                          'spatial frequency from their measured transfer; --no-fourier-weighting uses one weight per frame')
     st.add_argument('--fourier-power', type=float, default=4.0,

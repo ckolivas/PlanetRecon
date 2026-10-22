@@ -130,7 +130,7 @@ accumulated separately; after stacking each bin's transfer and noise are
 measured per frequency ring and the bins are recombined. On six Saturn L3
 captures it gave 1.1–1.9 times the fine-scale signal-to-noise of the former
 50% quality-range stacks, and looked clearly better after sharpening. It
-applies to stacks without a motion model. See [Fourier weighting](docs/fourier-weighting.md).
+applies with every Geometry motion model as well. See [Fourier weighting](docs/fourier-weighting.md).
 
 Alignment points require cached preprocessing. A capture with no bright,
 textured region that fits a point, or fewer than four selected frames, falls back

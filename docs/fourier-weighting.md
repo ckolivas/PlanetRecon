@@ -55,6 +55,15 @@ amplitudes would weight noise.
 Previews during stacking show ordinary weights; the weighting is applied when
 the stack completes. Checkpoints keep the bin accumulators and resume exactly.
 
+With a Geometry motion model the same bins are accumulated in the
+motion-compensated reference geometry: each point ranks frames at its
+predicted position in that frame, and every frame is projected once, its
+samples scattered into the ordinary sums and then into its rank-bin sums with
+the bin weights (the fused CUDA scatter reuses the projected coordinates).
+Halves alternate in 32-frame blocks across the whole capture, so both cover
+the full rotation. Colour completion is not limited by globe and ring regions,
+so recombining bins needs no region handling.
+
 ## Results: Saturn L3, 2026-10-17 12:33.1 (44,440 screened frames)
 
 One stack at 100% with 16 rank bins (GPU, 23 min), re-weighted offline from

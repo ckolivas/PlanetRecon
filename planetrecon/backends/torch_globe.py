@@ -230,6 +230,7 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
         self.demosaic_accum = None if demosaic_accum is None else self.tensor(demosaic_accum)
         self.demosaic_weight = None if demosaic_weight is None else self.tensor(demosaic_weight)
         self.channels = None
+        self.bin_accum = self.bin_weight = None
         if demosaic_accum is not None:
             labels = cfa_labels(*shape,color)
             self.channels = torch.as_tensor(np.where(labels=='R',0,np.where(labels=='G',1,2)),
@@ -249,32 +250,66 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
         """Per-source-pixel layer labels for the fused scatter (None without layers)."""
         return None, (0, 0, 0), None
 
-    def add(self, frame, pose, ref, score, demo=None, sample_xy=None):
+    def enable_bins(self, bin_accum, bin_weight):
+        """Resident Fourier-weighting rank-bin sums, (accumulators, ...) like ``accum``/``weight``."""
+        self.bin_accum, self.bin_weight = self.tensor(bin_accum), self.tensor(bin_weight)
+
+    def add(self, frame, pose, ref, score, demo=None, sample_xy=None, bins=None):
         """Scatter one frame, or a batch when ``pose`` is a sequence.
 
         ``score`` is a scalar or a reference-geometry map per frame (batches:
-        shape (B,) or (B, h, w)). Returns whether each frame covered any pixel.
+        shape (B,) or (B, h, w)). ``bins`` (after ``enable_bins``) lists each
+        frame's [(accumulator, reference-geometry weight map)] for Fourier
+        weighting; a batch passes one list per frame. Every frame is mapped
+        once. Returns whether each frame covered any pixel.
         """
         batch = not isinstance(pose, FramePose)
         lead = (len(pose),) if batch else ()
         values = self.tensor(frame).reshape(*lead, self.h*self.w, -1)
         demo = None if demo is None else self.tensor(demo).reshape(*lead, -1, 3)
+        n = lead[0] if batch else 1
+        members = {}  # accumulator -> ([frame positions], [weight maps])
+        for position, frame_bins in enumerate((bins if batch else [bins]) if bins else []):
+            for k, weight in frame_bins:
+                members.setdefault(k, ([], []))
+                members[k][0].append(position)
+                members[k][1].append(weight)
         if self.fused is not None:
-            n = lead[0] if batch else 1
             score = self.tensor(score)
             score = score.reshape(n) if score.numel() == n else score.reshape(n, -1)
             x, y, valid = self.sample_map(pose, ref, sample_xy)
+            x, y, valid = (a.reshape(-1, self.h, self.w).expand(n, self.h, self.w) for a in (x, y, valid))
             labels, codes, layer_sums = self.layer_labels()
+            values = values.reshape(n, self.h*self.w, -1)
             covered = self.fused.scatter(
-                x.reshape(-1, self.h, self.w), y.reshape(-1, self.h, self.w), valid.reshape(-1, self.h, self.w),
-                values.reshape(n, self.h*self.w, -1), score,
+                x, y, valid, values, score,
                 (self.accum.view(-1), self.weight.view(-1),
                  None if self.demosaic_accum is None else self.demosaic_accum.view(-1),
                  None if self.demosaic_weight is None else self.demosaic_weight.view(-1)),
                 demo=None if demo is None else demo.reshape(n, -1, 3), cfa=self.channels,
                 labels=None if labels is None else labels.reshape(n, -1), layer_sums=layer_sums,
                 layer_codes=codes)
+            for k, (positions, weights) in members.items():
+                chosen = torch.as_tensor(positions, device=self.device)
+                self.fused.scatter(
+                    x[chosen], y[chosen], valid[chosen], values[chosen],
+                    torch.stack([self.tensor(m).reshape(-1) for m in weights]),
+                    (self.bin_accum[k].view(-1), self.bin_weight[k].view(-1), None, None), cfa=self.channels)
             return (covered > 0).tolist() if batch else bool(covered[0] > 0)
+        corners = list(self.sample_corners(pose,ref,sample_xy))
+        covered = self._scatter_corners(corners, values, demo, score, lead,
+                                        (self.accum, self.weight, self.demosaic_accum, self.demosaic_weight), True)
+        for k, (positions, weights) in members.items():
+            maps = torch.zeros((n, self.h*self.w), dtype=torch.float64, device=self.device)
+            maps[positions] = torch.stack([self.tensor(m).reshape(-1) for m in weights])
+            self._scatter_corners(corners, values, None, maps if batch else maps[0], lead,
+                                  (self.bin_accum[k], self.bin_weight[k], None, None), False)
+        return (covered > 0).tolist() if batch else bool(covered > 0)
+
+    def _scatter_corners(self, corners, values, demo, score, lead, sums, layers):
+        """Bilinear scatter of mapped corners into ``sums`` = (accum, weight, demosaic_accum, demosaic_weight)."""
+        accum, weights, demosaic_accum, demosaic_weight = sums
+        batch = bool(lead)
         covered = torch.zeros(lead, dtype=torch.float64, device=self.device)
         # A per-pixel score (reference geometry) applies at each destination pixel.
         score_map = None
@@ -283,7 +318,7 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
         elif batch:
             score = self.tensor(score).reshape(-1, 1)
         rows = torch.arange(lead[0], device=self.device)[:, None] if batch else None
-        for index, weight in self.sample_corners(pose,ref,sample_xy):
+        for index, weight in corners:
             covered += weight.sum(-1)
             if score_map is None:
                 weighted = weight*score
@@ -292,21 +327,26 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
             flat_index, flat_weighted = index.reshape(-1), weighted.reshape(-1)
             if self.channels is not None:
                 dest = (index*3+self.channels).reshape(-1)
-                self.accum.flatten().scatter_add_(0,dest,flat_weighted*values[...,0].reshape(-1))
-                self.weight.flatten().scatter_add_(0,dest,flat_weighted)
+                accum.view(-1).scatter_add_(0,dest,flat_weighted*values[...,0].reshape(-1))
+                weights.view(-1).scatter_add_(0,dest,flat_weighted)
             else:
                 channels = values.shape[-1]
                 dest = flat_index[:,None].expand(-1,channels)
-                self.accum.view(-1,channels).scatter_add_(0,dest,flat_weighted[:,None]*values.reshape(-1,channels))
-                self.weight.view(-1,channels).scatter_add_(0,dest,flat_weighted[:,None].expand(-1,channels))
+                accum.view(-1,channels).scatter_add_(0,dest,flat_weighted[:,None]*values.reshape(-1,channels))
+                weights.view(-1,channels).scatter_add_(0,dest,flat_weighted[:,None].expand(-1,channels))
             if demo is not None:
                 dest = flat_index[:,None].expand(-1,3)
-                self.demosaic_accum.view(-1,3).scatter_add_(0,dest,flat_weighted[:,None]*demo.reshape(-1,3))
-                self.demosaic_weight.view(-1,3).scatter_add_(0,dest,flat_weighted[:,None].expand(-1,3))
-            self.add_layer_coverage(flat_index,flat_weighted)
-        return (covered > 0).tolist() if batch else bool(covered > 0)
+                demosaic_accum.view(-1,3).scatter_add_(0,dest,flat_weighted[:,None]*demo.reshape(-1,3))
+                demosaic_weight.view(-1,3).scatter_add_(0,dest,flat_weighted[:,None].expand(-1,3))
+            if layers:
+                self.add_layer_coverage(flat_index,flat_weighted)
+        return covered
 
     def download(self):
         # Detached snapshots: later device updates cannot mutate UI/checkpoints.
         return tuple(None if a is None else a.cpu().numpy().copy() for a in
                      (self.accum,self.weight,self.demosaic_accum,self.demosaic_weight))
+
+    def download_bins(self):
+        """Detached rank-bin sums (bin_accum, bin_weight), or (None, None) without Fourier weighting."""
+        return tuple(None if a is None else a.cpu().numpy().copy() for a in (self.bin_accum, self.bin_weight))

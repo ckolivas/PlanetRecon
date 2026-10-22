@@ -130,10 +130,10 @@ def test_fourier_checkpoint_resumes_and_binds_settings(tmp_path):
                 stack_source(source, other, resume_from=checkpoint)
 
 
-def test_fourier_weighting_is_the_default_for_alignment_point_stacks():
+def test_fourier_weighting_is_the_default_for_every_alignment_point_stack():
     assert config().fourier_active and config().fourier_power == 4.
     assert not ReconstructionConfig().fourier_active  # Global alignment only.
-    assert not config(geometry_mode='surface').fourier_active
+    assert config(geometry_mode='surface').fourier_active  # Motion models too.
     assert not config(fourier_weighting=False).fourier_active
     for value in (0., 9., float('nan'), '1'):
         with pytest.raises(ValueError, match='fourier_power'):
@@ -168,3 +168,99 @@ def test_cuda_fourier_weighting_matches_cpu(tmp_path):
         gpu = stack_source(source, config(fourier_weighting=True, device='gpu'))
     assert gpu.backend == 'cuda'
     np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-6, atol=1e-6*np.abs(cpu.image).max())
+
+
+GLOBE = (128, 160)
+
+
+def rotating_globe(path, colour='mono', n=320, rate=.002):
+    """A rotating globe with fine surface texture; per-frame blur, small drift and noise."""
+    from scipy.ndimage import map_coordinates
+    rng = np.random.default_rng(11)
+    surface = gaussian_filter(rng.normal(size=(256, 512)), 1.2, mode='wrap')
+    surface = surface / surface.std()
+    y, x = np.indices(GLOBE, dtype=float)
+    frames = []
+    for i, blur in enumerate(rng.uniform(.4, 2.4, n)):
+        sx, sy = x + .5 - 80, 64 - (y + .5)
+        inside = sx*sx + sy*sy < 46**2
+        z = np.sqrt(np.maximum(46**2 - sx*sx - sy*sy, 0.))
+        lon = (np.arctan2(sx, z) + rate*i) % (2*np.pi)
+        lat = np.arcsin(np.clip(sy/46, -1, 1))
+        texture = map_coordinates(surface, [(lat/np.pi + .5)*255, lon/(2*np.pi)*512], order=1, mode='grid-wrap')
+        scene = np.where(inside, 2000 + 900*texture, 0.)
+        frame = ndshift(gaussian_filter(scene, blur), rng.uniform(-1, 1, 2), order=1, mode='nearest')
+        frames.append(frame + rng.normal(scale=260., size=GLOBE))
+    frames = np.clip(np.asarray(frames) + 1000, 0, 65535)
+    if colour == 'RGGB':
+        frames[:, ::2, ::2] *= .8
+        frames[:, 1::2, 1::2] *= .6
+    return write_ser(path, frames.astype('u2'), color_id=NAME_TO_COLOR[colour],
+                     timestamps=np.arange(n)*10_000_000)  # One second apart.
+
+
+def globe_config(**kwargs):
+    return config(**{'geometry_mode': 'surface', 'field_center_x': 80., 'field_center_y': 64.,
+                     'equatorial_radius_px': 46., 'surface_rate_rad_s': .002, 'sub_obs_lat_rad': 0.,
+                     'motion_reference': 'best', 'batch_frames': 24, **kwargs})
+
+
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_fourier_weighting_with_a_motion_model(tmp_path, monkeypatch, colour):
+    path = rotating_globe(tmp_path/'globe.ser', colour)
+    with SERSource(path) as source:
+        preprocess_source(source, globe_config())
+        ordinary = stack_source(source, globe_config(fourier_weighting=False))
+        matched = stack_source(source, globe_config(fourier_power=1.))
+        sharper = stack_source(source, globe_config())
+        # Equal weights must reproduce the ordinary motion stack: the rank bins
+        # hold exactly the samples the ordinary accumulators receive.
+        monkeypatch.setattr(fourier_weights, 'weights', lambda T, V, D, power: np.ones_like(T))
+        equal = stack_source(source, globe_config())
+    assert ordinary.provenance['geometry']['surface_rate_rad_s'] == .002
+    np.testing.assert_allclose(equal.image, ordinary.image, rtol=0, atol=1e-9*np.abs(ordinary.image).max())
+    detail = matched.provenance['fourier_weighting']
+    T = np.asarray(detail['transfer'], dtype=float)
+    assert T[0, ring(.2)] > 2*max(T[-1, ring(.2)], 1e-3)
+    # This capture is limited by registration more than noise at fine scales,
+    # so p = 1 cannot gain much signal-to-noise there, but must not lose it.
+    snr, plain = np.asarray(detail['ring_snr']), np.asarray(detail['ordinary_ring_snr'])
+    assert snr[ring(.15):ring(.3)].sum() > .95*plain[ring(.15):ring(.3)].sum()
+    gains = [coherent_gain(r.image, ordinary.image, .15, .3) for r in (matched, sharper)]
+    assert 1. < gains[0] < gains[1]
+    assert 'Fourier power 4' in sharper.provenance['stack_quality']['weighting']
+
+
+def test_motion_model_fourier_checkpoint_resumes(tmp_path):
+    path = rotating_globe(tmp_path/'resume.ser', 'RGGB', n=96)
+    cfg = globe_config()
+    with SERSource(path) as source:
+        preprocess_source(source, cfg)
+        whole = stack_source(source, cfg)
+        stop = False
+
+        def event(result, info):
+            nonlocal stop
+            stop = stop or (result.stage not in ('setup', 'cache_ready') and info['n_processed'] >= 40)
+        checkpoint = tmp_path/'state.npz'
+        partial = stack_source(source, cfg, on_event=event, should_cancel=lambda: stop, state_checkpoint=checkpoint)
+        assert partial.incomplete
+        resumed = stack_source(source, cfg, resume_from=checkpoint)
+        np.testing.assert_allclose(resumed.image, whole.image, rtol=0, atol=1e-9*np.abs(whole.image).max())
+        with pytest.raises(ValueError, match='identity|configuration'):
+            stack_source(source, replace(cfg, fourier_power=2.), resume_from=checkpoint)
+
+
+@pytest.mark.hardware
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_cuda_motion_model_fourier_matches_cpu(tmp_path, colour):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    path = rotating_globe(tmp_path/'cuda.ser', colour, n=96)
+    with SERSource(path) as source:
+        preprocess_source(source, globe_config())
+        cpu = stack_source(source, globe_config())
+        gpu = stack_source(source, globe_config(device='gpu'))
+    assert gpu.backend == 'cuda' and 'fourier_weighting' in gpu.provenance
+    np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-5, atol=1e-5*np.abs(cpu.image).max())
