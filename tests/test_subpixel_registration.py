@@ -41,3 +41,20 @@ def test_subpixel_cpu_cuda_agree(cuda_backend=None):
     moved=shift(image,(1.3,-2.6),order=3,mode='wrap')
     np.testing.assert_allclose(TorchBackend().phase_correlation(image,moved),
                                phase_correlation_shift(image,moved),atol=1e-10)
+
+
+def test_flat_tilted_ridge_summit_beyond_the_neighbour_is_refit():
+    from planetrecon.pipeline.masked_align import quadratic_peak
+    # Ring correlation scores of a dim IR850 Saturn frame (2026-10-22 11:16.6,
+    # frame 1863): a thin, tilted ring ellipse leaves a flat ridge whose fitted
+    # summit lay 1.02 px from the best grid score, failing the 3x3 fit.
+    window = np.array([[.98009, .98132, .98219, .98270, .98284],
+                       [.98721, .98803, .98848, .98855, .98825],
+                       [.99099, .99137, .99138, .99102, .99028],
+                       [.99133, .99127, .99085, .99005, .98887],
+                       [.98822, .98773, .98688, .98565, .98406]])
+    np.testing.assert_allclose(quadratic_peak(window), [.47, -1.02], atol=.03)
+    y, x = np.indices((5, 5)) - 2.
+    np.testing.assert_allclose(quadratic_peak(1 - .01*((y - .3)**2 + (x + .4)**2)), [.3, -.4], atol=1e-12)
+    # A summit beyond the neighbour's own 3x3 is not supported by the window.
+    assert quadratic_peak(1 - .01*(y**2 + (x + 2.6)**2)) is None

@@ -30,6 +30,51 @@ def observed_correlations(proxy, template, mask):
     return dot,total,squares,support
 
 
+def peak_window(scores, py, px):
+    """5x5 scores centred on (py, px); -inf outside the array."""
+    window = np.full((5, 5), -np.inf)
+    y0, x0 = max(0, py-2), max(0, px-2)
+    y1, x1 = min(scores.shape[0], py+3), min(scores.shape[1], px+3)
+    window[y0-py+2:y1-py+2, x0-px+2:x1-px+2] = scores[y0:y1, x0:x1]
+    return window
+
+
+def quadratic_peak(window):
+    """Sub-pixel maximum (dy, dx) from the centre of a 5x5 score window, or None.
+
+    The centre is the best grid score. Its 3x3 quadratic fit must be a
+    maximum. On a flat, tilted ridge (thin rings in a dim frame) the fitted
+    summit can lie just beyond the neighbouring grid point; then fit once more
+    around the neighbour nearest it, which must contain the summit.
+    """
+    def fit(cy, cx):
+        n = window[cy-1:cy+2, cx-1:cx+2]
+        if not np.isfinite(n).all():
+            return None
+        # Tilted features couple horizontal and vertical offsets. Independent
+        # axis fits find two different slices of the peak, not its joint centre.
+        centre = n[1, 1]
+        gy = .5*(n[2, 1]-n[0, 1])
+        gx = .5*(n[1, 2]-n[1, 0])
+        hyy = n[0, 1]-2*centre+n[2, 1]
+        hxx = n[1, 0]-2*centre+n[1, 2]
+        hxy = .25*(n[2, 2]-n[2, 0]-n[0, 2]+n[0, 0])
+        hessian = np.array([[hyy, hxy], [hxy, hxx]])
+        if np.linalg.eigvalsh(hessian)[-1] >= 0:
+            return None
+        # A perfect normalized match is already an exact solution.
+        delta = np.zeros(2) if centre >= 1-1e-12 else np.linalg.solve(-hessian, [gy, gx])
+        return delta if np.isfinite(delta).all() else None
+    delta = fit(2, 2)
+    if delta is None or np.all(np.abs(delta) <= 1.):
+        return delta
+    step = np.clip(np.rint(delta), -1, 1).astype(int)
+    refit = fit(2+step[0], 2+step[1])
+    if refit is None or np.any(np.abs(refit) > 1.):
+        return None
+    return step + refit
+
+
 class MaskedRegistration:
     """Linear correlation with real source support and distinct-peak guards."""
 
@@ -74,26 +119,8 @@ class MaskedRegistration:
             return None
         if py == 0 or px == 0 or py == scores.shape[0]-1 or px == scores.shape[1]-1:
             return None
-        neighbourhood = scores[py-1:py+2, px-1:px+2]
-        if not np.isfinite(neighbourhood).all():
-            return None
-        # Tilted features couple horizontal and vertical offsets. Independent
-        # axis fits find two different slices of the peak, not its joint centre.
-        gy = .5*(neighbourhood[2, 1]-neighbourhood[0, 1])
-        gx = .5*(neighbourhood[1, 2]-neighbourhood[1, 0])
-        hyy = neighbourhood[0, 1]-2*peak+neighbourhood[2, 1]
-        hxx = neighbourhood[1, 0]-2*peak+neighbourhood[1, 2]
-        hxy = .25*(neighbourhood[2, 2]-neighbourhood[2, 0]
-                    -neighbourhood[0, 2]+neighbourhood[0, 0])
-        hessian = np.array([[hyy, hxy], [hxy, hxx]])
-        if np.linalg.eigvalsh(hessian)[-1] >= 0:
-            return None
-        # A perfect normalized match is already an exact solution.
-        delta = (np.zeros(2) if peak >= 1-1e-12 else
-                 np.linalg.solve(-hessian, [gy, gx]))
-        # A tilted peak's centre can be beyond half a pixel from the best grid
-        # point, but must remain inside the observed three-by-three neighbourhood.
-        if not np.isfinite(delta).all() or np.any(np.abs(delta) > 1.):
+        delta = quadratic_peak(peak_window(scores, py, px))
+        if delta is None:
             return None
         offsets = np.array([py, px]) - (np.array(self.shape)-1) + delta
         if min_improvement > 0:

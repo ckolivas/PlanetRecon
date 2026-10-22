@@ -14,6 +14,7 @@ from scipy.ndimage import minimum_filter
 
 from planetrecon.backends.torch_ap import _gaussian
 from planetrecon.detector import BAYER_PATTERNS, is_bayer
+from planetrecon.pipeline.masked_align import quadratic_peak
 
 
 def _shifted_sum(image, offsets, first=0):
@@ -293,9 +294,13 @@ class MaskedMatcher:
         box = (((torch.arange(size_y, device=self.device)[:, None] - wy[:, None, None]).abs() <= 3)
                & ((torch.arange(size_x, device=self.device)[None, :] - wx[:, None, None]).abs() <= 3))
         rival = torch.where(box, -torch.inf, competitors).flatten(1).max(1).values
-        ny = (wy[:, None] + torch.arange(-1, 2, device=self.device)).clamp(0, size_y - 1)
-        nx = (wx[:, None] + torch.arange(-1, 2, device=self.device)).clamp(0, size_x - 1)
-        neighbours = scores[frames, ny[:, :, None], nx[:, None, :]].flatten(1)
+        # 5x5 around the maximum for the host's quadratic fit; -inf beyond the scores.
+        ny = wy[:, None] + torch.arange(-2, 3, device=self.device)
+        nx = wx[:, None] + torch.arange(-2, 3, device=self.device)
+        inside_y, inside_x = (ny >= 0) & (ny < size_y), (nx >= 0) & (nx < size_x)
+        neighbours = torch.where(inside_y[:, :, None] & inside_x[:, None, :],
+                                 scores[frames, ny.clamp(0, size_y - 1)[:, :, None], nx.clamp(0, size_x - 1)[:, None, :]],
+                                 -torch.inf).flatten(1)
         centre = scores[frames[:, 0, 0], h - 1 - tensor(start_y), w - 1 - tensor(start_x)]
         host = torch.cat((torch.stack((peak, rival, centre, wy.to(self.dtype), wx.to(self.dtype)), 1),
                           neighbours), 1).double().cpu().numpy()
@@ -330,17 +335,8 @@ class MaskedMatcher:
             return None
         if py == 0 or px == 0 or py == self.full[0] - 1 or px == self.full[1] - 1:
             return None
-        n = row[5:].reshape(3, 3)
-        if not np.isfinite(n).all():
-            return None
-        gy, gx = .5 * (n[2, 1] - n[0, 1]), .5 * (n[1, 2] - n[1, 0])
-        hyy, hxx = n[0, 1] - 2 * peak + n[2, 1], n[1, 0] - 2 * peak + n[1, 2]
-        hxy = .25 * (n[2, 2] - n[2, 0] - n[0, 2] + n[0, 0])
-        hessian = np.array([[hyy, hxy], [hxy, hxx]])
-        if np.linalg.eigvalsh(hessian)[-1] >= 0:
-            return None
-        delta = np.zeros(2) if peak >= 1 - 1e-12 else np.linalg.solve(-hessian, [gy, gx])
-        if not np.isfinite(delta).all() or np.any(np.abs(delta) > 1.):
+        delta = quadratic_peak(row[5:].reshape(5, 5))
+        if delta is None:
             return None
         return np.array([py, px]) - (np.array(self.shape) - 1) + delta
 
