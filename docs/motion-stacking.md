@@ -87,9 +87,15 @@ radius. In a 6-minute capture such a spoke 40 degrees in from an ansa moves
 about 6 px across the sky. The Saturn model turns the ring plane with the globe
 (an exact affine map per frame, which carries uniform rings onto themselves).
 Light fixed to the viewing or lighting geometry does not move: ring motion
-fades in from 4 to 14 px clear of the globe's silhouette and its shadow on the
-rings, and out from 4 to 12 px beyond the ring edges. Rings in front of the
-globe follow the globe. Viewing-geometry ring asymmetries (the A ring's
+fades in from 4 px clear of the globe's silhouette and its shadow on the rings,
+and out from 4 to 12 px beyond the ring edges. Rings in front of the globe
+follow the globe. Fading tangential motion across the silhouette compresses
+the rings there by up to 1.5 x shift / fade length, so the clearance fade is
+10 px or 6 times the frame's in-plane shift, whichever is longer. With a fixed
+10 px fade, frames 3-6 minutes from the output epoch (ring shifts of 6-12 px)
+folded the rings into a dark seam a few px outside both limb crossings, which
+sharpening made obvious; the edge fades are radial, across the motion, and
+compress nothing. Viewing-geometry ring asymmetries (the A ring's
 azimuthal brightness pattern) are smooth enough that a few degrees of turn
 does not affect them.
 

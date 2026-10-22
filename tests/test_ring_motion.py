@@ -105,6 +105,20 @@ def test_motion_weight_fades_at_the_globe_its_shadow_and_beyond_the_rings():
     assert weight.max() == 1
 
 
+@pytest.mark.parametrize('dt', [-2., 2.5])
+def test_distant_frames_do_not_fold_rings_at_the_limb(dt):
+    # A frame minutes from the output epoch moves ring points several px (here 7-10 in plane);
+    # a short fade at the globe's silhouette compressed them into a seam.
+    model = SaturnSceneModel(globe(), rings())
+    x, y = detector_xy_grids(SIZE, SIZE)
+    dx, dy, _ = model.src_to_ref(x, y, FramePose(REFERENCE + dt, 0., CENTRE, CENTRE), FramePose(REFERENCE, 0., CENTRE, CENTRE))
+    det = np.gradient(dx, axis=1)*np.gradient(dy, axis=0) - np.gradient(dx, axis=0)*np.gradient(dy, axis=1)
+    weight = model.ring_motion_weight(*detector_to_sky(x, y, CENTRE, CENTRE))
+    fade = (weight > 0) & (weight < 1)
+    assert np.hypot(dx - x, dy - y)[weight == 1].max() > 2.5
+    assert np.all(np.abs(det[fade] - 1) < .3)
+
+
 def test_rings_turn_the_same_way_as_the_globe():
     model = SaturnSceneModel(globe(), rings())
     src, ref = FramePose(0., 0., CENTRE, CENTRE), FramePose(1., 0., CENTRE, CENTRE)

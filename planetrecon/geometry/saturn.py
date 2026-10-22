@@ -38,6 +38,11 @@ LIMB_TAPER_MU = 0.4
 # between these distances beyond the inner and outer ring edges (blurred ring light).
 RING_MOTION_CLEAR_PX = (4.0, 14.0)
 RING_MOTION_EDGE_PX = (4.0, 12.0)
+# The clearance fade turns tangential ring motion into compression across it
+# (at most 1.5 x shift / fade length, smoothstep's steepest slope). Lengthen the
+# fade to this many times the frame's in-plane shift so a frame several minutes
+# from the output epoch cannot fold the rings into a seam at the globe's limb.
+RING_MOTION_FADE_PER_SHIFT = 6.0
 
 
 def _smoothstep(u):
@@ -166,8 +171,12 @@ class SaturnSceneModel(SceneModel):
             if rings.sun_lon_rad is not None or rings.sun_lat_rad is not None:
                 self.ring_clearance.append((body_direction(sun_direction_obs(globe, rings)), True))
 
-    def ring_motion_weight(self, sx, sy):
-        """Share of ring motion (0..1) at field-free sky offsets from the centre; numpy or torch."""
+    def ring_motion_weight(self, sx, sy, chord=0.0):
+        """Share of ring motion (0..1) at field-free sky offsets from the centre; numpy or torch.
+
+        ``chord`` (ring_turn_chord) is the frame's in-plane shift per unit ring radius;
+        it lengthens the clearance fade. Scalar, or per pose broadcastable against sx.
+        """
         rt, (px, py) = self.ring_body, self.ring_plane
         z = px * sx + py * sy
         xb = rt[0, 0] * sx + rt[0, 1] * sy + rt[0, 2] * z
@@ -178,14 +187,20 @@ class SaturnSceneModel(SceneModel):
         weight = (_smoothstep((r - (self.rings.inner_radius_px - hi)) / (hi - lo))
                   * _smoothstep((self.rings.outer_radius_px + hi - r) / (hi - lo)))
         lo, hi = RING_MOTION_CLEAR_PX
+        span = (RING_MOTION_FADE_PER_SHIFT * chord * r).clip(hi - lo, None)
         for v, sunward in self.ring_clearance:
             along = xb * v[0] + yb * v[1]
             clear = (r2 - along * along).clip(0.0, None) ** 0.5 - self.globe.equatorial_radius_px
             if sunward:
                 # Only points beyond the globe from the Sun can be in its shadow.
                 clear = clear + (along >= 0) * 1e9
-            weight = weight * _smoothstep((clear - lo) / (hi - lo))
+            weight = weight * _smoothstep((clear - lo) / span)
         return weight
+
+    def ring_turn_chord(self, t_src: float, t_ref: float) -> float:
+        """In-plane distance a ring point moves between the two times, per unit ring radius."""
+        g = self.globe
+        return 2.0 * abs(np.sin(0.5 * (g.sub_obs_lon(t_src) - g.sub_obs_lon(t_ref))))
 
     def ring_turn(self, t_src: float, t_ref: float) -> np.ndarray:
         """2x2 map of field-free sky offsets on the ring plane from t_src to t_ref (rings turn with the globe)."""
@@ -273,7 +288,7 @@ class SaturnSceneModel(SceneModel):
         dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
         if self.ring_motion:
             # Ring points turn about the pole; zero weight on and near the globe.
-            weight = self.ring_motion_weight(sx, sy)
+            weight = self.ring_motion_weight(sx, sy, self.ring_turn_chord(src.t_s, ref.t_s))
             m = self.ring_turn(src.t_s, ref.t_s)
             rx, ry = m[0, 0]*sx + m[0, 1]*sy, m[1, 0]*sx + m[1, 1]*sy
             if self.apply_field:

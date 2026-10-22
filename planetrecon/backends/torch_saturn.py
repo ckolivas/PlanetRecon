@@ -135,7 +135,7 @@ class TorchSaturnWarp(TorchGlobeWarp):
         sx, sy = x-P([p.cx for p in P.srcs]), P([p.cy for p in P.srcs])-y
         if model.apply_field:
             sx, sy = self.rotate(sx, sy, P.angles([-p.field_angle_rad for p in P.srcs]))
-        weight = model.ring_motion_weight(sx, sy)
+        weight = model.ring_motion_weight(sx, sy, P([model.ring_turn_chord(s.t_s, r.t_s) for s, r in zip(P.srcs, P.refs)]))
         # Turned minus unturned field-free offsets, then the reference field attitude.
         rx = P(m[:,0,0]-1.)*sx+P(m[:,0,1])*sy
         ry = P(m[:,1,0])*sx+P(m[:,1,1]-1.)*sy
