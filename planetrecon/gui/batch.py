@@ -1,6 +1,11 @@
 """Sequential capture queue with distinct, non-overwriting output paths."""
+import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
+
+# WinJUPOS / FireCapture capture time: YYYY-MM-DD-HHMM_T, T in tenths of a minute (truncated).
+WINJUPOS_TIME = re.compile(r'(\d{4}-\d{2}-\d{2})-(\d{2})(\d{2})_(\d)(?!\d)')
 
 
 @dataclass
@@ -47,13 +52,34 @@ def quality_tag(summary):
     return tag
 
 
-def with_quality(output, summary, taken=()):
-    """``output`` with the quality tag before its extension, never an existing or taken path."""
+def epoch_stem(stem, epoch):
+    """``stem`` with its WinJUPOS time moved to a stack's output epoch.
+
+    Capture names carry the capture midpoint. ``epoch`` is the result's
+    ``output_epoch`` provenance: an epoch away from the midpoint is named by its
+    UTC when the SER records it, otherwise by shifting the named time.
+    """
+    match = WINJUPOS_TIME.search(stem)
+    if not epoch or match is None or abs(epoch['offset_from_midpoint_s']) < .05:
+        return stem
+    if epoch.get('utc'):
+        time = datetime.fromisoformat(epoch['utc'])
+    else:
+        named = datetime.strptime(f'{match[1]} {match[2]}{match[3]}', '%Y-%m-%d %H%M')
+        # The named tenth spans 6 s; take its centre.
+        time = named + timedelta(seconds=6*int(match[4]) + 3 + epoch['offset_from_midpoint_s'])
+    tenth = time.second // 6
+    return stem[:match.start()] + f'{time:%Y-%m-%d-%H%M}_{tenth}' + stem[match.end():]
+
+
+def result_output(output, provenance, taken=()):
+    """``output`` named for its result: WinJUPOS time at the output epoch and the
+    quality tag before the extension; never an existing or taken path."""
     output = Path(output)
-    tag = quality_tag(summary)
-    if not tag:
+    provenance = provenance or {}
+    base = epoch_stem(output.stem, provenance.get('output_epoch')) + quality_tag(provenance.get('stack_quality'))
+    if base == output.stem:
         return output
-    base = output.stem + tag
     candidate = output.with_name(base + output.suffix)
     count = 2
     while candidate in taken or candidate.exists() or candidate.is_symlink():

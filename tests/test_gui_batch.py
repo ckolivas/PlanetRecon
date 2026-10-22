@@ -60,7 +60,7 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
 
 
 def test_quality_tag_never_replaces_existing_or_reserved_outputs(tmp_path):
-    from planetrecon.gui.batch import quality_tag, with_quality
+    from planetrecon.gui.batch import quality_tag, result_output
     summary = {'frames_stacked': 3341, 'quality': {'weighted_mean': 1.19267}, 'estimated_snr': 1014.96,
                'alignment_points': {'frames_per_point': {'median': 2105.}, 'weighted_quality': {'median': 1.21546}}}
     assert quality_tag(summary) == '-n2105-q1.215-snr1015'
@@ -69,8 +69,37 @@ def test_quality_tag_never_replaces_existing_or_reserved_outputs(tmp_path):
     output = tmp_path / 'jup-planetrecon.tif'
     (tmp_path / 'jup-planetrecon-n2105-q1.215-snr1015.tif').write_bytes(b'keep')
     reserved = {tmp_path / 'jup-planetrecon-n2105-q1.215-snr1015-2.tif'}
-    assert with_quality(output, summary, reserved).name == 'jup-planetrecon-n2105-q1.215-snr1015-3.tif'
-    assert with_quality(output, None) == output
+    assert result_output(output, {'stack_quality': summary}, reserved).name == 'jup-planetrecon-n2105-q1.215-snr1015-3.tif'
+    assert result_output(output, None) == output
+
+
+def test_output_names_follow_an_epoch_away_from_the_capture_midpoint(tmp_path):
+    from planetrecon.gui.batch import epoch_stem, result_output
+    stem = '2026-10-22-1116_6-CK-IR850-Sat'
+    # The SER's UTC names the output epoch (FireCapture truncates to tenths of a minute).
+    assert epoch_stem(stem, {'offset_from_midpoint_s': -120., 'utc': '2026-10-22T11:14:38.295'}) == '2026-10-22-1114_6-CK-IR850-Sat'
+    assert epoch_stem(stem, {'offset_from_midpoint_s': 0., 'utc': '2026-10-22T11:16:38.301'}) == stem
+    assert epoch_stem(stem, None) == stem
+    # Without SER UTC the named time (centre of its tenth) moves by the offset, across midnight too.
+    assert epoch_stem(stem, {'offset_from_midpoint_s': 45., 'utc': None}) == '2026-10-22-1117_4-CK-IR850-Sat'
+    assert epoch_stem('2026-10-22-2359_8-Sat', {'offset_from_midpoint_s': 30., 'utc': None}) == '2026-10-23-0000_3-Sat'
+    assert epoch_stem('capture-1116_6', {'offset_from_midpoint_s': 30., 'utc': None}) == 'capture-1116_6'
+    provenance = {'output_epoch': {'offset_from_midpoint_s': 90., 'utc': '2026-10-22T11:18:08.3'},
+                  'stack_quality': {'frames_stacked': 12, 'quality': {'weighted_mean': 2.5}}}
+    assert result_output(tmp_path / f'{stem}-planetrecon.png', provenance).name == '2026-10-22-1118_1-CK-IR850-Sat-planetrecon-n12-q2.5.png'
+
+
+def test_output_epoch_is_recorded_against_the_midpoint(tmp_path):
+    from datetime import datetime
+    from planetrecon.geometry.pose import output_epoch
+    from planetrecon.io.ser import SERSource
+    ticks = (datetime(2026, 10, 22, 11, 13, 38) - datetime(1, 1, 1)).total_seconds() * 10**7
+    path = write_ser(tmp_path / 'timed.ser', np.zeros((5, 8, 8), 'u2'), datetime_utc=int(ticks),
+                     timestamps=int(ticks) + np.arange(5) * 9*10**7)
+    with SERSource(path) as source:
+        epoch = output_epoch(source, 6.)
+    assert epoch['capture_midpoint_s'] == 18. and epoch['offset_from_midpoint_s'] == -12.
+    assert epoch['utc'] == '2026-10-22T11:13:44'
 
 
 def test_queue_duplicate_names_and_existing_outputs(tmp_path):

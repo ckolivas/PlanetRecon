@@ -94,6 +94,31 @@ def capture_timing(source: FrameSource, *, cadence_s: float | None = None) -> di
             'definition': 'First-to-last frame-start timestamp; final exposure length is not included.'}
 
 
+def output_epoch(source: FrameSource, reference_epoch_s: float, *, cadence_s: float | None = None) -> dict | None:
+    """Output epoch against the capture midpoint, and in UTC when the SER records it.
+
+    Capture names (FireCapture, WinJUPOS) carry the midpoint; a different output
+    epoch moves the time the stacked image represents. None without frame times.
+    """
+    from datetime import datetime, timedelta
+    timing = capture_timing(source, cadence_s=cadence_s)
+    if timing['status'] != 'available':
+        return None
+    midpoint = .5 * timing['duration_s']
+    record = {'epoch_s': float(reference_epoch_s), 'capture_midpoint_s': midpoint,
+              'offset_from_midpoint_s': float(reference_epoch_s) - midpoint, 'utc': None}
+    ticks = source.timestamps()
+    field = source.metadata().extras.get('datetime_utc_ticks')
+    # SER trailer ticks are 100 ns UTC from 0001-01-01; relative ticks are not dates.
+    lo = (datetime(1900, 1, 1) - datetime(1, 1, 1)).days * 864000000000
+    hi = (datetime(2101, 1, 1) - datetime(1, 1, 1)).days * 864000000000
+    if (field is not None and source.timestamp_scale_s() == 1e-7 and ticks is not None and len(ticks)
+            and np.issubdtype(np.asarray(ticks).dtype, np.integer) and lo <= int(ticks[0]) < hi):
+        first = datetime(1, 1, 1) + timedelta(microseconds=int(ticks[0]) // 10)
+        record['utc'] = (first + timedelta(seconds=float(reference_epoch_s))).isoformat()
+    return record
+
+
 def build_frame_poses(
     times_s: np.ndarray,
     *,

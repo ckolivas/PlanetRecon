@@ -453,7 +453,12 @@ accumulator checkpoints. Output names use `<capture stem>-planetrecon-n<frames>-
 (or `.png`), from the stack quality: frames stacked (per alignment point when
 used), weighted mean quality and estimated SNR, e.g.
 `jupiter-planetrecon-n2105-q1.215-snr1015.tif`. Numeric suffixes preserve existing
-files and distinguish duplicate names.
+files and distinguish duplicate names. A WinJUPOS time in the capture name
+(`YYYY-MM-DD-HHMM_T`, the capture midpoint as FireCapture writes it) moves to the
+output epoch when a motion model's epoch is away from the midpoint: the SER's
+UTC at that epoch, truncated to tenths of a minute (or the named time shifted by
+the offset without SER UTC). **Save result…** suggests the same name for a
+single stack.
 
 If a GPU fault stops a job — for example `CUDA error: the launch timed out`, raised
 when the display driver's watchdog (about 7 s on a GPU that also drives the

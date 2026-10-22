@@ -182,8 +182,15 @@ def test_save_suggests_result_capture_name(monkeypatch, tmp_path, encoding, exte
     monkeypatch.setattr(win, 'save_result', lambda path, cfg, **kwargs: saved.append(path))
     try:
         win._choose_save()
-        assert seen == [str(tmp_path / ('Jupiter.capture' + extension))]
+        # Batch's name: '-planetrecon' and, when available, quality and the output epoch's time.
+        assert seen == [str(tmp_path / ('Jupiter.capture-planetrecon' + extension))]
         assert saved == [tmp_path / ('chosen-output' + extension)]
+        win.last_result.provenance = {
+            'source': {'path': str(tmp_path / '2026-10-22-1116_6-CK-IR850-Sat.ser')},
+            'stack_quality': {'frames_stacked': 8931, 'quality': {'weighted_mean': 3.21}, 'estimated_snr': 640.2},
+            'output_epoch': {'offset_from_midpoint_s': -120., 'utc': '2026-10-22T11:14:38.3'}}
+        win._choose_save()
+        assert seen[-1] == str(tmp_path / ('2026-10-22-1114_6-CK-IR850-Sat-planetrecon-n8931-q3.21-snr640' + extension))
     finally:
         win.window.close()
         app.processEvents()

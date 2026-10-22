@@ -102,6 +102,12 @@ def stack_source(
             result.provenance['cpu_memory_budget'] = cpu_report
         if full_scale is not None:
             normalise_result(result, config.normalise_percent, full_scale)
+        if config.geometry_mode != 'none':
+            from planetrecon.geometry.pose import output_epoch
+            # The time a motion-model stack represents; output names follow it.
+            epoch = output_epoch(source, config.reference_epoch_s, cadence_s=config.cadence_s)
+            if epoch is not None:
+                result.provenance['output_epoch'] = epoch
         return result
 
 

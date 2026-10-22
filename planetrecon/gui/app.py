@@ -601,9 +601,9 @@ class MainWindow:
         item = self.batch_current
         if kind == 'completed' and self.last_result is not None and not self.last_result.incomplete:
             item.quality = stack_quality_text(self.last_result)
-            from planetrecon.gui.batch import with_quality
-            item.output = with_quality(item.output, self.last_result.provenance.get('stack_quality'),
-                                       {other.output for other in self.batch_items if other is not item})
+            from planetrecon.gui.batch import result_output
+            item.output = result_output(item.output, self.last_result.provenance,
+                                        {other.output for other in self.batch_items if other is not item})
             try:
                 self.view.setCurrentText('Result')
                 self._fit_levels()  # Each capture's final full-resolution range.
@@ -1372,9 +1372,11 @@ class MainWindow:
             return
         extension = '.png' if cfg.encoding == 'png16' else '.tif'
         source = self.last_result.provenance.get('source', {}).get('path') or self.path
-        stem = Path(source).stem if source else 'result'
-        path, _ = QFileDialog.getSaveFileName(self.window, 'Save scientific result',
-                    str(Path(self._dialog_directory()) / (stem + extension)),
+        # Batch's name: WinJUPOS time at the output epoch, '-planetrecon' and the quality tag.
+        from planetrecon.gui.batch import result_output
+        suggested = result_output(Path(self._dialog_directory()) / (
+            (Path(source).stem + '-planetrecon' if source else 'result') + extension), self.last_result.provenance)
+        path, _ = QFileDialog.getSaveFileName(self.window, 'Save scientific result', str(suggested),
                     'PNG (*.png)' if extension == '.png' else 'TIFF (*.tif *.tiff)',
                     options=QFileDialog.Option.DontConfirmOverwrite)
         if not path:
