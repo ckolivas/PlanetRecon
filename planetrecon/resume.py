@@ -12,6 +12,8 @@ from planetrecon.pipeline.provenance import capture_provenance
 SCHEMA='planetrecon-baseline-state-2'
 GEOMETRY_SCHEMA='planetrecon-geometry-state-1'
 ARRAYS=('accum','weight','reference','demosaic_accum','demosaic_weight')
+# Fourier weighting's rank-bin accumulators (bins first), present only for those jobs.
+BIN_ARRAYS=('bin_accum','bin_weight')
 GEOMETRY_ARRAYS=ARRAYS+('globe_weight','ring_weight')
 # Per-frame quality of accumulated frames (NaN otherwise), for the stack quality
 # summary. Optional: checkpoints written before it existed still resume.
@@ -39,6 +41,11 @@ def identity(source,config,calibration,should_cancel=None):
     if config.quality_weighting:
         settings.pop('quality_weighting')
         capture['config'].pop('quality_weighting')
+    # Fourier weighting settings only bind jobs that use it.
+    if not config.fourier_weighting:
+        for key in ('fourier_weighting', 'fourier_power'):
+            settings.pop(key)
+            capture['config'].pop(key)
     # Alignment point settings only bind jobs that use alignment points.
     if not config.local_alignment:
         settings.pop('ap_size')
@@ -61,10 +68,10 @@ def validate_destination(path,source,config):
 
 def save(path,identity,state,*,geometry=False,should_cancel=None):
     path=Path(path)
-    names=GEOMETRY_ARRAYS if geometry else ARRAYS
+    names=GEOMETRY_ARRAYS if geometry else ARRAYS+BIN_ARRAYS
     metadata={'schema':GEOMETRY_SCHEMA if geometry else SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
-        'arrays':[name for name in names if state[name] is not None]
+        'arrays':[name for name in names if state.get(name) is not None]
                  +([FRAME_QUALITY] if state.get(FRAME_QUALITY) is not None else []),
         'execution_history':state.get('execution_history',['cpu']),
         'warnings':state.get('warnings',[])}
@@ -83,8 +90,9 @@ def save(path,identity,state,*,geometry=False,should_cancel=None):
         Path(tmp).unlink(missing_ok=True)
 
 
-def load(path,expected,shape,n_frames,bayer,*,geometry=False):
-    allowed_arrays=GEOMETRY_ARRAYS if geometry else ARRAYS
+def load(path,expected,shape,n_frames,bayer,*,geometry=False,bins=0):
+    """``bins``: number of quality-bin accumulators a Fourier-weighted job keeps (0 for none)."""
+    allowed_arrays=GEOMETRY_ARRAYS if geometry else ARRAYS+BIN_ARRAYS
     with np.load(path,allow_pickle=False) as data:
         meta=json.loads(str(data['metadata']))
         schema=meta.get('schema')
@@ -96,6 +104,9 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False):
         names=meta.get('arrays',[])
         required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer else set())
         if geometry:required|={'globe_weight','ring_weight'}
+        if bins:required|=set(BIN_ARRAYS)
+        elif set(BIN_ARRAYS) & set(names):
+            raise ValueError('state checkpoint arrays are incomplete or unknown')
         if not required.issubset(names) or set(names)-set(allowed_arrays)-{FRAME_QUALITY}:
             raise ValueError('state checkpoint arrays are incomplete or unknown')
         state={name:(data[name].copy() if name in names else None) for name in allowed_arrays}
@@ -127,7 +138,8 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False):
     state['warnings']=warnings
     for name,arr in ((name,state[name]) for name in allowed_arrays):
         if arr is None:continue
-        expected_shape=shape[:2] if name in ('reference','globe_weight','ring_weight') else shape
+        expected_shape=(shape[:2] if name in ('reference','globe_weight','ring_weight') else
+                        (bins,)+tuple(shape) if name in BIN_ARRAYS else shape)
         if arr.shape!=expected_shape or arr.dtype!=np.float64 or not np.isfinite(arr).all():
             raise ValueError(f'invalid state checkpoint array {name}')
         if 'weight' in name and (arr<0).any():raise ValueError('negative checkpoint weights')

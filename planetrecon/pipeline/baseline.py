@@ -234,6 +234,13 @@ def _stack_source(
         channel_order = "mono"
     demosaic_accum = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
+    # Fourier weighting keeps one accumulator pair per local-quality rank bin.
+    from planetrecon.pipeline import fourier_weights
+    rank_bins = (fourier_weights.rank_bins(int(np.count_nonzero(selection.accepted)))
+                 if config.fourier_weighting else 0)
+    n_bins = 2 * rank_bins
+    bin_accum = np.zeros((n_bins,) + accum.shape) if n_bins else None
+    bin_weight = np.zeros((n_bins,) + weight.shape) if n_bins else None
 
     reference = None
     reference_index = None
@@ -281,8 +288,11 @@ def _stack_source(
             state_identity['ap_registration_version'] = 1
             state_identity['local_registration_version'] = 2 if colour_registration else 1
             state_identity['local_template_boundary'] = 'normalised support; best-frame fill'
+        if n_bins:
+            state_identity['fourier_bins'] = n_bins
     if resume_from is not None:
-        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer)
+        restored = resume.load(resume_from, state_identity, accum.shape, n, bayer, bins=n_bins)
+        bin_accum, bin_weight = restored['bin_accum'], restored['bin_weight']
         accum, weight = restored["accum"], restored["weight"]
         reference, reference_index = restored["reference"], restored["reference_index"]
         n_used, n_rejected = restored["n_used"], restored["n_rejected"]
@@ -295,6 +305,10 @@ def _stack_source(
         snapshot_provenance["resumed_from_frame"] = next_index
 
     device_sums = None  # Alignment-point CUDA batch sums; CPU arrays stay authoritative.
+
+    def flush_device():
+        device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()),
+                          bins=(bin_accum, bin_weight) if n_bins else None)
 
     def cpu_fallback(exc):
         nonlocal backend, reference
@@ -310,7 +324,7 @@ def _stack_source(
             reference = backend.prepare_reference(reference)
         if device_sums is not None and device_sums.pending:
             try:
-                device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()))
+                flush_device()
             except Exception:
                 # Unmerged device sums are lost: recompute exactly those frames on CPU.
                 for index in device_sums.discard():
@@ -372,7 +386,10 @@ def _stack_source(
             warnings.append('No bright, textured region fits an alignment point; using global alignment.')
         screened = np.flatnonzero(reference_selection.accepted)
         count = int(np.count_nonzero(selection.accepted))
-        if local_matcher.layers and len(screened) <= count:
+        if not local_matcher.layers and n_bins:
+            warnings.append('Fourier weighting needs alignment points; using ordinary weights.')
+            n_bins, bin_accum, bin_weight = 0, None, None
+        if local_matcher.layers and len(screened) <= count and not n_bins:
             # Every screened frame is selected (e.g. 100%): each point would
             # choose every frame, so ranking cannot change the result.
             detail['local_quality'] = {'frames_per_point': count, 'ranked_frames': 0,
@@ -381,12 +398,16 @@ def _stack_source(
             try:
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                  reference, count, selection.accepted.copy(), should_cancel,
-                                                 use_cuda=backend.name == 'cuda', progress=setup_progress)
+                                                 use_cuda=backend.name == 'cuda', progress=setup_progress,
+                                                 n_bins=rank_bins if n_bins else 0,
+                                                 global_scores=selection.measurements[:, 0])
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                  reference, count, selection.accepted.copy(), should_cancel,
-                                                 progress=setup_progress)
+                                                 progress=setup_progress,
+                                                 n_bins=rank_bins if n_bins else 0,
+                                                 global_scores=selection.measurements[:, 0])
             selection = replace(selection, accepted=local_selection.frames())
             detail['local_quality'] = {
                 'frames_per_point': count, 'ranked_frames': len(screened),
@@ -452,9 +473,10 @@ def _stack_source(
             local_matcher.use_cuda = True
         field = local_matcher.displacement_tensor(plane, shift)
         projected = backend.backproject_tensors(calibrated, field, color)
+        bins = [(2*b + fourier_weights.half(index), score * m) for b, m in local_selection.bin_weights_tensor(index)] if n_bins else None
         if local_selection is not None:
             score = score * local_selection.weights_tensor(index)
-        return (score, *projected)
+        return (score, *projected, bins)
 
     def process_frame(item):
         nonlocal reference, reference_index
@@ -523,10 +545,11 @@ def _stack_source(
         if projected is None and local_matcher is not None:
             projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
         if projected is not None:
+            bins = [(2*b + fourier_weights.half(index), score * m) for b, m in local_selection.bin_weights(index)] if n_bins else None
             if local_selection is not None:
                 # Per-pixel blend of the alignment points that selected this frame.
                 score = score * local_selection.weights(index)
-            return (score, *projected)
+            return (score, *projected, bins)
         support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
                           order=1, prefilter=False, mode='grid-constant')
         if bayer:
@@ -548,13 +571,17 @@ def _stack_source(
     def accumulate(projected):
         if projected is None:
             return
-        score, add, wt, demo, support = projected
+        score, add, wt, demo, support, *bins = projected
         scale = score[..., None] if np.ndim(score) == 2 and add.ndim == 3 else score
         accum[...] += scale * add
         weight[...] += scale * wt
         if bayer:
             demosaic_accum[...] += scale * demo
             demosaic_weight[...] += (score * support)[..., None]
+        for b, m in (bins[0] or []) if bins else []:
+            m = m[..., None] if add.ndim == 3 else m
+            bin_accum[b] += m * add
+            bin_weight[b] += m * wt
 
     from planetrecon.pipeline.cpu_pool import CPUFramePool, selected_batches
     with CPUFramePool(config, shape, n-next_index, enabled=backend.name == 'cpu',
@@ -617,7 +644,7 @@ def _stack_source(
                 cancelled = True
             if device_sums is not None and device_sums.pending:
                 try:
-                    device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()))
+                    flush_device()
                 except RuntimeError as exc:
                     cpu_fallback(exc)
             cancelled = cancelled or pool.cancelled()
@@ -625,6 +652,7 @@ def _stack_source(
                 resume.save(state_checkpoint, state_identity, {
                     "accum": accum, "weight": weight, "reference": reference,
                     "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
+                    "bin_accum": bin_accum, "bin_weight": bin_weight,
                     "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
                     "next_index": n_used + n_rejected, resume.FRAME_QUALITY: frame_quality,
                     "execution_history": report.execution_history, "warnings": warnings})
@@ -636,6 +664,9 @@ def _stack_source(
 
     cancelled = cancelled or bool(should_cancel is not None and should_cancel())
     image = _normalise_stack(accum, weight)
+    fourier_detail = None
+    if n_bins and n_used:
+        image, fourier_detail = fourier_weights.apply(bin_accum, bin_weight, config.fourier_power)
     cov = weight
     provenance = {
         **snapshot_provenance,
@@ -655,6 +686,8 @@ def _stack_source(
         }
     if n_used == 0 and not cancelled:
         raise ValueError("no usable frames remain after rejection")
+    if fourier_detail is not None:
+        provenance['fourier_weighting'] = fourier_detail
     provenance["stack_quality"] = _stack_quality(source, calibration, config, frame_quality,
                                                  reference_selection, local_selection)
     result = ReconstructionResult(

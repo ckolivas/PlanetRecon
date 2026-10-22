@@ -51,6 +51,10 @@ class ConfigControls(QTabWidget):
         self.fields['normalise_brightness'].toggled.connect(self.fields['normalise_percent'].setEnabled)
         self._integer(capture, 'ap_size', 'Alignment point size (pixels)', 16, 256)
         self.fields['ap_size'].setSingleStep(8)
+        self._check(capture, 'fourier_weighting', 'Fourier (frequency-domain) weighting')
+        self._number(capture, 'fourier_power', 'Fourier weighting power')
+        self.fields['fourier_power'].setEnabled(config.fourier_weighting)
+        self.fields['fourier_weighting'].toggled.connect(self.fields['fourier_power'].setEnabled)
         self._choice(capture, 'frame_selection_mode', 'Optional frame selection',
                      ['quality_range', 'frame_count'])
         mode = self.fields['frame_selection_mode']
@@ -402,6 +406,8 @@ class ConfigControls(QTabWidget):
                         raise ValueError('Memory budget must be positive')
                     value = int(value * 1024**2)
             values[key] = value
+        if values['fourier_power'] is None:
+            values['fourier_power'] = self.base.fourier_power
         if values['geometry_mode'] != 'saturn':
             for key in ('ring_inner_radius_px', 'ring_outer_radius_px', 'sun_lon_rad', 'sun_lat_rad',
                         'moon_x', 'moon_y', 'moon_radius_px'):

@@ -38,6 +38,8 @@ class ReconstructionConfig:
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
     ap_size: int = 64
+    fourier_weighting: bool = False
+    fourier_power: float = 1.0
     max_shift_px: float = 32.0
     reference_index: int = 0
     motion_reference: str = "midpoint"
@@ -156,6 +158,13 @@ class ReconstructionConfig:
             raise ValueError('local_alignment must be a bool')
         if type(self.ap_size) is not int or not 16 <= self.ap_size <= 256:
             raise ValueError('ap_size must be an integer from 16 to 256 pixels')
+        if type(self.fourier_weighting) is not bool:
+            raise ValueError('fourier_weighting must be a bool')
+        if (type(self.fourier_power) not in (int, float) or not math.isfinite(self.fourier_power)
+                or not .25 <= self.fourier_power <= 8):
+            raise ValueError('fourier_power must be a number from 0.25 to 8')
+        if self.fourier_weighting and not self.local_alignment:
+            raise ValueError('Fourier weighting requires alignment points')
         if self.motion_reference not in ('midpoint', 'best'):
             raise ValueError('unknown motion_reference')
         if self.local_alignment and not self.frame_preselection:

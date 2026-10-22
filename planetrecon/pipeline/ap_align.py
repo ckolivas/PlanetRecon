@@ -333,10 +333,13 @@ class LocalQuality:
 
 class LocalSelection:
     """Per-AP best frames and their blended per-pixel weights."""
-    def __init__(self, matcher, chosen, frames, global_mask, shifts=None):
+    def __init__(self, matcher, chosen, frames, global_mask, shifts=None, bins=None, global_bins=None):
         """chosen: (n_frames, n_ap) bool for ``frames`` capture indices.
 
         ``shifts`` optionally keeps each frame's global registration for reuse.
+        ``bins`` (n_frames, n_ap) and ``global_bins`` (capture length) give
+        each chosen frame's local-quality rank bin (-1 when not chosen), for
+        Fourier weighting; the global bin applies outside the points.
         """
         h, w = matcher.shape
         ys, xs = np.arange(h, dtype=float), np.arange(w, dtype=float)
@@ -351,6 +354,7 @@ class LocalSelection:
         self.chosen = chosen
         self.global_mask = global_mask
         self.shifts = {} if shifts is None else dict(zip((int(f) for f in frames), shifts))
+        self.bins, self.global_bins = bins, global_bins
 
     def frames(self):
         """Capture indices with any nonzero weight."""
@@ -377,10 +381,50 @@ class LocalSelection:
                                    device=device, dtype=torch.float64)
         return (wyT * selected) @ wx * scale + rest * float(self.global_mask[index])
 
+    def bin_weights(self, index):
+        """[(bin, per-pixel weight)] for one frame; the weights sum to ``weights(index)``."""
+        k = self.row.get(int(index))
+        local = self.bins[k] if k is not None else np.full(self.wy.shape[0], -1)
+        outside = int(self.global_bins[index]) if self.global_mask[index] else -1
+        result = []
+        for b in sorted(set(local[local >= 0].tolist()) | ({outside} if outside >= 0 else set())):
+            weight = (self.wy.T * (local == b)) @ self.wx * self.scale
+            if b == outside:
+                weight = weight + self.rest
+            result.append((b, weight))
+        return result
+
+    def bin_weights_tensor(self, index, device='cuda:0'):
+        """Device equivalent of ``bin_weights``."""
+        import torch
+        self.weights_tensor(index, device)  # Ensures the device arrays exist.
+        wyT, wx, scale, rest = self._device
+        k = self.row.get(int(index))
+        local = self.bins[k] if k is not None else np.full(wyT.shape[1], -1)
+        outside = int(self.global_bins[index]) if self.global_mask[index] else -1
+        result = []
+        for b in sorted(set(local[local >= 0].tolist()) | ({outside} if outside >= 0 else set())):
+            selected = torch.as_tensor(local == b, device=device, dtype=torch.float64)
+            weight = (wyT * selected) @ wx * scale
+            if b == outside:
+                weight = weight + rest
+            result.append((b, weight))
+        return result
+
+
+def rank_bins(count, n_bins):
+    """Bin of each rank position: equal-count bins of the best ``count`` ranks."""
+    return np.minimum(np.arange(count) * n_bins // max(count, 1), n_bins - 1)
+
 
 def select_locally(matcher, frames, read_plane, correlate, reference, count, global_mask, should_cancel=None,
-                   use_cuda=False, progress=None):
-    """Measure local quality for ``frames`` and keep each AP's best ``count``."""
+                   use_cuda=False, progress=None, n_bins=0, global_scores=None):
+    """Measure local quality for ``frames`` and keep each AP's best ``count``.
+
+    With ``n_bins``, each point's chosen frames are also split into equal-count
+    local-quality rank bins, best first; ``global_scores`` (capture length)
+    ranks the frames of ``global_mask`` the same way for use outside the points.
+    """
     quality = LocalQuality(matcher, use_cuda=use_cuda)
     scores = np.zeros((len(frames), len(matcher.centres)))
     shifts = []
@@ -396,4 +440,12 @@ def select_locally(matcher, frames, read_plane, correlate, reference, count, glo
     order = np.argsort(-scores, axis=0, kind='stable')[:count]
     chosen = np.zeros(scores.shape, dtype=bool)
     np.put_along_axis(chosen, order, True, axis=0)
-    return LocalSelection(matcher, chosen, frames, global_mask, shifts)
+    bins = global_bins = None
+    if n_bins:
+        bins = np.full(scores.shape, -1, dtype=np.int64)
+        np.put_along_axis(bins, order, rank_bins(count, n_bins)[:, None], axis=0)
+        selected = np.flatnonzero(global_mask)
+        ranked = selected[np.argsort(-global_scores[selected], kind='stable')]
+        global_bins = np.full(len(global_mask), -1, dtype=np.int64)
+        global_bins[ranked] = rank_bins(len(ranked), n_bins)
+    return LocalSelection(matcher, chosen, frames, global_mask, shifts, bins, global_bins)

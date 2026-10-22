@@ -169,6 +169,12 @@ def main(argv: list[str] | None = None) -> int:
                          '(default with cached preprocessing); --no-local-alignment uses global alignment only')
     st.add_argument('--ap-size', type=int, default=64,
                     help='alignment point width/height in pixels (16-256; default 64); spacing is half the size')
+    st.add_argument('--fourier-weighting', action=argparse.BooleanOptionalAction, default=False,
+                    help='frequency-domain lucky imaging: each alignment point splits its frames into local-quality '
+                         'rank bins whose weights are set per spatial-frequency band from their measured transfer')
+    st.add_argument('--fourier-power', type=float, default=1.0,
+                    help='Fourier weighting exponent on each bin transfer (0.25-8; default 1, best band '
+                         'signal-to-noise); larger values favour sharpness over noise')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
                     help='quality_range: 50 keeps scores above (capture best + worst)/2; frame_count: ranked percentage of screened frames')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")
@@ -432,6 +438,8 @@ def main(argv: list[str] | None = None) -> int:
             local_alignment=(args.local_alignment if args.local_alignment is not None
                              else not args.no_frame_preselection),
             ap_size=args.ap_size,
+            fourier_weighting=args.fourier_weighting,
+            fourier_power=args.fourier_power,
             max_vram_bytes=None if args.cuda_memory_mib is None else args.cuda_memory_mib * 1024**2,
             max_ram_bytes=None if args.cpu_memory_mib is None else args.cpu_memory_mib * 1024**2,
             crop=args.crop,

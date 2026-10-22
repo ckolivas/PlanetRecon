@@ -195,9 +195,11 @@ class DeviceAccumulator:
     """
     def __init__(self):
         self.sums = None
+        self.bin_sums = {}
         self.pending = []
 
-    def add(self, index, weight, add, wt, demo, support):
+    def add(self, index, weight, add, wt, demo, support, bins=None):
+        """``bins``: optional [(bin, per-pixel weight)] for Fourier weighting's rank-bin sums."""
         if not torch.is_tensor(weight):
             weight = torch.tensor(float(weight), device=add.device, dtype=torch.float64)
         scale = weight[..., None] if weight.ndim == 2 and add.ndim == 3 else weight
@@ -209,18 +211,30 @@ class DeviceAccumulator:
         else:
             for total, part in zip(self.sums, parts):
                 total.add_(part)
+        for b, m in bins or ():
+            m = m[..., None] if add.ndim == 3 else m
+            if b in self.bin_sums:
+                self.bin_sums[b][0].add_(m * add)
+                self.bin_sums[b][1].add_(m * wt)
+            else:
+                self.bin_sums[b] = [m * add, m * wt]
         self.pending.append(int(index))
 
-    def flush(self, *targets):
-        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight])."""
+    def flush(self, *targets, bins=None):
+        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight])
+        and the rank-bin sums into ``bins`` (bin_accum, bin_weight)."""
         if self.sums is not None:
             for total, target in zip(self.sums, targets):
                 target += total.cpu().numpy()
+        for b, (total, total_weight) in self.bin_sums.items():
+            bins[0][b] += total.cpu().numpy()
+            bins[1][b] += total_weight.cpu().numpy()
         self.sums = None
+        self.bin_sums = {}
         self.pending = []
 
     def discard(self):
-        pending, self.sums, self.pending = self.pending, None, []
+        pending, self.sums, self.bin_sums, self.pending = self.pending, None, {}, []
         return pending
 
 
