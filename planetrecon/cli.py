@@ -172,9 +172,9 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--fourier-weighting', action=argparse.BooleanOptionalAction, default=False,
                     help='frequency-domain lucky imaging: each alignment point splits its frames into local-quality '
                          'rank bins whose weights are set per spatial-frequency band from their measured transfer')
-    st.add_argument('--fourier-power', type=float, default=1.0,
-                    help='Fourier weighting exponent on each bin transfer (0.25-8; default 1, best band '
-                         'signal-to-noise); larger values favour sharpness over noise')
+    st.add_argument('--fourier-power', type=float, default=4.0,
+                    help='Fourier weighting exponent on each bin transfer (0.25-8; default 4); 1 gives the best '
+                         'signal-to-noise at every scale, larger values favour the sharpest frames at fine scales')
     st.add_argument('--selection-mode', choices=('quality_range', 'frame_count'), default='quality_range',
                     help='quality_range: 50 keeps scores above (capture best + worst)/2; frame_count: ranked percentage of screened frames')
     st.add_argument("--cuda-memory-mib", type=int, help="CUDA tensor allocator cap in MiB; excludes driver/library memory")

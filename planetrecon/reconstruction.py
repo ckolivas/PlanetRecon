@@ -39,7 +39,7 @@ class ReconstructionConfig:
     local_alignment: bool = False
     ap_size: int = 64
     fourier_weighting: bool = False
-    fourier_power: float = 1.0
+    fourier_power: float = 4.0
     max_shift_px: float = 32.0
     reference_index: int = 0
     motion_reference: str = "midpoint"

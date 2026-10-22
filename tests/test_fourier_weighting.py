@@ -87,7 +87,9 @@ def test_fourier_weighting_concentrates_fine_detail_on_the_sharpest_frames(tmp_p
     with SERSource(path) as source:
         preprocess_source(source, config())
         ordinary = stack_source(source, config())
-        fourier = stack_source(source, config(fourier_weighting=True))
+        # p = 1 is the matched filter: the best measured signal-to-noise at every ring.
+        fourier = stack_source(source, config(fourier_weighting=True, fourier_power=1.))
+        sharper = stack_source(source, config(fourier_weighting=True))
     detail = fourier.provenance['fourier_weighting']
     T = np.asarray(detail['transfer'], dtype=float)
     # Coarse rings transfer equally; fine rings come from the best-ranked bins.
@@ -101,6 +103,8 @@ def test_fourier_weighting_concentrates_fine_detail_on_the_sharpest_frames(tmp_p
     assert coherent_gain(fourier.image, ordinary.image, .2, .3) > 1.3
     snr, plain = np.asarray(detail['ring_snr']), np.asarray(detail['ordinary_ring_snr'])
     assert snr[ring(.25):ring(.35)].sum() > 1.25*plain[ring(.25):ring(.35)].sum()
+    # The default power concentrates fine detail further on the sharpest frames.
+    assert coherent_gain(sharper.image, ordinary.image, .2, .3) > coherent_gain(fourier.image, ordinary.image, .2, .3)
     np.testing.assert_allclose(fourier.coverage, ordinary.coverage, rtol=1e-12)
     assert 'fourier_weighting' not in ordinary.provenance
 

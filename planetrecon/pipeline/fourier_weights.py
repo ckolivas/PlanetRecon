@@ -17,7 +17,8 @@ incoherent residual V from the difference of its two halves, which cancels all
 common signal whatever its blur and leaves noise plus random distortion from
 imperfect alignment (larger in poor frames). Image weights T^p / V, with T
 non-increasing and V smooth over rank, are the inverse-variance matched filter
-when p = 1 (best ring signal-to-noise); larger p favours sharpness over noise.
+when p = 1 (best ring signal-to-noise); larger p favours sharpness over noise
+(the default, 4, looked best on a Saturn capture sharpened by eye).
 
 The rings form a smooth partition of unity in radial frequency, so equal
 weights reproduce the ordinary stack exactly. The weighted ring stacks are

@@ -24,8 +24,9 @@ amplitudes would weight noise.
 
 1. Each alignment point already ranks every screened frame by its local
    quality. The frames it stacks are split into equal-count rank bins (16, or
-   fewer so each bin keeps at least 20 frames), and each bin into even and odd
-   frames. Every (bin, parity) has its own accumulator, filled with the
+   fewer so each bin keeps at least 20 frames), and each bin into two halves
+   of alternate 32-frame blocks (frames a few ms apart share seeing, so they
+   stay in the same half). Every (bin, parity) has its own accumulator, filled with the
    ordinary per-pixel blended weights; outside the points the global quality
    rank decides the bin.
 2. After stacking, each bin-stack is measured on narrow rings of radial
@@ -34,23 +35,46 @@ amplitudes would weight noise.
    - transfer T: the cross-spectrum against the stack of all other bins over
      that reference's power. The noise of the two is independent, so T has no
      noise bias.
-   - incoherent residual V: from the difference of the bin's even and odd
-     halves, which cancels all common signal whatever its blur and leaves noise
+   - incoherent residual V: from the difference of the bin's two halves, which cancels all common signal whatever its blur and leaves noise
      plus random distortion from imperfect alignment (larger in poor frames).
 3. Image weights T^p / V are the inverse-variance matched filter for p = 1:
    the best signal-to-noise at each ring, which is what sharpening exploits.
    T is smoothed across rings and made non-increasing over rank; V is smoothed
    across rings and fitted as a quadratic in log over rank (its bin-to-bin
-   scatter is estimation noise). `--fourier-power` (default 1) raises T to a
-   higher power to favour sharpness over noise.
+   scatter is estimation noise). `--fourier-power` (default 4) raises T to a
+   higher power to favour sharpness over noise; see the results below.
 4. Each ring's weighted stack is formed from the accumulators (per-pixel
    normalisation as usual) and the image is the ordinary stack plus each
    ring's filtered difference from it. Equal weights reproduce the ordinary
    stack exactly.
-5. The even and odd halves give each result's signal-to-noise per ring from
+5. The two halves give each result's signal-to-noise per ring from
    their Fourier ring correlation (SNR = 2 FRC / (1 - FRC) for the full
    stack); both the Fourier and the ordinary values are recorded in the
    provenance (`fourier_weighting`).
 
 Previews during stacking show ordinary weights; the weighting is applied when
 the stack completes. Checkpoints keep the bin accumulators and resume exactly.
+
+## Results: Saturn L3, 2026-10-17 12:33.1 (44,440 screened frames)
+
+One stack at 100% with 16 rank bins (GPU, 23 min), re-weighted offline from
+the saved accumulators. "Current" emulates the ordinary 50% quality-range
+stack: each point's best 7 of 16 bins (44% of frames, the share the 50%
+quality range kept), quality weighted. Ring SNR from the halves' Fourier ring
+correlation, as a ratio to Current:
+
+| cycles/px      | 0.08 | 0.10 | 0.12 | 0.15 | 0.18 | 0.20 | 0.23 | 0.25 | 0.28 |
+|----------------|------|------|------|------|------|------|------|------|------|
+| ordinary 100%  | 0.97 | 0.91 | 0.90 | 1.03 | 1.17 | 1.16 | 1.09 | 1.11 | 0.99 |
+| Fourier p = 1  | 1.02 | 1.03 | 1.09 | 1.12 | 1.21 | 1.21 | 1.14 | 1.15 | 1.00 |
+| Fourier p = 2  | 1.08 | 1.08 | 1.19 | 1.17 | 1.21 | 1.26 | 1.22 | 1.21 | 1.05 |
+| Fourier p = 4  | 0.94 | 0.83 | 0.89 | 0.89 | 0.96 | 1.12 | 1.18 | 1.24 | 1.12 |
+| Fourier p = 6  | 0.70 | 0.66 | 0.72 | 0.68 | 0.70 | 0.88 | 0.98 | 1.17 | 1.17 |
+| Fourier p = 8  | 0.57 | 0.60 | 0.66 | 0.60 | 0.57 | 0.71 | 0.78 | 1.05 | 1.20 |
+
+The stack's SNR falls to about 2 at 0.25 cycles/px. Each version was sharpened
+by eye: p = 4 looked best; 1 and 2 were softer; 6 and 8 were visibly noisier
+with only slightly sharper Cassini division. The finest rings, where p = 4
+leads, decide the visible result, so the default is 4. Above about 0.25
+cycles/px a single bin-stack is too noisy for its transfer to be measured,
+and the weights there drift back towards equal.
