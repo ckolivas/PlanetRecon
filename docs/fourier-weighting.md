@@ -111,3 +111,20 @@ clear winner by eye on 12:20.6, 12:26.6 and 12:33.1. Automatic detail
 measures did not reproduce those judgements: a 2x-binned gradient energy that
 matches AutoStakkert!4's quality values preferred the 50% stacks, and a
 fine-scale Laplacian preferred p = 6-8, which looked noisier.
+
+### With the Saturn motion model (12:33.1)
+
+Stacked at 100% with the Saturn model (geometry from preprocessing, Saturn
+rotation preset, latitude from SER UTC; GPU, 34 min). Ring SNR ratio to the
+emulated 50% stack from the same run:
+
+| cycles/px     | 0.08 | 0.10 | 0.12 | 0.15 | 0.18 | 0.20 | 0.23 | 0.25 |
+|---------------|------|------|------|------|------|------|------|------|
+| Fourier p = 1 | 1.01 | 1.07 | 1.04 | 1.18 | 1.27 | 1.10 | 1.10 | 1.15 |
+| Fourier p = 2 | 1.04 | 1.11 | 1.14 | 1.24 | 1.26 | 1.15 | 1.16 | 1.19 |
+| Fourier p = 4 | 0.90 | 0.87 | 0.91 | 0.99 | 1.00 | 1.03 | 1.16 | 1.22 |
+
+The same pattern as without a motion model. On this capture the absolute
+ring SNR with and without the Saturn model is similar (p = 4 at 0.25
+cycles/px: 2.08 and 2.02): alignment points already follow most of the
+rotation over the 6-minute capture.
