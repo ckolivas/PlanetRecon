@@ -59,18 +59,11 @@ def _normalise_stack(accum: np.ndarray, weight: np.ndarray) -> np.ndarray:
     return np.divide(accum, weight, out=np.zeros_like(accum), where=weight > 0)
 
 
-def _warn_duration_and_exposure(
-    times: np.ndarray, config: ReconstructionConfig, radius: float,
+def _warn_exposure(
+    config: ReconstructionConfig, radius: float,
     field_rate: float, surface_rate: float, ring_radius: float | None = None,
 ) -> list[str]:
     warnings: list[str] = []
-    if times.size:
-        span = float(times[-1] - times[0])
-        if span > float(config.geometry_duration_warn_s):
-            warnings.append(
-                "rigid_rotation_duration_limit: "
-                f"clip {span:.3f}s exceeds {config.geometry_duration_warn_s:.3f}s"
-            )
     speed = 0.0
     if config.geometry_mode in ("field", "combined", "saturn"):
         speed += abs(field_rate) * max(radius, ring_radius or radius)
@@ -384,8 +377,8 @@ def prepare_geometry(
         unavailable.append('edge-on rings cannot be reconstructed by the Saturn motion model')
     if unavailable:
         diagnostics['unavailable_motion'] = unavailable
-    warnings = (_warn_duration_and_exposure(times, config, radius, float(field_rate), surface_rate,
-                                           None if rings is None else rings.outer_radius_px)
+    warnings = (_warn_exposure(config, radius, float(field_rate), surface_rate,
+                               None if rings is None else rings.outer_radius_px)
                 if time_origin != "inferred" else [])
     if diagnostics['timestamp_duplicate_intervals']:
         warnings.append('timestamp_ties: frames with equal recorded timestamps are retained at the same time; zero intervals are excluded from rate estimation')

@@ -330,7 +330,7 @@ def test_cfa_stays_on_detector_lattice():
     assert result.provenance["demosaic_first"]["label"] == "comparison"
 
 
-def test_long_clip_and_exposure_warnings():
+def test_exposure_warning():
     frames = np.stack([_spot(16, 16, 32, 32) for _ in range(3)])
     src = ArraySource(frames, color_mode="mono", bit_depth=32, timestamps=np.array([0.0, 80.0, 160.0]))
     cfg = ReconstructionConfig(
@@ -343,11 +343,10 @@ def test_long_clip_and_exposure_warnings():
         equatorial_radius_px=12.0,
         exposure_s=2.0,
         freeze_mid_exposure=True,
-        geometry_duration_warn_s=100.0,
     )
     result = stack_source(src, cfg)
     text = " ".join(result.warnings)
-    assert "rigid_rotation_duration_limit" in text
+    assert "rigid_rotation_duration_limit" not in text
     assert "exposure_geometry_frozen" in text
 
 
@@ -391,3 +390,9 @@ def test_prepare_geometry_uses_user_rates():
     assert diag["field_origin"] == "user"
     assert diag["surface_origin"] == "user"
     assert poses[1].field_angle_rad == pytest.approx(0.01)
+
+
+def test_saved_jobs_with_removed_duration_warning_load():
+    data = ReconstructionConfig(device="cpu").to_dict()
+    data["geometry_duration_warn_s"] = 120.0
+    assert ReconstructionConfig.from_dict(data) == ReconstructionConfig(device="cpu")

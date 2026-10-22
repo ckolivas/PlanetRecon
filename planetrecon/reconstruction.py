@@ -62,7 +62,6 @@ class ReconstructionConfig:
     reverse_rotation: bool = False
     exposure_s: float | None = None
     cadence_s: float | None = None
-    geometry_duration_warn_s: float = C.GEOMETRY_DURATION_WARN_S
     freeze_mid_exposure: bool = True
     ring_inner_radius_px: float | None = None
     ring_outer_radius_px: float | None = None
@@ -220,15 +219,12 @@ class ReconstructionConfig:
             "flattening",
             "pole_pa_rad",
             "sub_obs_lon0_rad",
-            "geometry_duration_warn_s",
         ):
             value = getattr(self, name)
             if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be finite")
         if float(self.flattening) < 0.0 or float(self.flattening) >= 1.0:
             raise ValueError("flattening must be in [0, 1)")
-        if float(self.geometry_duration_warn_s) < 0.0:
-            raise ValueError("exposure and duration warning must be non-negative")
         for name in (
             "sub_obs_lat_rad",
             "field_rate_rad_s",
@@ -363,7 +359,8 @@ class ReconstructionConfig:
             raise ValueError("Square and circular local alignment were removed; create a new stacking job "
                              "with alignment points")
         data = {key: value for key, value in data.items() if key not in (
-            "alignment_method", "local_patch_size", "sampling_multiplier", "alignment_wavelength_nm")}
+            "alignment_method", "local_patch_size", "sampling_multiplier", "alignment_wavelength_nm",
+            "geometry_duration_warn_s")}
         known = set(cls.__dataclass_fields__)
         if set(data) - known:
             raise ValueError(f"unknown config fields: {sorted(set(data) - known)}")
