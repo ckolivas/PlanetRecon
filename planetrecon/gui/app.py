@@ -509,8 +509,8 @@ class MainWindow:
                                                 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if not names:
             return
-        self._remember_directory(Path(names[0]).parent)
-        folder = QFileDialog.getExistingDirectory(self.window, 'Batch output folder', str(Path(names[0]).parent))
+        self._remember_directory(Path(names[-1]).parent)
+        folder = QFileDialog.getExistingDirectory(self.window, 'Batch output folder', self._dialog_directory())
         if folder:
             self._remember_directory(folder)
             self.start_batch(names, folder)

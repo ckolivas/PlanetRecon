@@ -845,7 +845,7 @@ class SERWindow:
         if not names:
             return
         paths = [Path(name) for name in names]
-        self._remember_directory(paths[0].parent)
+        self._remember_directory(paths[-1].parent)
         directory, existing = None, 'skip'
         if export:
             directory = QFileDialog.getExistingDirectory(self.window, f'{title}: folder for filtered SER files',
