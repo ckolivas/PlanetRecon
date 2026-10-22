@@ -26,7 +26,7 @@ def capture(path, colour):
 
 def config(**kwargs):
     return ReconstructionConfig(device='cpu', threads=2, batch_frames=2,
-                                local_alignment=True, **kwargs)
+                                local_alignment=True, fourier_weighting=False, **kwargs)
 
 
 @pytest.mark.parametrize('colour', [0, 8, 100])

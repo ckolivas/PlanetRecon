@@ -226,14 +226,14 @@ def apply(bin_accum, bin_weight, power):
     T, V, D = measure(bin_accum, bin_weight)
     W = weights(T, V, D, power)
     image = combine(bin_accum, bin_weight, W)
-    clean = lambda a: np.where(np.isfinite(a), a, None).tolist()
+    clean = lambda a: np.where(np.isfinite(a), np.asarray(a, dtype=float), None).tolist()  # JSON has no NaN
     return image, {
         'method': 'local-quality rank bins split into halves of alternate 32-frame blocks; per-ring transfer T '
                   'against the stack of the other bins and incoherent residual V from the difference of the halves; image weights T^p / V '
                   'after smoothing across rings and a non-increasing fit of T over rank',
         'bins': len(T), 'power': power, 'band_centres_cycles_per_px': list(BAND_CENTRES),
-        'transfer': clean(T), 'residual': clean(V), 'weights': W.tolist(),
-        'effective_frame_share': effective_frames(bin_weight, W),
-        'ring_snr': ring_snr(bin_accum, bin_weight, W).tolist(),
-        'ordinary_ring_snr': ring_snr(bin_accum, bin_weight, np.ones_like(W)).tolist(),
+        'transfer': clean(T), 'residual': clean(V), 'weights': clean(W),
+        'effective_frame_share': clean(effective_frames(bin_weight, W)),
+        'ring_snr': clean(ring_snr(bin_accum, bin_weight, W)),
+        'ordinary_ring_snr': clean(ring_snr(bin_accum, bin_weight, np.ones_like(W))),
     }

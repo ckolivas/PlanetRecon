@@ -38,7 +38,7 @@ class ReconstructionConfig:
     frame_selection_mode: str = 'quality_range'
     local_alignment: bool = False
     ap_size: int = 64
-    fourier_weighting: bool = False
+    fourier_weighting: bool = True
     fourier_power: float = 4.0
     max_shift_px: float = 32.0
     reference_index: int = 0
@@ -143,6 +143,11 @@ class ReconstructionConfig:
                    'Signed viewing latitude comes from SER UTC or a Geometry override.'
                    if self.geometry_mode == 'saturn' else ''))
 
+    @property
+    def fourier_active(self) -> bool:
+        """Fourier weighting applies to alignment-point stacks without a motion model."""
+        return self.fourier_weighting and self.local_alignment and self.geometry_mode == 'none'
+
     def __post_init__(self) -> None:
         if type(self.normalise_brightness) is not bool:
             raise ValueError('normalise_brightness must be a bool')
@@ -163,8 +168,6 @@ class ReconstructionConfig:
         if (type(self.fourier_power) not in (int, float) or not math.isfinite(self.fourier_power)
                 or not .25 <= self.fourier_power <= 8):
             raise ValueError('fourier_power must be a number from 0.25 to 8')
-        if self.fourier_weighting and not self.local_alignment:
-            raise ValueError('Fourier weighting requires alignment points')
         if self.motion_reference not in ('midpoint', 'best'):
             raise ValueError('unknown motion_reference')
         if self.local_alignment and not self.frame_preselection:

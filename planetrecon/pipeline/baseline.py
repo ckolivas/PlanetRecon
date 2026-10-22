@@ -237,7 +237,7 @@ def _stack_source(
     # Fourier weighting keeps one accumulator pair per local-quality rank bin.
     from planetrecon.pipeline import fourier_weights
     rank_bins = (fourier_weights.rank_bins(int(np.count_nonzero(selection.accepted)))
-                 if config.fourier_weighting else 0)
+                 if config.fourier_active else 0)
     n_bins = 2 * rank_bins
     bin_accum = np.zeros((n_bins,) + accum.shape) if n_bins else None
     bin_weight = np.zeros((n_bins,) + weight.shape) if n_bins else None
@@ -689,7 +689,7 @@ def _stack_source(
     if fourier_detail is not None:
         provenance['fourier_weighting'] = fourier_detail
     provenance["stack_quality"] = _stack_quality(source, calibration, config, frame_quality,
-                                                 reference_selection, local_selection)
+                                                 reference_selection, local_selection, fourier_detail is not None)
     result = ReconstructionResult(
         image=image,
         coverage=cov,
@@ -710,7 +710,7 @@ def _stack_source(
     return result
 
 
-def _stack_quality(source, calibration, config, frame_quality, screened_selection, local_selection):
+def _stack_quality(source, calibration, config, frame_quality, screened_selection, local_selection, fourier=False):
     """Frames, weighting, effective frame count and estimated SNR of a finished stack."""
     from planetrecon.pipeline.stack_quality import single_frame_snr, summarise
     if frame_quality is None:
@@ -720,7 +720,8 @@ def _stack_quality(source, calibration, config, frame_quality, screened_selectio
         screened = np.where(screened_selection.accepted, screened_selection.measurements[:, 0], np.nan)
     used = np.flatnonzero(np.isfinite(frame_quality))
     return summarise(frame_quality, config.quality_weighting, screened=screened, local_selection=local_selection,
-                     frame_snr=single_frame_snr(source, calibration, used))
+                     frame_snr=single_frame_snr(source, calibration, used),
+                     fourier_power=config.fourier_power if fourier else None)
 
 
 def _normalise_stack(accum: np.ndarray, weight: np.ndarray) -> np.ndarray:

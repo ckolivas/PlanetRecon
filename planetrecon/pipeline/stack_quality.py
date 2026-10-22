@@ -94,19 +94,24 @@ def _spread(values):
     return {'median': float(np.median(values)), 'minimum': float(values.min()), 'maximum': float(values.max())}
 
 
-def summarise(frame_quality, quality_weighting, *, screened=None, local_selection=None, frame_snr=None):
+def summarise(frame_quality, quality_weighting, *, screened=None, local_selection=None, frame_snr=None,
+              fourier_power=None):
     """Summary of the frames accumulated so far.
 
     ``frame_quality``: capture-length scores, NaN for frames that did not
     contribute. ``screened``: optional capture-length quality of all frames
     that passed screening, for comparison with the stacked subset.
+    ``fourier_power``: set when Fourier weighting re-weighted the stack per
+    spatial frequency; the frame counts and SNR then describe its in-bin
+    weights, which every scale starts from.
     """
     frame_quality = np.asarray(frame_quality, dtype=np.float64)
     used = np.flatnonzero(np.isfinite(frame_quality))
     quality = frame_quality[used]
     weights = np.maximum(quality, 1e-12) if quality_weighting else np.ones(len(used))
     summary = {'frames_stacked': int(len(used)),
-               'weighting': 'linear quality' if quality_weighting else 'equal',
+               'weighting': (f'Fourier power {fourier_power:g}' if fourier_power is not None else
+                             'linear quality' if quality_weighting else 'equal'),
                'method': METHOD}
     if not len(used):
         return summary

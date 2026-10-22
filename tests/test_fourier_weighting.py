@@ -86,10 +86,10 @@ def test_fourier_weighting_concentrates_fine_detail_on_the_sharpest_frames(tmp_p
     path = capture(tmp_path/'blur.ser', colour)
     with SERSource(path) as source:
         preprocess_source(source, config())
-        ordinary = stack_source(source, config())
+        ordinary = stack_source(source, config(fourier_weighting=False))
         # p = 1 is the matched filter: the best measured signal-to-noise at every ring.
         fourier = stack_source(source, config(fourier_weighting=True, fourier_power=1.))
-        sharper = stack_source(source, config(fourier_weighting=True))
+        sharper = stack_source(source, config())
     detail = fourier.provenance['fourier_weighting']
     T = np.asarray(detail['transfer'], dtype=float)
     # Coarse rings transfer equally; fine rings come from the best-ranked bins.
@@ -130,12 +130,30 @@ def test_fourier_checkpoint_resumes_and_binds_settings(tmp_path):
                 stack_source(source, other, resume_from=checkpoint)
 
 
-def test_fourier_weighting_requires_alignment_points():
-    with pytest.raises(ValueError, match='alignment points'):
-        ReconstructionConfig(fourier_weighting=True)
+def test_fourier_weighting_is_the_default_for_alignment_point_stacks():
+    assert config().fourier_active and config().fourier_power == 4.
+    assert not ReconstructionConfig().fourier_active  # Global alignment only.
+    assert not config(geometry_mode='surface').fourier_active
+    assert not config(fourier_weighting=False).fourier_active
     for value in (0., 9., float('nan'), '1'):
         with pytest.raises(ValueError, match='fourier_power'):
             config(fourier_weighting=True, fourier_power=value)
+
+
+def test_settings_saved_before_fourier_weighting_take_the_full_default(monkeypatch):
+    monkeypatch.setenv('QT_QPA_PLATFORM', 'offscreen')
+    from PySide6.QtWidgets import QApplication
+    from planetrecon.gui.controls import ConfigControls
+    app = QApplication.instance() or QApplication([])
+    controls = ConfigControls(ReconstructionConfig(local_alignment=True))
+    try:
+        controls.restore_settings({'fields': {'stack_percent': 50, 'ap_size': 48}})
+        assert controls.fields['stack_percent'].value() == 100 and controls.fields['ap_size'].value() == 48
+        controls.restore_settings({'fields': {'stack_percent': 50, 'fourier_weighting': False}})
+        assert controls.fields['stack_percent'].value() == 50
+        assert not controls.configuration().fourier_weighting and not controls.fields['fourier_power'].isEnabled()
+    finally:
+        controls.close()
 
 
 @pytest.mark.hardware

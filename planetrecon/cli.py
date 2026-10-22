@@ -156,8 +156,9 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--preprocessing-cache', type=Path, help='read a specific preprocessing cache (default: beside capture)')
     st.add_argument('--no-frame-preselection', action='store_true',
                     help='ignore cached quality/shape decisions for this run')
-    st.add_argument('--stack-percent', type=int, default=50,
-                    help='upper quality-range or ranked frame-count percentage (1-100; default 50); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
+    st.add_argument('--stack-percent', type=int, default=100,
+                    help='upper quality-range or ranked frame-count percentage (1-100; default 100, with Fourier '
+                         'weighting deciding how much each frame contributes at each scale); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
     st.add_argument('--quality-weighting', action=argparse.BooleanOptionalAction, default=True,
                     help='weight retained frames by quality (default); --no-quality-weighting gives retained frames equal weight')
     st.add_argument('--normalise-brightness', action=argparse.BooleanOptionalAction, default=False,
@@ -169,9 +170,10 @@ def main(argv: list[str] | None = None) -> int:
                          '(default with cached preprocessing); --no-local-alignment uses global alignment only')
     st.add_argument('--ap-size', type=int, default=64,
                     help='alignment point width/height in pixels (16-256; default 64); spacing is half the size')
-    st.add_argument('--fourier-weighting', action=argparse.BooleanOptionalAction, default=False,
-                    help='frequency-domain lucky imaging: each alignment point splits its frames into local-quality '
-                         'rank bins whose weights are set per spatial-frequency band from their measured transfer')
+    st.add_argument('--fourier-weighting', action=argparse.BooleanOptionalAction, default=True,
+                    help='frequency-domain lucky imaging (default with alignment points and no motion model): each '
+                         'alignment point splits its frames into local-quality rank bins weighted separately at every '
+                         'spatial frequency from their measured transfer; --no-fourier-weighting uses one weight per frame')
     st.add_argument('--fourier-power', type=float, default=4.0,
                     help='Fourier weighting exponent on each bin transfer (0.25-8; default 4); 1 gives the best '
                          'signal-to-noise at every scale, larger values favour the sharpest frames at fine scales')

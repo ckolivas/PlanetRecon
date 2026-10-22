@@ -37,8 +37,8 @@ def test_batch_outputs_each_capture_and_continues_after_failure(gui, tmp_path):
     assert [i.status for i in win.batch_items] == ['saved', 'failed', 'saved']
     assert 'missing.ser' in win.batch_items[1].detail
     # Each completed capture lists its stack quality beneath it in the queue.
-    assert '8 of 8 screened frames stacked' in win.batch_items[0].quality
-    assert '12 of 12 screened frames stacked' in win.batch_items[2].quality
+    assert 'stacks 8 of 8 screened frames (Fourier power 4 weights' in win.batch_items[0].quality
+    assert 'stacks 12 of 12 screened frames' in win.batch_items[2].quality
     assert not win.batch_items[1].quality
     assert win.batch_status.toPlainText().count('Stack quality: ') == 2
     # Output names carry frames, weighted quality and estimated SNR.

@@ -337,9 +337,12 @@ class ConfigControls(QTabWidget):
         self.geometry_auto = {}
         self.calculated_geometry.clear()
         self._update_calculated_button()
+        # Settings saved before Fourier weighting kept the old 50% default; with
+        # it, the default is 100% and the weighting decides each frame's share.
+        legacy = 'fourier_weighting' not in state['fields']
         for key, value in state['fields'].items():
             edit = self.fields.get(key)
-            if edit is None:
+            if edit is None or (legacy and key == 'stack_percent'):
                 continue
             edit.blockSignals(True)
             try:
@@ -358,6 +361,7 @@ class ConfigControls(QTabWidget):
         self._mode_changed()
         self._selection_mode_changed()
         self.fields['normalise_percent'].setEnabled(self.fields['normalise_brightness'].isChecked())
+        self.fields['fourier_power'].setEnabled(self.fields['fourier_weighting'].isChecked())
         self._rotation_changed()
         auto = state.get('geometry_auto', {})
         manual = state.get('geometry_manual', [])

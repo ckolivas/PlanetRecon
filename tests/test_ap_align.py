@@ -158,11 +158,15 @@ def test_stacking_with_alignment_points_and_local_quality(tmp_path, color_id):
         # Every screened frame is a candidate.
         assert detail['local_quality']['ranked_frames'] == selected.accepted.sum()
         # With every screened frame selected each point would use every frame:
-        # ranking is skipped and the result equals plain alignment-point stacking.
-        everything = replace(cfg, stack_percent=100)
+        # without Fourier weighting ranking is skipped and the result equals
+        # plain alignment-point stacking; Fourier weighting ranks for its bins.
+        everything = replace(cfg, stack_percent=100, fourier_weighting=False)
         skipped = stack_source(source, everything)
         assert skipped.provenance['local_alignment']['local_quality']['ranked_frames'] == 0
         assert skipped.n_used == selected.accepted.sum()
+        binned = stack_source(source, replace(everything, fourier_weighting=True))
+        assert binned.provenance['local_alignment']['local_quality']['ranked_frames'] == selected.accepted.sum()
+        assert binned.n_used == selected.accepted.sum() and 'fourier_weighting' in binned.provenance
 
 
 def test_alignment_point_checkpoints_resume_exactly_and_bind_settings(tmp_path):

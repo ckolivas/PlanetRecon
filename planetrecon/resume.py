@@ -42,7 +42,7 @@ def identity(source,config,calibration,should_cancel=None):
         settings.pop('quality_weighting')
         capture['config'].pop('quality_weighting')
     # Fourier weighting settings only bind jobs that use it.
-    if not config.fourier_weighting:
+    if not config.fourier_active:
         for key in ('fourier_weighting', 'fourier_power'):
             settings.pop(key)
             capture['config'].pop(key)

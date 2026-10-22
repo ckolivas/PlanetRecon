@@ -35,7 +35,7 @@ def test_gui_keeps_ordinary_local_defaults():
     try:
         assert 'local_cfa_interpolation' not in controls.fields
         config = controls.configuration()
-        assert config.local_alignment and config.stack_percent == 50
+        assert config.local_alignment and config.stack_percent == 100 and config.fourier_active
         assert config.frame_selection_mode == 'quality_range'
         assert 'squared_quality_weights' not in controls.fields
         assert 'squared_quality_weights' not in config.to_dict()
