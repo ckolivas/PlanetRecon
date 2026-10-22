@@ -158,6 +158,7 @@ def prepare_geometry(
     field_origin = "user"
     field_resolved = field_rate is not None
     angles = None
+    field_fit = None
     field_sample_shifts = None
     if field_rate is None and config.geometry_mode in ("field", "combined", "saturn"):
         field_origin = "inferred"
@@ -245,6 +246,10 @@ def prepare_geometry(
             for estimate in estimates:
                 degeneracy.extend(estimate["degeneracy"])
             raw_angles = np.array([estimate["angle_rad"] for estimate in estimates])
+            if config.geometry_mode == 'saturn':
+                # Rings look the same turned by half a turn: keep each angle on
+                # the half-turn branch nearest the anchor's.
+                raw_angles = raw_angles - np.pi*np.round((raw_angles - raw_angles[anchor])/np.pi)
             angles = unwrap_angles(raw_angles)
             usable = np.array([good and not estimate["degeneracy"]
                                for good, estimate in zip(registered, estimates)])
@@ -252,11 +257,11 @@ def prepare_geometry(
             # introduce an angle-wrap branch into their rate. Use actual elapsed
             # time between retained samples; timestamp ties still supply no rate.
             valid_angles = unwrap_angles(raw_angles[usable])
-            dt = np.diff(times[indices[usable]])
-            pairs = dt > 0
-            if np.any(pairs):
+            sample_times = times[indices[usable]]
+            if len(sample_times) >= 2 and np.ptp(sample_times) > 0:
                 field_resolved = True
-                field_rate = float(np.median(np.diff(valid_angles)[pairs] / dt[pairs]))
+                from planetrecon.geometry.fit import field_rate_fit
+                field_rate, field_fit = field_rate_fit(sample_times, valid_angles)
             else:
                 field_rate = 0.0
                 degeneracy.append("roll_unconstrained")
@@ -317,9 +322,20 @@ def prepare_geometry(
                 vx_px_s=float(config.moon_vx_px_s),
                 vy_px_s=float(config.moon_vy_px_s),
             )
+    limb = None
+    if globe is not None and surface_rate != 0:
+        if config.limb_darkening_power is not None:
+            limb = {'power': float(config.limb_darkening_power), 'origin': 'user'}
+        else:
+            from planetrecon.geometry.limb import fit_limb_darkening
+            anchor_pose = poses[int(sample_indices[anchor])]
+            limb = fit_limb_darkening(planes[anchor], globe, anchor_pose.cx, anchor_pose.cy,
+                                      anchor_pose.field_angle_rad if config.geometry_mode != 'surface' else 0.,
+                                      rings=rings)
+        limb['law'] = 'mu ** power; moved globe light is scaled by L(mu_ref) / L(mu_src) with mu >= 0.2'
     model = select_scene_model(
         config.geometry_mode, globe, rings=rings, moon=moon,
-        field_angle0_rad=config.field_angle0_rad,
+        field_angle0_rad=config.field_angle0_rad, ld_power=0. if limb is None else limb['power'],
     )
     diagnostics = {
         "time_origin": time_origin,
@@ -340,6 +356,8 @@ def prepare_geometry(
         "sample_times_s": [float(t) for t in times[indices]],
         "reference_epoch_s": float(config.reference_epoch_s),
         "estimated_angles_rad": None if angles is None else [float(a) for a in angles],
+        "field_rate_fit": field_fit,
+        "limb_darkening": limb,
         "field_sample_shifts_px": field_sample_shifts,
         "geometry_operator_version": C.GEOMETRY_OPERATOR_VERSION,
         "geometry_mode": config.geometry_mode,
@@ -358,6 +376,13 @@ def prepare_geometry(
         # checkpoint geometry identity so old masked sums cannot be resumed.
         diagnostics['ring_globe_overlap_policy'] = 'continuous globe motion with smooth limb taper v3'
         diagnostics['saturn_boundary_policy'] = 'unclipped footprints; product of squared-mu smoothsteps at both limbs, mu=0.4'
+        if model.ring_motion:
+            from planetrecon.geometry.saturn import RING_MOTION_CLEAR_PX, RING_MOTION_EDGE_PX
+            diagnostics['ring_motion'] = (
+                'ring plane turns with the globe (spokes follow Saturn\'s rotation); fades in from '
+                f'{RING_MOTION_CLEAR_PX[0]:g} to {RING_MOTION_CLEAR_PX[1]:g} px clear of the globe silhouette '
+                'and its shadow, and out from '
+                f'{RING_MOTION_EDGE_PX[0]:g} to {RING_MOTION_EDGE_PX[1]:g} px beyond the ring edges')
     if cropped_field and field_origin == 'inferred':
         diagnostics['field_estimation'] = 'direct observed polar samples; stable joint drift'
     if surface_origin == 'planet_preset':
@@ -389,7 +414,7 @@ def prepare_geometry(
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
     if isinstance(model, SaturnSceneModel) and not model.edge_on:
-        warnings.append("ring_globe_overlap: observed composite uses globe motion, fading to field alignment near the limb; ring and globe light are not separated")
+        warnings.append("ring_globe_overlap: rings in front of the globe use globe motion, fading to field alignment near the limb; ring and globe light are not separated")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if requested_surface_rate is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")
@@ -772,7 +797,7 @@ def stack_source_geometry(
         if backend.name == 'cuda' and isinstance(model, SaturnSceneModel):
             from planetrecon.backends.torch_saturn import TorchSaturnWarp
             renderer = TorchSaturnWarp((h,w),model).render
-        local_render = renderer or (lambda image, src, ref: render_observed(image,model,src,ref))
+        local_render = renderer or (lambda image, src, ref, **kwargs: render_observed(image,model,src,ref,**kwargs))
         def local_plane(frame):
             return _alignment_plane(demosaic(frame),'RGB') if bayer else _alignment_plane(frame,color)
         local_anchor = local_plane(sample_frames[sample_idx.index(anchor_index)])
@@ -791,7 +816,7 @@ def stack_source_geometry(
                 return None
             pose, colour_plane = observed
             stacked = np.stack((colour_plane,np.ones((h,w))),axis=-1)
-            projected = local_render(stacked,anchor_pose,pose)
+            projected = local_render(stacked,anchor_pose,pose,gain_channels=1)
             return projected[...,0],projected[...,1]
 
         read_group = None
@@ -806,7 +831,7 @@ def stack_source_geometry(
                     planes = torch.stack([observed[k][1] for k in kept])
                     projected = renderer.__self__.render_tensor(
                         torch.stack((planes, torch.ones_like(planes)), -1), anchor_pose,
-                        [observed[k][0] for k in kept], per_pose=True)
+                        [observed[k][0] for k in kept], per_pose=True, gain_channels=1)
                     for j, k in enumerate(kept):
                         aligned[k] = projected[j, ..., 0], projected[j, ..., 1]
                 return aligned
@@ -1162,7 +1187,11 @@ def stack_source_geometry(
                     n_rejected += 1
                 continue
             sx,sy = (xg,yg) if sample_xy is None else sample_xy
-            xd, yd, valid = model.src_to_ref(sx, sy, pose, ref_pose)
+            xd, yd, valid, gain = model.src_to_ref(sx, sy, pose, ref_pose, gain=True)
+            # Limb-darkening compensation scales each moved sample (geometry.limb).
+            calibrated = calibrated * (gain[..., None] if calibrated.ndim == 3 else gain)
+            if demo is not None:
+                demo = demo * gain[..., None]
             if isinstance(model,SaturnSceneModel):
                 valid &= ~layer_info['moon'] & ~layer_info['ring_degenerate']
             y_idx = yd - 0.5

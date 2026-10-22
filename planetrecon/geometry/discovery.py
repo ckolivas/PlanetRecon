@@ -223,10 +223,14 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
                 fit_times = np.array([t for t, fit in zip(sample_times, ring_fits) if fit['ok']])
                 field_rate = config.field_rate_rad_s
                 if len(good) == 3 and time_origin != 'inferred' and np.ptp(fit_times) > 0:
+                    from planetrecon.geometry.fit import field_rate_fit
                     unwrapped = np.unwrap(2*angles)/2
                     elapsed = fit_times-np.mean(fit_times)
                     slope, intercept = np.polyfit(elapsed, unwrapped, 1)
                     residual = float(np.max(abs(unwrapped-(intercept+slope*elapsed))))
+                    # Ring axes drift with noise and seeing; an equatorial mount has no rotation.
+                    slope, rate_fit = field_rate_fit(fit_times, unwrapped)
+                    report['saturn_geometry']['field_rate_fit'] = rate_fit
                     # Ring axes are measurable even with no azimuthal texture.
                     # Reject inconsistent or large inter-window rotations; the
                     # ellipse alone cannot resolve a half-turn alias.
@@ -235,7 +239,7 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
                         report['saturn_geometry']['field_axis_residual_rad'] = residual
                         suggestions['field_rate_rad_s'] = -float(slope)  # detector y is downward
                         report['roll_resolved'] = True
-                        report['roll_direction'] = ('counter-clockwise' if slope < 0 else 'clockwise')
+                        report['roll_direction'] = ('none' if slope == 0 else 'counter-clockwise' if slope < 0 else 'clockwise')
                         if field_rate is None:
                             field_rate = suggestions['field_rate_rad_s']
                         report['notes'].append('Field rotation measured from the ring-axis change between timed averages; '

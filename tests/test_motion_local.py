@@ -34,7 +34,7 @@ def test_predicted_rotation_is_retained_while_local_seeing_is_corrected():
     template=gaussian_filter(np.random.default_rng(204).normal(size=shape),1.5)*100+300
     model=SaturnSceneModel(GlobeParams(52.,surface_rate_rad_s=.05,sub_obs_lat_rad=.3),RingParams(65.,90.))
     anchor,pose=FramePose(0.,0.,96.,80.),FramePose(1.,.02,96.,80.)
-    render=lambda image,src,ref:render_observed(image,model,src,ref)
+    render=lambda image,src,ref,**kwargs:render_observed(image,model,src,ref,**kwargs)
     predicted=render(template,pose,anchor)
     prepared=np.stack((template,np.ones(shape,bool)),axis=-1)
     identity=local_coordinates(prepared,predicted,pose,anchor,render,False,ap_size=32)

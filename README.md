@@ -152,8 +152,12 @@ normalised CFA backprojection followed by nearest-neighbour RGB completion,
 plus a W09 geometry-aware baseline for declared field rotation and/or a rigid
 oblate globe, and a W10 Saturn layered scene. Field attitude and surface
 longitude are separate operators; unseen longitudes are left at zero coverage
-rather than filled. Saturn rings are a static equatorial annulus with near/far
-occlusion and do not inherit globe spin. CFA parity stays in detector
+rather than filled. Saturn rings are an equatorial annulus with near/far
+occlusion that turns with the globe (ring material and spokes), fading to
+stationary near the globe's silhouette and shadow. Moved globe light is
+compensated for limb darkening (fitted per capture, as WinJUPOS derotation
+does). Fitted field rotation is applied only when statistically significant,
+so equatorial-mount captures keep a fixed field. CFA parity stays in detector
 coordinates under rotation. Freeze-mid-exposure is the default and warns when
 limb motion during \(T_{\rm exp}\) is large. The iterative physical raw-CFA inverse solve and production MFBD remain
 unqualified. CPU/auto/CUDA translation, CPU geometry and CUDA surface/combined motion support compatible

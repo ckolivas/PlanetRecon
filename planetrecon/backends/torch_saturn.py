@@ -107,18 +107,41 @@ class TorchSaturnWarp(TorchGlobeWarp):
         return {'labels':labels,'motion_labels':motion_labels,'regions':regions,'invalid':invalid,
                 'quality_regions':quality_regions}
 
-    def map(self, src, ref, info=None, *, x=None, y=None):
+    def map(self, src, ref, info=None, *, x=None, y=None, gain=False):
         # The continuous warp only consumes exclusions, not ring/shadow labels.
         # Classification is still performed for scoring and layer coverage.
         needs_mask = self.model.moon is not None or self.model.edge_on
         mapped_info = ((self.classify(src,x,y,motion_only=True) if x is not None or info is None else info)
                        if needs_mask else None)
-        x,y,valid = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y)
+        out_x,out_y,valid,*rest = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y,gain=gain)
         if mapped_info is not None:
             valid &= ~mapped_info['invalid']
         if info is not None and needs_mask:
             valid &= ~info['invalid']
-        return x,y,valid
+        if self.model.ring_motion:
+            out_x, out_y = self.ring_motion(src, ref, out_x, out_y, x, y)
+        return (out_x,out_y,valid,*rest)
+
+    def ring_motion(self, src, ref, out_x, out_y, x=None, y=None):
+        """Add the rings' turn with the planet (SaturnSceneModel.src_to_ref) to mapped coordinates."""
+        model, g = self.model, self.model.globe
+        P = self.poses(src, ref)
+        turns = [np.eye(2) if g.surface_rate_rad_s*(s.t_s-r.t_s) == 0 or not model.apply_surface
+                 else model.ring_turn(s.t_s, r.t_s) for s, r in zip(P.srcs, P.refs)]
+        if all(np.array_equal(m, np.eye(2)) for m in turns):
+            return out_x, out_y
+        m = np.stack(turns)
+        x, y = (self.x,self.y) if x is None else (x,y)
+        sx, sy = x-P([p.cx for p in P.srcs]), P([p.cy for p in P.srcs])-y
+        if model.apply_field:
+            sx, sy = self.rotate(sx, sy, P.angles([-p.field_angle_rad for p in P.srcs]))
+        weight = model.ring_motion_weight(sx, sy)
+        # Turned minus unturned field-free offsets, then the reference field attitude.
+        rx = P(m[:,0,0]-1.)*sx+P(m[:,0,1])*sy
+        ry = P(m[:,1,0])*sx+P(m[:,1,1]-1.)*sy
+        if model.apply_field:
+            rx, ry = self.rotate(rx, ry, P.angles([r.field_angle_rad for r in P.refs]))
+        return out_x+weight*rx, out_y-weight*ry
 
 
 class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
@@ -138,12 +161,12 @@ class TorchSaturnAccumulator(TorchGlobeAccumulator, TorchSaturnWarp):
         self.prepared_pose = pose
         return self.source_info['quality_regions'].cpu().numpy()
 
-    def sample_map(self, pose, ref, sample_xy=None):
+    def sample_map(self, pose, ref, sample_xy=None, gain=False):
         if self.prepared_pose != pose:
             # Scoring regions only return to the host when prepare_source is asked.
             self.source_info, self.prepared_pose = self.classify(pose, motion_only=True), pose
         coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
-        return self.map(pose,ref,self.source_info,**coords)
+        return self.map(pose,ref,self.source_info,gain=gain,**coords)
 
     def layer_labels(self):
         return (self.source_info['motion_labels'], (LAYER_GLOBE, LAYER_NEAR_RING, LAYER_FAR_RING),

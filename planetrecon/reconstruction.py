@@ -60,6 +60,9 @@ class ReconstructionConfig:
     surface_rate_rad_s: float | None = None
     rotation_planet: str | None = None
     reverse_rotation: bool = False
+    # Exponent p of the limb darkening mu ** p compensated as globe light moves;
+    # None fits it per capture (geometry.limb), 0 disables compensation.
+    limb_darkening_power: float | None = None
     exposure_s: float | None = None
     cadence_s: float | None = None
     freeze_mid_exposure: bool = True
@@ -234,6 +237,7 @@ class ReconstructionConfig:
             "surface_rate_rad_s",
             "cadence_s",
             "exposure_s",
+            "limb_darkening_power",
         ):
             value = getattr(self, name)
             if value is None:
@@ -242,6 +246,8 @@ class ReconstructionConfig:
                 raise ValueError(f"{name} must be finite or null")
         if self.exposure_s is not None and self.exposure_s < 0:
             raise ValueError("exposure must be non-negative")
+        if self.limb_darkening_power is not None and not 0 <= float(self.limb_darkening_power) <= 3:
+            raise ValueError("limb_darkening_power must be in [0, 3]")
         if self.equatorial_radius_px is not None and float(self.equatorial_radius_px) <= 0:
             raise ValueError("equatorial_radius_px must be positive")
         if self.cadence_s is not None and float(self.cadence_s) <= 0:

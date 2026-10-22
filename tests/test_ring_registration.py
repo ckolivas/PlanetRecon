@@ -32,6 +32,20 @@ def source(colour, offsets, field_rate=0., ring_texture=None):
                        timestamps=np.arange(len(frames), dtype=float))
 
 
+@pytest.fixture
+def fixed_rings(monkeypatch):
+    """Hold the Saturn model's rings still.
+
+    These scenes spin Saturn about 70 degrees in five frames, with ring brightness
+    fixed to the viewing geometry, to test camera-drift tracking. Real rings turn a
+    few degrees over a capture; ring motion has its own tests (test_ring_motion).
+    """
+    from planetrecon.geometry.saturn import SaturnSceneModel
+    original = SaturnSceneModel.__init__
+    monkeypatch.setattr(SaturnSceneModel, '__init__',
+                        lambda self, *args, **kwargs: original(self, *args, **{**kwargs, 'ring_motion': False}))
+
+
 def config():
     # Drift comparisons share the original first-frame detector coordinates.
     return ReconstructionConfig(device='cpu', threads=2, frame_preselection=False, motion_reference='best',
@@ -111,7 +125,7 @@ def test_broad_resolved_ring_peak_is_not_a_competing_translation():
     np.testing.assert_allclose(matcher.displacement(moved), offset, atol=.03)
 
 
-def test_noisy_drifting_spin_stack_improves_image(monkeypatch):
+def test_noisy_drifting_spin_stack_improves_image(monkeypatch, fixed_rings):
     offsets = [(0, 0), (1.3, -2.4), (-3.7, 2.2), (.3, .4), (2.5, -1.2)]
     clean = source('mono', [(0, 0)]*5)
     rng = np.random.default_rng(672)

@@ -315,7 +315,8 @@ class PointGrid:
             index = index[(e >= .1 * np.median(e)) & (e > 1e-4 * abs(host[b, -1]))]
             frames.append(np.full(len(index), b)), chosen.append(index)
         if not frames:
-            return self.choose(references[:0])
+            none = torch.zeros(0, dtype=torch.long, device=self.device)
+            return none, none, t.flatten(1, 2)[none, none]
         frame_index = torch.as_tensor(np.concatenate(frames), device=self.device)
         point_index = torch.as_tensor(np.concatenate(chosen), device=self.device)
         return frame_index, point_index, t.flatten(1, 2)[frame_index, point_index]
@@ -412,7 +413,8 @@ def predicted_local_coordinates_batch(template_with_support, frames, poses, refe
     and inversion run in the frames' precision.
     """
     from planetrecon.pipeline.motion_local import cuda_inverse_local_coordinates
-    projected = warp.render_tensor(template_with_support.to(frames.dtype), list(poses), reference_pose)
+    projected = warp.render_tensor(template_with_support.to(frames.dtype), list(poses), reference_pose,
+                                   gain_channels=1)
     predicted, support = projected[..., 0], projected[..., 1]
     frame_index, point_index, templates = grid.choose(predicted, support >= 1. - 1e-9)
     proxies = gaussian_proxy(frames.to(device=warp.device))

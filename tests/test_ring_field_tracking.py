@@ -10,7 +10,7 @@ from planetrecon.geometry.pose import FramePose
 from planetrecon.io.source import ArraySource
 from planetrecon.pipeline.baseline import stack_source
 from planetrecon.pipeline.ring_align import RingRegistration
-from test_ring_registration import config, source
+from test_ring_registration import config, fixed_rings, source  # noqa: F401 (fixture)
 
 
 @pytest.mark.parametrize('colour', ['mono', 'RGGB', 'GRBG', 'GBRG', 'BGGR'])
@@ -22,13 +22,15 @@ def test_field_and_spin_drift_preserves_stationary_stack(colour, rate):
     stationary = stack_source(source(colour, [(0, 0)]*5, rate), cfg)
     mask = corrected.validity & stationary.validity & (stationary.image > .05)
     assert corrected.n_used == 5 and corrected.n_rejected == 0
-    np.testing.assert_allclose(corrected.image[mask], stationary.image[mask], atol=1e-7)
+    # Rings turn with the planet: rounding in that map reaches a few colour-completed
+    # pixels whose colours have tiny CFA weights.
+    np.testing.assert_allclose(corrected.image[mask], stationary.image[mask], atol=1e-6)
     for layer in ('globe', 'ring'):
         np.testing.assert_array_equal(corrected.layer_coverage[layer] > 0,
                                       stationary.layer_coverage[layer] > 0)
 
 
-def test_noisy_asymmetric_rings_improve_with_field_and_spin(monkeypatch):
+def test_noisy_asymmetric_rings_improve_with_field_and_spin(monkeypatch, fixed_rings):
     rate = .04
     texture = lambda radius, az: .6+.25*np.cos(3*az)+.2*np.sin(radius/2)
     clean = source('mono', [(0, 0)]*5, rate, texture)

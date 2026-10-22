@@ -106,7 +106,7 @@ def local_coordinates(template_with_support, frame, pose, reference_pose, render
                       *, should_cancel=None, ap_size=64):
     """Predict a fixed, prepared reference; only pose and observations vary."""
     from planetrecon.pipeline.ap_align import AlignmentPoints
-    projected = render(template_with_support,pose,reference_pose)
+    projected = render(template_with_support,pose,reference_pose,gain_channels=1)
     predicted,support = projected[...,0],projected[...,1]
     if should_cancel and should_cancel():
         raise InterruptedError('cancelled during local motion alignment')

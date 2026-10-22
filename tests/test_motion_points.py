@@ -30,7 +30,7 @@ def test_rotated_frame_seeing_is_corrected_in_frame_coordinates():
     template = gaussian_filter(disc*(300 + 600*texture/texture.std()), 1.)
     model = OblateGlobeModel(GlobeParams(60, surface_rate_rad_s=.05, sub_obs_lat_rad=.2), apply_field=False)
     anchor, pose = FramePose(0., 0., 96., 80.), FramePose(2., 0., 97.4, 79.2)
-    render = lambda image, src, ref: render_observed(image, model, src, ref)
+    render = lambda image, src, ref, **kwargs: render_observed(image, model, src, ref, **kwargs)
     predicted = render(template, pose, anchor)        # seeing-free frame at its own time
     prepared = np.stack((template, np.ones(shape)), axis=-1)
     identity = local_coordinates(prepared, predicted, pose, anchor, render, False, ap_size=32)
@@ -58,7 +58,7 @@ def test_cuda_alignment_point_motion_matches_cpu():
         np.random.default_rng(9).normal(size=shape), 2.)), 1.)
     model = OblateGlobeModel(GlobeParams(50, surface_rate_rad_s=.04, sub_obs_lat_rad=.1), apply_field=False)
     anchor, pose = FramePose(0., 0., 80., 64.), FramePose(1.5, 0., 80.6, 63.7)
-    render = lambda image, src, ref: render_observed(image, model, src, ref)
+    render = lambda image, src, ref, **kwargs: render_observed(image, model, src, ref, **kwargs)
     ux, uy = smooth_field(shape, 3, 1.2, sigma=20)
     observed = map_coordinates(render(template, pose, anchor), [y + uy, x + ux], order=3, mode='constant')
     prepared = np.stack((template, np.ones(shape)), axis=-1)

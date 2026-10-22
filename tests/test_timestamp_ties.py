@@ -82,15 +82,18 @@ def test_saturn_keeps_distinct_images_with_equal_timestamps(colour):
         assert tied.channel_order == 'RGB' and tied.validity.any(axis=(0, 1)).all()
 
 
-def test_field_rate_fit_excludes_zero_time_intervals(monkeypatch):
+@pytest.mark.parametrize('angles,rate', [
+    ((0., 0., .2), .25),     # tied samples agree: the rate is exact
+    ((0., .1, .2), 0.)])     # tied samples disagree by half the change: not significant
+def test_field_rate_fit_handles_zero_time_intervals(monkeypatch, angles, rate):
     import planetrecon.pipeline.geometry_stack as module
-    angles = iter([0., .1, .2])
+    angles = iter(angles)
     monkeypatch.setattr(module, 'estimate_field_angle',
                         lambda *args: {'angle_rad': next(angles), 'degeneracy': []})
     src = source()
     poses, _, diagnostics, _ = prepare_geometry(src, config(),
         [src.read_raw(i) for i in range(3)], sample_indices=[0, 1, 2])
-    assert diagnostics['field_rate_rad_s'] == pytest.approx(.125)
+    assert diagnostics['field_rate_rad_s'] == pytest.approx(rate)
     assert poses[0].t_s == poses[1].t_s == 0
     assert poses[0].field_angle_rad == poses[1].field_angle_rad
 

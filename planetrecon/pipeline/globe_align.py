@@ -14,10 +14,10 @@ def surface_displacement(reference, frame, model, pose, reference_pose, *, rende
     A newly visible hemisphere has no reference data. Its zero-filled prediction
     must not pull the translation toward an artificial dark limb.
     """
-    def render(image):
+    def render(image, gain_channels=None):
         if renderer is not None:
-            return renderer(image, pose, reference_pose)
-        return render_observed(image, model, pose, reference_pose)
+            return renderer(image, pose, reference_pose, gain_channels=gain_channels)
+        return render_observed(image, model, pose, reference_pose, gain_channels=gain_channels)
     predicted = render(reference)
     y, x = np.indices(reference.shape)
     rx, ry = x+.5-reference_pose.cx, reference_pose.cy-y-.5
@@ -28,7 +28,7 @@ def surface_displacement(reference, frame, model, pose, reference_pose, *, rende
     # proxy). Foreshortening can stretch that artificial edge deep into the new
     # disc. Require a complete reference neighbourhood before warping support.
     reference_support = minimum_filter(reference_globe, size=3, mode='constant', cval=0)
-    support = render(reference_support.astype(float))
+    support = render(reference_support.astype(float), gain_channels=0)
     sx, sy = x+.5-pose.cx, pose.cy-y-.5
     if model.apply_field:
         sx, sy = field_rotate_sky(sx, sy, -pose.field_angle_rad)

@@ -143,7 +143,7 @@ def test_unobserved_motion_template_retains_only_model_motion():
     reference = rng.normal(size=(80, 96))
     prepared = np.stack((reference, np.zeros_like(reference)), axis=-1)
     x, y = local_coordinates(prepared, np.roll(reference, 2, axis=1), None, None,
-                              lambda image, *args: image, False)
+                              lambda image, *args, **kwargs: image, False)
     yy, xx = np.indices(reference.shape)
     np.testing.assert_array_equal(x, xx+.5)
     np.testing.assert_array_equal(y, yy+.5)

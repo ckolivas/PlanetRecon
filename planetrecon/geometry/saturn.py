@@ -8,7 +8,9 @@ import numpy as np
 
 from planetrecon.geometry.coords import detector_to_sky, detector_xy_grids, sky_to_detector
 from planetrecon.geometry.fit import fit_disc_ellipse
-from planetrecon.geometry.globe import GlobeParams, body_to_sky, field_rotate_sky, globe_hit, render_globe_texture
+from planetrecon.geometry.globe import (GlobeParams, body_to_obs_matrix, body_to_sky, field_rotate_sky, globe_hit,
+                                        render_globe_texture)
+from planetrecon.geometry.limb import ld_ratio
 from planetrecon.geometry.model import FieldOnlyModel, OblateGlobeModel, SceneModel
 from planetrecon.geometry.pose import FramePose
 from planetrecon.geometry.rings import (
@@ -19,6 +21,7 @@ from planetrecon.geometry.rings import (
     ring_normal_obs,
     ring_shadow_on_globe,
     ring_transmission,
+    sun_direction_obs,
 )
 
 
@@ -28,6 +31,18 @@ LAYER_GLOBE = 2
 LAYER_NEAR_RING = 3
 LAYER_MOON = 4
 LIMB_TAPER_MU = 0.4
+# Ring material, and the spokes on it, turn with Saturn's rotation (spokes were
+# measured to follow it within 1%). Light fixed to the viewing or lighting
+# geometry does not move: the globe's silhouette across the rings and its shadow
+# on them. Ring motion fades in between these distances (px) from them, and out
+# between these distances beyond the inner and outer ring edges (blurred ring light).
+RING_MOTION_CLEAR_PX = (4.0, 14.0)
+RING_MOTION_EDGE_PX = (4.0, 12.0)
+
+
+def _smoothstep(u):
+    u = u.clip(0.0, 1.0)
+    return u * u * (3.0 - 2.0 * u)
 
 
 @dataclass(frozen=True)
@@ -103,7 +118,8 @@ def classify_layers(
 
 
 class SaturnSceneModel(SceneModel):
-    """Globe spin, static rings, field attitude on the composite, moons masked."""
+    """Globe spin with limb-darkening compensation, rings turning with the planet,
+    field attitude on the composite, moons masked."""
 
     def __init__(
         self,
@@ -114,6 +130,8 @@ class SaturnSceneModel(SceneModel):
         apply_field: bool = True,
         apply_surface: bool = True,
         field_angle0_rad: float = 0.0,
+        ld_power: float = 0.0,
+        ring_motion: bool = True,
     ):
         if rings.inner_radius_px <= globe.equatorial_radius_px:
             raise ValueError("ring inner radius must lie outside the equatorial globe")
@@ -123,12 +141,59 @@ class SaturnSceneModel(SceneModel):
         self.apply_field = bool(apply_field)
         self.apply_surface = bool(apply_surface)
         self.field_angle0_rad = float(field_angle0_rad)
-        self.globe_model = OblateGlobeModel(globe, apply_field=apply_field, apply_surface=apply_surface)
+        self.ld_power = float(ld_power)
+        self.globe_model = OblateGlobeModel(globe, apply_field=apply_field, apply_surface=apply_surface,
+                                            ld_power=ld_power)
         self.field_model = FieldOnlyModel()
-        n_z = abs(float(ring_normal_obs(globe)[2]))
+        n = ring_normal_obs(globe)
+        n_z = abs(float(n[2]))
         self.edge_on = n_z < EDGE_ON_MU
         self.low_opening = (not self.edge_on) and n_z < 0.2
         self.transmission = 0.0 if self.edge_on else ring_transmission(globe, rings)
+        self.ring_motion = bool(ring_motion) and not self.edge_on
+        if self.ring_motion:
+            # Observer depth of the ring plane at sky (x, y): z = plane[0] x + plane[1] y.
+            self.ring_plane = (-float(n[0] / n[2]), -float(n[1] / n[2]))
+            self.ring_body = body_to_obs_matrix(globe.pole_pa_rad, globe.sub_obs_lat_rad, 0.0).T
+            # Directions whose rays from a ring point must clear the globe for the
+            # point's light to move: toward the observer and (if set) toward the Sun.
+            # Body axes with z stretched by a/c, where the globe is a sphere of radius a.
+            stretch = np.array([1.0, 1.0, globe.equatorial_radius_px / globe.polar_radius_px])
+            def body_direction(obs):
+                v = self.ring_body @ np.asarray(obs, dtype=np.float64) * stretch
+                return v / np.linalg.norm(v)
+            self.ring_clearance = [(body_direction([0.0, 0.0, 1.0]), False)]
+            if rings.sun_lon_rad is not None or rings.sun_lat_rad is not None:
+                self.ring_clearance.append((body_direction(sun_direction_obs(globe, rings)), True))
+
+    def ring_motion_weight(self, sx, sy):
+        """Share of ring motion (0..1) at field-free sky offsets from the centre; numpy or torch."""
+        rt, (px, py) = self.ring_body, self.ring_plane
+        z = px * sx + py * sy
+        xb = rt[0, 0] * sx + rt[0, 1] * sy + rt[0, 2] * z
+        yb = rt[1, 0] * sx + rt[1, 1] * sy + rt[1, 2] * z
+        r2 = xb * xb + yb * yb
+        r = r2 ** 0.5
+        lo, hi = RING_MOTION_EDGE_PX
+        weight = (_smoothstep((r - (self.rings.inner_radius_px - hi)) / (hi - lo))
+                  * _smoothstep((self.rings.outer_radius_px + hi - r) / (hi - lo)))
+        lo, hi = RING_MOTION_CLEAR_PX
+        for v, sunward in self.ring_clearance:
+            along = xb * v[0] + yb * v[1]
+            clear = (r2 - along * along).clip(0.0, None) ** 0.5 - self.globe.equatorial_radius_px
+            if sunward:
+                # Only points beyond the globe from the Sun can be in its shadow.
+                clear = clear + (along >= 0) * 1e9
+            weight = weight * _smoothstep((clear - lo) / (hi - lo))
+        return weight
+
+    def ring_turn(self, t_src: float, t_ref: float) -> np.ndarray:
+        """2x2 map of field-free sky offsets on the ring plane from t_src to t_ref (rings turn with the globe)."""
+        g = self.globe
+        rs = body_to_obs_matrix(g.pole_pa_rad, g.sub_obs_lat_rad, g.sub_obs_lon(t_src))
+        rr = body_to_obs_matrix(g.pole_pa_rad, g.sub_obs_lat_rad, g.sub_obs_lon(t_ref))
+        on_plane = np.array([[1.0, 0.0], [0.0, 1.0], list(self.ring_plane)])
+        return (rr @ rs.T @ on_plane)[:2]
 
     def classify_detector(self, x, y, pose: FramePose, *, mask_moon: bool = True) -> dict:
         sx, sy = detector_to_sky(x, y, pose.cx, pose.cy)
@@ -173,20 +238,20 @@ class SaturnSceneModel(SceneModel):
         invalid = info["moon"] | info["ring_degenerate"]
         return np.where(invalid, -1, region)
 
-    def src_to_ref(self, x, y, src: FramePose, ref: FramePose):
+    def src_to_ref(self, x, y, src: FramePose, ref: FramePose, gain: bool = False):
         field_src = src if self.apply_field else replace(src, field_angle_rad=0.0)
         field_ref = ref if self.apply_field else replace(ref, field_angle_rad=0.0)
         fx, fy, fv = self.field_model.src_to_ref(x, y, field_src, field_ref)
         info = self.classify_detector(x, y, src) if self.moon is not None or self.edge_on else None
         valid = fv if info is None else fv & ~info['moon'] & ~info['ring_degenerate']
         if not self.apply_surface or self.globe.surface_rate_rad_s*(src.t_s-ref.t_s) == 0:
-            return fx, fy, valid
+            return (fx, fy, valid, np.ones(np.shape(fx))) if gain else (fx, fy, valid)
+        sx, sy = detector_to_sky(x, y, src.cx, src.cy)
+        if self.apply_field:
+            sx, sy = field_rotate_sky(sx, sy, -src.field_angle_rad)
         if info is None:
             # Ring and illumination classification is unnecessary for the
             # smooth globe warp. Keep the same ray intersection and visibility.
-            sx, sy = detector_to_sky(x, y, src.cx, src.cy)
-            if self.apply_field:
-                sx, sy = field_rotate_sky(sx, sy, -src.field_angle_rad)
             lon, lat, on_globe, mu, _ = globe_hit(sx, sy, self.globe, src.t_s)
             info = dict(lon=lon, lat=lat, on_globe=on_globe, mu=mu)
         gx, gy, visible, mu_ref = body_to_sky(info['lon'], info['lat'], self.globe, ref.t_s)
@@ -206,7 +271,22 @@ class SaturnSceneModel(SceneModel):
         # derivative continuous there, avoiding an edge after sharpening.
         dx = fx + blend*np.where(blend > 0, gx-fx, 0.)
         dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
-        return dx, dy, valid
+        if self.ring_motion:
+            # Ring points turn about the pole; zero weight on and near the globe.
+            weight = self.ring_motion_weight(sx, sy)
+            m = self.ring_turn(src.t_s, ref.t_s)
+            rx, ry = m[0, 0]*sx + m[0, 1]*sy, m[1, 0]*sx + m[1, 1]*sy
+            if self.apply_field:
+                rx, ry = field_rotate_sky(rx, ry, ref.field_angle_rad)
+            rx, ry = sky_to_detector(rx, ry, ref.cx, ref.cy)
+            dx = dx + weight*(rx - fx)
+            dy = dy + weight*(ry - fy)
+        if not gain:
+            return dx, dy, valid
+        if not self.ld_power:
+            return dx, dy, valid, np.ones(np.shape(dx))
+        ratio = ld_ratio(np.asarray(mu_ref, dtype=np.float64), np.asarray(info['mu'], dtype=np.float64), self.ld_power)
+        return dx, dy, valid, 1. + blend*np.where(blend > 0, ratio - 1., 0.)
 
 
 def fit_saturn_geometry(image: np.ndarray) -> dict:
@@ -277,17 +357,26 @@ def render_saturn(
     moon: MoonTrack | None = None,
     apply_field: bool = True,
     field_angle0_rad: float = 0.0,
+    turning_rings: bool = False,
 ) -> np.ndarray:
-    """Composite far ring, globe, near ring. Globe spin does not move the rings."""
+    """Composite far ring, globe, near ring.
+
+    Ring texture is fixed to the viewing geometry (as the A ring's azimuthal
+    brightness asymmetry is), or with ``turning_rings`` fixed to ring material
+    turning with the globe (as spokes are).
+    """
     x, y = detector_xy_grids(height, width)
     sx, sy = detector_to_sky(x, y, pose.cx, pose.cy)
     if apply_field:
         sx, sy = field_rotate_sky(sx, sy, -float(pose.field_angle_rad))
     info = classify_layers(sx, sy, globe, rings, pose.t_s)
     img = np.zeros((int(height), int(width)), dtype=np.float64)
-    tex_r = ring_tex if ring_tex is not None else (
+    tex = ring_tex if ring_tex is not None else (
         lambda radius, azimuth: default_ring_profile(radius, azimuth, rings.inner_radius_px, rings.outer_radius_px)
     )
+    # Azimuth fixed to the turning body: the observer-fixed azimuth plus the sub-observer longitude.
+    turn = globe.sub_obs_lon(pose.t_s) if turning_rings else 0.0
+    tex_r = lambda radius, azimuth: tex(radius, azimuth + turn)
     trans = 0.0 if info["edge_on"] else ring_transmission(globe, rings)
     if np.any(info["far_ring"]):
         val = np.asarray(

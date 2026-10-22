@@ -151,7 +151,7 @@ class TorchSurfaceTracker:
     def displacements(self, frames, poses):
         """Drift for a batch of frames (leading axis) at their poses: (dx, dy) or None each."""
         projected = self.warp.render_tensor(torch.stack((self.reference, self.reference_support), -1),
-                                            list(poses), self.reference_pose)
+                                            list(poses), self.reference_pose, gain_channels=1)
         predicted, support = projected[..., 0], projected[..., 1]
         mask = _eroded((support >= 1. - 1e-12) & self.on_globe(list(poses)))
         template, count, energy = masked_templates(predicted, mask)

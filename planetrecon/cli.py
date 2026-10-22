@@ -200,6 +200,9 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--rotation-planet', choices=tuple(PERIOD_DAYS), default=None,
                     help='use a published sidereal rotation preset unless a surface rate is supplied')
     st.add_argument('--reverse-rotation', action='store_true', help='reverse the apparent direction of the planet preset')
+    st.add_argument('--limb-darkening-power', type=float, default=None,
+                    help='exponent p of the limb darkening mu**p compensated as globe light moves '
+                         '(default: fitted per capture; 0 disables)')
     st.add_argument("--field-angle0-deg", type=float, default=0.0)
     st.add_argument("--flattening", type=float, default=0.0)
     st.add_argument("--radius", type=float, default=None, help="equatorial radius in pixels")
@@ -453,6 +456,7 @@ def main(argv: list[str] | None = None) -> int:
             surface_rate_rad_s=_rad(args.surface_rate_deg_s),
             rotation_planet=args.rotation_planet,
             reverse_rotation=args.reverse_rotation,
+            limb_darkening_power=args.limb_darkening_power,
             field_angle0_rad=_rad(args.field_angle0_deg) or 0.0,
             flattening=args.flattening,
             equatorial_radius_px=args.radius,

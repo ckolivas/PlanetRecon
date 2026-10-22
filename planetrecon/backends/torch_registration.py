@@ -11,7 +11,8 @@ class TorchRingRegistrationOps(TorchGlobeWarp):
     def __init__(self, shape, device='cuda:0'):
         super().__init__(shape, None, device)
 
-    def map(self, src, ref):
+    def map(self, src, ref, gain=False):
+        # Field rotation moves no globe light: no limb-darkening gain.
         P = self.poses(src, ref)
         x, y = self.rotate(self.x-P([s.cx for s in P.srcs]), P([s.cy for s in P.srcs])-self.y,
                            P.angles([r.field_angle_rad-s.field_angle_rad for s, r in zip(P.srcs, P.refs)]))

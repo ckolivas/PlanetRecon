@@ -59,6 +59,49 @@ on CUDA. Field-only motion currently runs on CPU. The reference
 prediction changes with each frame, so motion stacking does more work than the
 fixed-reference ordinary stacker; this change makes no performance claim.
 
+## Limb darkening, ring motion and field rotation
+
+**Limb-darkening compensation.** A globe's brightness is its surface albedo
+times limb darkening, which depends only on the emission cosine mu and so
+stays fixed while the surface turns. Each globe sample moved from mu_src to
+mu_ref is scaled by L(mu_ref) / L(mu_src) with L(mu) = mu^p (mu clamped at
+0.2, where the limb is dominated by blur), as WinJUPOS applies when
+derotating. Model predictions of a frame (drift tracking, alignment-point
+references) apply the inverse; support channels are never scaled. p is fitted
+per capture on the anchor frame over mu >= 0.5, with a separate brightness per
+2-degree latitude band so belts do not bias it, excluding rings in front of the
+globe and ring shadows (`limb_darkening_power` overrides it; 0 disables).
+Without it the limb-darkening slope itself moves with the spin: when the stacked
+frames are weighted away from the reference time (seeing improving late in a
+capture), one limb gains a compressed, steeper edge that sharpening turns into
+a bright rind, on the side set by the sign of that time offset. On synthetic
+limb-darkened globes with only zonal belts and frames weighted late, the
+compensation reduces the error where spin moves light 22x (Saturn) to 67x
+(Surface), and the fit recovers p within 0.001.
+
+**Ring motion (Saturn).** Ring material turns with the planet. Spokes form
+near synchronous orbit and follow the planet's rotation: one tracked through
+the sharpened stacks of 2026-10-14 (12:05-12:28 UT) moved at 0.561 degrees per
+minute, against 0.563 for Saturn's rotation and 0.627 for orbital motion at its
+radius. In a 6-minute capture such a spoke 40 degrees in from an ansa moves
+about 6 px across the sky. The Saturn model turns the ring plane with the globe
+(an exact affine map per frame, which carries uniform rings onto themselves).
+Light fixed to the viewing or lighting geometry does not move: ring motion
+fades in from 4 to 14 px clear of the globe's silhouette and its shadow on the
+rings, and out from 4 to 12 px beyond the ring edges. Rings in front of the
+globe follow the globe. Viewing-geometry ring asymmetries (the A ring's
+azimuthal brightness pattern) are smooth enough that a few degrees of turn
+does not affect them.
+
+**Field rotation.** The rotation estimated from sampled ring or field angles
+(a least-squares slope; ring angles folded to one half turn, since rings look
+the same turned by 180 degrees) is applied only when significant at 95%
+confidence by Student's t on its residual scatter. With three or four samples
+that scatter is itself uncertain, so a fixed number of standard errors would
+pass noise. Preprocessing's ring-axis estimate uses the same test.
+Equatorial-mount captures therefore keep a fixed field instead of a few tenths
+of a degree of spurious rotation.
+
 ## Verification
 
 The record below predates the removal of the square and circular matchers;

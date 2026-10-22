@@ -89,7 +89,13 @@ class TorchGlobeWarp:
             c, s = (torch.as_tensor(v, dtype=torch.float64, device=x.device).view(-1, 1, 1) for v in (c, s))
         return c*x-s*y, s*x+c*y
 
-    def map(self, src, ref, *, limb_taper=None, x=None, y=None):
+    @property
+    def ld_power(self):
+        return getattr(self.model, 'ld_power', 0.)
+
+    def map(self, src, ref, *, limb_taper=None, x=None, y=None, gain=False):
+        """Mapped x, y and valid; with ``gain`` also each sample's limb-darkening gain
+        (None when the model applies none)."""
         g = self.model.globe
         P = self.poses(src, ref)
         explicit = x is not None
@@ -97,16 +103,19 @@ class TorchGlobeWarp:
         sx, sy = x-P([p.cx for p in P.srcs]), P([p.cy for p in P.srcs])-y
         static = np.array([not self.model.apply_surface or g.surface_rate_rad_s*(s.t_s-r.t_s) == 0
                            for s, r in zip(P.srcs, P.refs)])
+        gain = gain and bool(self.ld_power)
         if static.any():
             angle = P.angles([r.field_angle_rad-s.field_angle_rad if self.model.apply_field else 0.
                               for s, r in zip(P.srcs, P.refs)])
             fx, fy = self.rotate(sx, sy, angle)
             fx, fy = fx+P([r.cx for r in P.refs]), P([r.cy for r in P.refs])-fy
             fixed = fx, fy, torch.isfinite(fx) & torch.isfinite(fy)
+            if gain:
+                fixed = (*fixed, torch.ones_like(fx))
             if static.all():
                 return fixed
         if self.fused is not None:
-            moved = self.fused_map(P, x if explicit else None, y if explicit else None, limb_taper)
+            moved = self.fused_map(P, x if explicit else None, y if explicit else None, limb_taper, gain)
             if not static.any():
                 return moved
             keep = P.mask(static)
@@ -144,6 +153,9 @@ class TorchGlobeWarp:
             sx, sy = self.rotate(sx, sy, angle)
         use = on_globe & visible
         cx, cy = P([p.cx for p in P.refs]), P([p.cy for p in P.refs])
+        if gain:
+            from planetrecon.geometry.limb import ld_ratio
+            ratio = ld_ratio(torch.where(use, mu_ref, 1.), torch.where(use, mu_src, 1.), self.ld_power)
         if limb_taper is not None:
             blend = torch.ones_like(sx)
             for mu in (mu_src,mu_ref):
@@ -152,16 +164,20 @@ class TorchGlobeWarp:
             x = sx+cx+blend*torch.where(blend > 0,rx-sx,0.)
             y = cy-sy-blend*torch.where(blend > 0,ry-sy,0.)
             moved = x, y, torch.isfinite(x)&torch.isfinite(y)
+            if gain:
+                moved = (*moved, 1.+blend*torch.where(blend > 0, ratio-1., 0.))
         else:
             x, y = torch.where(use,rx,sx)+cx, cy-torch.where(use,ry,sy)
             moved = x, y, torch.isfinite(x) & torch.isfinite(y) & (~on_globe | visible)
+            if gain:
+                moved = (*moved, torch.where(use, ratio, 1.))
         if not static.any():
             return moved
         # A mixed batch (e.g. the anchor frame itself) keeps the static mapping per pose.
         keep = P.mask(static)
         return tuple(torch.where(keep, a, b) for a, b in zip(fixed, moved))
 
-    def fused_map(self, P, x, y, limb_taper):
+    def fused_map(self, P, x, y, limb_taper, gain=False):
         """The rotating-globe branch of ``map`` as one fused kernel; per-pose scalars in one table."""
         from planetrecon.backends import triton_warp as K
         g, field = self.model.globe, self.model.apply_field
@@ -177,7 +193,7 @@ class TorchGlobeWarp:
             row[K.RS:K.RS+9] = rs.reshape(-1)
             row[K.RR:K.RR+9] = body_to_obs_matrix(g.pole_pa_rad, g.sub_obs_lat_rad, g.sub_obs_lon(r.t_s)).reshape(-1)
         out = K.globe_map(torch.as_tensor(params, device=self.device), (self.h, self.w), g, x=x, y=y,
-                          field=field, limb_taper=limb_taper)
+                          field=field, limb_taper=limb_taper, ld_power=self.ld_power if gain else None)
         return tuple(o[0] for o in out) if P.single else out
 
     def corners(self, x, y, valid):
@@ -197,13 +213,26 @@ class TorchGlobeWarp:
                 yield ((yy.clamp(0,self.h-1)*self.w+xx.clamp(0,self.w-1)).reshape(*lead, -1),
                        (wy*wx*keep).reshape(*lead, -1))
 
-    def render_tensor(self, image, src, ref, *, per_pose=False):
-        """Pull ``image`` through the mapping; ``per_pose`` images carry the batch axis first."""
+    def render_tensor(self, image, src, ref, *, per_pose=False, gain_channels=None):
+        """Pull ``image`` through the mapping; ``per_pose`` images carry the batch axis first.
+
+        Moved globe light returns to the source's limb darkening (the inverse of
+        the accumulation gain). ``gain_channels`` limits that to the first channels
+        (later channels are support, and 0 means the image is support).
+        """
         image = self.tensor(image) if not isinstance(image,torch.Tensor) else image
-        x, y, valid = self.map(src, ref)
+        x, y, valid, *gain = self.map(src, ref, gain=gain_channels != 0)
         lead = x.shape[:-2]
+        def brightness(out):
+            # ``out`` is (*lead, h*w or h, w, C); gain is (*lead, h, w).
+            if not gain:
+                return out
+            scale = gain[0].reshape(*lead, *out.shape[len(lead):-1], 1).to(out.dtype)
+            if gain_channels is None:
+                return out / scale
+            return torch.cat((out[..., :gain_channels] / scale, out[..., gain_channels:]), -1)
         if self.fused is not None:
-            out = self.fused.pull(image, x, y, valid, per_pose)
+            out = brightness(self.fused.pull(image, x, y, valid, per_pose))
             return out.reshape(*lead, *(image.shape[len(lead):] if per_pose else image.shape))
         if per_pose:
             flat = image.reshape(*lead, self.h*self.w, -1)
@@ -216,11 +245,12 @@ class TorchGlobeWarp:
         for index, weight in self.corners(x,y,valid):
             part = gather(index)*weight[..., None]
             out = part if out is None else out+part
+        out = brightness(out)
         shape = image.shape[len(lead):] if per_pose else image.shape
         return out.reshape(*lead, *shape)
 
-    def render(self, image, src, ref):
-        return self.render_tensor(image, src, ref).cpu().numpy()
+    def render(self, image, src, ref, *, gain_channels=None):
+        return self.render_tensor(image, src, ref, gain_channels=gain_channels).cpu().numpy()
 
 
 class TorchGlobeAccumulator(TorchGlobeWarp):
@@ -236,9 +266,9 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
             self.channels = torch.as_tensor(np.where(labels=='R',0,np.where(labels=='G',1,2)),
                                             device=self.device).flatten()
 
-    def sample_map(self, pose, ref, sample_xy=None):
+    def sample_map(self, pose, ref, sample_xy=None, gain=False):
         coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
-        return self.map(pose,ref,**coords)
+        return self.map(pose,ref,gain=gain,**coords)
 
     def sample_corners(self, pose, ref, sample_xy=None):
         return self.corners(*self.sample_map(pose,ref,sample_xy))
@@ -274,10 +304,17 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
                 members.setdefault(k, ([], []))
                 members[k][0].append(position)
                 members[k][1].append(weight)
+        x, y, valid, *gain = self.sample_map(pose, ref, sample_xy, gain=True)
+        if gain:
+            # Limb-darkening compensation scales each moved sample (geometry.limb).
+            gain = gain[0].reshape(n, -1, 1)
+            values = values.reshape(n, self.h*self.w, -1) * gain
+            demo = None if demo is None else demo.reshape(n, -1, 3) * gain
+            values = values if batch else values[0]
+            demo = None if demo is None else (demo if batch else demo[0])
         if self.fused is not None:
             score = self.tensor(score)
             score = score.reshape(n) if score.numel() == n else score.reshape(n, -1)
-            x, y, valid = self.sample_map(pose, ref, sample_xy)
             x, y, valid = (a.reshape(-1, self.h, self.w).expand(n, self.h, self.w) for a in (x, y, valid))
             labels, codes, layer_sums = self.layer_labels()
             values = values.reshape(n, self.h*self.w, -1)
@@ -296,7 +333,7 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
                     torch.stack([self.tensor(m).reshape(-1) for m in weights]),
                     (self.bin_accum[k].view(-1), self.bin_weight[k].view(-1), None, None), cfa=self.channels)
             return (covered > 0).tolist() if batch else bool(covered[0] > 0)
-        corners = list(self.sample_corners(pose,ref,sample_xy))
+        corners = list(self.corners(x, y, valid))
         covered = self._scatter_corners(corners, values, demo, score, lead,
                                         (self.accum, self.weight, self.demosaic_accum, self.demosaic_weight), True)
         for k, (positions, weights) in members.items():

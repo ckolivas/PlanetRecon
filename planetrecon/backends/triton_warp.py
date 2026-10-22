@@ -169,8 +169,8 @@ PARAMETERS = 28
 
 
 @triton.jit
-def _globe_map(x_ptr, y_ptr, params_ptr, constants_ptr, out_x, out_y, out_valid, total, plane, W: tl.constexpr, EXPLICIT: tl.constexpr, FIELD: tl.constexpr,
-               TAPER: tl.constexpr, BLOCK: tl.constexpr):
+def _globe_map(x_ptr, y_ptr, params_ptr, constants_ptr, out_x, out_y, out_valid, out_gain, total, plane, W: tl.constexpr,
+               EXPLICIT: tl.constexpr, FIELD: tl.constexpr, TAPER: tl.constexpr, GAIN: tl.constexpr, BLOCK: tl.constexpr):
     i = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     inside = i < total
     p = params_ptr + (i // plane) * 28
@@ -237,6 +237,12 @@ def _globe_map(x_ptr, y_ptr, params_ptr, constants_ptr, out_x, out_y, out_valid,
     use = on_globe & visible
     cx = tl.load(p + 6, inside, other=0.)
     cy = tl.load(p + 7, inside, other=0.)
+    if GAIN:
+        # Limb-darkening compensation (geometry.limb): (mu_ref / mu_src) ** power, mu clamped at the floor.
+        power = tl.load(constants_ptr + 5)
+        floor = tl.load(constants_ptr + 6)
+        ratio = libdevice.pow(tl.maximum(tl.where(use, mu_ref, 1.), floor)
+                              / tl.maximum(tl.where(use, mu_src, 1.), floor), power)
     if TAPER:
         u = tl.minimum(tl.maximum(tl.where(use, mu_src, 0.) / taper, 0.), 1.)
         u = u * u
@@ -247,33 +253,46 @@ def _globe_map(x_ptr, y_ptr, params_ptr, constants_ptr, out_x, out_y, out_valid,
         ox = sx + cx + blend * tl.where(blend > 0, rx - sx, 0.)
         oy = cy - sy - blend * tl.where(blend > 0, ry - sy, 0.)
         valid = (ox == ox) & (oy == oy) & (tl.abs(ox) < float('inf')) & (tl.abs(oy) < float('inf'))
+        if GAIN:
+            tl.store(out_gain + i, 1. + blend * tl.where(blend > 0, ratio - 1., 0.), inside)
     else:
         ox = tl.where(use, rx, sx) + cx
         oy = cy - tl.where(use, ry, sy)
         valid = (ox == ox) & (oy == oy) & (tl.abs(ox) < float('inf')) & (tl.abs(oy) < float('inf')) \
             & (~on_globe | visible)
+        if GAIN:
+            tl.store(out_gain + i, tl.where(use, ratio, 1.), inside)
     tl.store(out_x + i, ox, inside)
     tl.store(out_y + i, oy, inside)
     tl.store(out_valid + i, valid.to(tl.int8), inside)
 
 
-def globe_map(params, shape, globe, *, x=None, y=None, field=True, limb_taper=None):
-    """Rotating-globe mapping for B poses (``params`` is (B, PARAMETERS)): x, y, valid of (B, h, w)."""
+def globe_map(params, shape, globe, *, x=None, y=None, field=True, limb_taper=None, ld_power=None):
+    """Rotating-globe mapping for B poses (``params`` is (B, PARAMETERS)): x, y, valid of (B, h, w).
+
+    With ``ld_power`` also each sample's limb-darkening gain (geometry.limb).
+    """
+    from planetrecon.geometry.limb import LD_MU_FLOOR
     h, w = shape
     n = params.shape[0]
     out_x = torch.empty((n, h, w), device=params.device, dtype=torch.float64)
     out_y, out_valid = torch.empty_like(out_x), torch.empty((n, h, w), device=params.device, dtype=torch.int8)
+    out_gain = torch.empty_like(out_x) if ld_power is not None else out_x
     explicit = x is not None
     if explicit:
         x, y = x.expand(n, h, w).contiguous(), y.expand(n, h, w).contiguous()
     total, block = n * h * w, 256
     a, c = globe.equatorial_radius_px, globe.polar_radius_px
     # Float scalars would reach the kernel as fp32; constants travel as float64.
-    constants = torch.tensor([1 / (a * a), 1 / (c * c), a * a, c * c, 1. if limb_taper is None else float(limb_taper)],
+    constants = torch.tensor([1 / (a * a), 1 / (c * c), a * a, c * c, 1. if limb_taper is None else float(limb_taper),
+                              0. if ld_power is None else float(ld_power), LD_MU_FLOOR],
                              device=params.device, dtype=torch.float64)
     _globe_map[(triton.cdiv(total, block),)](
         x if explicit else out_x, y if explicit else out_y, params.contiguous(), constants, out_x, out_y, out_valid,
-        total, h * w, W=w, EXPLICIT=explicit, FIELD=field, TAPER=limb_taper is not None, BLOCK=block, enable_fp_fusion=False)
+        out_gain, total, h * w, W=w, EXPLICIT=explicit, FIELD=field, TAPER=limb_taper is not None,
+        GAIN=ld_power is not None, BLOCK=block, enable_fp_fusion=False)
+    if ld_power is not None:
+        return out_x, out_y, out_valid.bool(), out_gain
     return out_x, out_y, out_valid.bool()
 
 

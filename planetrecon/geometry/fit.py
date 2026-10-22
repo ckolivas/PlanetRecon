@@ -213,3 +213,36 @@ def _as_plane(image: np.ndarray) -> np.ndarray:
     if img.ndim == 3:
         return 0.5 * img[..., 1] + 0.25 * img[..., 0] + 0.25 * img[..., 2]
     return img
+
+
+# Confidence that a fitted field rotation is real before it is applied. With a
+# few angle samples the residual scatter is itself uncertain (one or two degrees
+# of freedom), so the threshold is Student's t, not a fixed number of errors.
+FIELD_RATE_CONFIDENCE = .95
+
+
+def field_rate_fit(times, angles) -> tuple[float, dict]:
+    """Field rotation rate from sampled angles: least-squares slope, zero unless significant.
+
+    Two samples (or exactly linear angles) give their slope. With three or more,
+    the residual scatter gives the slope's standard error; a slope that is not
+    significant at ``FIELD_RATE_CONFIDENCE`` is measurement noise (for example
+    a fixed field on an equatorial mount) and returns 0.
+    """
+    from scipy.stats import t as student_t
+    t = np.asarray(times, dtype=np.float64)
+    a = np.asarray(angles, dtype=np.float64)
+    spread = float(np.sum((t - t.mean()) ** 2))
+    slope = float(np.sum((t - t.mean()) * (a - a.mean())) / spread)
+    fit = {'method': 'least-squares slope of sampled angles', 'samples': len(t), 'slope_rad_s': slope}
+    if len(t) < 3:
+        return slope, fit
+    residual = a - (a.mean() + slope * (t - t.mean()))
+    error = float(np.sqrt(np.sum(residual ** 2) / (len(t) - 2) / spread))
+    threshold = float(student_t.ppf(.5 + FIELD_RATE_CONFIDENCE / 2, len(t) - 2)) * error
+    fit.update(standard_error_rad_s=error, residual_rms_rad=float(np.sqrt(np.mean(residual ** 2))),
+               significance_threshold_rad_s=threshold)
+    if abs(slope) <= threshold:
+        fit['applied'] = f'0: not significant at {FIELD_RATE_CONFIDENCE:.0%} confidence'
+        return 0.0, fit
+    return slope, fit
