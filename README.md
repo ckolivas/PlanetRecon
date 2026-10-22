@@ -98,7 +98,9 @@ and shows exclusion counts before processing. GUI **Stack** validates the cache 
 preprocessing when needed; startup and capture selection do not start analysis.
 Use `planetrecon preprocess --path capture.ser` from the CLI;
 `stack --no-frame-preselection` uses global alignment and ignores cached decisions. After preprocessing,
-**Quality range** defaults to 50% for new GUI and CLI runs and keeps
+the stack percentage defaults to 100% for new GUI and CLI runs: every
+screened frame can contribute, and Fourier weighting (below) decides how much
+at each scale. A lower **Quality range** percentage caps the frames; 50% keeps
 scores strictly above `(capture best + capture worst) / 2`, then applies screening.
 **Frame count** (`--selection-mode frame_count`) instead selects a ranked
 percentage of screened frames. The GUI shows the actual retained count.
@@ -120,12 +122,21 @@ without sharpening. The earlier square-patch and circular multiscale methods wer
 removed once alignment points matched or exceeded AutoStakkert!4; saved jobs and
 checkpoints that used them must be restarted.
 
+**Fourier weighting** (on by default; CLI `--no-fourier-weighting` to disable,
+`--fourier-power`, default 4) weights frames separately at every spatial
+frequency: coarse detail draws on nearly every frame, the finest detail on the
+sharpest. Each alignment point splits its frames into local-quality rank bins
+accumulated separately; after stacking each bin's transfer and noise are
+measured per frequency ring and the bins are recombined. On six Saturn L3
+captures it gave 1.1–1.9 times the fine-scale signal-to-noise of the former
+50% quality-range stacks, and looked clearly better after sharpening. It
+applies to stacks without a motion model. See [Fourier weighting](docs/fourier-weighting.md).
+
 Alignment points require cached preprocessing. A capture with no bright,
 textured region that fits a point, or fewer than four selected frames, falls back
 to global alignment with a warning. The CLI uses alignment points whenever cached
 preprocessing is used; `--no-local-alignment` selects global alignment, and
-`--no-frame-preselection` disables cached decisions and so local alignment. Set
-`--stack-percent 100` to retain all screened frames.
+`--no-frame-preselection` disables cached decisions and so local alignment.
 
 Review corrections preserve shifted-edge brightness and per-channel CFA
 coverage, reject non-finite frames and unsupported colour modes, validate SER

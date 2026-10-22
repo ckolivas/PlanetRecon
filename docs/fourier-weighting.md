@@ -78,3 +78,27 @@ with only slightly sharper Cassini division. The finest rings, where p = 4
 leads, decide the visible result, so the default is 4. Above about 0.25
 cycles/px a single bin-stack is too noisy for its transfer to be measured,
 and the weights there drift back towards equal.
+
+## Results: all six Saturn L3 captures, 2026-10-17
+
+Fourier p = 4 at 100% against each capture's own former 50% quality-range
+stack (emulated by the best bins holding that capture's retained share), ring
+SNR ratio from the halves' Fourier ring correlation:
+
+| capture | 50% range kept | 0.08 | 0.10 | 0.12 | 0.15 | 0.18 | 0.20 | 0.23 | 0.25 | SNR at 0.25 |
+|---------|----------------|------|------|------|------|------|------|------|------|-------------|
+| 12:20.6 | 32%            | 1.06 | 1.03 | 1.00 | 1.03 | 1.08 | 1.05 | 1.10 | 1.20 | 4.8 |
+| 12:26.6 | 28%            | 1.11 | 0.99 | 0.93 | 1.02 | 1.07 | 1.04 | 1.12 | 1.22 | 2.6 |
+| 12:33.1 | 44%            | 0.94 | 0.83 | 0.89 | 0.89 | 0.96 | 1.12 | 1.18 | 1.24 | 2.0 |
+| 12:39.9 | 47%            | 1.03 | 0.97 | 1.21 | 1.27 | 1.36 | 1.39 | 1.23 | 1.21 | 1.6 |
+| 12:46.6 | 22%            | 1.33 | 1.19 | 1.38 | 1.52 | 1.51 | 1.49 | 1.66 | 1.14 | 0.8 |
+| 12:52.8 | 20%            | 1.43 | 1.37 | 1.80 | 1.99 | 1.92 | 1.90 | 1.51 | 1.89 | 1.1 |
+
+The finest rings gain 1.1-1.9x on every capture; the gain is largest where the
+50% quality range kept fewest frames, and p = 4 trades a little mid-frequency
+SNR on the capture where it kept most (12:33.1). Sharpened with the same
+Planetary Tools workflow (automatic amounts to a target noise), p = 4 was the
+clear winner by eye on 12:20.6, 12:26.6 and 12:33.1. Automatic detail
+measures did not reproduce those judgements: a 2x-binned gradient energy that
+matches AutoStakkert!4's quality values preferred the 50% stacks, and a
+fine-scale Laplacian preferred p = 6-8, which looked noisier.
