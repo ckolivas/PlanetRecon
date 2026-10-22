@@ -8,8 +8,8 @@ import threading
 import time
 
 import numpy as np
-from PySide6.QtCore import Qt, QThread, QTimer, Signal
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtCore import QPointF, Qt, QThread, QTimer, Signal
+from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QProgressBar,
@@ -143,6 +143,7 @@ class MainWindow:
         self.last_result = None
         self.preview = None
         self.input_image = None
+        self.input_stride = 1
         self.input_metadata = {}
         self.input_max = None
         self.export_worker = None
@@ -266,6 +267,15 @@ class MainWindow:
             edit = self.controls.fields[key]
             signal = edit.currentIndexChanged if isinstance(edit, QComboBox) else (edit.toggled if isinstance(edit, QCheckBox) else edit.textChanged)
             signal.connect(self._preprocessing_settings_changed)
+        # The predicted motion arrows follow the Geometry settings.
+        for key in ('geometry_mode', 'field_center_x', 'field_center_y', 'equatorial_radius_px', 'flattening',
+                    'pole_pa_rad', 'sub_obs_lat_rad', 'sub_obs_lon0_rad', 'surface_rate_rad_s', 'field_rate_rad_s',
+                    'field_angle0_rad', 'reference_epoch_s', 'rotation_planet', 'reverse_rotation',
+                    'ring_outer_radius_px'):
+            edit = self.controls.fields[key]
+            signal = (edit.currentIndexChanged if isinstance(edit, QComboBox) else
+                      edit.toggled if isinstance(edit, QCheckBox) else edit.textChanged)
+            signal.connect(lambda *_: self.redraw_timer.start())
         self.controls.setMinimumWidth(360)
         self.device = self.controls.fields['device']
         split.addWidget(self.controls)
@@ -281,6 +291,13 @@ class MainWindow:
         for widget in (self.view, self.channel, self.zoom):
             toolbar.addWidget(widget)
             widget.currentIndexChanged.connect(self._draw)
+        self.motion_check = QCheckBox('Predicted motion')
+        self.motion_check.setChecked(True)
+        self.motion_check.setToolTip('After preprocessing, draw curved arrows showing the motion the current Geometry '
+                                     'settings predict: amber for surface rotation, cyan for field rotation. Check '
+                                     'them against the capture before stacking with a motion model.')
+        self.motion_check.toggled.connect(self._draw)
+        toolbar.addWidget(self.motion_check)
         body.addLayout(toolbar)
         class ResultCanvas(QScrollArea):
             def resizeEvent(self, event):
@@ -567,6 +584,7 @@ class MainWindow:
         self.path = item.source
         self._clear_quality_preview()
         self.input_image = None
+        self.input_stride = 1
         self.input_metadata = {}
         self.input_max = None
         self.last_result = None
@@ -625,6 +643,7 @@ class MainWindow:
             self.resume_check.setChecked(False)
             self.source_label.setText(str(self.path))
             self.input_image = None
+            self.input_stride = 1
             self.input_metadata = {}
             self.input_max = None
             self._capture_ready()
@@ -792,6 +811,7 @@ class MainWindow:
 
     def _set_input(self, payload):
         self.input_image = payload['input_image']
+        self.input_stride = int(payload.get('input_stride', 1))
         meta = payload['source_metadata']
         self.input_metadata = meta
         exposure = meta.get('extras', {}).get('exposure_s', {}).get('value')
@@ -978,6 +998,7 @@ class MainWindow:
             self.controls.prefill_geometry(info.get('geometry_estimate', {}),
                                           allow_prefill=not self.checkpoint_path.text().strip(),
                                           replace_manual=replace_manual)
+        self.redraw_timer.start()  # Predicted motion arrows appear once preprocessing is ready.
 
     def _update_run_device(self, payload):
         backend = payload.get('backend')
@@ -1239,6 +1260,7 @@ class MainWindow:
         else:
             scale = float(self.zoom.currentText().rstrip('%')) / 100
             pixmap = pixmap.scaled(max(1, int(q.width()*scale)), max(1, int(q.height()*scale)))
+        motion = self._paint_motion(pixmap, arr.shape)
         self.image_label.setPixmap(pixmap)
         self.image_label.resize(pixmap.size())
         valid = np.isfinite(arr)
@@ -1254,7 +1276,63 @@ class MainWindow:
                     and 'display_sampling' in self.preview.provenance else '')
         self.histogram.setText(sampling + f'Preview histogram {bars} · valid {valid.mean():.1%} · '
             f'{clipped} display-clipped samples · magenta = missing support.\n'
-            'Coverage shows accumulation weights, not calibrated uncertainty. Zoom refers to preview pixels.')
+            'Coverage shows accumulation weights, not calibrated uncertainty. Zoom refers to preview pixels.'
+            + (f'\n{motion}' if motion else ''))
+
+    def _paint_motion(self, pixmap, shape):
+        """Draw the predicted motion arrows on ``pixmap`` after preprocessing; returns a note."""
+        if not self.motion_check.isChecked() or self.preprocessing_info.get('status') != 'ready':
+            return ''
+        from planetrecon.gui.motion import predicted_motion
+        try:
+            config = self.controls.configuration()
+            stride = (self.input_stride if self.view.currentText() == 'Input' else
+                      self.preview.spatial_stride if self.preview is not None else 1)
+            arrows, notes = predicted_motion(config, (shape[0] * stride, shape[1] * stride))
+        except ValueError as exc:
+            return f'Predicted motion unavailable: {exc}'
+        sx, sy = pixmap.width() / shape[1], pixmap.height() / shape[0]
+
+        def point(x, y):
+            # Detector pixel centres onto the strided preview, then the pixmap.
+            return QPointF(((x - .5) / stride + .5) * sx, ((y - .5) / stride + .5) * sy)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        head = max(8., .03 * min(pixmap.width(), pixmap.height()))
+        for arrow in arrows:
+            colour = QColor(255, 176, 0) if arrow.kind == 'surface' else QColor(0, 220, 255)
+            points = [point(x, y) for x, y in arrow.points]
+            path = QPainterPath(points[0])
+            for p in points[1:]:
+                path.lineTo(p)
+            tip, back = points[-1], points[max(0, len(points) - 4)]
+            dx, dy = tip.x() - back.x(), tip.y() - back.y()
+            length = max(float(np.hypot(dx, dy)), 1e-9)
+            ux, uy = dx / length, dy / length
+            base = QPointF(tip.x() - head * ux, tip.y() - head * uy)
+            wing = QPointF(-uy * head * .5, ux * head * .5)
+            triangle = QPolygonF([tip, base + wing, base - wing])
+            for pen_colour, width in ((QColor(0, 0, 0, 200), 5.), (colour, 2.5)):
+                painter.setPen(QPen(pen_colour, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawPath(path)
+                painter.setBrush(pen_colour)
+                painter.drawPolygon(triangle)
+            # Label beyond the tail, away from the head and the arc.
+            tail, after = points[0], points[min(3, len(points) - 1)]
+            tx, ty = tail.x() - after.x(), tail.y() - after.y()
+            norm = max(float(np.hypot(tx, ty)), 1e-9)
+            metrics = painter.fontMetrics()
+            width, height = metrics.horizontalAdvance(arrow.label), metrics.ascent()
+            anchor = QPointF(tail.x() + 8. * tx / norm, tail.y() + 8. * ty / norm + height / 2)
+            if tx < 0:
+                anchor.setX(anchor.x() - width)
+            painter.setPen(colour)
+            painter.drawText(anchor, arrow.label)
+        painter.end()
+        described = ', '.join(f'{a.label} ({"amber" if a.kind == "surface" else "cyan"})' for a in arrows)
+        return ' '.join(filter(None, [f'Predicted motion: {described}; check against the capture.'
+                                      if arrows else '', *notes]))
 
     def _export_options(self):
         encoding = self.encoding.currentText()

@@ -6,6 +6,16 @@ selection. It enables screening and AutoStakkert-style
 The former Run button, which honoured the local alignment toggle, is retired. Required geometry must be resolved or supplied; an unresolved
 motion model is never silently replaced with ordinary stacking.
 
+After preprocessing, the Image tab draws the motion the current Geometry
+settings predict (toolbar **Predicted motion**, on by default), for checking
+by eye before stacking: an amber curved arrow along a latitude of the visible
+hemisphere shows which way surface features move, and a cyan arc outside the
+disc shows which way the field turns when its rate is known. Directions come
+from the stack's own globe and field models; a nearly edge-on view is drawn
+tilted to at least 17 degrees so the arc stays curved. The arrows follow
+changes to the Geometry controls (for example a reversed rotation or a pole
+flipped by 180 degrees).
+
 The new **Automatic motion reference** choice defaults to **Good frames near
 capture midpoint**. From the screened frames in the middle 20% of elapsed
 capture time, it chooses the frame nearest the midpoint among the better half
