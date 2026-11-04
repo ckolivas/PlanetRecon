@@ -12,7 +12,7 @@ from planetrecon.export import ExportCancelled
 from planetrecon.io import open_source
 from planetrecon.io.ser import SERSource, SER_HEADER_SIZE, NAME_TO_COLOR
 from planetrecon.pipeline.preprocess import best_frame_mask
-from planetrecon.pipeline.preprocess_cache import load_cache
+from planetrecon.pipeline.preprocess_cache import effective_selection, load_cache
 
 
 @dataclass(frozen=True)
@@ -95,6 +95,7 @@ def export_filtered_ser(source_path, destination, config, *, cache_path=None,
                 raise ValueError(report.get('reason', 'Preprocess this capture before exporting'))
             if expected_digest is not None and selection.digest != expected_digest:
                 raise ValueError('Preprocessing changed; reload the quality graph before exporting')
+            selection, report = effective_selection(selection, report, config)
             indices = np.flatnonzero(export_frame_mask(selection, config.stack_percent,
                                                        config.frame_selection_mode, minimum_quality))
             if not indices.size:

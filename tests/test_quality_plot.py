@@ -237,3 +237,34 @@ def test_preview_reads_only_requested_frame_with_correct_colour(color):
     with pytest.raises(ValueError, match='outside'):
         input_frame_preview(Source(), 3)
     assert reads == [2]
+
+
+def test_disc_brightness_overlay_draws_and_describes_frames(gui):
+    app, win = gui
+    plot = win.quality_plot
+    info = report()
+    win._set_preprocessing(info)
+    assert not plot.brightness_control.isEnabled()  # A four-column cache has no brightness.
+    scores = (0, 50, 75, 100, 90, np.nan)
+    rows = [[q, 1, 1, 0, 10 + 100 * b, 10, .1, 1] for q, b in zip(scores, (1, .6, 1, 1.1, .9, np.nan))]
+    selection = FrameSelection(np.array([True, True, True, True, False, False]), np.array(rows),
+        {'rejected_indices_by_reason': {'low_quality': [], 'width_outlier': [4], 'height_outlier': [],
+         'clipped_target': [], 'no_target': [5], 'invalid': [], 'saturated': []}}, digest='brightness-test')
+    win._set_preprocessing({**cache_report(selection), 'frame_quality': quality_plot_data(selection)})
+    assert plot.brightness_control.isEnabled()
+    assert 'Disc brightness 60% of median' in plot.frame_description(1)
+    plot.brightness_control.setChecked(True)
+    plot.canvas.resize(400, 200)
+    assert not plot.canvas.grab().isNull()
+
+
+def test_toggling_transparency_compensation_reloads_the_cached_scores(gui, tmp_path, monkeypatch):
+    app, win = gui
+    calls = []
+    monkeypatch.setattr(win, '_capture_ready', lambda: calls.append('reload'))
+    win.path = None
+    win.controls.fields['transparency_compensation'].setChecked(True)
+    assert calls == []
+    win.path = tmp_path / 'capture.ser'
+    win.controls.fields['transparency_compensation'].setChecked(False)
+    assert calls == ['reload']

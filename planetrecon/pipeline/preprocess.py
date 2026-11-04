@@ -4,12 +4,12 @@ The noise-robust squared-Laplacian is an adaptation of Kraaikamp's published
 AutoStakkert estimator family, not a claim of bitwise AutoStakkert equivalence.
 See docs/preprocessing.md for the exact reproducible algorithm and limitations.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from contextlib import contextmanager
 from functools import partial
 
 import numpy as np
-from scipy.ndimage import binary_dilation, gaussian_filter, label, laplace
+from scipy.ndimage import binary_dilation, binary_erosion, convolve, gaussian_filter, label, laplace
 
 from planetrecon.calibration import apply_calibration
 from planetrecon.detector import is_bayer
@@ -30,8 +30,35 @@ def measurement_plane(frame, color):
     return plane, 1
 
 
+# Columns of FrameSelection.measurements: the Laplacian quality, apparent
+# silhouette, and the disc brightness, sky and pixel noise line (variance =
+# slope * brightness + offset) that transparency compensation needs. Caches
+# from before the last four have four columns.
+MEASUREMENTS = ('quality', 'width_px', 'height_px', 'angle_rad', 'disc_level', 'sky_level', 'noise_slope', 'noise_offset')
+N_MEASUREMENTS = len(MEASUREMENTS)
+# Immerkaer's (1996) noise operator: blind to planes and to separable quadratics,
+# so a smooth disc leaves little signal; white noise of variance s^2 gives 36 s^2.
+# Noise correlated between pixels (some colour cameras and resampled captures)
+# is underestimated; see docs/preprocessing.md for how one such capture fared.
+NOISE_OPERATOR = np.outer([1., -2., 1.], [1., -2., 1.])
+
+
+def _laplacian_noise_gain():
+    """Squared-Laplacian energy of the quality filter per unit white-noise variance."""
+    delta = np.zeros((41, 41))
+    delta[20, 20] = 1.
+    return float(np.sum(laplace(gaussian_filter(delta, 1.0, mode='constant'), mode='constant') ** 2))
+
+
+LAPLACIAN_NOISE_GAIN = _laplacian_noise_gain()
+
+
+def noise_residual(plane):
+    return convolve(plane, NOISE_OPERATOR, mode='nearest')
+
+
 def measure_frame(frame, color):
-    """Return quality, silhouette width/height in detector px, angle and status.
+    """Return the measurements named by MEASUREMENTS, and a status.
 
     The largest connected illuminated silhouette excludes detached moons and
     hot pixels. Principal axes follow rings/phase/roll; these are apparent
@@ -39,27 +66,31 @@ def measure_frame(frame, color):
     """
     plane, scale = measurement_plane(frame, color)
     smooth = gaussian_filter(plane, 1.0, mode='nearest')
-    return measure_filtered(smooth, scale)
+    return measure_filtered(smooth, scale, residual=noise_residual(plane))
 
 
-def measure_filtered(smooth, scale, laplacian=None):
-    """Shared CPU silhouette decisions after CPU or CUDA filtering."""
+def measure_filtered(smooth, scale, laplacian=None, residual=None):
+    """Shared CPU silhouette decisions after CPU or CUDA filtering.
+
+    ``residual`` is the unsmoothed plane under NOISE_OPERATOR.
+    """
+    missing = (np.nan,) * N_MEASUREMENTS
     border = np.concatenate((smooth[0], smooth[-1], smooth[1:-1, 0], smooth[1:-1, -1]))
     sky = float(np.median(border))
     noise = 1.4826 * float(np.median(np.abs(border - sky)))
     peak = float(smooth.max())
     contrast = peak - sky
     if contrast <= max(6 * noise, np.finfo(float).eps * max(abs(peak), 1)):
-        return (np.nan, np.nan, np.nan, np.nan, 'no_target')
+        return (*missing, 'no_target')
     labels, count = label(smooth > sky + max(.15 * contrast, 6 * noise))
     sizes = np.bincount(labels.ravel(), minlength=count+1)
     sizes[0] = 0
     mask = labels == int(sizes.argmax())
     if sizes.max() < 9:
-        return (np.nan, np.nan, np.nan, np.nan, 'no_target')
+        return (*missing, 'no_target')
     yy, xx = np.nonzero(mask)
     if xx.min() == 0 or yy.min() == 0 or xx.max() == smooth.shape[1]-1 or yy.max() == smooth.shape[0]-1:
-        return (np.nan, np.nan, np.nan, np.nan, 'clipped_target')
+        return (*missing, 'clipped_target')
     points = np.column_stack((xx - xx.mean(), yy - yy.mean()))
     _, axes = np.linalg.eigh(points.T @ points / len(points))
     # The major apparent axis becomes horizontal, including a ring system or
@@ -76,7 +107,31 @@ def measure_filtered(smooth, scale, laplacian=None):
     if laplacian is None:
         laplacian = laplace(smooth, mode='nearest')
     quality = float(np.mean(laplacian[support] ** 2))
-    return quality, float(width), float(height), angle, 'ok'
+    level = float(np.mean(smooth[support]))
+    slope, offset = _noise_line(smooth, residual, mask) if residual is not None else (np.nan, np.nan)
+    return quality, float(width), float(height), angle, level, sky, slope, offset, 'ok'
+
+
+def _noise_line(smooth, residual, mask):
+    """Pixel noise variance as slope * brightness + offset (photon plus read noise).
+
+    Mean squares (not medians), so 8-bit quantisation counts as the noise it
+    is. Measured inside the disc clear of the limb, which the operator sees,
+    and on the sky clear of the halo.
+    """
+    inner = binary_erosion(mask, iterations=3)
+    if inner.sum() < 9:
+        inner = mask
+    outer = ~binary_dilation(mask, iterations=6)
+    outer[[0, -1], :] = outer[:, [0, -1]] = False
+    v_in, l_in = float(np.mean(residual[inner] ** 2)) / 36, float(np.mean(smooth[inner]))
+    if outer.sum() < 9:
+        return 0., v_in
+    v_out, l_out = float(np.mean(residual[outer] ** 2)) / 36, float(np.mean(smooth[outer]))
+    if l_in - l_out <= 0:
+        return 0., v_in
+    slope = max((v_in - v_out) / (l_in - l_out), 0.)
+    return slope, v_in - slope * l_in
 
 
 def sigma_selection(measurements, valid):
@@ -123,7 +178,7 @@ class FrameSelection:
 
 def _measure_observation(raw, *, color, bit_depth, reject_saturated, calibration):
     from planetrecon.pipeline.baseline import _saturated
-    values, status = (np.nan,)*4, 'invalid'
+    values, status = (np.nan,)*N_MEASUREMENTS, 'invalid'
     if np.isfinite(raw).all():
         if reject_saturated and _saturated(raw, bit_depth):
             status = 'saturated'
@@ -242,7 +297,7 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
     """Read serial bounded batches; measure independent frames in a bounded pool."""
 
     n = source.n_frames()
-    metrics = np.full((n, 4), np.nan)
+    metrics = np.full((n, N_MEASUREMENTS), np.nan)
     statuses = np.full(n, 'unmeasured', dtype='<U20')
     processed = 0
     stopped = False
@@ -295,6 +350,83 @@ def screen_source(source, config, calibration=None, *, should_cancel=None, on_pr
         'execution': {**execution, 'cuda_frames': cuda_frames},
     }
     return FrameSelection(accepted, metrics, summary, stopped)
+
+
+# Compensation restores frames down to this brightness relative to the capture
+# median. Below it noise dominates the score, so a small noise-model error
+# would rank a frame through thick cloud as sharp; such frames still rank down.
+MIN_COMPENSATED_BRIGHTNESS = .5
+
+
+def _noise_model(slopes, offsets):
+    """The capture's noise line: medians of the frames' lines.
+
+    Each frame spans sky to disc, so the line is determined however little the
+    transparency varies; medians keep odd frames, and texture that leaks into
+    the noise operator in the sharpest frames, from steering it.
+    """
+    return float(np.median(slopes)), float(np.median(offsets))
+
+
+def transparency_compensated(selection):
+    """Selection ranked by sharpness alone when sky transparency varies.
+
+    Quality becomes the disc's Laplacian energy less its expected noise energy,
+    divided by the squared disc brightness above the sky relative to the
+    capture's median (floored at MIN_COMPENSATED_BRIGHTNESS): a sharp frame
+    through thin cloud keeps its rank. Screening is decided again on the
+    compensated scores; the cached measurements are not changed. Requires the
+    brightness and noise columns.
+    """
+    m = selection.measurements
+    if m.shape[1] < N_MEASUREMENTS:
+        raise ValueError('transparency compensation needs brightness and noise measurements; run Preprocess again')
+    valid = np.isfinite(m).all(axis=1)
+    level, sky = m[:, 4], m[:, 5]
+    contrast = level - sky
+    valid &= contrast > 0
+    slope, intercept = _noise_model(m[valid, 6], m[valid, 7]) if valid.any() else (0., 0.)
+    expected = LAPLACIAN_NOISE_GAIN * np.maximum(slope * level + intercept, 0.)
+    reference = float(np.median(contrast[valid])) if valid.any() else 1.
+    measurements = m.copy()
+    with np.errstate(invalid='ignore', divide='ignore'):
+        signal = np.maximum(m[:, 0] - expected, 1e-6 * m[:, 0])
+        brightness = np.maximum(contrast / reference, MIN_COMPENSATED_BRIGHTNESS)
+        measurements[:, 0] = np.where(valid, signal / brightness ** 2, np.nan)
+    accepted, cuts, stats = sigma_selection(measurements, valid)
+    reasons = dict(selection.summary['rejected_indices_by_reason'])
+    reasons.update({name: np.flatnonzero(cuts[:, i]).tolist()
+                    for i, name in enumerate(('low_quality', 'width_outlier', 'height_outlier'))})
+    # Frames the screen measured but compensation cannot (no brightness above the sky).
+    reasons['invalid'] = sorted(set(reasons['invalid']) | set(
+        np.flatnonzero(np.isfinite(m[:, :3]).all(axis=1) & ~valid).tolist()))
+    relative = contrast[valid] / reference
+    summary = {**selection.summary, 'statistics': stats, 'rejected_indices_by_reason': reasons,
+               'n_accepted': int(accepted.sum()),
+               'n_rejected': int(selection.summary['n_measured'] - accepted.sum()),
+               'transparency_compensation': {
+                   'method': 'squared-Laplacian quality less expected noise energy, per squared disc '
+                             'brightness above sky, at the median disc brightness',
+                   'minimum_compensated_brightness': MIN_COMPENSATED_BRIGHTNESS,
+                   'noise_model': {'slope': slope, 'intercept': intercept,
+                                   'laplacian_noise_gain': LAPLACIAN_NOISE_GAIN},
+                   'median_disc_brightness': reference,
+                   'relative_brightness_percentiles': (
+                       {str(q): float(np.percentile(relative, q)) for q in (1, 5, 50, 95, 99)}
+                       if relative.size else None)}}
+    return replace(selection, accepted=accepted, measurements=measurements, summary=summary)
+
+
+def relative_brightness(selection):
+    """Disc brightness above the sky relative to the capture median, or None without it."""
+    m = selection.measurements
+    if m.shape[1] < N_MEASUREMENTS:
+        return None
+    contrast = m[:, 4] - m[:, 5]
+    valid = np.isfinite(contrast) & (contrast > 0)
+    if not valid.any():
+        return None
+    return np.where(valid, contrast / np.median(contrast[valid]), np.nan)
 
 
 def quality_range(selection):

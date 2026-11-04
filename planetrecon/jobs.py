@@ -169,13 +169,15 @@ def _worker_run(
             payload = {**input_frame_preview(source), 'source_metadata': source.metadata().as_dict(),
                        'capture_timing': capture_timing(source, cadence_s=config.cadence_s)}
             if inspect_only:
-                from planetrecon.pipeline.preprocess_cache import load_cache, calibration_for, quality_plot_data
-                selected, payload['preprocessing_cache'] = load_cache(source, config, calibration_for(source, config),
+                from planetrecon.pipeline.preprocess_cache import (load_cache, calibration_for, quality_plot_data,
+                                                                   effective_selection)
+                selected, payload['preprocessing_cache'] = effective_selection(*load_cache(
+                    source, config, calibration_for(source, config),
                     validation=cache_validation, verify=verify_cache,
                     should_cancel=cancel_event.is_set,
                     on_progress=lambda done, total: emit('progress', {
                         'stage': f'Validating cached preprocessing: {done:,}/{total:,} frames',
-                        'fraction': done / max(total, 1), 'backend': 'cpu'}))
+                        'fraction': done / max(total, 1), 'backend': 'cpu'})), config)
                 if selected is not None:
                     payload['preprocessing_cache']['frame_quality'] = quality_plot_data(selected)
                 payload['cache_validation'] = vars(cache_validation).copy()
@@ -183,7 +185,8 @@ def _worker_run(
             if inspect_only:
                 return
         if preprocess_only:
-            from planetrecon.pipeline.preprocess_cache import preprocess_source, cache_report, default_cache_path, quality_plot_data
+            from planetrecon.pipeline.preprocess_cache import (preprocess_source, cache_report, default_cache_path,
+                                                               quality_plot_data, effective_selection)
             emit('progress', {'stage': 'Preprocessing: validating capture', 'fraction': None, 'backend': 'cpu'})
             preprocessing_device = {'backend': 'cpu'}
             def preprocessing_backend(report):
@@ -196,7 +199,7 @@ def _worker_run(
                 on_progress=lambda done, total: emit('progress', {'stage': 'Preprocessing: quality and shape',
                     'fraction': done/max(total, 1), 'backend': preprocessing_device['backend'],
                     'device_report': dict(preprocessing_device)}))
-            report = cache_report(selected, default_cache_path(source))
+            selected, report = effective_selection(selected, cache_report(selected, default_cache_path(source)), config)
             report['frame_quality'] = quality_plot_data(selected)
             # The final event owns the preview too: optional source events may
             # have been dropped. No second worker or full cache re-read is needed.

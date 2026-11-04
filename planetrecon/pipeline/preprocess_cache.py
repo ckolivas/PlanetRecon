@@ -11,7 +11,8 @@ from zipfile import BadZipFile
 import numpy as np
 
 from planetrecon.calibration import load_calibration
-from planetrecon.pipeline.preprocess import FrameSelection, screen_source, quality_range_counts
+from planetrecon.pipeline.preprocess import (N_MEASUREMENTS, FrameSelection, relative_brightness, screen_source,
+                                             quality_range_counts, transparency_compensated)
 from planetrecon.pipeline.provenance import capture_provenance
 from planetrecon.pipeline.capture_hash import HASH_METHOD, LEGACY_HASH_METHOD, pixel_hash
 
@@ -154,7 +155,22 @@ def quality_plot_data(selection):
     """Per-frame display data, sent once by workers, never added to provenance."""
     return {'scores': selection.measurements[:, 0].copy(),
             'accepted': selection.accepted.copy(),
-            'reasons': selection.summary['rejected_indices_by_reason']}
+            'reasons': selection.summary['rejected_indices_by_reason'],
+            'brightness': relative_brightness(selection)}
+
+
+def effective_selection(selection, report, config):
+    """Cached measurements as this configuration ranks them, with the report to match.
+
+    Transparency compensation rescores and rescreens a copy; the cache and its
+    digest are unchanged.
+    """
+    if selection is None or not config.transparency_compensation:
+        return selection, report
+    view = transparency_compensated(selection)
+    return view, {**report, **exclusion_counts(view), 'best_reference_index': view.best_reference_index,
+                  'quality_range': quality_range_counts(view),
+                  'transparency_compensation': view.summary['transparency_compensation']}
 
 
 def cache_report(selection, path=None, config=None, source=None):
@@ -292,11 +308,15 @@ def load_cache(source, config, calibration=None, *, path=None, should_cancel=Non
         n = source.n_frames()
         if (not isinstance(selection.identity, dict)
                 or selection.accepted.dtype != np.bool_ or selection.accepted.shape != (n,)
-                or selection.measurements.dtype != np.float64 or selection.measurements.shape != (n, 4)
+                or selection.measurements.dtype != np.float64
+                or selection.measurements.shape not in ((n, 4), (n, N_MEASUREMENTS))
                 or not selection.summary['complete'] or selection.summary['n_measured'] != n
                 or not np.isfinite(selection.measurements[selection.accepted]).all()
                 or selection_digest(selection) != selection.digest):
             raise ValueError('invalid or incomplete cache measurements')
+        if config.transparency_compensation and selection.measurements.shape[1] < N_MEASUREMENTS:
+            return None, {'status': 'stale', 'reason': 'Transparency compensation needs the brightness and noise '
+                          'measurements of a newer preprocessing cache; run Preprocess again.'}
         if (selection.validation_identity is not None
                 and (not isinstance(selection.validation_identity, dict)
                      or meta.get('validation_digest') != _validation_digest(selection))):

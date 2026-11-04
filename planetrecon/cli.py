@@ -161,6 +161,9 @@ def main(argv: list[str] | None = None) -> int:
                          'weighting deciding how much each frame contributes at each scale); 100 keeps all screened frames; below 100 requires preprocessing; ignored with --no-frame-preselection')
     st.add_argument('--quality-weighting', action=argparse.BooleanOptionalAction, default=True,
                     help='weight retained frames by quality (default); --no-quality-weighting gives retained frames equal weight')
+    st.add_argument('--transparency-compensation', action=argparse.BooleanOptionalAction, default=False,
+                    help='rank, screen and weight frames by sharpness alone when cloud or haze varies the brightness: '
+                         'preprocessing quality less its noise, per squared disc brightness (default off: dimmer frames rank lower)')
     st.add_argument('--normalise-brightness', action=argparse.BooleanOptionalAction, default=False,
                     help='apply one output gain so the stack peak reaches the requested full-scale percentage')
     st.add_argument('--normalise-percent', type=int, default=70,
@@ -436,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
             batch_frames=args.batch,
             frame_preselection=not args.no_frame_preselection,
             quality_weighting=args.quality_weighting,
+            transparency_compensation=args.transparency_compensation,
             normalise_brightness=args.normalise_brightness,
             normalise_percent=args.normalise_percent,
             stack_percent=args.stack_percent,

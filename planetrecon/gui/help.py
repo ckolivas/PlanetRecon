@@ -1,6 +1,7 @@
 """Hover help for capture configuration, expressed in the GUI's displayed units."""
 
 CONTROL_HELP = {
+    'transparency_compensation': 'For captures through passing cloud or haze. Off (default), a dimmer frame scores lower, as its signal-to-noise is lower. On, frame quality is the disc\'s sharpness less its expected noise, per squared disc brightness, so sharp frames through thin cloud are not screened out, ranked down or weighted down. Frames are still summed as recorded. Needs a preprocessing cache made by this version; Stack preprocesses again when needed.',
     'normalise_brightness': 'Apply one gain after stacking so the supported stack peak reaches the selected percentage of the capture brightness range. Every input frame retains its intrinsic brightness; RGB colour ratios are preserved. Disabled by default.',
     'normalise_percent': 'Target stack peak as a percentage of capture full scale; defaults to 70%. For an 8-bit SER, 70% is 178.5 ADU. No per-frame adjustment, gamma or clipping is applied.',
     'quality_weighting': 'Weight retained frames in proportion to their quality score (default on). Turn off for equal frame weights. Frame selection and alignment are unchanged; neither mode adjusts individual frame brightness.',

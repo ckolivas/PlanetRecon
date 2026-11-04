@@ -373,6 +373,8 @@ exports the selected frames as a lossless filtered SER. It does not stack.
   screened frames, or every score strictly above an absolute quality value.
   The dashed line on the graph is the active cutoff. Shape and validity
   screening applies in every mode.
+- **Compensate variable transparency** ranks and screens frames by sharpness
+  alone when cloud or haze varies the brightness, as in the stacking window.
 - Clicking the graph reads that frame directly from the capture (up to 1024
   pixels on the long side, nearest-neighbour Bayer colour) using one linear
   display range for the whole capture.
@@ -424,6 +426,16 @@ if it is missing, stale or unusable, then stacks with the resulting prefills.
 Motion runs also refresh geometry estimates when needed; unresolved required
 geometry still prevents stacking. **Preprocess** remains available separately.
 Checkpoint resumes retain their exact settings and do not rebuild caches.
+
+**Compensate variable transparency** (default off; `--transparency-compensation`)
+is for captures through passing cloud or haze. By default a frame dimmed by cloud
+scores lower, as its signal-to-noise ratio is lower. With the option, frame
+quality is the disc's sharpness less its measured photon and read noise, per
+squared disc brightness (down to half the capture median), so screening,
+selection and weights follow seeing rather than transparency. Frames are still
+summed as recorded. Caches made before the brightness and noise measurements
+are preprocessed again when the option is on. The quality graph's **Disc
+brightness** overlay shows the transparency; see `docs/preprocessing.md`.
 
 A finished stack reports its **stack quality** under the result (and in the
 command-line output, beneath each capture in the batch queue, and the result

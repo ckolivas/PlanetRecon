@@ -142,7 +142,8 @@ def _stack_source(
     selection = reference_selection = None
     cache_status = {'status': 'disabled', 'reason': 'Cached preprocessing is disabled for this run.'}
     if config.frame_preselection:
-        from planetrecon.pipeline.preprocess_cache import load_cache, identity, cache_report, selection_digest
+        from planetrecon.pipeline.preprocess_cache import (load_cache, identity, cache_report, selection_digest,
+                                                           effective_selection)
         if preprocessing is not None:
             from planetrecon.pipeline.capture_hash import LEGACY_HASH_METHOD
             expected = preprocessing.validation_identity or preprocessing.identity
@@ -157,6 +158,7 @@ def _stack_source(
                                                 should_cancel=should_cancel, validation=cache_validation)
             if cache_status['status'] in ('stale', 'invalid'):
                 raise ValueError(cache_status['reason'] + ' Run Preprocess again or disable cached preprocessing.')
+        selection, cache_status = effective_selection(selection, cache_status, config)
         if config.local_alignment and selection is None:
             raise ValueError('Local alignment requires a matching cache. Run Preprocess first.')
         if config.stack_percent < 100 and selection is None:

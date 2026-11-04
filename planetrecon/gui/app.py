@@ -261,6 +261,7 @@ class MainWindow:
                                        remember_directory=self._remember_directory)
         self.controls.fields['stack_percent'].valueChanged.connect(self._refresh_preprocessing)
         self.controls.fields['frame_selection_mode'].currentIndexChanged.connect(self._refresh_preprocessing)
+        self.controls.fields['transparency_compensation'].toggled.connect(self._transparency_changed)
         for key in ('bayer_override', 'endian_override', 'endian_convention', 'crop',
                     'recover_complete_frames', 'reject_saturated', 'bias_path', 'dark_path',
                     'flat_path', 'gain_e_per_adu', 'read_noise_e', 'saturate_adu'):
@@ -968,6 +969,15 @@ class MainWindow:
         self.ser_min_quality.setEnabled(idle and self.ser_quality_check.isChecked())
         self.export_ser_btn.setEnabled(bool(ready and idle and count))
         self.cancel_ser_btn.setEnabled(isinstance(self.export_worker, SERExportWorker))
+
+    def _transparency_changed(self, checked=None):
+        """Compensation rescores the cached measurements; reload the graph and counts."""
+        if self.path is None or self.closing:
+            return
+        if self.job is not None or self.run_stage is not None or self.batch_active:
+            self._preprocessing_settings_changed()
+        else:
+            self._capture_ready()
 
     def _preprocessing_settings_changed(self, value=None):
         if self.preprocessing_info.get('status') == 'ready':

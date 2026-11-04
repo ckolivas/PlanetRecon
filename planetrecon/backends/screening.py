@@ -51,8 +51,8 @@ class CUDAScreening:
         free, total = torch.cuda.mem_get_info(0)
         cap = int(total * torch.cuda.get_per_process_memory_fraction(0))
         room = max(0, min(free, cap-torch.cuda.memory_allocated(0)))
-        # Conservative simultaneous raw/calibrated/filter scratch estimate.
-        chunk = max(1, min(len(batch), room//2//max(1, 64*int(np.prod(self.shape)))))
+        # Conservative simultaneous raw/calibrated/filter/noise scratch estimate.
+        chunk = max(1, min(len(batch), room//2//max(1, 80*int(np.prod(self.shape)))))
         items = []
         for start in range(0, len(batch), chunk):
             if should_cancel is not None and should_cancel():
@@ -94,22 +94,26 @@ class CUDAScreening:
             if self.scale == 2:
                 n, h, w = work.shape
                 work = work[:, :h//2*2, :w//2*2].reshape(n, h//2, 2, w//2, 2).mean((2, 4))
+            # preprocess.NOISE_OPERATOR: second differences across, then down.
+            padded = F.pad(work[:, None], (1, 1, 1, 1), mode='replicate')[:, 0]
+            across = padded[:, :, :-2] - 2*padded[:, :, 1:-1] + padded[:, :, 2:]
+            residual = across[:, :-2] - 2*across[:, 1:-1] + across[:, 2:]
             smooth = self._filter(self._filter(work, 1), 2)
             padded = F.pad(smooth[:, None], (1, 1, 1, 1), mode='replicate')[:, 0]
             vertical = padded[:, :-2, 1:-1] - 2*smooth + padded[:, 2:, 1:-1]
             horizontal = padded[:, 1:-1, :-2] - 2*smooth + padded[:, 1:-1, 2:]
-            planes = torch.stack((smooth, vertical+horizontal), dim=1).cpu().numpy()
+            planes = torch.stack((smooth, vertical+horizontal, residual), dim=1).cpu().numpy()
             flags = codes.cpu().numpy()
-            items.extend((plane[0], plane[1], int(flag), self.scale) for plane, flag in zip(planes, flags))
+            items.extend((plane[0], plane[1], plane[2], int(flag), self.scale) for plane, flag in zip(planes, flags))
         return items
 
     @staticmethod
     def measure(item):
-        from planetrecon.pipeline.preprocess import measure_filtered
-        smooth, laplacian, code, scale = item
-        values, status = (np.nan,)*4, 'invalid' if code == 2 else 'saturated'
+        from planetrecon.pipeline.preprocess import N_MEASUREMENTS, measure_filtered
+        smooth, laplacian, residual, code, scale = item
+        values, status = (np.nan,)*N_MEASUREMENTS, 'invalid' if code == 2 else 'saturated'
         if code == 0:
-            *values, status = measure_filtered(smooth, scale, laplacian)
+            *values, status = measure_filtered(smooth, scale, laplacian, residual)
             if status == 'ok' and not np.isfinite(values).all():
                 status = 'invalid'
         return values, status

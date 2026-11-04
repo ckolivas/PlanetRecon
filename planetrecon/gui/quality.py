@@ -50,7 +50,12 @@ class QualityPlot(QWidget):
         self.absolute_control.setToolTip('Show raw quality scores on an axis starting at zero instead of the capture’s worst-to-best range.')
         self.log_control = QCheckBox('Log scale')
         self.log_control.setToolTip('Logarithmic above 0.1% of the axis maximum; linear near zero so zero-quality frames remain visible.')
-        for control in (self.absolute_control, self.log_control):
+        self.brightness_control = QCheckBox('Disc brightness')
+        self.brightness_control.setToolTip('Overlay each frame’s disc brightness above the sky, relative to the capture median '
+                                           '(its own scale from zero). Dips show passing cloud or haze. Needs a preprocessing '
+                                           'cache made by this version.')
+        self.brightness = None
+        for control in (self.absolute_control, self.log_control, self.brightness_control):
             control.toggled.connect(lambda *_: self.canvas.update())
             axes.addWidget(control)
         axes.addStretch(1)
@@ -119,6 +124,8 @@ class QualityPlot(QWidget):
             self.selection = None
             self.quality_order = np.zeros(0, dtype=int)
             self.quality_ranks = np.zeros(0, dtype=int)
+            brightness = None if data is None else data.get('brightness')
+            self.brightness = None if brightness is None else np.asarray(brightness, dtype=float)
             if data is not None:
                 scores = np.asarray(data['scores'], dtype=float)
                 accepted = np.asarray(data['accepted'], dtype=bool)
@@ -175,6 +182,7 @@ class QualityPlot(QWidget):
             'Green: selected · Orange: below selection · Red: screened out · Bottom strip: mask' + self.registration_note
             if enabled else 'Grey: measured quality · Screening masks are inactive; run-time validity checks still apply')
         self.order_control.setEnabled(self.selection is not None)
+        self.brightness_control.setEnabled(self.brightness is not None)
         self._frame_caption()
         self.canvas.update()
 
@@ -232,6 +240,8 @@ class QualityPlot(QWidget):
             state = 'Below selection'
         else:
             state = 'Selected'
+        if self.brightness is not None and np.isfinite(self.brightness[index]):
+            quality += f' · Disc brightness {100 * self.brightness[index]:.0f}% of median'
         return f'Frame {index + 1:,} · {ranking} · Quality {quality}\n{state}' + (': ' + ', '.join(reasons) if reasons else '')
 
 
@@ -301,6 +311,8 @@ class QualityCanvas(QWidget):
                 # Separate lanes keep overlapping mask classes visible.
                 y = rect.bottom() + 4 + state * 3
                 painter.drawLine(QPointF(x, y), QPointF(x, y+2))
+        if plot.brightness is not None and plot.brightness_control.isChecked():
+            self._draw_brightness(painter, rect, plot.brightness[order], xbins, columns)
         painter.restore()
         position = None if plot.cutoff is None else float(plot.quality_position(plot.cutoff))
         if position is not None and 0 <= position <= 1:  # An absolute cutoff may lie outside the axis.
@@ -325,6 +337,30 @@ class QualityCanvas(QWidget):
         painter.drawText(bottom, Qt.AlignmentFlag.AlignRight, f'{n:,}')
         painter.drawText(bottom, Qt.AlignmentFlag.AlignCenter,
                          'Quality rank (best first)' if plot.order_control.currentIndex() else 'Frame number (capture order)')
+
+    def _draw_brightness(self, painter, rect, values, xbins, columns):
+        """Column means on a scale from zero to at least 125% of the median."""
+        finite = np.isfinite(values)
+        if not finite.any():
+            return
+        total, count = np.zeros(columns), np.zeros(columns)
+        np.add.at(total, xbins[finite], values[finite])
+        np.add.at(count, xbins[finite], 1)
+        top = max(1.25, float(np.max(values[finite])))
+        color = QColor('#7fb8ff')
+        painter.setPen(QPen(color, 1.2))
+        previous = None
+        for col in range(columns):
+            if not count[col]:
+                previous = None
+                continue
+            point = QPointF(rect.left() + col * rect.width() / max(columns-1, 1),
+                            rect.bottom() - total[col] / count[col] / top * rect.height())
+            if previous is not None:
+                painter.drawLine(previous, point)
+            previous = point
+        painter.drawText(QRectF(rect.right()-260, rect.top()+2, 255, 17), Qt.AlignmentFlag.AlignRight,
+                         f'Disc brightness · 0–{100 * top:.0f}% of median')
 
     def frame_at(self, position):
         rect = self.plot_rect()

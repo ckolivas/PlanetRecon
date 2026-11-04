@@ -34,6 +34,8 @@ INPUT_KEYS = ('bayer_override', 'endian_override', 'endian_convention', 'recover
               'reject_saturated', 'bias_path', 'dark_path', 'flat_path', 'gain_e_per_adu',
               'read_noise_e', 'saturate_adu')
 SELECTION_KEYS = ('selection_mode', 'stack_percent', 'minimum_quality')
+# Settings that rescore the cached measurements.
+RESCORE_KEYS = ('transparency_compensation',)
 FRAME_PREVIEW_LIMIT = 1024
 BATCH_OUTCOMES = ('exported', 'measured', 'cached', 'skipped', 'failed', 'cancelled')
 
@@ -41,6 +43,7 @@ HELP = {
     **CONTROL_HELP,
     'selection_mode': 'Frames shown green and written by Export SER. Quality range keeps scores above a cutoff between the capture worst and best. Frame count keeps a ranked percentage of screened frames. Absolute quality keeps scores strictly above a fixed estimator score. Shape and validity screening applies in every mode.',
     'stack_percent': 'Quality range: 50 keeps scores strictly above (best + worst) / 2. Frame count: keeps this percentage of screened frames ranked by quality. 100 keeps every screened frame. Changing it reuses the existing measurements.',
+    'transparency_compensation': 'For captures through passing cloud or haze. Off (default), a dimmer frame scores lower, as its signal-to-noise is lower. On, frame quality is the disc\'s sharpness less its expected noise, per squared disc brightness, so sharp frames through thin cloud are not screened out or ranked down. Exported frames are unchanged. Needs a preprocessing cache made by this version.',
     'minimum_quality': 'Absolute Kraaikamp-style estimator score, as shown by Absolute quality on the graph. Scientific notation is accepted. Only scores strictly above this value are selected.',
     'bayer_override': 'Use the capture header, force monochrome, or select the sensor Bayer pattern. Changes the measured frames and the output header; exported samples are unchanged.',
     'reject_saturated': 'Screen out frames with more than 5% of samples at the detector ceiling, or any sample at an explicitly set saturation threshold.',
@@ -56,6 +59,7 @@ class SERControls(QScrollArea):
     """Selection, capture interpretation, processing and calibration settings."""
     selectionChanged = Signal()
     inputChanged = Signal()
+    rescoreChanged = Signal()
     changed = Signal()
 
     def __init__(self, *, dialog_directory=None, remember_directory=None):
@@ -76,6 +80,8 @@ class SERControls(QScrollArea):
         self._integer(form, 'stack_percent', 'Upper quality range (%)', 1, 100, 50)
         self.percent_label = form.labelForField(self.fields['stack_percent'])
         self._text(form, 'minimum_quality', 'Quality above', '0')
+        self._check(form, 'transparency_compensation', 'Compensate variable transparency',
+                    defaults.transparency_compensation)
 
         form = self._group(layout, 'SER interpretation')
         self._choice(form, 'bayer_override', 'Raw colour override', [
@@ -172,6 +178,8 @@ class SERControls(QScrollArea):
             self._selection_mode_changed()
         if key in SELECTION_KEYS:
             self.selectionChanged.emit()
+        elif key in RESCORE_KEYS:
+            self.rescoreChanged.emit()
         elif key in INPUT_KEYS:
             self.inputChanged.emit()
         self.changed.emit()
@@ -408,6 +416,7 @@ class SERWindow:
         self.controls.changed.connect(self.settings_timer.start)
         self.controls.selectionChanged.connect(self._refresh)
         self.controls.inputChanged.connect(self._input_changed)
+        self.controls.rescoreChanged.connect(self._rescore)
         for control in (self.quality_plot.absolute_control, self.quality_plot.log_control):
             control.toggled.connect(lambda *_: self.settings_timer.start())
         self._refresh()
@@ -706,6 +715,15 @@ class SERWindow:
         else:
             self.preprocessing_label.setText(info.get('reason', 'No preprocessing measurements loaded.'))
         self._buttons()
+
+    def _rescore(self):
+        """Compensation rescores the cached measurements; reload the graph."""
+        if self.path is None or self.preprocessing_info.get('status') is None:
+            return
+        if self._busy() or self.batch is not None:
+            self._input_changed()
+        else:
+            self._load()
 
     def _input_changed(self):
         if self.path is None or self.preprocessing_info.get('status') in (None, 'unverified'):

@@ -57,7 +57,7 @@ def test_exact_simultaneous_two_sigma_rules_and_degenerate_population():
 def test_silhouette_dimensions_follow_roll_and_do_not_force_a_disc(phase, rings):
     dims = []
     for angle in (0, .4, .9, 1.5):
-        q, width, height, pa, status = measure_frame(planet(angle=angle, phase=phase, rings=rings), 'mono')
+        q, width, height, pa, *_, status = measure_frame(planet(angle=angle, phase=phase, rings=rings), 'mono')
         assert q > 0 and status == 'ok'
         dims.append((width, height))
     np.testing.assert_allclose(dims, np.broadcast_to(dims[0], (4, 2)), atol=3)
@@ -149,7 +149,9 @@ def test_clipped_target_and_calibration_are_measured_before_statistics():
     assert baseline.summary['rejected_indices_by_reason']['clipped_target'] == [30]
     np.testing.assert_array_equal(baseline.accepted, calibrated.accepted)
     np.testing.assert_allclose(calibrated.measurements[:30, 0], baseline.measurements[:30, 0]*4)
-    np.testing.assert_allclose(calibrated.measurements[:30, 1:], baseline.measurements[:30, 1:])
+    np.testing.assert_allclose(calibrated.measurements[:30, 1:4], baseline.measurements[:30, 1:4])
+    # Brightness, sky and the noise line's slope follow the gain; its offset the squared gain.
+    np.testing.assert_allclose(calibrated.measurements[:30, 4:], baseline.measurements[:30, 4:]*[2, 2, 2, 4])
 
 
 def test_screened_translation_resume_retains_indices_and_counts(tmp_path):

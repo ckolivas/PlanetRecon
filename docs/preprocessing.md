@@ -296,8 +296,55 @@ For each calibrated, finite, unsaturated frame:
 5. The score is the mean squared four-neighbour discrete Laplacian of the
    smoothed plane over the silhouette dilated by two measurement pixels,
    excluding the outermost image border. Larger scores mean sharper frames.
-   There is no brightness normalization, so changing transparency or gain
-   can affect scores. This filter is only for measurement, not sharpening.
+   There is no brightness normalization by default, so a frame dimmed by
+   cloud or haze scores lower, as its signal-to-noise ratio is lower. This
+   filter is only for measurement, not sharpening.
+6. Record the mean smoothed brightness over the same region, the sky level,
+   and a pixel noise line, variance = slope × brightness + offset. The line
+   joins mean squared responses of Immerkær's noise operator (an outer
+   product of [1, −2, 1]; white noise of variance s² gives 36 s²) inside the
+   disc three pixels clear of the limb and on the sky six pixels clear of the
+   silhouette. Mean squares count 8-bit quantisation as the noise it is.
+   These feed only the optional transparency compensation below.
+
+## Optional transparency compensation
+
+**Compensate variable transparency** (`--transparency-compensation`,
+`ReconstructionConfig(transparency_compensation=True)`; default off) is for
+captures through passing cloud or haze. Quality becomes
+
+    max(score − G · (slope · brightness + offset), 10⁻⁶ · score) / max(c / c̃, ½)²
+
+where G is the quality filter's squared-Laplacian energy per unit white-noise
+variance (≈ 0.112), slope and offset are the medians of the frames' noise
+lines, c is the frame's brightness above the sky and c̃ its capture median.
+A sharp frame through thin cloud then keeps its rank. Brightness normalisation
+alone is not enough: photon noise is typically a third to two thirds of the
+score in real captures, and dividing it by the squared brightness rates dim
+frames as sharper than they are. Compensation restores frames only down to
+half the median brightness; below that, noise dominates the score and a small
+noise-model error would rank a frame through thick cloud as sharp.
+
+Screening (the low-quality and size cuts), best-frame selection, the quality
+weights, the automatic reference frame and the graph all use the compensated
+scores, recomputed from the cached measurements; the cache and its digest are
+unchanged. Frames are still summed as recorded: for photon-limited data equal
+raw weights already make the best use of a dim frame's photons, and scaling it
+up would amplify its noise. Alignment-point ranking is unaffected: local
+quality has always been normalised by local brightness. Caches made before
+these measurements still load with compensation off; with it on, **Stack**
+preprocesses again and **Preprocess** refreshes them.
+
+Checked on 300 frames each of real captures (Saturn R and L, Mars L3, Jupiter
+colour), with half the frames dimmed to 40–100% by scaling and adding the
+matching photon noise: compensated scores reproduced the undimmed ranking with
+Spearman 0.966–0.986, against 0.38–0.52 uncompensated. Dimmed frames scored 3–7%
+below their undimmed selves, and 8–14% below below 55% brightness, where the
+half-brightness limit applies; brightness normalisation without the noise term
+rated them 3–82% above. On the undimmed captures compensation left the ranking
+at Spearman 0.988–0.999 against the default scores. The Jupiter capture's noise
+is correlated between neighbouring pixels (lag-1 0.59), which the noise operator
+underestimates; the median noise line still held its ranking at 0.973.
 
 ## Planet dimensions and rejection
 
@@ -575,6 +622,10 @@ screened frames below the current selection, and red marks preprocessing
 exclusions. The mask strip also marks excluded frames with no quality score.
 Hover for the original frame number (starting at 1), score and screening reasons.
 Large captures retain each display column's quality extrema and exclusion marks.
+**Disc brightness** overlays each frame's brightness above the sky relative to
+the capture median, on its own scale from zero, so passing cloud shows as dips;
+it needs a cache made with the brightness measurements. Toggling **Compensate
+variable transparency** reloads the graph with the scores the stack will use.
 
 The first capture frame appears below the graph. Click the graph or its mask
 strip to display that observation, including screened-out frames. In quality-rank
