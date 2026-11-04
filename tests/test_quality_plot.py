@@ -11,9 +11,10 @@ from test_w14 import gui, pump
 
 
 def report(scores=(0, 50, 75, 100, 90, np.nan), accepted=(True, True, True, True, False, False)):
+    reasons = {'low_quality': [], 'width_outlier': [4], 'height_outlier': [], 'clipped_target': [],
+               'no_target': [5], 'invalid': [], 'saturated': []}
     selection = FrameSelection(np.array(accepted), np.array([[q, 1, 1, 0] for q in scores]),
-        {'rejected_indices_by_reason': {'low_quality': [], 'width_outlier': [4],
-         'height_outlier': [], 'clipped_target': [], 'no_target': [5], 'invalid': [], 'saturated': []}},
+        {'rejected_indices_by_reason': {k: [i for i in v if i < len(scores)] for k, v in reasons.items()}},
         digest='plot-test')
     return {**cache_report(selection), 'frame_quality': quality_plot_data(selection)}
 

@@ -202,6 +202,18 @@ def test_quality_range_uses_capture_extrema_then_applies_screening():
     np.testing.assert_array_equal(selection.accepted, before)
 
 
+def test_quality_range_ignores_frames_rejected_as_not_the_target():
+    # Frame 4 is a noise speck screened out by its size; frame 0 failed only the quality cut.
+    selection = quality_selection([0, 40, 60, 80, 350, 30], [False, True, True, True, False, False])
+    selection.summary['rejected_indices_by_reason'] = {
+        'low_quality': [0], 'width_outlier': [4], 'height_outlier': [4], 'no_target': [5]}
+    from planetrecon.pipeline.preprocess import quality_range, quality_range_counts
+    assert quality_range(selection) == (0., 80.)
+    np.testing.assert_array_equal(best_frame_mask(selection, 50, 'quality_range'),
+                                  [False, False, True, True, False, False])
+    assert quality_range_counts(selection)['retained_counts'][49] == 2
+
+
 @pytest.mark.parametrize('scores', [[4, 4, 4], [np.nan, np.nan], [0, 50, 100], [0, 10, 60, 70, 100]])
 def test_cached_range_counts_match_masks_including_flat_and_empty_range(scores):
     from planetrecon.pipeline.preprocess import quality_range_counts

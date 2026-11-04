@@ -155,8 +155,12 @@ screened frames, and disable local alignment to use global registration.
 After Preprocess, choose **Quality range** and **Upper quality range (%)** in
 Capture. At 50%, retain scores strictly above `(best + worst) / 2`.
 For percentage `p`, the cutoff is `worst + (best - worst) * (1 - p / 100)`.
-The extrema are all finite measured capture qualities, before quality/shape
-screening; screening still applies to the selected frames. This is not a
+The extrema are the scores of accepted frames and of frames rejected only for
+low quality. Frames rejected for shape, no target, clipping, saturation or
+invalid data are left out, because their scores are not measurements of the
+target: a noise speck taken for the planet can outscore every real frame and
+push the cutoff above them all. Screening still applies to the selected frames,
+and such frames can lie outside 0–100% on the graph. This is not a
 percentile or fixed frame count. Equal-to-cutoff scores are excluded; a flat
 quality range and 100% retain all screened frames. CLI: `stack --stack-percent 50`;
 Python: `ReconstructionConfig(stack_percent=50, frame_selection_mode='quality_range')`.

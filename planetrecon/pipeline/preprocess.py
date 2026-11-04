@@ -429,10 +429,23 @@ def relative_brightness(selection):
     return np.where(valid, contrast / np.median(contrast[valid]), np.nan)
 
 
+def range_frames(selection):
+    """Frames whose scores span the quality range: finite and screened out, if at
+    all, only for low quality.
+
+    Shape, target and validity rejections measure something other than the
+    target; a speck of noise scored as the target can exceed every real frame.
+    """
+    mask = np.isfinite(selection.measurements[:, 0])
+    for reason, indices in selection.summary.get('rejected_indices_by_reason', {}).items():
+        if reason != 'low_quality':
+            mask[np.asarray(indices, dtype=int)] = False
+    return mask
+
+
 def quality_range(selection):
-    """Worst/best finite quality measured across the capture, before screening."""
-    scores = selection.measurements[:, 0]
-    scores = scores[np.isfinite(scores)]
+    """Worst/best quality of the capture's target measurements, before quality screening."""
+    scores = selection.measurements[range_frames(selection), 0]
     return (float(scores.min()), float(scores.max())) if scores.size else (None, None)
 
 
@@ -446,7 +459,7 @@ def quality_range_counts(selection):
         counts = (len(scores)-np.searchsorted(scores, cutoffs, side='right')).tolist()
         counts[-1] = len(scores)  # 100% retains all screened frames, including the minimum.
     return {'minimum': low, 'maximum': high, 'retained_counts': counts,
-            'range_scope': 'all finite measured capture qualities; screening still applies'}
+            'range_scope': 'accepted and low-quality frames; shape, target and validity rejections excluded; screening still applies'}
 
 
 def best_frame_mask(selection, percent, mode='frame_count'):

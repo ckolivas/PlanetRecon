@@ -352,7 +352,9 @@ def test_gui_absolute_export_quality_count_and_saved_preference(tmp_path):
         win.controls.fields['frame_selection_mode'].setCurrentIndex(
             win.controls.fields['frame_selection_mode'].findData('quality_range'))
         win.controls.fields['stack_percent'].setValue(1)
-        assert not win.quality_plot.selected.any() and not win.export_ser_btn.isEnabled()
+        # The width outlier scoring 100 does not set the range: 1% keeps the best screened frame.
+        assert np.flatnonzero(win.quality_plot.selected).tolist() == [5]
+        assert win.ser_export_count.text() == 'Export: 1/8 frames'
         win.ser_quality_check.setChecked(True)
         for value in ('bad', 'nan', '-1', '1000'):
             win.ser_min_quality.setText(value)
@@ -360,7 +362,7 @@ def test_gui_absolute_export_quality_count_and_saved_preference(tmp_path):
         win.ser_min_quality.setText('7e1')
         assert win.ser_export_count.text() == 'Export: 2/8 frames'
         assert win.export_ser_btn.isEnabled()
-        assert not win.quality_plot.selected.any()  # Stacking selection is unchanged.
+        assert np.flatnonzero(win.quality_plot.selected).tolist() == [5]  # Stacking selection is unchanged.
         out = tmp_path/'gui-quality.ser'
         assert win.save_filtered_ser(out)
         assert not win.ser_quality_check.isEnabled() and not win.ser_min_quality.isEnabled()

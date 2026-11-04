@@ -129,7 +129,8 @@ class QualityPlot(QWidget):
             if data is not None:
                 scores = np.asarray(data['scores'], dtype=float)
                 accepted = np.asarray(data['accepted'], dtype=bool)
-                self.selection = FrameSelection(accepted, scores[:, None], {})
+                self.selection = FrameSelection(accepted, scores[:, None],
+                                                {'rejected_indices_by_reason': data.get('reasons', {})})
                 self.low, self.high = quality_range(self.selection)
                 self.normalized = np.full(scores.shape, np.nan)
                 finite = np.isfinite(scores)
