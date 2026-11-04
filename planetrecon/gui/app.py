@@ -632,9 +632,19 @@ class MainWindow:
         if self.batch_items:
             self._batch_display()
 
+    def _clear_batch(self):
+        """Forget a finished or stopped queue so it is not shown with another capture."""
+        if self.batch_active or self.batch_saving:
+            return
+        self.batch_items = []
+        self.batch_current = None
+        self.batch_status.clear()
+        self.batch_status.hide()
+
     def _choose(self):
         name, _ = QFileDialog.getOpenFileName(self.window, 'Open capture', self._dialog_directory(), 'Captures (*.ser *.avi *.h5 *.hdf5)')
         if name:
+            self._clear_batch()
             self.controls.clear_geometry_estimate()
             self.preprocessing_info = {}
             self._refresh_preprocessing()

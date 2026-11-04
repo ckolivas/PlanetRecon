@@ -248,3 +248,29 @@ def test_repeated_gpu_fault_fails_the_capture(gui, tmp_path, monkeypatch):
     # One restart per capture: the first fails after two faults, the second retries afresh.
     assert [i.status for i in win.batch_items] == ['failed', 'saved'] and len(stacks) == 3
     assert 'launch timed out' in win.batch_items[0].detail
+
+
+def test_opening_a_capture_clears_the_finished_queue(gui, tmp_path, monkeypatch):
+    app, win = gui
+    from PySide6.QtWidgets import QFileDialog
+    import planetrecon.gui.app as module
+    first, second, opened = (capture(tmp_path / f'{name}.ser') for name in ('first', 'second', 'opened'))
+    small_frames(win)
+    output = tmp_path / 'output'
+    output.mkdir()
+    assert win.start_batch([first, second], output)
+    pump(app, lambda: not win.batch_active and win.export_worker is None, timeout=30)
+    assert [i.status for i in win.batch_items] == ['saved', 'saved'] and win.batch_status.isVisibleTo(win.window)
+    monkeypatch.setattr(QFileDialog, 'getOpenFileName', lambda *a, **k: (str(opened), ''))
+    win._choose()
+    assert not win.batch_items and win.batch_current is None
+    assert not win.batch_status.isVisibleTo(win.window) and not win.batch_status.toPlainText()
+    pump(app, lambda: win.job is None, timeout=30)
+    started = []
+    start = module.start_stack_job
+    monkeypatch.setattr(module, 'start_stack_job', lambda path, *a, **k: (started.append(path), start(path, *a, **k))[1])
+    win._stack()
+    pump(app, lambda: win.job is None and win.run_stage is None and win.export_worker is None, timeout=30)
+    assert started and set(started) == {opened}
+    assert not win.batch_active and not win.batch_items
+    assert win.last_result.provenance['source']['path'] == str(opened)
