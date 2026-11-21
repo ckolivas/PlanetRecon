@@ -356,8 +356,8 @@ def _stack_source(
     local_matcher = None
     local_selection = None
     if config.local_alignment:
-        from planetrecon.pipeline.ap_align import (REFERENCE_FRAMES, AlignmentPoints, refined_reference,
-                                                   select_locally)
+        from planetrecon.pipeline.ap_align import (REFERENCE_FRAMES, AlignmentPoints, calibration_samples,
+                                                   refined_reference, select_locally)
         from planetrecon.pipeline.local_align import cpu_backproject
         accepted = np.flatnonzero(selection.accepted)
         order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
@@ -387,6 +387,19 @@ def _stack_source(
             prepare_reference()
         detail = snapshot_provenance['local_alignment']
         local_matcher = AlignmentPoints(reference, size=config.ap_size, should_cancel=should_cancel)
+        if local_matcher.layers:
+            def calibrate():
+                local_matcher.calibrate(calibration_samples(np.flatnonzero(selection.accepted), read_plane,
+                                                            backend.phase_correlation, reference,
+                                                            config.max_shift_px))
+            local_matcher.use_cuda = backend.name == 'cuda'
+            try:
+                calibrate()
+            except RuntimeError as exc:
+                local_matcher.release_cuda()
+                local_matcher.use_cuda = False
+                cpu_fallback(exc)
+                calibrate()
         detail.update(local_matcher.provenance, template_frames=len(candidates),
                       template='best selected frames averaged after global alignment, then again after '
                                'alignment-point registration to that mean; origin anchored to the best frame')

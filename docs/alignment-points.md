@@ -36,6 +36,27 @@ The method:
    a point on a ring edge or the limb constrains only the direction across the
    edge. A weak prior (0.01 x median curvature) returns the field to global
    motion away from points. Accepted shifts are applied at full strength.
+
+   Before stacking, each point's peak fits on up to 400 frames spread over the
+   selection calibrate how far each of its two principal directions can be
+   trusted. Seeing moves a point about as far as the best-measured directions
+   (the median spread of each point's strongest direction, about 1.6 px on a
+   Saturn IR642 capture). Along a ridge, such as Saturn's belts at the disc
+   centre, there is nothing to match, so noise picks the position, spreading
+   offsets evenly over the search window (std (2 x 6 - 1) / sqrt(12) = 3.2 px).
+   Each direction keeps its share of seeing-like offsets in a mixture of the
+   two spreads; its information is scaled by that share.
+
+   Without this, every frame was shifted along the belts until its noise best
+   matched the reference's, which imprinted the reference's fine noise at each
+   point: a short, slightly curved double line about 8 px apart near the
+   central meridian of Saturn's disc, invisible in the stack but obvious after
+   wavelet sharpening. A 48 px point size moved the streaks onto its own grid,
+   and global alignment had none. Calibration removed them in 15,780-frame
+   tests of 2026-11-21-1018_9-CK-IR642-Sat (streak rms 0.63 to 0.33 x 10^-3 of the
+   disc, below the disc noise), with ring and limb detail unchanged within 1%.
+   The reference refinement and the motion-model matchers use the same
+   calibration; `direction_trust` in the provenance reports it.
 4. The raw detector samples are resampled once with that field (unchanged
    bilinear backprojection, including raw CFA support).
 

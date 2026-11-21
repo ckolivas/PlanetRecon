@@ -103,14 +103,17 @@ def cuda_inverse_local_coordinates(shift, *, tensors=False):
 
 
 def local_coordinates(template_with_support, frame, pose, reference_pose, render, use_cuda,
-                      *, should_cancel=None, ap_size=64):
-    """Predict a fixed, prepared reference; only pose and observations vary."""
+                      *, should_cancel=None, ap_size=64, trust=None):
+    """Predict a fixed, prepared reference; only pose and observations vary.
+
+    ``trust`` is the calibrated ``AlignmentPoints.trust_map`` of the reference's points.
+    """
     from planetrecon.pipeline.ap_align import AlignmentPoints
     projected = render(template_with_support,pose,reference_pose,gain_channels=1)
     predicted,support = projected[...,0],projected[...,1]
     if should_cancel and should_cancel():
         raise InterruptedError('cancelled during local motion alignment')
     matcher = AlignmentPoints(predicted, size=ap_size, use_cuda=use_cuda, valid_mask=support >= 1.-1e-9,
-                              should_cancel=should_cancel)
+                              should_cancel=should_cancel, trust=trust)
     shift = matcher.displacement(frame,(0.,0.))
     return inverse_local_coordinates(shift, use_cuda=use_cuda)

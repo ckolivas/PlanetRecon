@@ -838,11 +838,26 @@ def stack_source_geometry(
         local_template,local_support = build_motion_template(local_anchor,candidates,read_aligned,should_cancel,
                                                              read_group=read_group,group=group)
         from planetrecon.pipeline.ap_align import AlignmentPoints
-        from planetrecon.pipeline.motion_points import refine_motion_template
+        from planetrecon.pipeline.motion_points import calibrate_motion_points, refine_motion_template
         local_template, local_support = refine_motion_template(
             local_template, candidates, read_aligned, size=config.ap_size,
             use_cuda=backend.name == 'cuda', should_cancel=should_cancel, read_group=read_group, group=group)
         local_matcher = AlignmentPoints(local_template, size=config.ap_size, should_cancel=should_cancel)
+        if len(local_matcher.centres):
+            # Correlations on the device when available; the matcher itself stays a CPU reference.
+            calibration_frames = np.flatnonzero(selection.accepted) if selection is not None else candidates
+            local_matcher.use_cuda = backend.name == 'cuda'
+            try:
+                calibrate_motion_points(local_matcher, calibration_frames, read_aligned,
+                                        read_group if local_matcher.use_cuda else None, group)
+            except RuntimeError:
+                if not local_matcher.use_cuda or read_group is not None:
+                    raise  # Device-only planes cannot be calibrated on the CPU.
+                local_matcher.use_cuda = False
+                calibrate_motion_points(local_matcher, calibration_frames, read_aligned)
+            local_matcher.use_cuda = False
+            local_matcher.release_cuda()
+        local_trust = local_matcher.trust_map()
         local_template_with_support = np.stack((local_template,local_support),axis=-1)
         if len(local_matcher.centres):
             local_selection, selection = _motion_local_quality(
@@ -1039,6 +1054,7 @@ def stack_source_geometry(
     if grouped and config.local_alignment:
         from planetrecon.backends.torch_ap import PointGrid, predicted_local_coordinates_batch
         point_grid = PointGrid((h, w), config.ap_size)
+        point_grid.set_trust(local_trust)
 
     def stack_group(members):
         """Accumulate (index, calibrated) frames together; returns (used, rejected)."""
@@ -1174,7 +1190,7 @@ def stack_source_geometry(
                                _alignment_plane(demo,'RGB') if bayer else local_plane(calibrated))
                 sample_xy = local_coordinates(local_template_with_support,local_image,
                     pose,anchor_pose,local_render,backend.name == 'cuda',
-                    should_cancel=should_cancel,ap_size=config.ap_size)
+                    should_cancel=should_cancel,ap_size=config.ap_size,trust=local_trust)
             if gpu_accumulator is not None:
                 if bayer and demo is None:
                     demo = demosaic(calibrated)

@@ -124,16 +124,22 @@ class TorchAlignmentPoints:
         var = (s2 - s1 * s1 / self.window.sum()).clamp_min(1e-12)
         return num / (var.sqrt() * self.norm[:, None, None])
 
+    def peak_fits(self, frame, global_shift):
+        """``AlignmentPoints.peak_fits`` with the correlations on the device."""
+        proxy = gaussian_proxy(torch.as_tensor(frame, device=self.device, dtype=torch.float64))
+        image = sample(proxy, self.yy + float(global_shift[1]), self.xx + float(global_shift[0]))
+        # Peak decisions are tiny (n x 13 x 13); reuse the CPU reference logic.
+        offset, H, ok, _ = ap_align._peak_fit(self._ncc(image).cpu().numpy())
+        return offset, H, ok
+
     def displacement(self, frame, global_shift):
         gx, gy = float(global_shift[0]), float(global_shift[1])
         if not len(self.centres):
             return torch.stack([torch.full(self.shape, gx, device=self.device, dtype=torch.float64),
                                 torch.full(self.shape, gy, device=self.device, dtype=torch.float64)])
-        proxy = gaussian_proxy(torch.as_tensor(frame, device=self.device, dtype=torch.float64))
-        image = sample(proxy, self.yy + gy, self.xx + gx)
-        # Peak decisions are tiny (n x 13 x 13); reuse the CPU reference logic.
-        offset, H, ok, _ = ap_align._peak_fit(self._ncc(image).cpu().numpy())
+        offset, H, ok = self.peak_fits(frame, global_shift)
         self.matcher.accepted.append(float(ok.mean()))
+        H = ap_align.trusted(H, self.matcher.trust)
         H_t = torch.as_tensor(H, device=self.device, dtype=torch.float64)
         d = torch.as_tensor(offset, device=self.device, dtype=torch.float64)
         Hd = torch.einsum('nij,nj->ni', H_t, d)
@@ -269,10 +275,16 @@ class PointGrid:
         c = torch.as_tensor(self.centres, device=device)
         self.tile_rows = (c[:, 0] - half - search)[:, None] + ar
         self.tile_cols = (c[:, 1] - half - search)[:, None] + ar
+        self.trust = None
         gy, gx = ap_align._grid(h, ap_align.FIELD_STEP), ap_align._grid(w, ap_align.FIELD_STEP)
         sigma = .6 * spacing
         self.wy = torch.as_tensor(ap_align._gaussians(gy, self.centres[:, 0].astype(float), sigma), device=device)
         self.wx = torch.as_tensor(ap_align._gaussians(gx, self.centres[:, 1].astype(float), sigma), device=device)
+
+    def set_trust(self, trust):
+        """Apply a calibrated ``AlignmentPoints.trust_map`` to every frame's points (None clears it)."""
+        self.trust = None if not trust else np.stack(
+            [trust.get(tuple(c), np.eye(2)) for c in self.centres.tolist()])
 
     def sections(self, images):
         """(B, ny, nx, size, size) point sections of (B, h, w) images, as a strided view."""
@@ -348,6 +360,8 @@ class PointGrid:
             ncc = (num / (var.sqrt() * norm[:, None, None])).double().cpu().numpy()
             # Peak decisions are tiny (m x 13 x 13); reuse the CPU reference logic.
             offset, information, ok, _ = ap_align._peak_fit(ncc)
+            if self.trust is not None:
+                information = ap_align.trusted(information, self.trust[point_index.cpu().numpy()])
             frames = frame_index.cpu().numpy()
             trace = information[:, 0, 0] + information[:, 1, 1]
             for b in range(n):

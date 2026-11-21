@@ -10,6 +10,26 @@ import numpy as np
 from planetrecon.pipeline.local_align import pull
 
 
+def calibrate_motion_points(matcher, indices, read_aligned, read_group=None, group=1):
+    """``AlignmentPoints.calibrate`` on anchor-geometry frames (already aligned: no global shift).
+
+    With ``read_group`` (device planes), frames are read ``group`` at a time
+    and the matcher must correlate on the device.
+    """
+    from planetrecon.pipeline.ap_align import CALIBRATION_FRAMES
+    indices = np.asarray(indices)
+    if len(indices) > CALIBRATION_FRAMES:
+        indices = indices[np.linspace(0, len(indices) - 1, CALIBRATION_FRAMES).round().astype(int)]
+
+    def aligned():
+        if read_group is None:
+            yield from (read_aligned(int(index)) for index in indices)
+            return
+        for begin in range(0, len(indices), max(1, group)):
+            yield from read_group([int(i) for i in indices[begin:begin + max(1, group)]])
+    matcher.calibrate((a[0], (0., 0.)) for a in aligned() if a is not None)
+
+
 def refine_motion_template(template, indices, read_aligned, *, size, use_cuda=False, should_cancel=None,
                            progress=None, read_group=None, group=1):
     """Average the anchor-geometry frames again after alignment points align them to ``template``.
@@ -19,6 +39,8 @@ def refine_motion_template(template, indices, read_aligned, *, size, use_cuda=Fa
     """
     from planetrecon.pipeline.ap_align import AlignmentPoints
     matcher = AlignmentPoints(template, size=size, use_cuda=use_cuda, should_cancel=should_cancel)
+    if len(matcher.centres):
+        calibrate_motion_points(matcher, indices, read_aligned, read_group if use_cuda else None, group)
     if use_cuda and len(matcher.centres) and read_group is not None:
         return _refine_groups(template, matcher, indices, read_group, group, should_cancel, progress)
     if use_cuda and len(matcher.centres):
@@ -73,6 +95,7 @@ def _refine_groups(template, matcher, indices, read_group, group, should_cancel,
     import torch
     from planetrecon.backends.torch_ap import PointGrid, gaussian_proxy, sample_frames
     grid = PointGrid(template.shape, matcher.size, search=matcher.search)
+    grid.set_trust(matcher.trust_map())
     points = templates = None
     total = torch.zeros(template.shape, device='cuda:0', dtype=torch.float64)
     weight = torch.zeros_like(total)

@@ -11,6 +11,16 @@ an AP on a ring edge or limb constrains only the direction across that edge.
 A weak prior returns the field to the global shift away from accepted APs.
 Accepted shifts are used at full strength (no shrinkage toward global motion).
 
+Where a point's reference varies along one direction only (Saturn's belts at
+the disc centre), its correlation peak is a ridge and the position along the
+ridge is chosen by noise. Following those offsets would shift each frame
+until its noise best matches the reference's, which imprints the reference's
+fine noise on the stack as streaks at the point. A calibration pass measures
+how each point's offsets spread along its principal directions: seeing moves
+points about as far as the best-measured directions, while noise-chosen
+offsets spread evenly across the search window. Each direction keeps the
+share of its information that behaves like seeing.
+
 Local quality ranks frames separately for each AP; per-pixel frame weights
 blend the AP selections with normalised Gaussian footprints. Outside the AP
 cloud the global frame selection applies.
@@ -29,12 +39,63 @@ FIELD_STEP = 4
 REFERENCE_FRAMES = 3000  # best selected frames averaged into the reference
 MIN_BRIGHTNESS = 0.1
 QUALITY_SMOOTH_PX = 1.5
+CALIBRATION_FRAMES = 400  # frames whose peak fits measure each point's trustworthy directions
+MIN_CALIBRATION = 30  # accepted fits a point needs before its directions are judged
 
 
 def _grid(length, step):
     """Coarse field sample coordinates spanning the detector exactly."""
     count = max(2, int(np.ceil((length - 1) / step)) + 1)
     return np.linspace(0., length - 1., count)
+
+
+def noise_spread(search=SEARCH):
+    """Spread of offsets chosen by noise: even over the interior of the search window."""
+    return (2 * search - 1) / np.sqrt(12)
+
+
+def direction_trust(offsets, information, ok, search=SEARCH):
+    """(n, 2, 2) trust matrices from peak fits (frames, n, ...) of n points, and a summary.
+
+    Each point's offsets are projected on the principal directions of its mean
+    information. A direction whose offsets spread as widely as the seeing (the
+    median spread of the points' best-measured directions) is fully trusted;
+    one spreading as evenly as noise over the search window is not. Between
+    the two, the trusted share is the fraction of offsets that follow the
+    seeing in a mixture of the two spreads. Points with too few accepted fits
+    keep all their information. Information H becomes T H T.
+    """
+    offsets, information, ok = np.asarray(offsets), np.asarray(information), np.asarray(ok, bool)
+    n = information.shape[1]
+    vectors = np.tile(np.eye(2), (n, 1, 1))
+    spreads = np.full((n, 2), np.nan)
+    for k in range(n):
+        m = ok[:, k]
+        if m.sum() < MIN_CALIBRATION:
+            continue
+        _, vectors[k] = np.linalg.eigh(information[m, k].mean(0))  # Weakest direction first.
+        spreads[k] = (offsets[m, k] @ vectors[k]).std(0)
+    noise = noise_spread(search)
+    measured = np.isfinite(spreads[:, 1])
+    seeing = float(np.median(spreads[measured, 1])) if measured.any() else np.nan
+    keep = np.ones((n, 2))
+    if np.isfinite(seeing) and seeing < noise:
+        keep = np.where(np.isfinite(spreads),
+                        np.clip((noise ** 2 - spreads ** 2) / (noise ** 2 - seeing ** 2), 0., 1.), 1.)
+    trust = np.einsum('kij,kj,klj->kil', vectors, np.sqrt(keep), vectors)
+    summary = {'calibration_frames': int(len(ok)), 'points_measured': int(measured.sum()),
+               'seeing_spread_px': None if not np.isfinite(seeing) else seeing,
+               'noise_spread_px': float(noise),
+               'directions_mostly_noise': int(np.sum(keep < .5)),
+               'directions_partly_noise': int(np.sum((keep >= .5) & (keep < .9)))}
+    return trust, summary
+
+
+def trusted(information, trust):
+    """Information (m, 2, 2) restricted to trusted directions; ``trust`` (m, 2, 2) or None."""
+    if trust is None:
+        return information
+    return np.einsum('mij,mjk,mlk->mil', trust, information, trust)
 
 
 def _gaussians(coords, centres, sigma):
@@ -90,7 +151,9 @@ class AlignmentPoints:
     ``displacement`` returns a dense (x, y) sampling field in detector pixels,
     the convention of ``local_align.pull`` and the CUDA backprojection.
     """
-    def __init__(self, reference, *, size=64, search=SEARCH, use_cuda=False, should_cancel=None, valid_mask=None):
+    def __init__(self, reference, *, size=64, search=SEARCH, use_cuda=False, should_cancel=None, valid_mask=None,
+                 trust=None):
+        """``trust`` optionally maps point centres (row, column) to calibrated trust matrices (``trust_map``)."""
         reference = np.asarray(reference, dtype=np.float64)
         if reference.ndim != 2 or not np.isfinite(reference).all():
             raise ValueError('finite two-dimensional reference required')
@@ -140,6 +203,10 @@ class AlignmentPoints:
         self.wy = _gaussians(self.gy, self.centres[:, 0].astype(float), self.sigma)
         self.wx = _gaussians(self.gx, self.centres[:, 1].astype(float), self.sigma)
         self.accepted = []
+        self.trust = None
+        if trust:
+            self.trust = np.stack([trust.get(tuple(c), np.eye(2)) for c in self.centres.tolist()]) \
+                if len(self.centres) else None
         self.provenance = {
             'version': 1, 'method': 'alignment_points',
             'ap_size_px': size, 'spacing_px': self.spacing, 'points': int(len(self.centres)),
@@ -178,8 +245,38 @@ class AlignmentPoints:
             out[k] = num / (np.sqrt(var) * max(self.norm[k], 1e-15))
         return out
 
+    def peak_fits(self, frame, global_shift):
+        """(offset, information, accepted) of every point for one frame, before any trust."""
+        if self.use_cuda:
+            return self._device().peak_fits(frame, global_shift)
+        from planetrecon.pipeline.local_align import pull
+        image = pull(registration_proxy(np.asarray(frame, dtype=np.float64)), tuple(float(v) for v in global_shift))
+        offset, H, ok, _ = _peak_fit(self._ncc(image))
+        return offset, H, ok
+
+    def calibrate(self, samples):
+        """Measure each point's trusted directions from (plane, global shift) samples."""
+        fits = []
+        for plane, shift in samples:
+            self._check_cancel()
+            fits.append(self.peak_fits(plane, shift))
+        if not len(self.centres) or not fits:
+            return
+        offsets, information, ok = (np.stack(a) for a in zip(*fits))
+        self.trust, summary = direction_trust(offsets, information, ok, self.search)
+        self.provenance['direction_trust'] = {
+            **summary, 'method': 'offset spread along each point\'s principal directions: seeing-like '
+                                 'spread kept, even spread over the search window (noise) dropped'}
+
+    def trust_map(self):
+        """Calibrated trust by point centre, for matchers of predicted references on the same grid."""
+        if self.trust is None:
+            return None
+        return {tuple(c): t for c, t in zip(self.centres.tolist(), self.trust)}
+
     def _solve(self, offset, H, ok, global_shift):
         """Coarse-grid weighted least squares, then bilinear upsampling."""
+        H = trusted(H, self.trust)
         Hd = np.einsum('nij,nj->ni', H, offset)
         A = np.einsum('ky,kx,kij->yxij', self.wy, self.wx, H)
         b = np.einsum('ky,kx,ki->yxi', self.wy, self.wx, Hd)
@@ -208,27 +305,40 @@ class AlignmentPoints:
         if not len(self.centres):
             return tuple(np.full(self.shape, float(v)) for v in global_shift)
         self._check_cancel()
-        from planetrecon.pipeline.local_align import pull
-        image = pull(registration_proxy(frame), tuple(float(v) for v in global_shift))
-        offset, H, ok, _ = _peak_fit(self._ncc(image))
+        offset, H, ok = self.peak_fits(frame, global_shift)
         self.accepted.append(float(ok.mean()))
         return self._solve(offset, H, ok, np.asarray(global_shift, dtype=float))
 
     def displacement_tensor(self, frame, global_shift):
         """CUDA field kept on the device for direct raw backprojection."""
-        from planetrecon.backends.torch_ap import TorchAlignmentPoints
         self._check_cancel()
+        return self._device().displacement(frame, global_shift)
+
+    def _device(self):
         if self._cuda is None:
+            from planetrecon.backends.torch_ap import TorchAlignmentPoints
             self._cuda = TorchAlignmentPoints(self)
             self.provenance['cuda_execution'].update(used=True, precision='float64',
                 matching='grouped GPU correlations and field solve; CPU peak fits')
-        return self._cuda.displacement(frame, global_shift)
+        return self._cuda
 
     def release_cuda(self):
         self._cuda = None
 
     def acceptance(self):
         return float(np.mean(self.accepted)) if self.accepted else None
+
+
+def calibration_samples(indices, read_plane, correlate, reference, max_shift):
+    """(plane, global shift) of up to CALIBRATION_FRAMES of ``indices``, spread evenly."""
+    indices = np.asarray(indices)
+    if len(indices) > CALIBRATION_FRAMES:
+        indices = indices[np.linspace(0, len(indices) - 1, CALIBRATION_FRAMES).round().astype(int)]
+    for index in indices:
+        plane = read_plane(int(index))
+        shift = correlate(reference, plane)
+        if np.isfinite(shift).all() and max(abs(v) for v in shift) <= max_shift:
+            yield plane, shift
 
 
 def refined_reference(reference, indices, read_plane, correlate, max_shift, *, size, use_cuda=False,
@@ -259,6 +369,7 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
     matcher = AlignmentPoints(template, size=size, use_cuda=use_cuda, should_cancel=should_cancel)
     if not len(matcher.centres):
         return template
+    matcher.calibrate(calibration_samples(indices, read_plane, correlate, template, max_shift))
     if use_cuda:
         import torch
         from planetrecon.backends.torch_ap import sample

@@ -294,3 +294,61 @@ def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, f
     assert fallback.n_used == cpu.n_used
     np.testing.assert_allclose(fallback.image, cpu.image, rtol=1e-7, atol=1e-7*cpu.image.max())
     np.testing.assert_allclose(fallback.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
+
+
+def test_direction_trust_drops_offsets_chosen_by_noise():
+    from planetrecon.pipeline.ap_align import direction_trust, noise_spread, trusted
+    rng = np.random.default_rng(4)
+    n = 400
+    offsets = rng.normal(0, 1.5, (n, 3, 2))
+    # Point 1 lies on a ridge along x: noise picks its x anywhere in the search window.
+    offsets[:, 1, 0] = rng.uniform(-5.5, 5.5, n)
+    information = np.tile(np.diag([.02, .02]), (n, 3, 1, 1))
+    information[:, 1] = np.diag([.001, .02])
+    ok = np.ones((n, 3), bool)
+    ok[10:, 2] = False  # Too few accepted fits to judge: unchanged.
+    trust, summary = direction_trust(offsets, information, ok)
+    assert noise_spread() == pytest.approx(11 / np.sqrt(12))
+    assert summary['seeing_spread_px'] == pytest.approx(1.5, abs=.15) and summary['points_measured'] == 2
+    np.testing.assert_allclose(trust[0], np.eye(2), atol=.1)
+    np.testing.assert_allclose(trust[1], np.diag([0., 1.]), atol=.1)
+    np.testing.assert_array_equal(trust[2], np.eye(2))
+    kept = trusted(information[0], trust)
+    assert kept[1, 0, 0] < .1 * information[0, 1, 0, 0] and kept[1, 1, 1] == pytest.approx(.02, rel=.1)
+    assert summary['directions_mostly_noise'] == 1
+
+
+def banded(shape=(200, 260)):
+    """A disc with belts only: nothing to match along them."""
+    yy, xx = np.indices(shape, dtype=float)
+    disc = np.hypot((yy - shape[0]/2)/.9, xx - shape[1]/2) < 100
+    return gaussian_filter(disc*(100 + 30*np.sin(yy/3.)), 1.5)
+
+
+def test_belts_do_not_let_noise_choose_motion_along_them():
+    ref = banded()
+    rng = np.random.default_rng(7)
+    frames = [ref + rng.normal(0, 6, ref.shape) for _ in range(160)]
+    matcher = AlignmentPoints(ref + rng.normal(0, 1, ref.shape), size=48)
+    inner = np.flatnonzero(np.hypot(matcher.centres[:, 0] - 100, matcher.centres[:, 1] - 130) < 45)
+    assert len(inner) >= 4
+
+    def along_belts():
+        return np.std([matcher.displacement(frame, (0., 0.))[0][70:130, 100:160].mean() for frame in frames[:40]])
+    untrusted = along_belts()
+    matcher.calibrate((frame, (0., 0.)) for frame in frames)
+    detail = matcher.provenance['direction_trust']
+    assert detail['calibration_frames'] == 160 and detail['directions_mostly_noise'] >= len(inner)
+    # Inside the belts the across-belt direction is kept and the along-belt one dropped.
+    np.testing.assert_allclose(np.abs(matcher.trust[inner, 1, 1]), 1., atol=.15)
+    assert np.all(np.abs(matcher.trust[inner, 0, 0]) < .5)
+    assert along_belts() < .25 * untrusted
+    import torch
+    if torch.cuda.is_available():
+        np.testing.assert_allclose(matcher.displacement_tensor(frames[0], (.3, -.2)).cpu().numpy(),
+                                   np.array(matcher.displacement(frames[0], (.3, -.2))), atol=1e-9)
+    # A predicted reference on the same grid takes the calibrated trust by centre.
+    copy = AlignmentPoints(ref, size=48, trust=matcher.trust_map())
+    lookup = matcher.trust_map()
+    for centre, t in zip(copy.centres.tolist(), copy.trust):
+        np.testing.assert_array_equal(t, lookup.get(tuple(centre), np.eye(2)))
