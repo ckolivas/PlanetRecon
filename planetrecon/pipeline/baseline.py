@@ -205,6 +205,8 @@ def _stack_source(
             selection=selection, cache_status=cache_status, reference_selection=reference_selection,
         )
         result.warnings = fallback_warnings + list(result.warnings)
+        result.provenance['moons'] = ({'enabled': True, 'skipped': 'not available with planet rotation models'}
+                                      if config.moon_stacking else {'enabled': False})
         return result
     budget_error = memory_report and memory_report['error']
     backend, report = select_backend('cpu' if budget_error else config.device, threads=config.threads)
@@ -288,6 +290,7 @@ def _stack_source(
         snapshot_provenance['cuda_allocation_budget'] = memory_report
     next_index = 0
     state_identity = None
+    restored = None
     if resume_from is not None or state_checkpoint is not None:
         state_identity = resume.identity(source, config, calibration, should_cancel)
         from planetrecon.pipeline.preprocess_cache import reconstruction_digest
@@ -298,6 +301,9 @@ def _stack_source(
             state_identity['local_template_boundary'] = 'normalised support; best-frame fill'
         if n_bins:
             state_identity['fourier_bins'] = n_bins
+        if config.moon_stacking:
+            from planetrecon.pipeline.moons import VERSION as MOON_VERSION
+            state_identity['moon_stacking_version'] = MOON_VERSION
     if resume_from is not None:
         restored = resume.load(resume_from, state_identity, accum.shape, n, bayer, bins=n_bins)
         bin_accum, bin_weight = restored['bin_accum'], restored['bin_weight']
@@ -443,12 +449,73 @@ def _stack_source(
             from planetrecon.backends.torch_ap import DeviceAccumulator
             device_sums = DeviceAccumulator()
 
+    moon_stack = None
+    moon_state = None  # Checkpointed moon definitions; None when moons were not looked for.
+    pending_moons = {}
+    if not config.moon_stacking:
+        snapshot_provenance['moons'] = {'enabled': False}
+    elif selection is None or reference is None:
+        snapshot_provenance['moons'] = {'enabled': True, 'skipped': 'needs preprocessing to choose a reference'}
+    else:
+        from planetrecon.pipeline import moons as moon_module
+        times, real_time = moon_module.frame_times(source)
+        t_out = .5 * (times[0] + times[-1])
+        channels = 3 if rgb else 1
+        if restored is not None and restored.get('moons') is not None:
+            moon_stack = moon_module.MoonStack(
+                [moon_module.Moon.from_dict(m) for m in restored['moons']['moons']], (h, w), channels, times,
+                t_out, bayer=color if bayer else None, accum=restored['moon_accum'], weight=restored['moon_weight'],
+                counts=restored['moons'].get('counts'))
+            moon_summary = restored['moons'].get('summary', {})
+        else:
+            def read_moon_plane(index):
+                calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+                plane = np.asarray(alignment_plane(calibrated, color), dtype=np.float64)
+                return plane, (backend.registration_plane(calibrated, color) if backend.name == 'cuda' else plane)
+
+            def find_moons():
+                points = local_matcher.centres if local_matcher is not None and local_matcher.layers else ()
+                return moon_module.setup(
+                    np.flatnonzero(local_selection.global_mask if local_selection is not None
+                                   else selection.accepted), read_moon_plane, backend.phase_correlation, reference,
+                    config.max_shift_px, times, t_out, real_time=real_time, points=points,
+                    point_reach=.75 * config.ap_size, progress=setup_progress,
+                    check_cancel=check_cancel)
+
+            def check_cancel():
+                if should_cancel is not None and should_cancel():
+                    raise InterruptedError('stack cancelled while finding moons')
+            try:
+                found, moon_summary = find_moons()
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+                found, moon_summary = find_moons()
+            moon_stack = moon_module.MoonStack(found, (h, w), channels, times, t_out,
+                                               bayer=color if bayer else None)
+        moon_state = {**moon_stack.state(), 'summary': moon_summary}
+        if not moon_stack.moons:
+            moon_stack = None
+        snapshot_provenance['moons'] = {
+            'enabled': True, 'version': moon_module.VERSION, 'method': moon_module.METHOD,
+            'time_unit': 's' if real_time else 'frame', **moon_summary,
+            'stacked': len(moon_stack.moons) if moon_stack is not None else 0}
+
+    def moon_contributions(index, calibrated, plane, global_shift, score):
+        if moon_stack is None:
+            return
+        if local_selection is not None:
+            # Outside the alignment points the global frame selection applies.
+            score = score * float(local_selection.global_mask[index])
+        if score > 0:
+            pending_moons[int(index)] = (moon_stack.contribute(int(index), calibrated, plane, global_shift), score)
+
     def emit(stage: str, incomplete: bool) -> None:
         nonlocal seq
         if on_event is None:
             return
         cov = weight.copy()
-        image = _normalise_stack(accum, weight)
+        image = _normalise_stack(accum, weight) if moon_stack is None else moon_stack.composite(
+            _normalise_stack(accum, weight))
         result = ReconstructionResult(
             image=image,
             coverage=cov,
@@ -490,6 +557,9 @@ def _stack_source(
             return None
         pending_quality[int(index)] = max(score, 1e-12)
         score = max(score, 1e-12) if config.quality_weighting else 1.
+        if moon_stack is not None:
+            moon_contributions(index, calibrated, np.asarray(alignment_plane(calibrated, color), dtype=np.float64),
+                               shift, score)
         if local_matcher.use_cuda is False:
             local_matcher.use_cuda = True
         field = local_matcher.displacement_tensor(plane, shift)
@@ -540,6 +610,7 @@ def _stack_source(
         pending_quality[int(index)] = score
         if not config.quality_weighting:
             score = 1.
+        moon_contributions(index, calibrated, plane, shift, score)
         if local_matcher is not None:
             if local_matcher.use_cuda != (backend.name == 'cuda'):
                 local_matcher.use_cuda = backend.name == 'cuda'
@@ -649,6 +720,7 @@ def _stack_source(
                     # the work batch. Account for exactly the consumed prefix.
                     n_rejected += int(index) - (n_used + n_rejected)
                     quality = pending_quality.pop(int(index), np.nan)
+                    moon_frame = pending_moons.pop(int(index), None)
                     if projected is None:
                         n_rejected += 1
                         continue
@@ -658,6 +730,8 @@ def _stack_source(
                         accumulate(projected)
                     if frame_quality is not None:
                         frame_quality[int(index)] = quality
+                    if moon_frame is not None:
+                        moon_stack.add(*moon_frame)
                     n_used += 1
             except InterruptedError:
                 if not pool.cancelled():
@@ -676,7 +750,10 @@ def _stack_source(
                     "bin_accum": bin_accum, "bin_weight": bin_weight,
                     "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
                     "next_index": n_used + n_rejected, resume.FRAME_QUALITY: frame_quality,
-                    "execution_history": report.execution_history, "warnings": warnings})
+                    "execution_history": report.execution_history, "warnings": warnings,
+                    "moons": moon_state if moon_stack is None else {**moon_state, **moon_stack.state()},
+                    "moon_accum": None if moon_stack is None else moon_stack.accum,
+                    "moon_weight": None if moon_stack is None else moon_stack.weight})
             emit("baseline", incomplete=True)
             if cancelled:
                 break
@@ -688,6 +765,9 @@ def _stack_source(
     fourier_detail = None
     if n_bins and n_used:
         image, fourier_detail = fourier_weights.apply(bin_accum, bin_weight, config.fourier_power)
+    if moon_stack is not None:
+        image = moon_stack.composite(image)
+        snapshot_provenance['moons']['moons'] = moon_stack.provenance()
     cov = weight
     provenance = {
         **snapshot_provenance,

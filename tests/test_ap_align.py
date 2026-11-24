@@ -259,7 +259,7 @@ def test_cuda_stacking_matches_cpu_and_reports_setup_progress(tmp_path, color_id
         np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-7*cpu.image.max())
         np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
         names = {name for name, _, _ in phases}
-        assert names == {'Building alignment reference', 'Ranking frames by local quality'}
+        assert names == {'Building alignment reference', 'Ranking frames by local quality', 'Finding moons'}
         assert all(done == total for name, done, total in phases[-1:])
 
 

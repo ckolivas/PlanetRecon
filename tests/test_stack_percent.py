@@ -90,7 +90,7 @@ def test_selection_applies_to_geometry_and_resume(tmp_path, geometry, mode, expe
         stop = False
         def event(result, info):
             nonlocal stop
-            if info['n_processed'] >= 4: stop = True
+            if result.stage != 'setup' and info['n_processed'] >= 4: stop = True
         checkpoint = tmp_path/'resume.npz'
         partial = stack_source(source, cfg, should_cancel=lambda: stop, on_event=event,
                                state_checkpoint=checkpoint)

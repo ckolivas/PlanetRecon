@@ -467,7 +467,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     edits = dict(device='gpu', threads=7, batch_frames=3, max_ram_bytes=None,
         max_vram_bytes=None, crop='bland', bayer_override='BGGR', endian_override='big',
         endian_convention='spec', recover_complete_frames=True, reject_saturated=False, 
-        quality_weighting=False, transparency_compensation=True, normalise_brightness=True, normalise_percent=80, motion_reference='best',
+        quality_weighting=False, transparency_compensation=True, moon_stacking=False, normalise_brightness=True, normalise_percent=80, motion_reference='best',
         stack_percent=25, frame_selection_mode='frame_count', reference_index=2, max_shift_px=9.5, cadence_s=.2, exposure_s=.1,
         ap_size=40, fourier_weighting=False, fourier_power=2.,  # This window stacks without alignment points.
         bias_path='bias.npy', dark_path='dark.npy', flat_path='flat.npy',

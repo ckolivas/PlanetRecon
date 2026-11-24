@@ -33,6 +33,7 @@ class ReconstructionConfig:
     frame_preselection: bool = True
     quality_weighting: bool = True
     transparency_compensation: bool = False
+    moon_stacking: bool = True
     normalise_brightness: bool = False
     normalise_percent: int = 70
     stack_percent: int = 100
@@ -160,6 +161,8 @@ class ReconstructionConfig:
             raise ValueError('quality_weighting must be a bool')
         if type(self.transparency_compensation) is not bool:
             raise ValueError('transparency_compensation must be a bool')
+        if type(self.moon_stacking) is not bool:
+            raise ValueError('moon_stacking must be a bool')
         if type(self.stack_percent) is not int or not 1 <= self.stack_percent <= 100:
             raise ValueError('stack_percent must be an integer from 1 to 100')
         if self.frame_selection_mode not in ('quality_range', 'frame_count'):

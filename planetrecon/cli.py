@@ -164,6 +164,10 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument('--transparency-compensation', action=argparse.BooleanOptionalAction, default=False,
                     help='rank, screen and weight frames by sharpness alone when cloud or haze varies the brightness: '
                          'preprocessing quality less its noise, per squared disc brightness (default off: dimmer frames rank lower)')
+    st.add_argument('--moon-stacking', action=argparse.BooleanOptionalAction, default=True,
+                    help='register and stack moons clear of the planet\'s glow on their own positions, which follow '
+                         'their seeing tilt and orbital drift (default); --no-moon-stacking leaves them registered '
+                         'with the planet')
     st.add_argument('--normalise-brightness', action=argparse.BooleanOptionalAction, default=False,
                     help='apply one output gain so the stack peak reaches the requested full-scale percentage')
     st.add_argument('--normalise-percent', type=int, default=70,
@@ -440,6 +444,7 @@ def main(argv: list[str] | None = None) -> int:
             frame_preselection=not args.no_frame_preselection,
             quality_weighting=args.quality_weighting,
             transparency_compensation=args.transparency_compensation,
+            moon_stacking=args.moon_stacking,
             normalise_brightness=args.normalise_brightness,
             normalise_percent=args.normalise_percent,
             stack_percent=args.stack_percent,

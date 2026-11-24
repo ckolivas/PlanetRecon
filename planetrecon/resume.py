@@ -18,6 +18,9 @@ GEOMETRY_ARRAYS=ARRAYS+('globe_weight','ring_weight')
 # Per-frame quality of accumulated frames (NaN otherwise), for the stack quality
 # summary. Optional: checkpoints written before it existed still resume.
 FRAME_QUALITY='frame_quality'
+# Moons stacked on their own positions: windows (moons, n, n[, 3]) and their
+# definitions in the metadata. Present in jobs with moon stacking enabled.
+MOON_ARRAYS=('moon_accum','moon_weight')
 
 
 def identity(source,config,calibration,should_cancel=None):
@@ -75,8 +78,9 @@ def save(path,identity,state,*,geometry=False,should_cancel=None):
     names=(GEOMETRY_ARRAYS if geometry else ARRAYS)+BIN_ARRAYS
     metadata={'schema':GEOMETRY_SCHEMA if geometry else SCHEMA,'identity':identity,
         **{k:state[k] for k in ('n_used','n_rejected','reference_index','next_index')},
-        'arrays':[name for name in names if state.get(name) is not None]
+        'arrays':[name for name in names+MOON_ARRAYS if state.get(name) is not None]
                  +([FRAME_QUALITY] if state.get(FRAME_QUALITY) is not None else []),
+        'moons':state.get('moons'),
         'execution_history':state.get('execution_history',['cpu']),
         'warnings':state.get('warnings',[])}
     if should_cancel is not None and should_cancel():
@@ -111,10 +115,23 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False,bins=0):
         if bins:required|=set(BIN_ARRAYS)
         elif set(BIN_ARRAYS) & set(names):
             raise ValueError('state checkpoint arrays are incomplete or unknown')
-        if not required.issubset(names) or set(names)-set(allowed_arrays)-{FRAME_QUALITY}:
+        if not required.issubset(names) or set(names)-set(allowed_arrays)-{FRAME_QUALITY}-set(MOON_ARRAYS):
             raise ValueError('state checkpoint arrays are incomplete or unknown')
         state={name:(data[name].copy() if name in names else None) for name in allowed_arrays}
         state[FRAME_QUALITY]=data[FRAME_QUALITY].copy() if FRAME_QUALITY in names else None
+        moons=meta.get('moons')
+        if moons is not None and not (isinstance(moons,dict) and isinstance(moons.get('moons'),list)):
+            raise ValueError('invalid state checkpoint moons')
+        count=len(moons['moons']) if moons else 0
+        if (count>0)!=all(name in names for name in MOON_ARRAYS) or (count==0 and any(n in names for n in MOON_ARRAYS)):
+            raise ValueError('state checkpoint moon arrays are incomplete')
+        state['moons']=moons
+        for name in MOON_ARRAYS:
+            arr=data[name].copy() if name in names else None
+            if arr is not None and (arr.ndim not in (3,4) or arr.shape[0]!=count or arr.dtype!=np.float64
+                                    or not np.isfinite(arr).all() or ('weight' in name and (arr<0).any())):
+                raise ValueError(f'invalid state checkpoint array {name}')
+            state[name]=arr
     for key in ('n_used','n_rejected','next_index'):
         value=meta.get(key)
         if type(value) is not int or not 0<=value<=n_frames:

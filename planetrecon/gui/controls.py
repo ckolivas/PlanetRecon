@@ -46,6 +46,7 @@ class ConfigControls(QTabWidget):
         self._check(capture, 'reject_saturated', 'Reject saturated frames')
         self._check(capture, 'quality_weighting', 'Weight frames by quality')
         self._check(capture, 'transparency_compensation', 'Compensate variable transparency')
+        self._check(capture, 'moon_stacking', 'Stack moons separately')
         self._check(capture, 'normalise_brightness', 'Normalise brightness')
         self._integer(capture, 'normalise_percent', 'Normalise brightness (%)', 1, 100)
         self.fields['normalise_percent'].setEnabled(config.normalise_brightness)

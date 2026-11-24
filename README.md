@@ -437,6 +437,15 @@ summed as recorded. Caches made before the brightness and noise measurements
 are preprocessed again when the option is on. The quality graph's **Disc
 brightness** overlay shows the transparency; see `docs/preprocessing.md`.
 
+**Stack moons separately** (default on; `--no-moon-stacking` to disable) finds
+moons clear of the planet's glow and stacks each on its own position. Seeing tilts
+moons tens of arcseconds from the planet differently from the planet, and they drift
+along their orbits, so registered with the planet they blur to about twice their size.
+Each moon follows its orbital drift and as much of its measured tilt as its brightness
+allows; a moon too faint to measure borrows brighter neighbours' tilt instead of
+following its own noise. Moons in the glow of the planet or rings keep the planet's
+alignment. Not used with planet rotation models; see `docs/moons.md`.
+
 A finished stack reports its **stack quality** under the result (and in the
 command-line output, beneath each capture in the batch queue, and the result
 provenance as `stack_quality`):

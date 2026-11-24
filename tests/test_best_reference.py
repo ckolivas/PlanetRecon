@@ -54,7 +54,7 @@ def test_cached_best_reference_used_from_first_batch_and_after_resume(tmp_path, 
         stop = False
         def event(result, info):
             nonlocal stop
-            if info['n_processed'] >= 4:
+            if result.stage != 'setup' and info['n_processed'] >= 4:
                 assert result.provenance['reference_index'] == 11
                 stop = True
         checkpoint = tmp_path/'resume.npz'

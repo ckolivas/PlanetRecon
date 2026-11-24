@@ -101,6 +101,8 @@ def test_processing_only_accumulates_selected_frames_after_full_scan(mode):
     source = TrackedSource()
     stages = []
     def event(result, info):
+        if result.stage == 'setup':  # Finding moons reads a sample of selected frames first.
+            return
         stages.append(result.stage)
         if result.n_used:
             assert set(range(len(frames))).issubset(source.reads)
@@ -164,7 +166,7 @@ def test_screened_translation_resume_retains_indices_and_counts(tmp_path):
     cancel = False
     def event(result, info):
         nonlocal cancel
-        if result.stage != 'preprocessing' and info['n_processed'] >= 10:
+        if result.stage not in ('preprocessing', 'setup') and info['n_processed'] >= 10:
             cancel = True
     with SERSource(path) as source:
         preprocess_source(source, cfg)
