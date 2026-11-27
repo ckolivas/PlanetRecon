@@ -172,7 +172,9 @@ def _prepare(result, config):
                 "rendering": "display-rendered" if config.display_gamma is not None else "scientific-linear",
                 "transfer": {"function": "power" if config.display_gamma is not None else "linear",
                              "gamma": config.display_gamma or 1.0,
-                             "colour_primaries": "unspecified; no colour-space conversion"},
+                             "colour_primaries": "unspecified; no colour-space conversion",
+                             **({"file_tag": "none; viewers show the stored codes directly"}
+                                if config.encoding in ("png16", "tiff16") else {})},
                 "mapping": mapping, "counts": stats, "resampling": "none",
                 "invalid_policy": "NaN" if config.encoding in ("tiff32", "tiff32_raw") else "zero with separate validity mask",
                 "coverage_description": "per-sample accumulation weights; not a calibrated uncertainty",
@@ -203,7 +205,9 @@ def _write_png(stream, pixels, metadata, check_cancel=lambda: None):
     height, width = pixels.shape[:2]
     stream.write(b"\x89PNG\r\n\x1a\n")
     _chunk(stream, b"IHDR", struct.pack(">IIBBBBB", width, height, 16, 0 if pixels.ndim == 2 else 2, 0, 0, 0))
-    _chunk(stream, b"gAMA", struct.pack(">I", round(100000 / metadata["transfer"]["gamma"])))
+    # No gAMA/sRGB/iCCP chunk, as for tiff16: the stored codes are display values. A
+    # gamma 1.0 tag made colour-managed viewers (Qt, so Plasma's Gwenview and
+    # thumbnails) re-encode the linear codes for the screen and show them far too bright.
     _chunk(stream, b"iTXt", b"PlanetRecon\0\0\0\0\0" + _json(metadata))
     compressor = zlib.compressobj()
     for row in pixels:

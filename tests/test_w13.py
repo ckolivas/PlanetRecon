@@ -120,12 +120,14 @@ def test_encodings_preserve_values_and_metadata(tmp_path, rgb, encoding):
     if encoding == 'png16':
         chunks = png_chunks(p)
         assert struct.unpack('>IIBBBBB', chunks[b'IHDR'][0]) == (10, 1, 16, 2 if rgb else 0, 0, 0, 0)
-        assert struct.unpack('>I', chunks[b'gAMA'][0]) == (100000,)
+        # Untagged like tiff16: a colour-managed viewer must not re-encode the codes.
+        assert not {b'gAMA', b'sRGB', b'iCCP', b'cHRM'} & set(chunks)
+        assert meta['transfer']['file_tag'].startswith('none')
         embedded = json.loads(chunks[b'iTXt'][0].split(b'\0', 5)[-1])
         # Qt/libpng independently decodes all 16 bits, including truecolour RGB.
         QtGui = pytest.importorskip('PySide6.QtGui')
         q = QtGui.QImage(str(p)).convertToFormat(QtGui.QImage.Format.Format_RGBA64)
-        assert not q.isNull()
+        assert not q.isNull() and not QtGui.QImage(str(p)).colorSpace().isValid()
         rgba = np.frombuffer(q.constBits(), dtype=np.uint16).reshape(1, 10, 4)
         np.testing.assert_array_equal(rgba[..., :3] if rgb else rgba[..., 0], expected)
     else:
