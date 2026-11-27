@@ -336,7 +336,24 @@ packed into non-blocking uploads too. The CPU then fits the peaks, launches
 the field solve, resampling and sums, and measures the moons' centroids
 (vectorised over the group's frames) while the GPU works. Uncalibrated integer
 frames need no CPU copy or finiteness pass, and their saturation test is the
-same count made on the device. Local-quality ranking measures the same groups.
+same count made on the device. Local-quality ranking measures the same groups,
+with non-blocking uploads as well.
+
+The Bayer registration plane (bilinear-demosaic luminance) is one fused Triton
+pass that sums each pixel's neighbouring CFA samples by colour in int32 for
+integer frames (exact, as the float64 sums were) and divides in float64; it is
+bitwise identical to the torch demosaic and takes 0.19 ms per 1428x574 frame
+instead of 0.54.
+
+The global phase correlation is in two stages. A float32 correlation surface
+(half spectra) locates the integer peak; float32 alone moved the shifts by up
+to 1e-3 px, so the 3 x 3 correlations around the peak are then formed exactly
+in float64, as dot products of the frame with the reference convolved once
+with the registration filter (a correlation at a lag is that dot product with
+the frame shifted by the lag), climbing to a neighbouring lag while it is
+higher. The displacements are those of the float64 surface (within 4e-12 px of
+the CPU on real frames) at 0.2 ms per frame instead of 1.2: the frame size
+574 x 1428 factors into the slow primes 41 and 17.
 
 Two fused Triton kernels (`backends/triton_stack.py`) do the resampling and the
 sums. The backprojection forms each sample's four corner weights from the
@@ -399,3 +416,8 @@ unchanged.
 Moving those checks and copies off the CPU's critical path took stacking to
 191 s (3.35 ms per frame, close to the GPU's own 2.8 ms) and the whole capture
 to 6.0 minutes, with an identical image (6e-17).
+
+The fused registration plane and the two-stage correlation then took ranking to
+56 s (1.05 ms per frame) and stacking to 168 s, and the whole capture to 4.4
+minutes (reference 30 s). The image moved by 7e-7 of its peak rms (near-tied
+local-quality ranks can swap); the SNR estimate and the moons are unchanged.

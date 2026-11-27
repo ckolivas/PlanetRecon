@@ -100,7 +100,7 @@ def local_quality_batch(planes, centres, sigma):
     lap = torch.zeros_like(smooth)
     lap[:, 1:-1, 1:-1] = (smooth[:, :-2, 1:-1] + smooth[:, 2:, 1:-1] + smooth[:, 1:-1, :-2]
                           + smooth[:, 1:-1, 2:] - 4 * smooth[:, 1:-1, 1:-1])
-    c = torch.as_tensor(np.asarray(centres, dtype=np.float64), device=device)
+    c = centres if torch.is_tensor(centres) else torch.as_tensor(np.asarray(centres, dtype=np.float64), device=device)
     ys = torch.arange(h, device=device, dtype=torch.float64)
     xs = torch.arange(w, device=device, dtype=torch.float64)
     wy = torch.exp(-.5 * ((ys - c[..., 0:1]) / sigma) ** 2).to(dtype)

@@ -54,7 +54,7 @@ def _pull(image_ptr, field_ptr, out_ptr, total, P, W, H,
             xc = tl.minimum(tl.maximum(xx, 0), W - 1)
             site = b * P + yc * W + xc
             if BAYER:
-                value = tl.load(image_ptr + site, inside, other=0.)
+                value = tl.load(image_ptr + site, inside, other=0).to(tl.float64)
                 parity = (yc % 2) * 2 + (xc % 2)
                 colour = tl.where(parity == 0, L00, tl.where(parity == 1, L01, tl.where(parity == 2, L10, L11)))
                 signal = tl.where(cols[None, :] == colour[:, None], (value * weight)[:, None], 0.)
@@ -62,18 +62,18 @@ def _pull(image_ptr, field_ptr, out_ptr, total, P, W, H,
                 acc += signal + sites
             else:
                 value = tl.load(image_ptr + site[:, None] * C + cols[None, :],
-                                inside[:, None] & (cols[None, :] < C), other=0.)
+                                inside[:, None] & (cols[None, :] < C), other=0).to(tl.float64)
                 acc += tl.where(cols[None, :] < C, value * weight[:, None],
                                 tl.where(cols[None, :] < D, weight[:, None], 0.))
     tl.store(out_ptr + i[:, None] * D + cols[None, :], acc, inside[:, None] & (cols[None, :] < D))
 
 
 def pull(images, fields, labels=None):
-    """Contributions (B, h, w, 2C) float64 of frames (B, h, w[, C]) pulled by fields (B, 2, h, w) (x, y).
-
-    ``labels`` gives a Bayer frame's colour index (0 R, 1 G, 2 B) at its (row % 2, column % 2) sites.
+    """Contributions (B, h, w, 2C) float64 of frames (B, h, w[, C]) of any numeric dtype pulled by fields
+    (B, 2, h, w) (x, y). ``labels`` gives a Bayer frame's colour index (0 R, 1 G, 2 B) at its
+    (row % 2, column % 2) sites.
     """
-    images = images.to(torch.float64).contiguous()
+    images = images.contiguous()
     fields = fields.to(torch.float64).contiguous()
     B, h, w = images.shape[:3]
     C = 3 if labels is not None else (images.shape[3] if images.ndim == 4 else 1)
@@ -153,3 +153,100 @@ def accumulate(sums, contributions, wy, wx, scale, rest, pairs, upload=None):
         contributions.contiguous(), sums, wy.contiguous(), wx.contiguous(), scale, rest,
         frame, floats[0], floats[1], first, chosen, slot_first, slot_ids, P, w, wy.shape[1],
         D=D, DP=triton.next_power_of_2(D), BLOCK=BLOCK)
+
+
+@triton.jit
+def _luminance(image_ptr, out_ptr, total, P, W, H,
+               L00: tl.constexpr, L01: tl.constexpr, L10: tl.constexpr, L11: tl.constexpr,
+               INTEGER: tl.constexpr, BLOCK: tl.constexpr):
+    # 32-bit index arithmetic (``luminance`` checks the group fits); 64-bit integers are emulated.
+    i = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    inside = i < total
+    b = i // P
+    p = i - b * P
+    y = p // W
+    x = p - y * W
+    parity = (y & 1) * 2 + (x & 1)
+    own = tl.where(parity == 0, L00, tl.where(parity == 1, L01, tl.where(parity == 2, L10, L11)))
+    # Integer samples sum exactly in int32 (as float64 sums of them would), so float64 is needed
+    # only for the averages; consumer GPUs run float64 at a small fraction of integer speed.
+    acc = tl.int32 if INTEGER else tl.float64
+    centre = tl.load(image_ptr + i, inside, other=0).to(tl.float64)
+    s0 = tl.zeros((BLOCK,), dtype=acc)
+    s1 = tl.zeros((BLOCK,), dtype=acc)
+    s2 = tl.zeros((BLOCK,), dtype=acc)
+    n0 = tl.zeros((BLOCK,), dtype=tl.int32)
+    n1 = tl.zeros((BLOCK,), dtype=tl.int32)
+    n2 = tl.zeros((BLOCK,), dtype=tl.int32)
+    for dy in tl.static_range(-1, 2):
+        for dx in tl.static_range(-1, 2):
+            if dy != 0 or dx != 0:
+                yy = y + dy
+                xx = x + dx
+                keep = inside & (yy >= 0) & (yy < H) & (xx >= 0) & (xx < W)
+                value = tl.load(image_ptr + b * P + yy * W + xx, keep, other=0).to(acc)
+                q = (yy & 1) * 2 + (xx & 1)
+                colour = tl.where(q == 0, L00, tl.where(q == 1, L01, tl.where(q == 2, L10, L11)))
+                s0 += tl.where(keep & (colour == 0), value, 0)
+                s1 += tl.where(keep & (colour == 1), value, 0)
+                s2 += tl.where(keep & (colour == 2), value, 0)
+                n0 += (keep & (colour == 0)).to(tl.int32)
+                n1 += (keep & (colour == 1)).to(tl.int32)
+                n2 += (keep & (colour == 2)).to(tl.int32)
+    r = tl.where(own == 0, centre, s0.to(tl.float64) / tl.maximum(n0, 1).to(tl.float64))
+    g = tl.where(own == 1, centre, s1.to(tl.float64) / tl.maximum(n1, 1).to(tl.float64))
+    bl = tl.where(own == 2, centre, s2.to(tl.float64) / tl.maximum(n2, 1).to(tl.float64))
+    out = .25 * r
+    out = out + .5 * g
+    out = out + .25 * bl
+    tl.store(out_ptr + i, out, inside)
+
+
+def luminance(images, labels):
+    """Bilinear-demosaic luminance (0.25 R + 0.5 G + 0.25 B) float64 of raw Bayer frames (B, h, w) of any
+    numeric dtype; ``labels`` gives the colour index at each (row % 2, column % 2) site. Per pixel the
+    same sums, in the same order, as ``TorchBackend.registration_plane``."""
+    images = images.contiguous()
+    B, h, w = images.shape
+    out = torch.empty((B, h, w), dtype=torch.float64, device=images.device)
+    total = B * h * w
+    if total >= 2 ** 31:
+        raise ValueError('frame group too large for 32-bit indexing')
+    (l00, l01), (l10, l11) = labels
+    integer = not images.dtype.is_floating_point and images.dtype.itemsize <= 2  # 8 neighbours fit in int32.
+    _luminance[(triton.cdiv(total, BLOCK),)](images, out, total, h * w, w, h, l00, l01, l10, l11,
+                                             INTEGER=integer, BLOCK=BLOCK)
+    return out
+
+
+@triton.jit
+def _stencil(image_ptr, filtered_ptr, peak_ptr, out_ptr, P, W, H, blocks, BLOCK: tl.constexpr):
+    b = tl.program_id(0)
+    block = tl.program_id(1)
+    p = block * BLOCK + tl.arange(0, BLOCK)
+    inside = p < P
+    y = p // W
+    x = p - y * W
+    reference = tl.load(filtered_ptr + p, inside, other=0.)
+    py = tl.load(peak_ptr + 2 * b)
+    px = tl.load(peak_ptr + 2 * b + 1)
+    for dy in tl.static_range(-1, 2):
+        for dx in tl.static_range(-1, 2):
+            yy = (y + py + dy + 2 * H) % H
+            xx = (x + px + dx + 2 * W) % W
+            value = tl.load(image_ptr + b.to(tl.int64) * P + yy * W + xx, inside, other=0.)
+            tl.store(out_ptr + (b * blocks + block) * 9 + (dy + 1) * 3 + (dx + 1), tl.sum(value * reference))
+
+
+def stencil(images, filtered, peaks):
+    """Correlations at the 3 x 3 lags around each frame's integer ``peaks`` (B, 2) (row, column): (B, 3, 3)
+    float64, sum over pixels p of images[b, p + lag] x filtered[p] (indices wrap), summed per block then
+    across blocks."""
+    images = images.to(torch.float64).contiguous()
+    B, h, w = images.shape
+    P = h * w
+    blocks = triton.cdiv(P, 1024)
+    partial = torch.empty((B, blocks, 9), dtype=torch.float64, device=images.device)
+    _stencil[(B, blocks)](images, filtered.contiguous(), peaks.to(torch.int32).contiguous(), partial,
+                          P, w, h, blocks, BLOCK=1024)
+    return partial.sum(1).reshape(B, 3, 3)

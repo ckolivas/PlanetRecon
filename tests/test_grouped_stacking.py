@@ -132,3 +132,37 @@ def test_saturated_frames_are_rejected_on_the_device_as_on_the_cpu(tmp_path, col
         gpu = stack_source(source, replace(cfg, device='gpu'))
     assert gpu.backend == 'cuda' and gpu.n_used == cpu.n_used and gpu.n_rejected == cpu.n_rejected >= 2
     np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-7 * cpu.image.max())
+
+
+@pytest.mark.parametrize('color', ['RGGB', 'GRBG', 'GBRG', 'BGGR'])
+def test_fused_luminance_matches_the_torch_demosaic_exactly(color):
+    torch = cuda()
+    from planetrecon.backends import triton_stack
+    from planetrecon.backends.torch_accel import TorchBackend
+    from planetrecon.detector import BAYER_PATTERNS
+    backend = TorchBackend()
+    backend._fused_planes = False  # The reference: the torch demosaic.
+    labels = [["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]]
+    rng = np.random.default_rng(13)
+    raw = torch.as_tensor(rng.integers(0, 65536, (3, 21, 26), dtype=np.uint16), device='cuda')
+    for images in (raw, raw.double() + .25):
+        expected = torch.stack([backend.registration_plane(image, color) for image in images])
+        assert torch.equal(triton_stack.luminance(images, labels), expected)
+
+
+@pytest.mark.parametrize('shape', [(64, 64), (33, 50), (101, 77)])
+def test_two_stage_correlation_keeps_float64_displacements(shape):
+    torch = cuda()
+    from scipy.ndimage import gaussian_filter, shift as ndshift
+    from planetrecon.backends.cpu import CPUBackend
+    from planetrecon.backends.torch_accel import TorchBackend
+    rng = np.random.default_rng(14)
+    ref = gaussian_filter(rng.normal(size=shape), 3) * 100
+    gpu, cpu = TorchBackend(), CPUBackend(threads=2)
+    frames = np.stack([ndshift(ref, rng.normal(0, 4, 2), order=1, mode='wrap') + rng.normal(0, 3, shape)
+                       for _ in range(6)])
+    expected = [cpu.phase_correlation(cpu.prepare_reference(ref), frame) for frame in frames]
+    for reference in (gpu.prepare_reference(ref), ref.copy()):  # Prepared, and an ad hoc reference.
+        found = gpu.phase_correlations(reference, torch.as_tensor(frames, device='cuda'))
+        np.testing.assert_allclose(found, expected, atol=1e-10)
+    np.testing.assert_allclose(gpu.phase_correlation(gpu.prepare_reference(ref), frames[2]), expected[2], atol=1e-10)

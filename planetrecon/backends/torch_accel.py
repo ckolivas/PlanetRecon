@@ -17,56 +17,75 @@ class TorchBackend(Backend):
 
     def prepare_reference(self, reference: np.ndarray) -> np.ndarray:
         snapshot = np.array(reference, dtype=np.float64, copy=True)
-        ref = torch.tensor(snapshot, device='cuda:0', dtype=torch.float64)
-        spectrum = torch.conj(torch.fft.rfft2(ref-ref.mean()))
         snapshot.flags.writeable = False
-        self._phase_reference, self._reference_spectrum = snapshot, spectrum
+        self._phase_reference, self._reference_terms = snapshot, self._terms(snapshot)
         return snapshot
 
-    def _correlation(self, reference, img):
-        """Filtered cross-correlation of zero-mean frames (..., h, w) with ``reference``.
+    def _terms(self, reference):
+        """(float32 half spectrum, float32 filter, float64 filtered reference) of a correlation reference.
 
-        The frames are real, so half spectra (rfft2) carry the same correlation.
+        The filtered reference is the zero-mean reference convolved with the registration filter, so
+        a frame's filtered correlation at a lag is its dot product with the frame shifted by that lag.
         """
         if reference is getattr(self, '_phase_reference', None):
-            spectrum = self._reference_spectrum
-        else:
-            ref = torch.tensor(reference, device='cuda:0', dtype=torch.float64)
-            spectrum = torch.conj(torch.fft.rfft2(ref-ref.mean()))
+            return self._reference_terms
         from planetrecon.pipeline.align import correlation_filter
-        shape = tuple(reference.shape)
-        if getattr(self, '_correlation_shape', None) != shape:
-            # The filter depends on |frequency| only; the half spectrum keeps columns 0..w/2.
-            self._correlation_filter = torch.as_tensor(correlation_filter(shape)[:, :shape[1]//2+1], device='cuda:0')
-            self._correlation_shape = shape
-        return torch.fft.irfft2(torch.fft.rfft2(img) * spectrum * self._correlation_filter, s=shape)
+        ref = torch.tensor(np.asarray(reference, dtype=np.float64), device='cuda:0')
+        ref = ref - ref.mean()
+        shape = tuple(ref.shape)
+        # The filter depends on |frequency| only; the half spectrum keeps columns 0..w/2.
+        filt = torch.as_tensor(correlation_filter(shape)[:, :shape[1]//2+1], device='cuda:0')
+        spectrum = torch.fft.rfft2(ref)
+        filtered = torch.fft.irfft2(spectrum * filt, s=shape)
+        return torch.conj(spectrum).to(torch.complex64), filt.to(torch.float32), filtered
 
     def phase_correlation(self, reference: np.ndarray, frame: np.ndarray) -> tuple[float, float]:
         convert = (torch.tensor if isinstance(frame, np.ndarray) and not frame.flags.writeable
                    else torch.as_tensor)
-        img = convert(frame, device="cuda:0", dtype=torch.float64)
-        corr = self._correlation(reference, img - img.mean())
-        # Locate the peak on the device; only the two three-point stencils are copied.
-        from planetrecon.pipeline.align import peak_neighbours, peak_offsets
-        shape = tuple(reference.shape)
-        py, px = divmod(int(torch.argmax(corr)), shape[1])
-        vertical, horizontal = peak_neighbours(py, px, shape)
-        index = torch.as_tensor([vertical, horizontal], device=corr.device)
-        values = corr[index[:, 0], index[:, 1]].cpu().numpy()
-        return peak_offsets(py, px, shape, values[0], values[1])
+        return self.phase_correlations(reference, convert(frame, device='cuda:0', dtype=torch.float64)[None])[0]
 
     def phase_correlations(self, reference: np.ndarray, frames) -> list[tuple[float, float]]:
-        """``phase_correlation`` of each of frames (B, h, w) on the device, with one copy back."""
+        """Displacements (x, y) of frames (B, h, w) against ``reference``, with one or two copies back.
+
+        A float32 correlation surface locates each integer peak; the 3 x 3 correlations around it
+        are then formed exactly in float64 (dot products with the filtered reference), climbing to
+        the neighbouring lag while one is higher, and fitted as before. The displacements are those
+        of the float64 surface (to about 1e-12 px), at float32 transform cost.
+        """
+        from planetrecon.pipeline.align import peak_offsets
         img = torch.as_tensor(frames, device='cuda:0', dtype=torch.float64)
-        corr = self._correlation(reference, img - img.mean((-2, -1), keepdim=True))
-        from planetrecon.pipeline.align import peak_neighbours, peak_offsets
-        shape = tuple(reference.shape)
-        peaks = torch.argmax(corr.reshape(len(corr), -1), 1).cpu().numpy()
-        stencils = [peak_neighbours(*divmod(int(k), shape[1]), shape) for k in peaks]
-        rows = torch.as_tensor([[*v[0], *hz[0]] for v, hz in stencils], device='cuda:0')
-        cols = torch.as_tensor([[*v[1], *hz[1]] for v, hz in stencils], device='cuda:0')
-        values = corr[torch.arange(len(corr), device='cuda:0')[:, None], rows, cols].cpu().numpy()
-        return [peak_offsets(*divmod(int(k), shape[1]), shape, v[:3], v[3:]) for k, v in zip(peaks, values)]
+        img = img - img.mean((-2, -1), keepdim=True)
+        spectrum, filt, filtered = self._terms(reference)
+        shape = tuple(img.shape[-2:])
+        coarse = torch.fft.irfft2(torch.fft.rfft2(img.to(torch.float32)) * spectrum * filt, s=shape)
+        flat = torch.argmax(coarse.reshape(len(img), -1), 1)
+        peaks = torch.stack([flat // shape[1], flat % shape[1]], 1)
+        # One copy back: the integer peaks with their 3 x 3 correlations.
+        host = torch.cat([peaks.to(torch.float64), self._stencil(img, filtered, peaks).reshape(-1, 9)], 1).cpu().numpy()
+        peaks, values = host[:, :2].astype(np.int64), host[:, 2:].reshape(-1, 3, 3)
+        for _ in range(16):
+            # Move any frame whose exact peak is a neighbouring lag, and measure there again.
+            best = values.reshape(len(values), 9).argmax(1)
+            moving = np.flatnonzero(best != 4)
+            if not len(moving):
+                break
+            peaks[moving] = (peaks[moving] + np.stack([best[moving] // 3 - 1, best[moving] % 3 - 1], 1)) % shape
+            values[moving] = self._stencil(img[moving], filtered,
+                                           torch.as_tensor(peaks[moving], device='cuda:0')).cpu().numpy()
+        return [peak_offsets(int(py), int(px), shape, v[:, 1], v[1, :]) for (py, px), v in zip(peaks, values)]
+
+    @staticmethod
+    def _stencil(img, filtered, peaks):
+        from planetrecon.backends.torch_ap import fused_kernels
+        kernels = fused_kernels()
+        if kernels is not None:
+            return kernels.stencil(img, filtered, peaks)
+        out = torch.empty((len(img), 3, 3), dtype=torch.float64, device=img.device)
+        for b, (py, px) in enumerate(peaks.tolist()):
+            for i in range(3):
+                for j in range(3):
+                    out[b, i, j] = (torch.roll(img[b], (-(py + i - 1), -(px + j - 1)), (0, 1)) * filtered).sum()
+        return out
 
     def shift(self, image: np.ndarray, shift_xy: tuple[float, float]) -> np.ndarray:
         from scipy.ndimage import shift as ndshift
@@ -167,10 +186,27 @@ class TorchBackend(Backend):
         planes=image[...,None]*self._mask_weights
         return planes,torch.where(self._masks,planes,self._neighbors(planes)/self._demo_weights)
 
+    def registration_planes(self, images, color):
+        """``registration_plane`` of frames (B, h, w[, 3]) of any numeric dtype: (B, h, w) float64."""
+        from planetrecon.detector import BAYER_PATTERNS
+        images=torch.as_tensor(images,device='cuda:0')
+        if color in BAYER_PATTERNS:
+            from planetrecon.backends.torch_ap import fused_kernels
+            kernels=fused_kernels()
+            if kernels is not None and images.numel()<2**31:
+                # One fused pass; the same sums and averages as the demosaic below.
+                return kernels.luminance(images,[["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]])
+        return torch.stack([self.registration_plane(image,color) for image in images])
+
     def registration_plane(self, raw, color):
         """Device equivalent of the colour registration plane (bilinear RGB luminance)."""
         from planetrecon.detector import BAYER_PATTERNS
         image=torch.as_tensor(raw,device='cuda:0')
+        if color in BAYER_PATTERNS and getattr(self,'_fused_planes',True):
+            from planetrecon.backends.torch_ap import fused_kernels
+            if fused_kernels() is not None and image.numel()<2**31:
+                return self.registration_planes(image[None],color)[0]
+            self._fused_planes=False
         image=image if image.dtype==torch.float64 else image.to(torch.float64)
         if color in BAYER_PATTERNS:
             rgb=self._demosaic(image,color)[1]

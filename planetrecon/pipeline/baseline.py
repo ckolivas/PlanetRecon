@@ -445,19 +445,23 @@ def _stack_source(
                                        'skipped': 'every screened frame is selected'}
         elif local_matcher.layers:
             try:
+                from planetrecon.backends.torch_ap import PinnedStage
+                rank_stage, rank_groups = PinnedStage(), [0]
+
                 def rank_group(indices):
                     """Global shifts and point scores of frames registered together on CUDA."""
-                    import torch
                     from planetrecon.backends import precision
                     from planetrecon.backends.torch_ap import local_quality_batch
+                    rank_groups[0] += 1
+                    parity = rank_groups[0] % 2
                     raws = [reader.read_raw(index) for index in indices]
-                    images = (torch.as_tensor(np.stack(raws), device='cuda:0').to(torch.float64) if calibration is None
-                              else torch.as_tensor(np.stack([apply_calibration(raw, calibration)[0] for raw in raws]),
-                                                   device='cuda:0', dtype=torch.float64))
-                    planes = torch.stack([backend.registration_plane(image, color) for image in images])
+                    # Non-blocking uploads; uncalibrated integer frames go up as they are read.
+                    images = rank_stage.upload_stack(('frames', parity), raws if calibration is None else
+                                                     [apply_calibration(raw, calibration)[0] for raw in raws])
+                    planes = backend.registration_planes(images, color)
                     found = backend.phase_correlations(reference, planes)
-                    centres = (local_matcher.centres.astype(float)[None]
-                               + np.array([[float(dy), float(dx)] for dx, dy in found])[:, None, :])
+                    centres = rank_stage.upload(('centres', parity), local_matcher.centres.astype(float)[None]
+                                                + np.array([[float(dy), float(dx)] for dx, dy in found])[:, None, :])
                     return found, local_quality_batch(planes.to(precision.REGISTRATION), centres, local_matcher.size / 4)
                 cuda_ranking = backend.name == 'cuda'
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
@@ -642,9 +646,12 @@ def _stack_source(
             return set(), None
         local_matcher._check_cancel()
         device_sums.groups += 1
+        # Raw integer samples stay integers on the device; the kernels read them as float64.
         images = device_sums.stage.upload_stack(('frames', device_sums.groups % 2),
-                                                [calibrated for _, calibrated, _ in kept]).to(torch.float64)
-        planes = torch.stack([backend.registration_plane(image, color) for image in images])
+                                                [calibrated for _, calibrated, _ in kept])
+        if device_sums.kernels is None:
+            images = images.to(torch.float64)
+        planes = backend.registration_planes(images, color)
         for k, item in enumerate(kept):
             if item[2] is None:
                 item[2] = backend.phase_correlation(reference, planes[k])
@@ -662,7 +669,8 @@ def _stack_source(
         count_saturated = calibration is None and config.reject_saturated and bit_depth <= 16
         if count_saturated:
             peak = (1 << int(bit_depth)) - 1
-            parts.append((images >= peak).flatten(1).sum(1).to(torch.float64))
+            samples = images if images.dtype.is_floating_point else images.to(torch.int32)  # No uint16 compare.
+            parts.append((samples >= peak).flatten(1).sum(1).to(torch.float64))
         matcher = local_matcher._device()
         points = len(local_matcher.centres) > 0
         if points:
