@@ -37,6 +37,7 @@ def float64_registration(request, monkeypatch):
     except ImportError:
         return
     monkeypatch.setattr(precision, 'REGISTRATION', torch.float64)
+    monkeypatch.setattr(precision, 'BLEND', torch.float64)
 
 
 def pytest_addoption(parser):

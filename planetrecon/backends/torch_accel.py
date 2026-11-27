@@ -68,16 +68,18 @@ class TorchBackend(Backend):
         """Exact pixel-coordinate bilinear pull with zero exterior support."""
         return cls._pull_many((image,), shift_xy)[0]
 
+    # Stands for an all-ones (h, w) plane in ``_pull_many``: its pull is the support.
+    SUPPORT = object()
+
     @classmethod
     def _pull_many(cls, images, shift_xy):
         """Share displacement upload and each corner across signal and support.
 
-        Keep only one corner's indices/weights alive at a time; stacking full
-        RGB/CFA planes into a larger tensor would needlessly raise peak VRAM.
+        ``images`` may include ``SUPPORT`` for the pulled support of an all-ones
+        plane. Only one corner's indices and weights are alive at a time.
         """
-        image = images[0]
+        image = next(value for value in images if value is not cls.SUPPORT)
         h, w = image.shape[:2]
-        results = [torch.zeros_like(value) for value in images]
         if np.ndim(shift_xy[0]) or np.ndim(shift_xy[1]):
             sx = torch.as_tensor(shift_xy[0], device=image.device, dtype=torch.float64)
             sy = torch.as_tensor(shift_xy[1], device=image.device, dtype=torch.float64)
@@ -89,15 +91,22 @@ class TorchBackend(Backend):
             x = torch.arange(w, device=image.device, dtype=torch.float64)[None, :] + sx
             iy, ix = torch.floor(y).long(), torch.floor(x).long()
             fy, fx = y-iy, x-ix
+            results = [torch.zeros((h, w), dtype=torch.float64, device=image.device) if value is cls.SUPPORT
+                       else torch.zeros_like(value) for value in images]
             for dy, wy in ((0, 1-fy), (1, fy)):
                 for dx, wx in ((0, 1-fx), (1, fx)):
                     yy, xx = iy+dy, ix+dx
                     weight = wy*wx*((yy >= 0) & (yy < h) & (xx >= 0) & (xx < w))
                     yy, xx = yy.clamp(0, h-1), xx.clamp(0, w-1)
                     for value, result in zip(images, results):
-                        weights = weight[..., None] if value.ndim == 3 else weight
-                        result += value[yy, xx]*weights
+                        if value is cls.SUPPORT:
+                            result += weight  # The pull of an all-ones plane.
+                        else:
+                            result += value[yy, xx]*(weight[..., None] if value.ndim == 3 else weight)
             return results
+        images = [torch.ones((h, w), dtype=torch.float64, device=image.device) if value is cls.SUPPORT else value
+                  for value in images]
+        results = [torch.zeros_like(value) for value in images]
         import math
         sx,sy=map(float,shift_xy); ix,iy=math.floor(sx),math.floor(sy)
         fx,fy=sx-ix,sy-iy
@@ -142,21 +151,25 @@ class TorchBackend(Backend):
     def registration_plane(self, raw, color):
         """Device equivalent of the colour registration plane (bilinear RGB luminance)."""
         from planetrecon.detector import BAYER_PATTERNS
-        image=torch.as_tensor(raw,device='cuda:0',dtype=torch.float64)
+        image=torch.as_tensor(raw,device='cuda:0')
+        image=image if image.dtype==torch.float64 else image.to(torch.float64)
         if color in BAYER_PATTERNS:
-            return self._demosaic(image,color)[1]@torch.tensor([.25,.5,.25],device='cuda:0',dtype=torch.float64)
+            rgb=self._demosaic(image,color)[1]
+            # Elementwise, not a float64 matrix-vector product (slow on consumer GPUs); same sum.
+            return .25*rgb[...,0]+.5*rgb[...,1]+.25*rgb[...,2]
         if image.ndim==3:
             return .5*image[...,1]+.25*image[...,0]+.25*image[...,2]
         return image
 
     def backproject_tensors(self, raw, shift_xy, color):
-        """Device contributions (signal, weight, demosaic comparison, support)."""
+        """Device contributions (signal, weight, None, support); Bayer CFA sites give their own weight."""
         from planetrecon.detector import BAYER_PATTERNS
-        image=torch.as_tensor(raw,device='cuda:0',dtype=torch.float64)
+        image=torch.as_tensor(raw,device='cuda:0')
+        image=image if image.dtype==torch.float64 else image.to(torch.float64)
         if color in BAYER_PATTERNS:
-            planes,demo=self._demosaic(image,color)
-            return tuple(self._pull_many((planes,self._mask_weights,demo,torch.ones_like(image)),shift_xy))
-        add,support=self._pull_many((image,torch.ones_like(image)),shift_xy)
+            self._bayer(image.shape,color)
+            return (*self._pull_many((image[...,None]*self._mask_weights,self._mask_weights),shift_xy),None,None)
+        add,support=self._pull_many((image,self.SUPPORT if image.ndim==2 else torch.ones_like(image)),shift_xy)
         return add,support,None,None
 
     def backproject(self, raw, shift_xy, color):

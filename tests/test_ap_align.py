@@ -263,6 +263,30 @@ def test_cuda_stacking_matches_cpu_and_reports_setup_progress(tmp_path, color_id
         assert all(done == total for name, done, total in phases[-1:])
 
 
+@pytest.mark.registration_precision
+@pytest.mark.parametrize('color_id', [0, 8])
+def test_float32_device_registration_stays_close_to_the_cpu(tmp_path, color_id):
+    """Production float32 matching and footprint blending move the stack far less than its noise."""
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    import planetrecon.backends.precision as precision
+    assert precision.REGISTRATION == precision.BLEND == torch.float32
+    with SERSource(capture(tmp_path, color_id=color_id)) as source:
+        cfg = replace(points_config(), fourier_weighting=True, stack_percent=50)
+        preprocess_source(source, cfg)
+        cpu = stack_source(source, cfg)
+        gpu = stack_source(source, replace(cfg, device='gpu'))
+    execution = gpu.provenance['local_alignment']['cuda_execution']
+    assert execution['registration_precision'] == execution['blend_precision'] == 'float32'
+    assert gpu.n_used == cpu.n_used
+    assert np.abs(gpu.image - cpu.image).max() <= 1e-4 * cpu.image.max()
+    # Coverage sums bilinear (CFA) sample weights at positions moved by ~1e-4 px: a few
+    # pixels where those weights are steep move by up to ~1e-3.
+    relative = np.abs(gpu.coverage - cpu.coverage) / np.maximum(cpu.coverage, 1e-12 * cpu.coverage.max())
+    assert np.median(relative) < 2e-5 and np.mean(relative > 1e-4) < 2e-3 and relative.max() < 2e-3
+
+
 @pytest.mark.hardware
 @pytest.mark.parametrize('color_id', [0, 8])
 @pytest.mark.parametrize('failure_stage', ['matching', 'backprojection'])

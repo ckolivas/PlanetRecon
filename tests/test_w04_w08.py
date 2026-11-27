@@ -188,7 +188,7 @@ def test_stack_array_mono_and_cfa():
     result = stack_source(src, cfg)
     assert result.channel_order == "RGB"
     assert result.image.shape == (16, 16, 3)
-    assert result.provenance["demosaic_first"]["label"] == "comparison"
+    assert "demosaic_first" not in result.provenance  # No parallel demosaic-first comparison stack.
 
 
 def test_auto_device_falls_back_when_arch_unsupported(monkeypatch):

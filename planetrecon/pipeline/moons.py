@@ -33,6 +33,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from functools import lru_cache
+
 import numpy as np
 from scipy.ndimage import distance_transform_edt, gaussian_filter, maximum_filter, median_filter
 
@@ -101,25 +103,41 @@ def spread(indices, count):
     return indices
 
 
+@lru_cache(maxsize=32)
 def _offsets(half):
-    return np.mgrid[-half:half + 1, -half:half + 1].astype(np.float64)
+    offsets = np.mgrid[-half:half + 1, -half:half + 1].astype(np.float64)
+    offsets.flags.writeable = False
+    return offsets
 
 
-def centroid(plane, cy, cx, sigma, half, parity=None):
+@lru_cache(maxsize=32)
+def _border_fit(half):
+    """(border mask, least-squares operator) of the plane fitted to a window's border."""
+    yy, xx = _offsets(half)
+    border = np.maximum(np.abs(yy), np.abs(xx)) > half - 3
+    design = np.stack([np.ones(border.sum()), yy[border], xx[border]], 1)
+    operator = np.linalg.pinv(design)
+    border.flags.writeable = operator.flags.writeable = False
+    return border, operator
+
+
+def centroid(plane, cy, cx, sigma, half, parity=None, *, origin=(0, 0), shape=None):
     """Gaussian-weighted centroid (y, x) near (cy, cx), or None.
 
     A plane fitted to the window's border removes sky and glow gradients.
     ``parity`` 0 or 1 uses only pixels whose (row + column) has that parity.
+    ``plane`` may be a crop of a frame of ``shape`` whose pixel (0, 0) is the
+    frame's ``origin`` (row, column); coordinates stay those of the frame.
     """
-    h, w = plane.shape
+    h, w = plane.shape if shape is None else shape
     iy, ix = int(round(cy)), int(round(cx))
     if iy - half < 0 or ix - half < 0 or iy + half >= h or ix + half >= w:
         return None
-    win = np.asarray(plane[iy - half:iy + half + 1, ix - half:ix + half + 1], dtype=np.float64)
+    oy, ox = origin
+    win = np.asarray(plane[iy - half - oy:iy + half + 1 - oy, ix - half - ox:ix + half + 1 - ox], dtype=np.float64)
     yy, xx = _offsets(half)
-    border = np.maximum(np.abs(yy), np.abs(xx)) > half - 3
-    design = np.stack([np.ones(border.sum()), yy[border], xx[border]], 1)
-    coef = np.linalg.lstsq(design, win[border], rcond=None)[0]
+    border, operator = _border_fit(half)
+    coef = operator @ win[border]
     win = win - (coef[0] + coef[1] * yy + coef[2] * xx)
     use = np.ones_like(win) if parity is None else ((yy + xx) % 2 == parity).astype(np.float64)
     y0, x0 = cy - iy, cx - ix
@@ -136,6 +154,53 @@ def centroid(plane, cy, cx, sigma, half, parity=None):
         if done:
             break
     return iy + y0, ix + x0
+
+
+def _crops(plane, centres, halves):
+    """[(window, origin) or None]: each centroid window of ``plane`` around (row, column) ``centres``.
+
+    A device tensor plane is copied to the host once for all windows, so the
+    centroids need only the frame's registration plane where it already is.
+    """
+    h, w = plane.shape[:2]
+    boxes = []
+    for (cy, cx), half in zip(centres, halves):
+        iy, ix = int(round(cy)), int(round(cx))
+        inside = iy - half >= 0 and ix - half >= 0 and iy + half < h and ix + half < w
+        boxes.append((iy - half, ix - half, 2 * half + 1) if inside else None)
+    if not hasattr(plane, 'cpu'):
+        return [None if b is None else (plane, (0, 0)) for b in boxes]
+    import torch
+    used = [b for b in boxes if b is not None]
+    if not used:
+        return [None] * len(boxes)
+    flat = torch.cat([plane[y:y + n, x:x + n].reshape(-1) for y, x, n in used]).double().cpu().numpy()
+    out, start = [], 0
+    for b in boxes:
+        if b is None:
+            out.append(None)
+            continue
+        y, x, n = b
+        out.append((flat[start:start + n * n].reshape(n, n), (y, x)))
+        start += n * n
+    return out
+
+
+def _shifted(plane, dy, dx):
+    """``plane`` moved by (dy, dx) with bilinear weights and zero outside: SciPy's order-one
+    ``shift`` (``prefilter=False``, ``mode='grid-constant'``), and its support, from four slices."""
+    h, w = plane.shape
+    out, support = np.zeros_like(plane, dtype=np.float64), np.zeros((h, w))
+    iy, ix = int(np.floor(-dy)), int(np.floor(-dx))
+    fy, fx = -dy - iy, -dx - ix
+    for oy, wy in ((iy, 1 - fy), (iy + 1, fy)):
+        for ox, wx in ((ix, 1 - fx), (ix + 1, fx)):
+            y0, y1, x0, x1 = max(0, -oy), min(h, h - oy), max(0, -ox), min(w, w - ox)
+            if wy * wx == 0 or y1 <= y0 or x1 <= x0:
+                continue
+            out[y0:y1, x0:x1] += (wy * wx) * plane[y0 + oy:y1 + oy, x0 + ox:x1 + ox]
+            support[y0:y1, x0:x1] += wy * wx
+    return out, support
 
 
 def pull(plane, sy, sx, radius, cy, cx):
@@ -160,9 +225,8 @@ def _fwhm(image, y, x, half):
     iy, ix = int(round(y)), int(round(x))
     win = np.asarray(image[iy - half:iy + half + 1, ix - half:ix + half + 1], dtype=np.float64)
     yy, xx = _offsets(half)
-    border = np.maximum(np.abs(yy), np.abs(xx)) > half - 3
-    design = np.stack([np.ones(border.sum()), yy[border], xx[border]], 1)
-    coef = np.linalg.lstsq(design, win[border], rcond=None)[0]
+    border, operator = _border_fit(half)
+    coef = operator @ win[border]
     win = win - (coef[0] + coef[1] * yy + coef[2] * xx)
     peak = win[half - 2:half + 3, half - 2:half + 3].max()
     if not peak > 0:
@@ -465,9 +529,11 @@ class MoonStack:
         predicted, measured = [], []
         for moon in self.moons:
             ry, rx = moon.relative(t)
-            py, px = ry + shift[1], rx + shift[0]
-            predicted.append((py, px))
-            got = centroid(plane, py, px, moon.sigma, moon.half)
+            predicted.append((ry + shift[1], rx + shift[0]))
+        crops = _crops(plane, predicted, [moon.half for moon in self.moons])
+        for moon, (py, px), crop in zip(self.moons, predicted, crops):
+            got = None if crop is None else centroid(crop[0], py, px, moon.sigma, moon.half, origin=crop[1],
+                                                     shape=plane.shape[:2])
             deviation = None
             if got is not None:
                 limit = OUTLIER_SIGMA * (moon.detail.get('seeing_jitter_px', 0.) ** 2
@@ -489,19 +555,36 @@ class MoonStack:
     def _window(self, calibrated, moon, sy, sx):
         r = self.radius
         if self.bayer is not None:
-            from planetrecon.detector import cfa_accumulate
+            # Each colour's CFA samples and their sites, pulled bilinearly: ``detector.cfa_accumulate``
+            # restricted to the window, with the colour masks of the window's Bayer phase cached.
             n = 2 * r + 1
             fy, fx = round(moon.y) - r + sy, round(moon.x) - r + sx
             iy, ix = int(np.floor(fy)), int(np.floor(fx))
             if iy < 0 or ix < 0 or iy + n >= calibrated.shape[0] or ix + n >= calibrated.shape[1]:
                 return None, None
-            add, wt = cfa_accumulate(calibrated[iy:iy + n + 1, ix:ix + n + 1], (fx - ix, fy - iy),
-                                     self.bayer, origin_xy=(ix, iy))
-            return add[:n, :n], wt[:n, :n]
+            mask = self._cfa_masks(n + 1, iy % 2, ix % 2)
+            crop = np.asarray(calibrated[iy:iy + n + 1, ix:ix + n + 1], dtype=np.float64)[..., None] * mask
+            dy, dx = fy - iy, fx - ix
+
+            def bilinear(c):
+                return ((1 - dy) * ((1 - dx) * c[:-1, :-1] + dx * c[:-1, 1:])
+                        + dy * ((1 - dx) * c[1:, :-1] + dx * c[1:, 1:]))
+            return bilinear(crop), bilinear(mask)
         add = pull(calibrated, sy, sx, r, moon.y, moon.x)
         if add is None:
             return None, None
         return add, np.ones_like(add)
+
+    def _cfa_masks(self, size, py, px):
+        """(size, size, 3) colour masks of a window whose origin has row and column parity (py, px)."""
+        cache = self.__dict__.setdefault('_mask_cache', {})
+        key = (size, py, px)
+        if key not in cache:
+            from planetrecon.detector import CHANNEL_INDEX, cfa_labels
+            labels = cfa_labels(size, size, self.bayer, (px, py))
+            cache[key] = np.stack([labels == c for c in sorted(CHANNEL_INDEX, key=CHANNEL_INDEX.get)],
+                                  -1).astype(np.float64)
+        return cache[key]
 
     def add(self, contributions, score):
         for k, (add, wt, followed) in enumerate(contributions):
@@ -552,16 +635,18 @@ class MoonStack:
 
 
 def setup(indices, read, correlate, reference, max_shift, times, t_out, *, real_time=True,
-          points=(), point_reach=0., progress=None, check_cancel=None):
+          points=(), point_reach=0., progress=None, check_cancel=None, plan=None):
     """Find and calibrate moons from up to MOON_FRAMES of ``indices``.
 
     ``read(index)`` returns (measurement plane as a NumPy array, registration
-    plane for ``correlate``). Returns (moons, summary).
+    plane for ``correlate``). ``plan`` (optional) is told each pass's reading
+    order first, e.g. to read ahead. Returns (moons, summary).
     """
-    from scipy.ndimage import shift as ndshift
+    plan = plan or (lambda order: None)
     indices = spread(indices, MOON_FRAMES)
     shifts = {}
     accum = support = None
+    plan(indices)
     for step, index in enumerate(indices):
         if check_cancel is not None:
             check_cancel()
@@ -573,8 +658,7 @@ def setup(indices, read, correlate, reference, max_shift, times, t_out, *, real_
             continue
         s = (float(s[0]), float(s[1]))
         shifts[int(index)] = s
-        moved = ndshift(plane, (-s[1], -s[0]), order=1, prefilter=False, mode='grid-constant')
-        cover = ndshift(np.ones(plane.shape), (-s[1], -s[0]), order=1, prefilter=False, mode='grid-constant')
+        moved, cover = _shifted(plane, -s[1], -s[0])
         accum = moved if accum is None else accum + moved
         support = cover if support is None else support + cover
     summary = {'calibration_frames': len(shifts), 'output_epoch_s' if real_time else 'output_epoch_frame': t_out}
@@ -590,6 +674,7 @@ def setup(indices, read, correlate, reference, max_shift, times, t_out, *, real_
 
     def frames():
         phase = next(passes, 'Measuring moons')
+        plan(list(shifts))
         for step, (index, s) in enumerate(shifts.items()):
             if check_cancel is not None:
                 check_cancel()

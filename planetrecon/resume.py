@@ -110,7 +110,8 @@ def load(path,expected,shape,n_frames,bayer,*,geometry=False,bins=0):
         if schema=='planetrecon-baseline-state-1' and expected['config']['device']!='cpu':
             raise ValueError('legacy state checkpoints require CPU execution')
         names=meta.get('arrays',[])
-        required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer else set())
+        # Translation stacks no longer keep the demosaic-first comparison sums (older checkpoints may).
+        required={'accum','weight'} | ({'demosaic_accum','demosaic_weight'} if bayer and geometry else set())
         if geometry:required|={'globe_weight','ring_weight'}
         if bins:required|=set(BIN_ARRAYS)
         elif set(BIN_ARRAYS) & set(names):

@@ -104,4 +104,7 @@ against a scatter no larger), so it follows its drift and the tilt it shares wit
 2.6" away: a modest gain, and no false core. Mimas, over the rings beside the globe, keeps
 the planet's alignment. On a 15,780-frame subset the bright moons stacked to 5.1-5.5 px,
 and moon stacking added about 8% to the run time (three passes over 400 frames, then a
-centroid and a small window per moon per frame).
+centroid and a small window per moon per frame). On Bayer captures with alignment points
+the centroids originally used a CPU demosaic of every frame (40 ms per frame on a 1428x574
+capture); they now use windows of the registration plane already on the GPU, copied to the
+host together, and each moon's CFA window is sampled directly (45 us, from 320 us).

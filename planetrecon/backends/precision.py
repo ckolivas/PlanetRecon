@@ -11,3 +11,7 @@ the device path with the CPU reference exactly.
 import torch
 
 REGISTRATION = torch.float32
+
+# Alignment-point blending footprints (per-pixel frame weights) are summed in
+# BLEND precision, then applied in float64; a relative weight error of ~1e-7.
+BLEND = torch.float32

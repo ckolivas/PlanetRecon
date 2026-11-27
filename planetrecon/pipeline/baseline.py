@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Callable
 from dataclasses import replace
 from functools import partial
@@ -26,6 +27,10 @@ from planetrecon.result import ReconstructionResult
 from planetrecon.pipeline.provenance import capture_provenance
 from planetrecon.pipeline.colour import complete_bayer_rgb
 
+
+# A checkpoint holds every accumulator (with Fourier weighting, two full-frame sums
+# per rank bin), so it is rewritten at most this often during a stack.
+CHECKPOINT_INTERVAL_S = 60.
 
 PreviewFn = Callable[[ReconstructionResult, dict], None]
 CancelFn = Callable[[], bool]
@@ -82,7 +87,9 @@ def stack_source(
 
     context = (cuda_allocation_limit(config.max_vram_bytes)
                if config.device != 'cpu' and config.geometry_mode == 'none' else nullcontext(None))
-    with cpu_memory_limit(config.max_ram_bytes) as cpu_report, context as memory_report:
+    from planetrecon.io.readahead import Readahead
+    with cpu_memory_limit(config.max_ram_bytes) as cpu_report, context as memory_report, \
+            Readahead(source) as reader:
         def event(result, info):
             if result.stage == 'setup':
                 on_event(result, info)
@@ -95,7 +102,7 @@ def stack_source(
                 on_event(result, info)
         result = _stack_source(source, config, calibration=calibration, on_event=event if on_event else None,
                              should_cancel=should_cancel, resume_from=resume_from,
-                             state_checkpoint=state_checkpoint, memory_report=memory_report,
+                             state_checkpoint=state_checkpoint, memory_report=memory_report, reader=reader,
                              preprocessing=preprocessing, preprocessing_cache=preprocessing_cache,
                              cache_validation=cache_validation)
         if cpu_report is not None:
@@ -124,7 +131,12 @@ def _stack_source(
     preprocessing_cache=None,
     cache_validation=None,
     memory_report=None,
+    reader=None,
 ) -> ReconstructionResult:
+    """``reader`` (``io.readahead.Readahead``) reads ahead of each pass; source reads go through it."""
+    if reader is None:
+        from planetrecon.io.readahead import Readahead
+        reader = Readahead(source)
     if resume_from is not None or state_checkpoint is not None:
         from planetrecon import resume
         if state_checkpoint is not None:
@@ -242,8 +254,6 @@ def _stack_source(
         accum = np.zeros((h, w), dtype=np.float64)
         weight = np.zeros((h, w), dtype=np.float64)
         channel_order = "mono"
-    demosaic_accum = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
-    demosaic_weight = np.zeros((h, w, 3), dtype=np.float64) if bayer else None
     # Fourier weighting keeps one accumulator pair per local-quality rank bin.
     from planetrecon.pipeline import fourier_weights
     rank_bins = (fourier_weights.rank_bins(int(np.count_nonzero(selection.accepted)))
@@ -257,7 +267,7 @@ def _stack_source(
     chosen_reference = (config.reference_index if config.reference_index else
                         selection.best_reference_index if selection is not None else None)
     if chosen_reference is not None:
-        raw_ref = source.read_raw(chosen_reference)
+        raw_ref = reader.read_raw(chosen_reference)
         calibrated_ref, ref_info = apply_calibration(raw_ref, calibration)
         if (not np.all(np.isfinite(calibrated_ref)) or
                 (config.reject_saturated and (_saturated(raw_ref, meta.bit_depth) or ref_info["saturated"]))):
@@ -310,7 +320,6 @@ def _stack_source(
         accum, weight = restored["accum"], restored["weight"]
         reference, reference_index = restored["reference"], restored["reference_index"]
         n_used, n_rejected = restored["n_used"], restored["n_rejected"]
-        demosaic_accum, demosaic_weight = restored["demosaic_accum"], restored["demosaic_weight"]
         next_index = restored["next_index"]
         frame_quality = restored[resume.FRAME_QUALITY]
         history = restored["execution_history"]
@@ -320,9 +329,8 @@ def _stack_source(
 
     device_sums = None  # Alignment-point CUDA batch sums; CPU arrays stay authoritative.
 
-    def flush_device():
-        device_sums.flush(accum, weight, *((demosaic_accum, demosaic_weight) if bayer else ()),
-                          bins=(bin_accum, bin_weight) if n_bins else None)
+    def flush_device(everything=True):
+        device_sums.flush(accum, weight, bins=(bin_accum, bin_weight) if n_bins else None, everything=everything)
 
     def cpu_fallback(exc):
         nonlocal backend, reference
@@ -336,13 +344,16 @@ def _stack_source(
         warnings.append(message)
         if reference is not None:
             reference = backend.prepare_reference(reference)
-        if device_sums is not None and device_sums.pending:
+        if device_sums is not None and (device_sums.pending or device_sums.bin_pending):
             try:
                 flush_device()
             except Exception:
-                # Unmerged device sums are lost: recompute exactly those frames on CPU.
-                for index in device_sums.discard():
-                    accumulate(process_frame((index, source.read_raw(index))))
+                # Unmerged device sums are lost: recompute exactly those frames' sums on CPU.
+                pending, bin_only = device_sums.discard()
+                for index in pending:
+                    accumulate(process_frame((index, reader.read_raw(index))))
+                for index in bin_only:
+                    accumulate(process_frame((index, reader.read_raw(index))), main=False)
 
     def setup_progress(phase, done, total):
         if on_event is not None:
@@ -375,7 +386,10 @@ def _stack_source(
             snapshot_provenance['local_alignment']['registration_proxy'] = 'bilinear RGB luminance (0.25 R + 0.5 G + 0.25 B)'
 
         def read_plane(index):
-            calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+            raw = reader.read_raw(index)
+            if backend.name == 'cuda' and calibration is None:
+                return backend.registration_plane(raw, color)  # Uploads the raw samples; float64 on the device.
+            calibrated, _ = apply_calibration(raw, calibration)
             if backend.name == 'cuda':
                 return backend.registration_plane(calibrated, color)
             return alignment_plane(calibrated, color)
@@ -384,12 +398,13 @@ def _stack_source(
                 reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
                                               config.max_shift_px, size=config.ap_size,
                                               use_cuda=backend.name == 'cuda', should_cancel=should_cancel,
-                                              progress=setup_progress)
+                                              progress=setup_progress, plan=reader.expect)
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
                                               config.max_shift_px, size=config.ap_size,
-                                              should_cancel=should_cancel, progress=setup_progress)
+                                              should_cancel=should_cancel, progress=setup_progress,
+                                              plan=reader.expect)
             prepare_reference()
         detail = snapshot_provenance['local_alignment']
         local_matcher = AlignmentPoints(reference, size=config.ap_size, should_cancel=should_cancel)
@@ -397,7 +412,7 @@ def _stack_source(
             def calibrate():
                 local_matcher.calibrate(calibration_samples(np.flatnonzero(selection.accepted), read_plane,
                                                             backend.phase_correlation, reference,
-                                                            config.max_shift_px))
+                                                            config.max_shift_px, plan=reader.expect))
             local_matcher.use_cuda = backend.name == 'cuda'
             try:
                 calibrate()
@@ -427,14 +442,14 @@ def _stack_source(
                                                  reference, count, selection.accepted.copy(), should_cancel,
                                                  use_cuda=backend.name == 'cuda', progress=setup_progress,
                                                  n_bins=rank_bins if n_bins else 0,
-                                                 global_scores=selection.measurements[:, 0])
+                                                 global_scores=selection.measurements[:, 0], plan=reader.expect)
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                  reference, count, selection.accepted.copy(), should_cancel,
                                                  progress=setup_progress,
                                                  n_bins=rank_bins if n_bins else 0,
-                                                 global_scores=selection.measurements[:, 0])
+                                                 global_scores=selection.measurements[:, 0], plan=reader.expect)
             selection = replace(selection, accepted=local_selection.frames())
             detail['local_quality'] = {
                 'frames_per_point': count, 'ranked_frames': len(screened),
@@ -469,9 +484,14 @@ def _stack_source(
             moon_summary = restored['moons'].get('summary', {})
         else:
             def read_moon_plane(index):
-                calibrated, _ = apply_calibration(source.read_raw(index), calibration)
+                raw = reader.read_raw(index)
+                calibrated, _ = apply_calibration(raw, calibration)
+                if backend.name == 'cuda' and (colour_registration or not bayer):
+                    # The device registration plane is the stack's alignment plane here.
+                    registration = backend.registration_plane(raw if calibration is None else calibrated, color)
+                    return registration.double().cpu().numpy(), registration
                 plane = np.asarray(alignment_plane(calibrated, color), dtype=np.float64)
-                return plane, (backend.registration_plane(calibrated, color) if backend.name == 'cuda' else plane)
+                return plane, plane
 
             def find_moons():
                 points = local_matcher.centres if local_matcher is not None and local_matcher.layers else ()
@@ -480,7 +500,7 @@ def _stack_source(
                                    else selection.accepted), read_moon_plane, backend.phase_correlation, reference,
                     config.max_shift_px, times, t_out, real_time=real_time, points=points,
                     point_reach=.75 * config.ap_size, progress=setup_progress,
-                    check_cancel=check_cancel)
+                    check_cancel=check_cancel, plan=reader.expect)
 
             def check_cancel():
                 if should_cancel is not None and should_cancel():
@@ -543,9 +563,13 @@ def _stack_source(
         seq += 1
         on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
 
-    def device_frame(index, calibrated):
+    def device_frame(index, raw, calibrated):
         """Alignment points on CUDA: plane, registration and contributions stay on the device."""
-        plane = backend.registration_plane(calibrated, color)
+        import torch
+        # One upload per frame; uncalibrated frames go up as their (smaller) raw samples.
+        image = (torch.as_tensor(raw, device='cuda:0').to(torch.float64) if calibration is None
+                 else torch.as_tensor(calibrated, device='cuda:0', dtype=torch.float64))
+        plane = backend.registration_plane(image, color)
         # Local quality already registered this frame against the same reference.
         shift = local_selection.shifts.get(int(index)) if local_selection is not None else None
         if shift is None:
@@ -557,13 +581,12 @@ def _stack_source(
             return None
         pending_quality[int(index)] = max(score, 1e-12)
         score = max(score, 1e-12) if config.quality_weighting else 1.
-        if moon_stack is not None:
-            moon_contributions(index, calibrated, np.asarray(alignment_plane(calibrated, color), dtype=np.float64),
-                               shift, score)
+        # The registration plane is the moons' measurement plane; only their windows leave the device.
+        moon_contributions(index, calibrated, plane, shift, score)
         if local_matcher.use_cuda is False:
             local_matcher.use_cuda = True
         field = local_matcher.displacement_tensor(plane, shift)
-        projected = backend.backproject_tensors(calibrated, field, color)
+        projected = backend.backproject_tensors(image, field, color)
         bins = [(2*b + fourier_weights.half(index), score * m) for b, m in local_selection.bin_weights_tensor(index)] if n_bins else None
         if local_selection is not None:
             score = score * local_selection.weights_tensor(index)
@@ -581,7 +604,7 @@ def _stack_source(
             return None
         if device_sums is not None and backend.name == 'cuda':
             try:
-                return device_frame(index, calibrated)
+                return device_frame(index, raw, calibrated)
             except RuntimeError as exc:
                 if hasattr(local_matcher, 'release_cuda'):
                     local_matcher.release_cuda()
@@ -635,21 +658,18 @@ def _stack_source(
                     local_matcher.use_cuda = False
                     shift = local_matcher.displacement(plane, global_shift)
         if projected is None and local_matcher is not None:
-            projected = cpu_backproject(calibrated, shift, color, demosaiced=demosaiced)
+            projected = cpu_backproject(calibrated, shift, color)
         if projected is not None:
             bins = [(2*b + fourier_weights.half(index), score * m) for b, m in local_selection.bin_weights(index)] if n_bins else None
             if local_selection is not None:
                 # Per-pixel blend of the alignment points that selected this frame.
                 score = score * local_selection.weights(index)
             return (score, *projected, bins)
-        support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
-                          order=1, prefilter=False, mode='grid-constant')
         if bayer:
             add, wt = cfa_accumulate(calibrated, shift, color)
-            demo = demosaic(calibrated)
-            shifted = np.stack([ndshift(demo[..., c], shift=(-shift[1], -shift[0]),
-                                order=1, prefilter=False, mode='grid-constant') for c in range(3)], axis=2)
-            return score, add, wt, shifted, support
+            return score, add, wt, None, None
+        support = ndshift(np.ones((h, w)), shift=(-shift[1], -shift[0]),
+                          order=1, prefilter=False, mode='grid-constant')
         if rgb:
             if calibrated.ndim != 3:
                 raise ValueError('RGB source produced a 2-D frame')
@@ -660,22 +680,21 @@ def _stack_source(
                       order=1, prefilter=False, mode='grid-constant')
         return score, add, support, None, None
 
-    def accumulate(projected):
+    def accumulate(projected, main=True):
+        """Add one frame's contributions; ``main=False`` adds only its Fourier rank-bin sums."""
         if projected is None:
             return
         score, add, wt, demo, support, *bins = projected
         scale = score[..., None] if np.ndim(score) == 2 and add.ndim == 3 else score
-        accum[...] += scale * add
-        weight[...] += scale * wt
-        if bayer:
-            demosaic_accum[...] += scale * demo
-            demosaic_weight[...] += (score * support)[..., None]
+        if main:
+            accum[...] += scale * add
+            weight[...] += scale * wt
         for b, m in (bins[0] or []) if bins else []:
             m = m[..., None] if add.ndim == 3 else m
             bin_accum[b] += m * add
             bin_weight[b] += m * wt
 
-    from planetrecon.pipeline.cpu_pool import CPUFramePool, selected_batches
+    from planetrecon.pipeline.cpu_pool import CPUFramePool
     with CPUFramePool(config, shape, n-next_index, enabled=backend.name == 'cpu',
                       should_cancel=should_cancel) as pool:
         if backend.name == 'cpu':
@@ -703,14 +722,33 @@ def _stack_source(
                 yield process_frame(item)
             yield from pool.map(process_frame, items)
 
-        batches = (selected_batches(source, config.batch_frames, start=next_index,
-                                    accepted=selection.accepted, should_cancel=should_cancel)
-                   if pool.workers > 1 and selection is not None else
-                   source.iter_batches(config.batch_frames, start=next_index, should_cancel=should_cancel))
+        # Selected frames in capture order, read ahead of the work; unselected frames are
+        # skipped (counted as rejected from the gaps between indices).
+        order = np.arange(next_index, n)
+        if selection is not None:
+            order = order[selection.accepted[next_index:]]
+        raw_bytes = 2 * int(np.prod(shape))  # Raw samples are 16-bit integers.
+        batches = reader.batches(order, min(config.batch_frames, max(1, (64 << 20) // raw_bytes)),
+                                 should_cancel=should_cancel)
+        last_checkpoint, dirty = [time.monotonic()], [False]
+
+        def save_checkpoint():
+            resume.save(state_checkpoint, state_identity, {
+                "accum": accum, "weight": weight, "reference": reference,
+                "bin_accum": bin_accum, "bin_weight": bin_weight,
+                "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
+                "next_index": n_used + n_rejected, resume.FRAME_QUALITY: frame_quality,
+                "execution_history": report.execution_history, "warnings": warnings,
+                "moons": moon_state if moon_stack is None else {**moon_state, **moon_stack.state()},
+                "moon_accum": None if moon_stack is None else moon_stack.accum,
+                "moon_weight": None if moon_stack is None else moon_stack.weight})
+            last_checkpoint[0], dirty[0] = time.monotonic(), False
+
         for indices, batch in batches:
             if pool.cancelled():
                 cancelled = True
                 break
+            dirty[0] = True
             try:
                 for index, projected in zip(indices, frame_results(zip(indices, batch))):
                     if pool.cancelled():
@@ -737,26 +775,27 @@ def _stack_source(
                 if not pool.cancelled():
                     raise
                 cancelled = True
-            if device_sums is not None and device_sums.pending:
+            cancelled = cancelled or pool.cancelled()
+            # Checkpoints are written at most every CHECKPOINT_INTERVAL_S, on cancellation and at the end.
+            save = state_checkpoint is not None and (
+                cancelled or time.monotonic() - last_checkpoint[0] >= CHECKPOINT_INTERVAL_S)
+            if device_sums is not None and (device_sums.pending or (save and device_sums.bin_pending)):
                 try:
-                    flush_device()
+                    flush_device(everything=save)
                 except RuntimeError as exc:
                     cpu_fallback(exc)
-            cancelled = cancelled or pool.cancelled()
-            if state_checkpoint is not None:
-                resume.save(state_checkpoint, state_identity, {
-                    "accum": accum, "weight": weight, "reference": reference,
-                    "demosaic_accum": demosaic_accum, "demosaic_weight": demosaic_weight,
-                    "bin_accum": bin_accum, "bin_weight": bin_weight,
-                    "reference_index": reference_index, "n_used": n_used, "n_rejected": n_rejected,
-                    "next_index": n_used + n_rejected, resume.FRAME_QUALITY: frame_quality,
-                    "execution_history": report.execution_history, "warnings": warnings,
-                    "moons": moon_state if moon_stack is None else {**moon_state, **moon_stack.state()},
-                    "moon_accum": None if moon_stack is None else moon_stack.accum,
-                    "moon_weight": None if moon_stack is None else moon_stack.weight})
+            if save:
+                save_checkpoint()
             emit("baseline", incomplete=True)
             if cancelled:
                 break
+        if device_sums is not None and (device_sums.pending or device_sums.bin_pending):
+            try:
+                flush_device()
+            except RuntimeError as exc:
+                cpu_fallback(exc)
+        if state_checkpoint is not None and dirty[0]:
+            save_checkpoint()
         if not cancelled and not pool.cancelled():
             n_rejected += n - (n_used + n_rejected)
 
@@ -780,11 +819,6 @@ def _stack_source(
         "config": config.to_dict(),
         "calibration_mode": (calibration.mode if calibration else "approximate-noise"),
     }
-    if bayer and demosaic_accum is not None:
-        provenance["demosaic_first"] = {
-            "label": "comparison",
-            "mean": float(np.mean(_normalise_stack(demosaic_accum, demosaic_weight))),
-        }
     if n_used == 0 and not cancelled:
         raise ValueError("no usable frames remain after rejection")
     if fourier_detail is not None:

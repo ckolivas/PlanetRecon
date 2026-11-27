@@ -61,8 +61,9 @@ The method:
    bilinear backprojection, including raw CFA support).
 
 CUDA runs the correlations, field solve, proxy filtering, local quality and
-reference resampling; peak decisions use the shared CPU code. CPU and CUDA
-fields agree to 1e-9 px in the tests. Checkpoints bind the point size.
+reference resampling; peak decisions use the shared CPU code. At float64 CPU and
+CUDA fields agree to 1e-9 px in the tests; production CUDA matching runs in
+float32 (see Mixed precision). Checkpoints bind the point size.
 
 ## With a motion model (Field, Surface, Combined, Saturn)
 
@@ -212,6 +213,19 @@ from 235 to 203 s for Saturn R and 44 to 34 s for Jupiter. Tests compare the
 device path with the CPU at float64 (`tests/conftest.py`) and check the
 float32 setting separately.
 
+Stacks without a motion model use the same split. The alignment-point proxies,
+their search tiles (only the tiles are resampled, not the whole proxy) and
+correlations, and local quality run in float32; the registration plane, global
+phase correlation, peak fits, field solve, backprojection and every sum stay
+float64. The per-pixel point footprints that blend each frame's weight (one map
+per Fourier rank bin) are summed in float32 (`precision.BLEND`) and applied in
+float64: a relative weight error of about 1e-7. On a 7,323-frame RGGB Saturn
+subset (2026-11-24-1115_9-CK-L3-Sat) the stack moved by 2.8e-5 of its peak rms
+(1.2e-4 over the disc, against 5.4e-3 high-pass noise there); local-quality
+ranks that are near ties can swap, which moved the Fourier weights by up to
+0.07 and the ring SNR by under 2% either way, and moon gains, sizes and the
+estimated stack SNR were unchanged.
+
 ## Why the earlier stacks were poor
 
 The investigation compared PlanetRecon with the AutoStakkert!4 stacks in the
@@ -314,8 +328,13 @@ With CUDA the whole per-frame path stays on the device: registration-plane
 demosaic, global correlation (only the peak stencil is copied back), proxy
 filtering, point correlations, field solve, local quality, backprojection and
 the weighted sums. Sums are merged into the authoritative CPU accumulators at
-the end of every batch; if CUDA fails, unmerged frames are recomputed on CPU.
-The global shifts measured while ranking local quality are reused for stacking.
+the end of every batch, and Fourier weighting's rank-bin sums (two full-frame
+sums per bin) every 1024 frames, before a checkpoint and at the end; if CUDA
+fails, unmerged frames are recomputed on CPU. Each frame is uploaded once, as
+its raw samples when there is no calibration. The global shifts measured while
+ranking local quality are reused for stacking. Frames are read on a background
+thread ahead of each pass, and the reference averages read their frames in
+capture order.
 
 The setup phases report progress: **Building alignment reference** (two passes
 over up to 3000 frames) and **Ranking frames by local quality** (every
@@ -329,3 +348,15 @@ Measured on the RTX 5070 for a 47,708-frame 1124x466 colour Saturn capture
 Before these
 optimisations the same capture needed about 36 ms/frame for ranking and 80 ms/frame
 for stacking, mostly CPU demosaicing and CPU accumulation.
+
+With moon stacking and Fourier weighting, a 7,323-frame subset of the 1428x574
+RGGB Saturn capture 2026-11-24-1115_9-CK-L3-Sat (49 points) took 738 s, 76 ms per
+stacked frame. Most of it was CPU work outside the device path: the moons'
+measurement plane was demosaiced on the CPU for every frame (40 ms), rank-bin
+sums were copied to the CPU every batch, the alignment points matched in float64
+(slow on consumer GPUs), and a demosaic-first comparison stack, kept only for a
+provenance mean, was resampled and summed with every frame. Now the moons are
+measured on windows of the device registration plane, the matching runs in
+float32, the comparison stack is gone and the final Fourier combination is
+threaded: 181 s (reference 38 s, ranking 24 s, moons 7 s, stacking 15 ms per
+frame including the final combination).

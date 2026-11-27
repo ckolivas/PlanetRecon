@@ -150,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--checkpoint", type=Path, default=None,
                     help="atomically update a full-resolution NPZ snapshot after each batch")
     st.add_argument("--resume", type=Path, help="resume baseline/geometry accumulator state with matching configuration")
-    st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable accumulator state after each batch")
+    st.add_argument("--state-checkpoint", type=Path, help="atomically save resumable accumulator state (translation stacks: at most once a minute, on cancellation and at the end)")
     st.add_argument("--device", choices=("cpu", "auto", "gpu"), default="auto")
     st.add_argument("--batch", type=int, default=32)
     st.add_argument('--preprocessing-cache', type=Path, help='read a specific preprocessing cache (default: beside capture)')

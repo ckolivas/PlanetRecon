@@ -5,10 +5,13 @@ reference implementation. Batched matching runs in the planes' precision
 (``backends.precision``); peak fits and field solves are float64. The field
 stays on the device.
 """
+from functools import lru_cache
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
+from planetrecon.backends import precision
 from planetrecon.pipeline import ap_align
 
 
@@ -29,6 +32,7 @@ def sample(image, y, x, *, nearest=False):
     return result
 
 
+@lru_cache(maxsize=64)
 def _gaussian_kernel(sigma, device, dtype=torch.float64):
     radius = int(4. * sigma + .5)
     x = torch.arange(-radius, radius + 1, device=device, dtype=torch.float64)
@@ -36,6 +40,7 @@ def _gaussian_kernel(sigma, device, dtype=torch.float64):
     return (kernel / kernel.sum()).to(dtype), radius
 
 
+@lru_cache(maxsize=64)
 def _reflected(n, radius, device):
     """Symmetric (edge-inclusive) reflection indices, repeated for kernels longer than the axis."""
     index = torch.remainder(torch.arange(-radius, n + radius, device=device), 2 * n)
@@ -60,7 +65,8 @@ def gaussian_proxy(image):
 def local_quality(plane, shift, centres, sigma, device='cuda:0'):
     """Device equivalent of ``ap_align.LocalQuality.measure``."""
     c = np.asarray(centres, dtype=np.float64) + np.array([float(shift[1]), float(shift[0])])
-    return local_quality_batch(torch.as_tensor(plane, device=device, dtype=torch.float64)[None], c[None], sigma)[0]
+    plane = torch.as_tensor(plane, device=device).to(precision.REGISTRATION)
+    return local_quality_batch(plane[None], c[None], sigma)[0]
 
 
 def local_quality_batch(planes, centres, sigma):
@@ -102,34 +108,40 @@ class TorchAlignmentPoints:
         self.weighted = tensor(matcher.weighted)
         self.norm = tensor(matcher.norm).clamp_min(1e-15)
         self.wy, self.wx = tensor(matcher.wy), tensor(matcher.wx)
-        h, w = self.shape
-        self.yy, self.xx = torch.meshgrid(torch.arange(h, device=device, dtype=torch.float64),
-                                          torch.arange(w, device=device, dtype=torch.float64), indexing='ij')
         half, R = self.size // 2, self.search
         span = self.size + 2 * R
-        ar = torch.arange(span, device=device)
-        iy = torch.as_tensor(self.centres[:, 0] - half - R, device=device)
-        ix = torch.as_tensor(self.centres[:, 1] - half - R, device=device)
+        ar = torch.arange(span, device=device, dtype=torch.float64)
+        iy = torch.as_tensor(self.centres[:, 0] - half - R, device=device, dtype=torch.float64)
+        ix = torch.as_tensor(self.centres[:, 1] - half - R, device=device, dtype=torch.float64)
+        # Search tiles in detector coordinates: (n, span, 1) rows and (n, 1, span) columns.
         self.rows = (iy[:, None] + ar[None, :])[:, :, None]
         self.cols = (ix[:, None] + ar[None, :])[:, None, :]
+        self.hann = tensor(np.hanning(self.size))
         self.matcher = matcher
 
-    def _ncc(self, image):
-        n = len(self.centres)
-        tiles = image[self.rows, self.cols][None]
-        window = self.window[None, None].expand(n, 1, self.size, self.size)
-        num = F.conv2d(tiles, self.weighted[:, None], groups=n)[0]
-        s1 = F.conv2d(tiles, window, groups=n)[0]
-        s2 = F.conv2d(tiles * tiles, window, groups=n)[0]
-        var = (s2 - s1 * s1 / self.window.sum()).clamp_min(1e-12)
-        return num / (var.sqrt() * self.norm[:, None, None])
+    def _ncc(self, tiles):
+        """Normalised correlations of (n, span, span) tiles, in their precision.
+
+        The Hann window sums use its separability (rows, then columns).
+        """
+        n, dtype = len(self.centres), tiles.dtype
+        num = F.conv2d(tiles[None], self.weighted.to(dtype)[:, None], groups=n)[0]
+        hann = self.hann.to(dtype)
+
+        def window_sum(image):
+            rows = F.conv2d(image[:, None], hann.view(1, 1, 1, -1))
+            return F.conv2d(rows, hann.view(1, 1, -1, 1))[:, 0]
+        s1, s2 = window_sum(tiles), window_sum(tiles * tiles)
+        var = (s2 - s1 * s1 / self.window.sum().to(dtype)).clamp_min(1e-12)
+        return num / (var.sqrt() * self.norm.to(dtype)[:, None, None])
 
     def peak_fits(self, frame, global_shift):
-        """``AlignmentPoints.peak_fits`` with the correlations on the device."""
-        proxy = gaussian_proxy(torch.as_tensor(frame, device=self.device, dtype=torch.float64))
-        image = sample(proxy, self.yy + float(global_shift[1]), self.xx + float(global_shift[0]))
+        """``AlignmentPoints.peak_fits`` with the correlations on the device, in registration precision."""
+        proxy = gaussian_proxy(torch.as_tensor(frame, device=self.device).to(precision.REGISTRATION))
+        # Only the search tiles are resampled: the same samples as shifting the whole proxy.
+        tiles = sample(proxy, self.rows + float(global_shift[1]), self.cols + float(global_shift[0]))
         # Peak decisions are tiny (n x 13 x 13); reuse the CPU reference logic.
-        offset, H, ok, _ = ap_align._peak_fit(self._ncc(image).cpu().numpy())
+        offset, H, ok, _ = ap_align._peak_fit(self._ncc(tiles).double().cpu().numpy())
         return offset, H, ok
 
     def displacement(self, frame, global_shift):
@@ -194,54 +206,68 @@ def device_template(reference, indices, read_plane, correlate, max_shift, *, sho
 
 
 class DeviceAccumulator:
-    """Weighted sums kept on the GPU for one batch, then merged into CPU sums.
+    """Weighted sums kept on the GPU, then merged into CPU sums.
 
-    The CPU arrays stay authoritative for checkpoints and fallback; ``pending``
-    lists the capture indices whose contributions have not been merged yet.
+    The CPU arrays stay authoritative for checkpoints and fallback. The main
+    sums merge after every batch, for previews; the rank-bin sums of Fourier
+    weighting (two full-frame sums per bin) merge only every ``BIN_FRAMES``
+    frames, before a checkpoint and at the end. ``pending`` lists the capture
+    indices whose main sums have not been merged, ``bin_pending`` those whose
+    bin sums have not.
     """
+    BIN_FRAMES = 1024
+
     def __init__(self):
         self.sums = None
         self.bin_sums = {}
         self.pending = []
+        self.bin_pending = []
 
     def add(self, index, weight, add, wt, demo, support, bins=None):
         """``bins``: optional [(bin, per-pixel weight)] for Fourier weighting's rank-bin sums."""
         if not torch.is_tensor(weight):
             weight = torch.tensor(float(weight), device=add.device, dtype=torch.float64)
         scale = weight[..., None] if weight.ndim == 2 and add.ndim == 3 else weight
-        parts = [scale * add, scale * wt]
+        parts = [(scale, add), (scale, wt)]
         if demo is not None:
-            parts += [scale * demo, (weight * support)[..., None]]
+            parts += [(scale, demo), (weight[..., None] if weight.ndim else weight, support[..., None])]
         if self.sums is None:
-            self.sums = parts
+            self.sums = [a * b for a, b in parts]
         else:
-            for total, part in zip(self.sums, parts):
-                total.add_(part)
+            for total, (a, b) in zip(self.sums, parts):
+                total.addcmul_(a, b)
         for b, m in bins or ():
             m = m[..., None] if add.ndim == 3 else m
             if b in self.bin_sums:
-                self.bin_sums[b][0].add_(m * add)
-                self.bin_sums[b][1].add_(m * wt)
+                self.bin_sums[b][0].addcmul_(m, add)
+                self.bin_sums[b][1].addcmul_(m, wt)
             else:
                 self.bin_sums[b] = [m * add, m * wt]
         self.pending.append(int(index))
+        if bins:
+            self.bin_pending.append(int(index))
 
-    def flush(self, *targets, bins=None):
-        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight])
-        and the rank-bin sums into ``bins`` (bin_accum, bin_weight)."""
+    def flush(self, *targets, bins=None, everything=True):
+        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight]) and,
+        when ``everything`` or enough frames are waiting, the rank-bin sums into ``bins`` (bin_accum, bin_weight)."""
         if self.sums is not None:
             for total, target in zip(self.sums, targets):
                 target += total.cpu().numpy()
-        for b, (total, total_weight) in self.bin_sums.items():
-            bins[0][b] += total.cpu().numpy()
-            bins[1][b] += total_weight.cpu().numpy()
         self.sums = None
-        self.bin_sums = {}
         self.pending = []
+        if everything or len(self.bin_pending) >= self.BIN_FRAMES:
+            for b, (total, total_weight) in self.bin_sums.items():
+                bins[0][b] += total.cpu().numpy()
+                bins[1][b] += total_weight.cpu().numpy()
+            self.bin_sums = {}
+            self.bin_pending = []
 
     def discard(self):
-        pending, self.sums, self.bin_sums, self.pending = self.pending, None, {}, []
-        return pending
+        """(frames with no merged sums, frames whose bin sums alone are unmerged); clears both."""
+        pending = self.pending
+        bin_only = sorted(set(self.bin_pending) - set(pending))
+        self.sums, self.bin_sums, self.pending, self.bin_pending = None, {}, [], []
+        return pending, bin_only
 
 
 class PointGrid:

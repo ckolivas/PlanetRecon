@@ -244,15 +244,13 @@ def build_template(reference, indices, read_plane, correlate, max_shift, should_
     return np.divide(anchored, support, out=reference.copy(), where=support > 0)
 
 
-def cpu_backproject(raw, shift, color, *, demosaiced=None):
-    """Resample original colour measurements and their support exactly once."""
-    from planetrecon.detector import is_bayer, cfa_labels, bilinear_demosaic
+def cpu_backproject(raw, shift, color):
+    """Resample original colour measurements and their support exactly once: (signal, weight, None, None)
+    for Bayer CFA sites, whose weights are their own, else (signal, weight, None, support)."""
+    from planetrecon.detector import is_bayer, cfa_labels
     raw = np.asarray(raw, dtype=np.float64)
-    support = pull(np.ones(raw.shape[:2]), shift)
     if is_bayer(color):
         masks = (cfa_labels(*raw.shape, color)[..., None] == np.array(list('RGB'))).astype(float)
-        if demosaiced is None:
-            demosaiced = bilinear_demosaic(raw, color)
-        return (pull(raw[..., None]*masks, shift), pull(masks, shift),
-                pull(demosaiced, shift), support)
+        return pull(raw[..., None]*masks, shift), pull(masks, shift), None, None
+    support = pull(np.ones(raw.shape[:2]), shift)
     return pull(raw, shift), np.broadcast_to(support[..., None], raw.shape) if raw.ndim == 3 else support, None, None

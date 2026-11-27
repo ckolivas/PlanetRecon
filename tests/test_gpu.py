@@ -32,8 +32,7 @@ def test_cuda_backprojection_matches_cpu(cuda_backend,color,offset):
     sy,sx=-offset[1],-offset[0]
     if is_bayer(color):
         a,w=cfa_accumulate(raw,offset,color)
-        d=ndshift(bilinear_demosaic(raw,color),(sy,sx,0),order=1,prefilter=False,mode='grid-constant')
-        np.testing.assert_allclose(demo,d,rtol=1e-13,atol=1e-9)
+        assert demo is None and support is None
     else:
         offsets=(sy,sx,0) if raw.ndim==3 else (sy,sx)
         a=ndshift(raw,offsets,order=1,prefilter=False,mode='grid-constant')

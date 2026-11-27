@@ -317,9 +317,13 @@ class AlignmentPoints:
     def _device(self):
         if self._cuda is None:
             from planetrecon.backends.torch_ap import TorchAlignmentPoints
+            from planetrecon.backends import precision
             self._cuda = TorchAlignmentPoints(self)
-            self.provenance['cuda_execution'].update(used=True, precision='float64',
-                matching='grouped GPU correlations and field solve; CPU peak fits')
+            self.provenance['cuda_execution'].update(
+                used=True, precision='float64',
+                registration_precision=str(precision.REGISTRATION).removeprefix('torch.'),
+                blend_precision=str(precision.BLEND).removeprefix('torch.'),
+                matching='grouped GPU correlations (registration precision) and float64 field solve; CPU peak fits')
         return self._cuda
 
     def release_cuda(self):
@@ -329,11 +333,16 @@ class AlignmentPoints:
         return float(np.mean(self.accepted)) if self.accepted else None
 
 
-def calibration_samples(indices, read_plane, correlate, reference, max_shift):
-    """(plane, global shift) of up to CALIBRATION_FRAMES of ``indices``, spread evenly."""
+def calibration_samples(indices, read_plane, correlate, reference, max_shift, *, plan=None):
+    """(plane, global shift) of up to CALIBRATION_FRAMES of ``indices``, spread evenly.
+
+    ``plan`` (optional) is told the reading order before the reads, e.g. to read ahead.
+    """
     indices = np.asarray(indices)
     if len(indices) > CALIBRATION_FRAMES:
         indices = indices[np.linspace(0, len(indices) - 1, CALIBRATION_FRAMES).round().astype(int)]
+    if plan is not None:
+        plan(indices)
     for index in indices:
         plane = read_plane(int(index))
         shift = correlate(reference, plane)
@@ -342,21 +351,26 @@ def calibration_samples(indices, read_plane, correlate, reference, max_shift):
 
 
 def refined_reference(reference, indices, read_plane, correlate, max_shift, *, size, use_cuda=False,
-                      should_cancel=None, progress=None):
+                      should_cancel=None, progress=None, plan=None):
     """Average many frames twice: globally aligned, then locally aligned to that mean.
 
     A low-noise reference limits imprinting its noise on the matches. With CUDA,
     ``read_plane`` may return device tensors; the result is a NumPy array.
+    The averages read the frames in capture order; ``plan`` (optional) is told
+    each reading order first, e.g. to read ahead.
     """
     from planetrecon.pipeline.local_align import build_template, pull
     total_steps = 2 * len(indices)
+    ordered = np.sort(np.asarray(indices))
+    plan = plan or (lambda order: None)
+    plan(ordered)
 
     def report(step):
         if progress is not None and (step % 25 == 0 or step == total_steps):
             progress('Building alignment reference', step, total_steps)
     if use_cuda:
         from planetrecon.backends.torch_ap import device_template
-        template = device_template(reference, indices, read_plane, correlate, max_shift,
+        template = device_template(reference, ordered, read_plane, correlate, max_shift,
                                    should_cancel=should_cancel, progress=report)
     else:
         seen = [0]
@@ -365,11 +379,11 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
             seen[0] += 1
             report(seen[0])
             return read_plane(index)
-        template = build_template(reference, indices, counted, correlate, max_shift, should_cancel)
+        template = build_template(reference, ordered, counted, correlate, max_shift, should_cancel)
     matcher = AlignmentPoints(template, size=size, use_cuda=use_cuda, should_cancel=should_cancel)
     if not len(matcher.centres):
         return template
-    matcher.calibrate(calibration_samples(indices, read_plane, correlate, template, max_shift))
+    matcher.calibrate(calibration_samples(indices, read_plane, correlate, template, max_shift, plan=plan))
     if use_cuda:
         import torch
         from planetrecon.backends.torch_ap import sample
@@ -392,7 +406,8 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
         def add(plane, field):
             total.__iadd__(pull(plane, field))
             weight.__iadd__(pull(ones, field))
-    for step, index in enumerate(indices, len(indices) + 1):
+    plan(ordered)
+    for step, index in enumerate(ordered, len(indices) + 1):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while building the alignment reference')
         report(step)
@@ -480,17 +495,28 @@ class LocalSelection:
         local = (self.wy.T * selected) @ self.wx * self.scale
         return local + self.rest * float(self.global_mask[index])
 
-    def weights_tensor(self, index, device='cuda:0'):
-        """Device equivalent of ``weights``."""
+    def _device_maps(self, selections, device):
+        """Blended footprints (k, h, w) float64 of (k, n_ap) point selections, on the device.
+
+        The footprint products are summed in ``precision.BLEND`` (one batched
+        product for all k); a relative error of about 1e-7 in a frame's weight.
+        """
         import torch
-        if getattr(self, '_device', None) is None:
+        from planetrecon.backends import precision
+        if getattr(self, '_device', None) is None or self._device[0].device != torch.device(device):
             self._device = [torch.as_tensor(a, device=device, dtype=torch.float64)
                             for a in (self.wy.T, self.wx, self.scale, self.rest)]
-        wyT, wx, scale, rest = self._device
+        wyT, wx, scale, _ = self._device
+        dtype = precision.BLEND
+        selected = torch.as_tensor(np.asarray(selections, dtype=np.float64), device=device, dtype=dtype)
+        maps = (wyT.to(dtype)[None] * selected[:, None, :]) @ wx.to(dtype)
+        return maps.to(torch.float64) * scale
+
+    def weights_tensor(self, index, device='cuda:0'):
+        """Device equivalent of ``weights``."""
         k = self.row.get(int(index))
-        selected = torch.as_tensor(self.chosen[k] if k is not None else np.zeros(wyT.shape[1], bool),
-                                   device=device, dtype=torch.float64)
-        return (wyT * selected) @ wx * scale + rest * float(self.global_mask[index])
+        selected = self.chosen[k] if k is not None else np.zeros(self.wy.shape[0], bool)
+        return self._device_maps(selected[None], device)[0] + self._device[3] * float(self.global_mask[index])
 
     def bin_weights(self, index):
         """[(bin, per-pixel weight)] for one frame; the weights sum to ``weights(index)``."""
@@ -507,20 +533,15 @@ class LocalSelection:
 
     def bin_weights_tensor(self, index, device='cuda:0'):
         """Device equivalent of ``bin_weights``."""
-        import torch
-        self.weights_tensor(index, device)  # Ensures the device arrays exist.
-        wyT, wx, scale, rest = self._device
         k = self.row.get(int(index))
-        local = self.bins[k] if k is not None else np.full(wyT.shape[1], -1)
+        local = self.bins[k] if k is not None else np.full(self.wy.shape[0], -1)
         outside = int(self.global_bins[index]) if self.global_mask[index] else -1
-        result = []
-        for b in sorted(set(local[local >= 0].tolist()) | ({outside} if outside >= 0 else set())):
-            selected = torch.as_tensor(local == b, device=device, dtype=torch.float64)
-            weight = (wyT * selected) @ wx * scale
-            if b == outside:
-                weight = weight + rest
-            result.append((b, weight))
-        return result
+        order = sorted(set(local[local >= 0].tolist()) | ({outside} if outside >= 0 else set()))
+        if not order:
+            return []
+        maps = self._device_maps(np.stack([local == b for b in order]), device)
+        rest = self._device[3]
+        return [(b, maps[j] + rest if b == outside else maps[j]) for j, b in enumerate(order)]
 
 
 def rank_bins(count, n_bins):
@@ -547,7 +568,7 @@ def assign_bins(order, chosen, n_bins, global_mask, global_scores):
 
 
 def select_locally(matcher, frames, read_plane, correlate, reference, count, global_mask, should_cancel=None,
-                   use_cuda=False, progress=None, n_bins=0, global_scores=None):
+                   use_cuda=False, progress=None, n_bins=0, global_scores=None, plan=None):
     """Measure local quality for ``frames`` and keep each AP's best ``count``.
 
     With ``n_bins``, each point's chosen frames are also split into equal-count
@@ -555,6 +576,8 @@ def select_locally(matcher, frames, read_plane, correlate, reference, count, glo
     ranks the frames of ``global_mask`` the same way for use outside the points.
     """
     quality = LocalQuality(matcher, use_cuda=use_cuda)
+    if plan is not None:
+        plan(frames)
     scores = np.zeros((len(frames), len(matcher.centres)))
     shifts = []
     for k, index in enumerate(frames):

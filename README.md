@@ -891,7 +891,9 @@ matches within float64 rounding: parallel scatter addition can change the order
 of additions. Cancellation before geometry preparation
 leaves the prior checkpoint intact.
 
-The GUI's optional **Checkpoint file** writes accumulator state after each batch.
+The GUI's optional **Checkpoint file** writes accumulator state after each batch
+(translation stacks: at most once a minute, when cancelled and at the end, since with
+Fourier weighting the state holds two full-frame sums per rank bin).
 Select **Resume this checkpoint** to continue it with the same capture/settings;
 this works for CPU/CUDA translation, CPU geometry and CUDA surface/combined motion. An incompatible state is
 reported without replacing the last received image. Input inspection ignores

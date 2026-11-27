@@ -26,8 +26,15 @@ recombined as the ordinary stack plus each ring's difference from it. The
 halves also give each result's signal-to-noise per ring from their Fourier
 ring correlation.
 """
+import os
+
 import numpy as np
+from scipy import fft as sfft
 from scipy.ndimage import binary_erosion, gaussian_filter
+
+# Threads for the final combination's transforms and weighted sums (run once per stack).
+WORKERS = min(32, os.cpu_count() or 1)
+BAND_CHUNK = 8  # Weighted ring stacks formed together (one matrix product per chunk).
 
 BINS = 16
 MIN_BIN_FRAMES = 20  # Each rank bin keeps at least ten frames of each half.
@@ -97,7 +104,7 @@ def _spectra(taper):
     def spectrum(image):
         lum = luminance(image)
         level = np.sum(lum * taper) / np.sum(taper)
-        return np.fft.fft2((lum - level) * taper)
+        return sfft.fft2((lum - level) * taper, workers=WORKERS)
     return spectrum
 
 
@@ -190,14 +197,18 @@ def combine(bin_accum, bin_weight, W, half=None):
     base = _normalise(accum, weight)
     filters = band_filters(base.shape)
     out = base.copy()
-    for b, f in enumerate(filters):
-        if np.allclose(W[:, b], W[0, b], rtol=1e-12, atol=0.):
-            continue  # Equal weights reproduce the ordinary stack.
-        band = _normalise(np.tensordot(W[:, b], a, axes=1), np.tensordot(W[:, b], w, axes=1))
-        difference = np.where(weight > 0, band - base, 0.)
-        axes = (0, 1)
-        out += np.real(np.fft.ifft2(np.fft.fft2(difference, axes=axes) * (f[..., None] if difference.ndim == 3 else f),
-                                    axes=axes))
+    # Equal weights reproduce the ordinary stack.
+    varying = [b for b in range(len(filters)) if not np.allclose(W[:, b], W[0, b], rtol=1e-12, atol=0.)]
+    flat_a, flat_w = a.reshape(len(a), -1), w.reshape(len(w), -1)
+    for start in range(0, len(varying), BAND_CHUNK):
+        chunk = varying[start:start + BAND_CHUNK]
+        num, den = W[:, chunk].T @ flat_a, W[:, chunk].T @ flat_w
+        for j, b in enumerate(chunk):
+            band = _normalise(num[j].reshape(base.shape), den[j].reshape(base.shape))
+            difference = np.where(weight > 0, band - base, 0.)
+            f = filters[b][..., None] if difference.ndim == 3 else filters[b]
+            out += np.real(sfft.ifft2(sfft.fft2(difference, axes=(0, 1), workers=WORKERS) * f, axes=(0, 1),
+                                      workers=WORKERS))
     return np.where(weight > 0, out, 0.)
 
 
