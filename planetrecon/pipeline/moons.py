@@ -135,65 +135,38 @@ def centroid(plane, cy, cx, sigma, half, parity=None, *, origin=(0, 0), shape=No
         return None
     oy, ox = origin
     win = np.asarray(plane[iy - half - oy:iy + half + 1 - oy, ix - half - ox:ix + half + 1 - ox], dtype=np.float64)
+    y, x = centroids(win[None], np.array([cy - iy]), np.array([cx - ix]), sigma, half, parity)
+    return None if np.isnan(y[0]) else (iy + y[0], ix + x[0])
+
+
+def centroids(windows, y0, x0, sigma, half, parity=None):
+    """``centroid`` of many (2 half + 1)-square windows at once: offsets (y, x) from each window's
+    centre, starting from (y0, x0); NaN where a centroid fails."""
+    win = np.asarray(windows, dtype=np.float64)
     yy, xx = _offsets(half)
     border, operator = _border_fit(half)
-    coef = operator @ win[border]
-    win = win - (coef[0] + coef[1] * yy + coef[2] * xx)
-    use = np.ones_like(win) if parity is None else ((yy + xx) % 2 == parity).astype(np.float64)
-    y0, x0 = cy - iy, cx - ix
+    coef = win[:, border] @ operator.T
+    win = win - (coef[:, 0, None, None] + coef[:, 1, None, None] * yy + coef[:, 2, None, None] * xx)
+    if parity is not None:
+        win = win * ((yy + xx) % 2 == parity)
+    y0, x0 = np.array(y0, dtype=np.float64), np.array(x0, dtype=np.float64)
+    active = np.ones(len(win), bool)
+    failed = np.zeros(len(win), bool)
     for _ in range(8):
-        g = np.exp(-((yy - y0) ** 2 + (xx - x0) ** 2) / (2 * sigma * sigma)) * use
-        f = (win * g).sum()
-        if not f > 0:
-            return None
-        y1, x1 = (win * g * yy).sum() / f, (win * g * xx).sum() / f
-        if abs(y1) > half - 2 or abs(x1) > half - 2:
-            return None
-        done = abs(y1 - y0) < 1e-3 and abs(x1 - x0) < 1e-3
-        y0, x0 = y1, x1
-        if done:
+        g = win * np.exp(-((yy - y0[:, None, None]) ** 2 + (xx - x0[:, None, None]) ** 2) / (2 * sigma * sigma))
+        f = g.sum(axis=(1, 2))
+        bad = active & ~(f > 0)
+        safe = np.where(f > 0, f, 1.)
+        y1, x1 = (g * yy).sum(axis=(1, 2)) / safe, (g * xx).sum(axis=(1, 2)) / safe
+        bad |= active & ((np.abs(y1) > half - 2) | (np.abs(x1) > half - 2))
+        failed |= bad
+        active &= ~bad
+        done = active & (np.abs(y1 - y0) < 1e-3) & (np.abs(x1 - x0) < 1e-3)
+        y0, x0 = np.where(active, y1, y0), np.where(active, x1, x0)
+        active &= ~done
+        if not active.any():
             break
-    return iy + y0, ix + x0
-
-
-def _crops(planes, centres, halves):
-    """Per plane, [(window, origin) or None]: each centroid window around its (row, column) ``centres``.
-
-    ``planes`` and ``centres`` are parallel lists (one entry per frame). Device
-    tensor windows of every frame are copied to the host together, so the
-    centroids need only each frame's registration plane where it already is.
-    """
-    boxes = []
-    for plane, frame_centres in zip(planes, centres):
-        h, w = plane.shape[:2]
-        frame = []
-        for (cy, cx), half in zip(frame_centres, halves):
-            iy, ix = int(round(cy)), int(round(cx))
-            inside = iy - half >= 0 and ix - half >= 0 and iy + half < h and ix + half < w
-            frame.append((iy - half, ix - half, 2 * half + 1) if inside else None)
-        boxes.append(frame)
-    device = [k for k, plane in enumerate(planes) if hasattr(plane, 'cpu')]
-    parts = [planes[k][y:y + n, x:x + n].reshape(-1) for k in device for y, x, n in
-             (b for b in boxes[k] if b is not None)]
-    flat = None
-    if parts:
-        import torch
-        flat = torch.cat(parts).double().cpu().numpy()
-    out, start = [], 0
-    for plane, frame in zip(planes, boxes):
-        on_device = hasattr(plane, 'cpu')
-        windows = []
-        for b in frame:
-            if b is None:
-                windows.append(None)
-            elif not on_device:
-                windows.append((plane, (0, 0)))
-            else:
-                y, x, n = b
-                windows.append((flat[start:start + n * n].reshape(n, n), (y, x)))
-                start += n * n
-        out.append(windows)
-    return out
+    return np.where(failed, np.nan, y0), np.where(failed, np.nan, x0)
 
 
 def _shifted(plane, dy, dx):
@@ -538,61 +511,119 @@ class MoonStack:
         return self.contribute_many([(index, calibrated, plane, shift)])[0]
 
     def contribute_many(self, frames):
-        """``contribute`` for [(index, calibrated, plane, shift)], copying device windows together."""
-        predicted = []
-        for index, _, _, shift in frames:
-            t = self.times[index] - self.t_out
-            rel = [moon.relative(t) for moon in self.moons]
-            predicted.append([(ry + shift[1], rx + shift[0]) for ry, rx in rel])
-        crops = _crops([plane for _, _, plane, _ in frames], predicted, [moon.half for moon in self.moons])
-        return [self._follow(calibrated, plane.shape[:2], frame_predicted, frame_crops)
-                for (_, calibrated, plane, _), frame_predicted, frame_crops in zip(frames, predicted, crops)]
+        """``contribute`` for [(index, calibrated, plane, shift)]; device planes' windows are copied together."""
+        plan = self.plan([(index, shift) for index, _, _, shift in frames], frames[0][2].shape[:2])
+        planes = [plane for _, _, plane, _ in frames]
+        if hasattr(planes[0], 'cpu'):
+            import torch
+            flat = self.device_windows(torch.stack(planes), plan).cpu().numpy()
+        else:
+            flat = self.host_windows(planes, plan)
+        return self.follow([calibrated for _, calibrated, _, _ in frames], plan, flat)
 
-    def _follow(self, calibrated, shape, predicted, crops):
-        measured = []
-        for moon, (py, px), crop in zip(self.moons, predicted, crops):
-            got = None if crop is None else centroid(crop[0], py, px, moon.sigma, moon.half, origin=crop[1],
-                                                     shape=shape)
-            deviation = None
-            if got is not None:
-                limit = OUTLIER_SIGMA * (moon.detail.get('seeing_jitter_px', 0.) ** 2
-                                         + moon.detail.get('centroid_noise_px', 0.) ** 2) ** .5 + 1.
-                if np.hypot(got[0] - py, got[1] - px) <= limit:
-                    deviation = np.array([got[0] - py, got[1] - px])
-            measured.append(deviation)
-        out = []
-        for moon, (py, px), own in zip(self.moons, predicted, measured):
-            shared = np.zeros(2)
+    def plan(self, frames, shape):
+        """Predicted positions (G, M, 2) of every moon in frames [(index, global shift (x, y))] and,
+        per moon, its centroid windows' top-left corners (G, 2) and whether they fit in ``shape``."""
+        t = np.array([self.times[index] - self.t_out for index, _ in frames])
+        shift = np.array([(s[1], s[0]) for _, s in frames], dtype=np.float64)
+        predicted = np.stack([np.stack(moon.relative(t), -1) for moon in self.moons], 1) + shift[:, None, :]
+        boxes = []
+        for k, moon in enumerate(self.moons):
+            centre = np.array([[int(round(v)) for v in point] for point in predicted[:, k]]).reshape(-1, 2)
+            inside = ((centre - moon.half >= 0) & (centre + moon.half < np.array(shape))).all(axis=1)
+            boxes.append((centre - moon.half, inside))
+        return predicted, boxes
+
+    def device_windows(self, planes, plan, upload=None):
+        """Every fitting centroid window of device planes (G, h, w), flattened by moon, then frame:
+        one gather. ``upload(array)`` optionally moves the gather indices to the device."""
+        import torch
+        G, h, w = planes.shape
+        index = []
+        for moon, (corner, inside) in zip(self.moons, plan[1]):
+            span = np.arange(2 * moon.half + 1)
+            for f, (y, x) in zip(np.flatnonzero(inside), corner[inside]):
+                index.append((f * h + y + span)[:, None] * w + (x + span)[None, :])
+        if not index:
+            return torch.zeros(0, dtype=torch.float64, device=planes.device)
+        index = np.concatenate([i.ravel() for i in index]).astype(np.int64)
+        index = upload(index) if upload is not None else torch.as_tensor(index, device=planes.device)
+        return planes.reshape(-1)[index].to(torch.float64)
+
+    def host_windows(self, planes, plan):
+        """``device_windows`` for NumPy planes."""
+        parts = []
+        for moon, (corner, inside) in zip(self.moons, plan[1]):
+            n = 2 * moon.half + 1
+            parts += [np.asarray(planes[f][y:y + n, x:x + n], dtype=np.float64).ravel()
+                      for f, (y, x) in zip(np.flatnonzero(inside), corner[inside])]
+        return np.concatenate(parts) if parts else np.zeros(0)
+
+    def follow(self, calibrated, plan, flat):
+        """Per frame, per moon (window, weight, own tilt followed) from the centroid windows ``flat``."""
+        predicted, boxes = plan
+        G, M = predicted.shape[:2]
+        measured = np.full((G, M, 2), np.nan)
+        start = 0
+        for k, (moon, (corner, inside)) in enumerate(zip(self.moons, boxes)):
+            n, count = 2 * moon.half + 1, int(inside.sum())
+            if not count:
+                continue
+            windows = flat[start:start + count * n * n].reshape(count, n, n)
+            start += count * n * n
+            centre = corner[inside] + moon.half
+            y, x = centroids(windows, predicted[inside, k, 0] - centre[:, 0], predicted[inside, k, 1] - centre[:, 1],
+                             moon.sigma, moon.half)
+            deviation = np.stack([centre[:, 0] + y, centre[:, 1] + x], -1) - predicted[inside, k]
+            limit = OUTLIER_SIGMA * (moon.detail.get('seeing_jitter_px', 0.) ** 2
+                                     + moon.detail.get('centroid_noise_px', 0.) ** 2) ** .5 + 1.
+            ok = np.isfinite(deviation).all(axis=1) & (np.hypot(*deviation.T) <= limit)
+            rows = np.flatnonzero(inside)[ok]
+            measured[rows, k] = deviation[ok]
+        followed = np.isfinite(measured).all(axis=2)
+        known = np.where(followed[..., None], measured, 0.)
+        out = [[None] * M for _ in range(G)]
+        for k, moon in enumerate(self.moons):
+            shared = np.zeros((G, 2))
             for j, beta in moon.coupling.items():
-                if measured[j] is not None:
-                    shared += np.asarray(beta) * measured[j]
-            move = shared + (moon.gain * (own - shared) if own is not None else 0.)
-            sy, sx = py + move[0] - moon.y, px + move[1] - moon.x
-            out.append(self._window(calibrated, moon, sy, sx) + (own is not None,))
+                shared += np.asarray(beta) * known[:, j]
+            move = shared + np.where(followed[:, k, None], moon.gain * (known[:, k] - shared), 0.)
+            sy = predicted[:, k, 0] + move[:, 0] - moon.y
+            sx = predicted[:, k, 1] + move[:, 1] - moon.x
+            for f, (add, wt) in enumerate(self._windows(calibrated, moon, sy, sx)):
+                out[f][k] = (add, wt, bool(followed[f, k]))
         return out
 
-    def _window(self, calibrated, moon, sy, sx):
+    def _windows(self, calibrated, moon, sy, sx):
+        """Each frame's (window, weight) of ``moon`` at sampling shifts (sy, sx) (G,); (None, None) where
+        the window leaves the frame. Bayer frames give each colour's CFA samples and their sites, pulled
+        bilinearly (``detector.cfa_accumulate`` restricted to the window, with cached colour masks)."""
         r = self.radius
+        n = 2 * r + 1
+        fy, fx = round(moon.y) - r + sy, round(moon.x) - r + sx
+        iy, ix = np.floor(fy).astype(int), np.floor(fx).astype(int)
+        out = [(None, None)] * len(sy)
+        keep = [f for f in range(len(sy)) if iy[f] >= 0 and ix[f] >= 0 and iy[f] + n < calibrated[f].shape[0]
+                and ix[f] + n < calibrated[f].shape[1]]
+        if not keep:
+            return out
+        crops = np.stack([np.asarray(calibrated[f][iy[f]:iy[f] + n + 1, ix[f]:ix[f] + n + 1], dtype=np.float64)
+                          for f in keep])
+        dy, dx = (fy - iy)[keep], (fx - ix)[keep]
         if self.bayer is not None:
-            # Each colour's CFA samples and their sites, pulled bilinearly: ``detector.cfa_accumulate``
-            # restricted to the window, with the colour masks of the window's Bayer phase cached.
-            n = 2 * r + 1
-            fy, fx = round(moon.y) - r + sy, round(moon.x) - r + sx
-            iy, ix = int(np.floor(fy)), int(np.floor(fx))
-            if iy < 0 or ix < 0 or iy + n >= calibrated.shape[0] or ix + n >= calibrated.shape[1]:
-                return None, None
-            mask = self._cfa_masks(n + 1, iy % 2, ix % 2)
-            crop = np.asarray(calibrated[iy:iy + n + 1, ix:ix + n + 1], dtype=np.float64)[..., None] * mask
-            dy, dx = fy - iy, fx - ix
+            masks = np.stack([self._cfa_masks(n + 1, iy[f] % 2, ix[f] % 2) for f in keep])
+            crops = crops[..., None] * masks
+        shape = (-1,) + (1,) * (crops.ndim - 1)
+        dy, dx = dy.reshape(shape), dx.reshape(shape)
 
-            def bilinear(c):
-                return ((1 - dy) * ((1 - dx) * c[:-1, :-1] + dx * c[:-1, 1:])
-                        + dy * ((1 - dx) * c[1:, :-1] + dx * c[1:, 1:]))
-            return bilinear(crop), bilinear(mask)
-        add = pull(calibrated, sy, sx, r, moon.y, moon.x)
-        if add is None:
-            return None, None
-        return add, np.ones_like(add)
+        def bilinear(c):
+            return ((1 - dy) * ((1 - dx) * c[:, :-1, :-1] + dx * c[:, :-1, 1:])
+                    + dy * ((1 - dx) * c[:, 1:, :-1] + dx * c[:, 1:, 1:]))
+        add = bilinear(crops)
+        wt = bilinear(masks) if self.bayer is not None else np.ones_like(add)
+        for j, f in enumerate(keep):
+            out[f] = (add[j], wt[j])
+        return out
 
     def _cfa_masks(self, size, py, px):
         """(size, size, 3) colour masks of a window whose origin has row and column parity (py, px)."""

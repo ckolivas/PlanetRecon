@@ -135,6 +135,7 @@ class TorchAlignmentPoints:
         self.cols = (ix[:, None] + ar[None, :])[:, None, :]
         self.hann = tensor(np.hanning(self.size))
         self.matcher = matcher
+        self.stage = PinnedStage(device)
 
     def _ncc(self, tiles):
         """Normalised correlations of (..., n, span, span) tiles, in their precision.
@@ -157,20 +158,30 @@ class TorchAlignmentPoints:
         norm = self.norm.to(dtype).repeat(groups // n)
         return (num / (var.sqrt() * norm[:, None, None])).reshape(*lead, n, *num.shape[-2:])
 
-    def peak_fits_batch(self, frames, shifts):
-        """Offsets (B, n, 2), information (B, n, 2, 2) and acceptance (B, n) of frames (B, h, w)
-        with global shifts (B, 2), with the correlations on the device in registration precision."""
+    def correlations(self, frames, shifts):
+        """Device NCC surfaces (B, n, 2R+1, 2R+1) of frames (B, h, w) with global shifts (B, 2),
+        in registration precision."""
         frames = torch.as_tensor(frames, device=self.device)
         proxies = gaussian_proxy(frames.to(precision.REGISTRATION))
-        s = torch.as_tensor(np.asarray(shifts, dtype=np.float64), device=self.device)
+        s = self.stage.upload('shifts', np.asarray(shifts, dtype=np.float64))
         # Only the search tiles are resampled: the same samples as shifting each whole proxy.
         tiles = sample_batch(proxies, self.rows[None] + s[:, 1, None, None, None],
                              self.cols[None] + s[:, 0, None, None, None])
-        ncc = self._ncc(tiles).double().cpu().numpy()
+        return self._ncc(tiles)
+
+    @staticmethod
+    def fits(ncc):
+        """Offsets (B, n, 2), information (B, n, 2, 2) and acceptance (B, n) of host NCC surfaces."""
+        ncc = np.asarray(ncc, dtype=np.float64)
         B, n = ncc.shape[:2]
         # Peak decisions are tiny (B x n x 13 x 13); reuse the CPU reference logic.
         offset, H, ok, _ = ap_align._peak_fit(ncc.reshape(B * n, *ncc.shape[2:]))
         return offset.reshape(B, n, 2), H.reshape(B, n, 2, 2), ok.reshape(B, n)
+
+    def peak_fits_batch(self, frames, shifts):
+        """Offsets (B, n, 2), information (B, n, 2, 2) and acceptance (B, n) of frames (B, h, w)
+        with global shifts (B, 2), with the correlations on the device in registration precision."""
+        return self.fits(self.correlations(frames, shifts).double().cpu().numpy())
 
     def peak_fits(self, frame, global_shift):
         """``AlignmentPoints.peak_fits`` with the correlations on the device, in registration precision."""
@@ -180,25 +191,35 @@ class TorchAlignmentPoints:
     def displacements(self, frames, shifts):
         """Dense (x, y) fields (B, 2, h, w) of frames (B, h, w) with global shifts (B, 2) (x, y)."""
         shifts = np.asarray(shifts, dtype=np.float64).reshape(-1, 2)
+        if not len(self.centres):
+            return self.solve(None, shifts)
+        return self.solve(self.correlations(frames, shifts).double().cpu().numpy(), shifts)
+
+    def solve(self, ncc, shifts):
+        """Fields (B, 2, h, w) from host NCC surfaces (B, n, 2R+1, 2R+1) (None without points)."""
+        shifts = np.asarray(shifts, dtype=np.float64).reshape(-1, 2)
         B = len(shifts)
         g = torch.as_tensor(shifts, device=self.device)[:, :, None, None]
         if not len(self.centres):
             return g.expand(B, 2, *self.shape).clone()
-        offset, H, ok = self.peak_fits_batch(frames, shifts)
+        offset, H, ok = self.fits(ncc)
         self.matcher.accepted.extend(float(v) for v in ok.mean(axis=1))
         n = len(self.centres)
         if self.matcher.trust is not None:
             H = ap_align.trusted(H.reshape(B * n, 2, 2), np.tile(self.matcher.trust, (B, 1, 1))).reshape(B, n, 2, 2)
         trace = H[..., 0, 0] + H[..., 1, 1]
         lam = ap_align.PRIOR * np.array([float(np.median(t[k])) if k.any() else 1. for t, k in zip(trace, ok)])
-        H_t = torch.as_tensor(H, device=self.device, dtype=torch.float64)
-        d = torch.as_tensor(offset, device=self.device, dtype=torch.float64)
+        # One non-blocking upload of the solve's inputs.
+        packed = self.stage.upload('solve', np.concatenate(
+            [H.reshape(-1), offset.reshape(-1), lam]).astype(np.float64))
+        H_t = packed[:H.size].view(H.shape)
+        d = packed[H.size:H.size + offset.size].view(offset.shape)
+        lam = packed[H.size + offset.size:][:, None, None]
         Hd = torch.einsum('bnij,bnj->bni', H_t, d)
         # Coarse-grid sums over points as matrix products: (gy, n) @ (n, gx) for every frame and entry.
         wyT = self.wy.T
         A = (wyT @ (H_t.permute(0, 2, 3, 1)[..., None] * self.wx)).permute(0, 3, 4, 1, 2)
         b = (wyT @ (Hd.permute(0, 2, 1)[..., None] * self.wx)).permute(0, 2, 3, 1)
-        lam = torch.as_tensor(lam, device=self.device)[:, None, None]
         A[..., 0, 0] += lam
         A[..., 1, 1] += lam
         det = A[..., 0, 0] * A[..., 1, 1] - A[..., 0, 1] * A[..., 1, 0]
@@ -245,6 +266,43 @@ def device_template(reference, indices, read_plane, correlate, max_shift, *, sho
     return torch.where(support > 0, anchored / support.clamp_min(1e-300), ref).cpu().numpy()
 
 
+class PinnedStage:
+    """Reusable page-locked host buffers for uploads that do not wait for the GPU.
+
+    An upload from ordinary (pageable) memory waits for every queued kernel, so
+    the CPU cannot prepare the next frames while the GPU works. Each named
+    buffer is reused once its previous copy has completed.
+    """
+
+    def __init__(self, device='cuda:0'):
+        self.device = device
+        self.buffers = {}
+
+    def upload(self, key, array):
+        return self.upload_stack(key, [array])[0]
+
+    def upload_stack(self, key, arrays):
+        """Arrays of one shape and dtype copied into the buffer and uploaded together: (N, ...) on the device."""
+        arrays = [np.asarray(a) for a in arrays]
+        shape, size = arrays[0].shape, arrays[0].size
+        dtype = torch.from_numpy(np.ascontiguousarray(arrays[0][:0]).reshape(-1)).dtype
+        total = size * len(arrays)
+        buffer, done = self.buffers.get(key, (None, None))
+        if buffer is None or buffer.dtype != dtype or buffer.numel() < total:
+            buffer = torch.empty(max(total, 1), dtype=dtype, pin_memory=True)
+        elif done is not None:
+            done.synchronize()
+        host = buffer[:total]
+        staged = host.numpy().reshape((len(arrays),) + shape)
+        for k, a in enumerate(arrays):
+            staged[k] = a
+        out = host.to(self.device, non_blocking=True).view((len(arrays),) + shape)
+        done = torch.cuda.Event()
+        done.record()
+        self.buffers[key] = (buffer, done)
+        return out
+
+
 def fused_kernels():
     """The fused Triton stacking kernels, or None (the torch equivalents are used)."""
     try:
@@ -276,13 +334,19 @@ class DeviceSums:
         self.sums = torch.zeros((n_bins + 1, h * w, 2 * channels), dtype=torch.float64, device=device)
         self.blend = blend
         self.kernels = fused_kernels()
+        self.stage = PinnedStage(device)
+        self.groups = 0
         self.pending, self.bin_pending, self.touched = [], [], set()
 
     def add(self, indices, contributions, pairs):
         """Add one group's (G, h*w, 2C) ``contributions`` for capture ``indices`` along ``pairs``."""
         wy, wx, scale, rest = self.blend
         if self.kernels is not None:
-            self.kernels.accumulate(self.sums, contributions, wy, wx, scale, rest, pairs)
+            self.groups += 1
+            # Alternate staging buffers so a group's tables upload while the last one's are in use.
+            parity = self.groups % 2
+            self.kernels.accumulate(self.sums, contributions, wy, wx, scale, rest, pairs,
+                                    upload=lambda key, array: self.stage.upload((key, parity), array))
         else:
             for f, slot, points, outside, score in pairs:
                 chosen = torch.zeros(wy.shape[1], dtype=wy.dtype, device=wy.device)
@@ -295,10 +359,11 @@ class DeviceSums:
         self.touched.update(pair[1] for pair in pairs if pair[1] != self.main)
 
     def _merge(self, slot, accum, weight):
-        values = self.sums[slot].cpu().numpy()
-        accum += values[:, :self.channels].reshape(accum.shape)
-        weight += values[:, self.channels:].reshape(weight.shape)
-        self.sums[slot].zero_()
+        # Split on the device, so the host adds contiguous arrays.
+        values = self.sums[slot]
+        accum += values[:, :self.channels].contiguous().cpu().numpy().reshape(accum.shape)
+        weight += values[:, self.channels:].contiguous().cpu().numpy().reshape(weight.shape)
+        values.zero_()
 
     def flush_main(self, accum, weight):
         """Add the ordinary sums into (accum, weight), e.g. for a preview."""

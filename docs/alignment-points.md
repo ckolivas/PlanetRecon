@@ -328,10 +328,15 @@ With CUDA the whole per-frame path stays on the device: registration-plane
 demosaic, global correlation (only the peak stencils are copied back), proxy
 filtering, point correlations, field solve, local quality, backprojection and
 the weighted sums. Frames go through it in groups (up to 8, fewer for large
-frames or a CUDA memory budget; `cuda_execution.frame_group`): one upload,
-batched point correlations and field solves with one copy of the correlation
-peaks, and the moons' centroid windows of the whole group copied together.
-Local-quality ranking measures the same groups.
+frames or a CUDA memory budget; `cuda_execution.frame_group`). A group goes up
+in one non-blocking upload from page-locked memory, and its saturation counts,
+correlation surfaces and moon centroid windows come back in one copy; the
+other small inputs (shifts, solve terms, window indices, weight tables) are
+packed into non-blocking uploads too. The CPU then fits the peaks, launches
+the field solve, resampling and sums, and measures the moons' centroids
+(vectorised over the group's frames) while the GPU works. Uncalibrated integer
+frames need no CPU copy or finiteness pass, and their saturation test is the
+same count made on the device. Local-quality ranking measures the same groups.
 
 Two fused Triton kernels (`backends/triton_stack.py`) do the resampling and the
 sums. The backprojection forms each sample's four corner weights from the
@@ -390,3 +395,7 @@ ranking 128 s (2.4 ms per frame), moons 7 s, stacking 293 s (5.3 ms per frame,
 now limited by CPU work: moon centroids and per-frame checks). The image moved
 by 8.5e-7 of its peak rms; the SNR estimate and every moon's gain and size are
 unchanged.
+
+Moving those checks and copies off the CPU's critical path took stacking to
+191 s (3.35 ms per frame, close to the GPU's own 2.8 ms) and the whole capture
+to 6.0 minutes, with an identical image (6e-17).

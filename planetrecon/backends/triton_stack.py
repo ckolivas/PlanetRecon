@@ -120,13 +120,15 @@ def _accumulate(x_ptr, sums_ptr, wy_ptr, wx_ptr, scale_ptr, rest_ptr,
     tl.store(target, tl.load(target, mask, other=0.) + acc, mask)
 
 
-def accumulate(sums, contributions, wy, wx, scale, rest, pairs):
+def accumulate(sums, contributions, wy, wx, scale, rest, pairs, upload=None):
     """Add contributions (G, P, D) into sums (slots, P, D) for ``pairs`` [(frame, slot, points, rest, score)].
 
     ``wy`` (h, K) and ``wx`` (K, w) are the footprints in blend precision; ``scale`` and ``rest`` (P,) float64.
+    ``upload(key, array)`` optionally moves the pair tables to the device (e.g. from pinned memory).
     """
     if not pairs:
         return
+    import numpy as np
     device = sums.device
     pairs = sorted(pairs, key=lambda pair: pair[1])
     slots = sorted({pair[1] for pair in pairs})
@@ -137,12 +139,17 @@ def accumulate(sums, contributions, wy, wx, scale, rest, pairs):
         points.extend(int(k) for k in chosen)
         pair_first.append(len(points))
     slot_first.append(len(pairs))
-    ints = lambda values: torch.tensor(values, dtype=torch.int32, device=device)
-    floats = lambda values: torch.tensor(values, dtype=torch.float64, device=device)
+    tables = [[pair[0] for pair in pairs], pair_first, points + [0], slot_first, slots]
+    offsets = np.cumsum([0] + [len(t) for t in tables])
+    ints = np.concatenate([np.asarray(t, dtype=np.int32) for t in tables])
+    floats = np.array([[pair[3] for pair in pairs], [pair[4] for pair in pairs]], dtype=np.float64)
+    if upload is None:
+        upload = lambda key, array: torch.as_tensor(array, device=device)
+    ints, floats = upload('ints', ints), upload('floats', floats)
+    frame, first, chosen, slot_first, slot_ids = (ints[offsets[k]:offsets[k + 1]] for k in range(5))
     P, D = sums.shape[1:]
     w = wx.shape[1]
     _accumulate[(len(slots), triton.cdiv(P, BLOCK))](
         contributions.contiguous(), sums, wy.contiguous(), wx.contiguous(), scale, rest,
-        ints([pair[0] for pair in pairs]), floats([pair[3] for pair in pairs]), floats([pair[4] for pair in pairs]),
-        ints(pair_first), ints(points + [0]), ints(slot_first), ints(slots), P, w, wy.shape[1],
+        frame, floats[0], floats[1], first, chosen, slot_first, slot_ids, P, w, wy.shape[1],
         D=D, DP=triton.next_power_of_2(D), BLOCK=BLOCK)

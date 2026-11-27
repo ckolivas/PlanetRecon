@@ -613,72 +613,109 @@ def _stack_source(
 
     def device_group(chunk):
         """Alignment points on CUDA for a group of (index, raw): planes, matching, backprojection and
-        weights stay on the device. Returns (indices used, (indices, contributions, pairs) or None)."""
+        weights stay on the device. Returns (indices used, (indices, contributions, pairs) or None).
+
+        The frames go up in one non-blocking upload; their saturation counts, correlation surfaces
+        and moon centroid windows come back in one copy, so the CPU prepares the next group while the
+        GPU resamples and accumulates this one.
+        """
         import torch
         kept = []
         for index, raw in chunk:
             index = int(index)
-            if not selection.accepted[index]:
+            if not selection.accepted[index] or not np.isfinite(selection.measurements[index, 0]):
                 continue
-            if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
+            if raw.dtype.kind not in 'ui' and not np.all(np.isfinite(raw)):
                 continue
-            calibrated, cal_info = apply_calibration(raw, calibration)
-            if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
-                continue
-            if not np.isfinite(selection.measurements[index, 0]):
-                continue
-            kept.append((index, raw, calibrated))
+            if calibration is None:
+                calibrated = raw  # The raw samples are the measurements; saturation is counted on the device.
+            else:
+                if config.reject_saturated and _saturated(raw, bit_depth):
+                    continue
+                calibrated, cal_info = apply_calibration(raw, calibration)
+                if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
+                    continue
+            # Local quality already registered this frame against the same reference.
+            shift = local_selection.shifts.get(index) if local_selection is not None else None
+            kept.append([index, calibrated, shift])
         if not kept:
             return set(), None
         local_matcher._check_cancel()
-        # One upload per group; uncalibrated frames go up as their (smaller) raw samples.
-        images = torch.as_tensor(np.stack([raw if calibration is None else calibrated for _, raw, calibrated in kept]),
-                                 device='cuda:0').to(torch.float64)
+        device_sums.groups += 1
+        images = device_sums.stage.upload_stack(('frames', device_sums.groups % 2),
+                                                [calibrated for _, calibrated, _ in kept]).to(torch.float64)
         planes = torch.stack([backend.registration_plane(image, color) for image in images])
-        shifts, good = [], []
-        for k, (index, _, _) in enumerate(kept):
-            # Local quality already registered this frame against the same reference.
-            shift = local_selection.shifts.get(index) if local_selection is not None else None
-            if shift is None:
-                shift = backend.phase_correlation(reference, planes[k])
-            if np.all(np.isfinite(shift)) and abs(shift[0]) <= config.max_shift_px and abs(shift[1]) <= config.max_shift_px:
-                good.append(k)
-                shifts.append((float(shift[0]), float(shift[1])))
+        for k, item in enumerate(kept):
+            if item[2] is None:
+                item[2] = backend.phase_correlation(reference, planes[k])
+        good = [k for k, (_, _, shift) in enumerate(kept) if np.all(np.isfinite(shift))
+                and abs(shift[0]) <= config.max_shift_px and abs(shift[1]) <= config.max_shift_px]
         if not good:
             return set(), None
         if len(good) < len(kept):
             kept = [kept[k] for k in good]
             select = torch.as_tensor(good, device='cuda:0')
             images, planes = images[select], planes[select]
-        scores = []
-        for index, _, _ in kept:
-            score = max(selection.measurements[index, 0], 1e-12)
-            pending_quality[index] = score
-            scores.append(score if config.quality_weighting else 1.)
+        shifts = [(float(shift[0]), float(shift[1])) for _, _, shift in kept]
+        # Everything the CPU needs from the device, in one copy.
+        parts, sizes = [], []
+        count_saturated = calibration is None and config.reject_saturated and bit_depth <= 16
+        if count_saturated:
+            peak = (1 << int(bit_depth)) - 1
+            parts.append((images >= peak).flatten(1).sum(1).to(torch.float64))
+        matcher = local_matcher._device()
+        points = len(local_matcher.centres) > 0
+        if points:
+            ncc = matcher.correlations(planes, shifts)
+            parts.append(ncc.reshape(-1).to(torch.float64))
+        plan = None
         if moon_stack is not None:
-            # The registration planes are the moons' measurement planes; only their windows leave the device.
-            frames = [(index, calibrated, planes[k], shift) for k, ((index, _, calibrated), shift)
-                      in enumerate(zip(kept, shifts))]
-            for (index, _, _, _), score, contribution in zip(frames, scores, moon_stack.contribute_many(frames)):
-                if local_selection is not None:
-                    # Outside the alignment points the global frame selection applies.
-                    score = score * float(local_selection.global_mask[index])
-                if score > 0:
-                    pending_moons[index] = (contribution, score)
-        fields = local_matcher.displacements_tensor(planes, shifts)
+            plan = moon_stack.plan([(index, shift) for (index, _, _), shift in zip(kept, shifts)], (h, w))
+            parts.append(moon_stack.device_windows(
+                planes, plan, upload=lambda a: device_sums.stage.upload(('moons', device_sums.groups % 2), a)))
+        sizes = [len(part) for part in parts]
+        host = torch.cat(parts).cpu().numpy() if parts else np.zeros(0)
+        pieces = iter(np.split(host, np.cumsum(sizes)[:-1]) if parts else [])
+        usable = np.ones(len(kept), bool)
+        if count_saturated:
+            usable &= next(pieces) / images[0].numel() <= .05
+        ncc_host = next(pieces).reshape(ncc.shape) if points else None
+        windows = next(pieces) if moon_stack is not None else None
+        if not usable.any():
+            return set(), None
+        rows = np.flatnonzero(usable)
+        if len(rows) < len(kept):
+            select = torch.as_tensor(rows, device='cuda:0')
+            images = images[select]
+            ncc_host = ncc_host[rows] if points else None
+        fields = matcher.solve(ncc_host, [shifts[k] for k in rows])
         if device_sums.kernels is not None:
             from planetrecon.detector import BAYER_PATTERNS
             labels = ([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]] if bayer else None)
             contributions = device_sums.kernels.pull(images, fields, labels)
         else:
             contributions = backend.backproject_group(images, fields, color)
-        pairs = []
-        for f, ((index, _, _), score) in enumerate(zip(kept, scores)):
+        indices, scores, pairs = [], [], []
+        for f, k in enumerate(rows):
+            index = kept[k][0]
+            score = max(selection.measurements[index, 0], 1e-12)
+            pending_quality[index] = score
+            score = score if config.quality_weighting else 1.
+            indices.append(index)
+            scores.append(score)
             terms = (local_selection.pairs(index, device_sums.main) if local_selection is not None
                      else [(device_sums.main, np.zeros(0, np.int64), 1.)])
-            pairs.extend((f, slot, points, outside, score) for slot, points, outside in terms)
-        indices = [index for index, _, _ in kept]
-        return set(indices), (indices, contributions.reshape(len(kept), h * w, -1), pairs)
+            pairs.extend((f, slot, chosen, outside, score) for slot, chosen, outside in terms)
+        if moon_stack is not None:
+            # While the GPU resamples: the moons' centroids on their windows of the registration planes.
+            followed = moon_stack.follow([calibrated for _, calibrated, _ in kept], plan, windows)
+            for k, index, score in zip(rows, indices, scores):
+                if local_selection is not None:
+                    # Outside the alignment points the global frame selection applies.
+                    score = score * float(local_selection.global_mask[index])
+                if score > 0:
+                    pending_moons[index] = (followed[k], score)
+        return set(indices), (indices, contributions.reshape(len(rows), h * w, -1), pairs)
 
     def process_frame(item):
         nonlocal reference, reference_index

@@ -107,4 +107,7 @@ and moon stacking added about 8% to the run time (three passes over 400 frames, 
 centroid and a small window per moon per frame). On Bayer captures with alignment points
 the centroids originally used a CPU demosaic of every frame (40 ms per frame on a 1428x574
 capture); they now use windows of the registration plane already on the GPU, copied to the
-host together, and each moon's CFA window is sampled directly (45 us, from 320 us).
+host together, and each moon's CFA window is sampled directly (45 us, from 320 us). With
+CUDA groups, the centroids and windows of each moon are computed for all of a group's frames
+at once (one vectorised centroid iteration, one gather of the windows from the device), about
+0.5 ms per frame for five moons, while the GPU resamples the frames.

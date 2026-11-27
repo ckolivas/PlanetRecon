@@ -111,3 +111,24 @@ def test_cuda_groups_match_the_cpu_with_fourier_weighting_and_moons(tmp_path):
     assert gpu.n_used == cpu.n_used
     np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-7 * cpu.image.max())
     np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
+
+
+@pytest.mark.parametrize('color_id', [0, 8])
+def test_saturated_frames_are_rejected_on_the_device_as_on_the_cpu(tmp_path, color_id, monkeypatch):
+    """Screening normally drops saturated frames first; here it does not, so stacking's own test decides."""
+    cuda()
+    import planetrecon.pipeline.baseline as baseline
+    from planetrecon.io.ser import write_ser
+    with SERSource(capture(tmp_path, color_id=color_id)) as source:
+        frames = np.stack([source.read_raw(i) for i in range(source.n_frames())])
+    frames[[3, 9]] = np.where(np.arange(frames.shape[2])[None, :] < frames.shape[2] // 8, 65535, frames[[3, 9]])
+    path = write_ser(tmp_path / 'saturated.ser', frames, color_id=color_id)
+    with SERSource(path) as source:
+        cfg = replace(points_config(), stack_percent=100)
+        with monkeypatch.context() as patch:
+            patch.setattr(baseline, '_saturated', lambda frame, bit_depth: False)
+            preprocess_source(source, cfg)
+        cpu = stack_source(source, cfg)
+        gpu = stack_source(source, replace(cfg, device='gpu'))
+    assert gpu.backend == 'cuda' and gpu.n_used == cpu.n_used and gpu.n_rejected == cpu.n_rejected >= 2
+    np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-7 * cpu.image.max())
