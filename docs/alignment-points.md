@@ -360,3 +360,7 @@ measured on windows of the device registration plane, the matching runs in
 float32, the comparison stack is gone and the final Fourier combination is
 threaded: 181 s (reference 38 s, ranking 24 s, moons 7 s, stacking 15 ms per
 frame including the final combination).
+The whole capture (58,848 frames, 53,062 stacked) went from about 90 minutes to
+15.5 minutes plus cache validation: reference 38 s, ranking 172 s (3.2 ms per
+frame), moons 7 s and stacking 713 s (13.4 ms per frame, GPU-bound at about 90%
+utilisation with reads served ahead of the work).
