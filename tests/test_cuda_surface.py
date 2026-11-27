@@ -115,3 +115,41 @@ def test_unavailable_cuda_falls_back_to_surface_cpu(monkeypatch):
     result=stack_source(source,replace(config(),device='gpu'))
     assert result.backend=='cpu' and result.n_used==2
     assert 'cuda_not_available' in result.warnings
+
+
+@cuda
+@pytest.mark.parametrize('colour', ['mono', 'RGB', 'RGGB'])
+@pytest.mark.parametrize('chunked', [False, True])
+def test_fused_rank_bin_scatter_matches_per_bin_scatters(colour, chunked, monkeypatch):
+    """One pass adds every frame to its rank bins exactly as separate scatters per bin do."""
+    shape, n, n_bins = (37, 43), 5, 6
+    model = OblateGlobeModel(GlobeParams(15., .1, .3, -.2, .1, .05), apply_field=True, ld_power=.4)
+    rng = np.random.default_rng(171)
+    channels = (*shape, 3) if colour != 'mono' else shape
+    frames = rng.uniform(10, 200, (n, *shape, 3) if colour == 'RGB' else (n, *shape))
+    demo = rng.uniform(10, 200, (n, *shape, 3)) if colour == 'RGGB' else None
+    poses = [FramePose(float(k), .02*k, 21.3+.4*k, 18.1-.3*k) for k in range(n)]
+    ref = FramePose(1.5, 0., 21., 18.)
+    score = torch.as_tensor(rng.uniform(.5, 2., (n, *shape)), device="cuda")
+    # Frames fall in different numbers of bins (none for frame 3).
+    bins = [[(int(k), rng.uniform(0, 1, shape)) for k in rng.choice(n_bins, size, replace=False)]
+            for size in (3, 1, 6, 0, 2)]
+    results = []
+    for fused in (True, False):
+        zeros = np.zeros(channels)
+        accumulator = TorchGlobeAccumulator(shape, model, colour, zeros, zeros,
+                                            zeros if demo is not None else None, zeros if demo is not None else None)
+        accumulator.enable_bins(np.zeros((n_bins, *channels)), np.zeros((n_bins, *channels)))
+        if fused:
+            assert accumulator.fused is not None
+            if chunked:
+                monkeypatch.setattr(accumulator, 'BIN_TABLE', 2*6*shape[0]*shape[1]*8)  # Two frames per call.
+        else:
+            accumulator.fused = None
+        covered = accumulator.add(frames, poses, ref, score, demo, bins=bins)
+        results.append((covered, *accumulator.download(), *accumulator.download_bins()))
+    assert results[0][0] == results[1][0]
+    for a, b in zip(results[0][1:], results[1][1:]):
+        if a is not None:
+            np.testing.assert_allclose(a, b, rtol=1e-12, atol=1e-12*np.abs(b).max())
+    assert np.abs(results[0][-2]).sum(axis=tuple(range(1, results[0][-2].ndim))).min() > 0

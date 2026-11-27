@@ -69,9 +69,10 @@ def pull(image, x, y, valid, per_pose):
 @triton.jit
 def _scatter(x_ptr, y_ptr, valid_ptr, values_ptr, score_ptr, demo_ptr, cfa_ptr, labels_ptr,
              accum_ptr, weight_ptr, demo_accum_ptr, demo_weight_ptr, globe_ptr, ring_ptr, covered_ptr,
+             bin_slot_ptr, bin_map_ptr, bin_accum_ptr, bin_weight_ptr, slots, bin_stride,
              total, plane, H: tl.constexpr, W: tl.constexpr, C: tl.constexpr, SCORE_MAP: tl.constexpr,
              CFA: tl.constexpr, DEMO: tl.constexpr, LAYERS: tl.constexpr, GLOBE: tl.constexpr,
-             NEAR: tl.constexpr, FAR: tl.constexpr, BLOCK: tl.constexpr):
+             NEAR: tl.constexpr, FAR: tl.constexpr, BINS: tl.constexpr, BLOCK: tl.constexpr):
     i = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     inside = i < total
     frame = i // plane
@@ -96,6 +97,9 @@ def _scatter(x_ptr, y_ptr, valid_ptr, values_ptr, score_ptr, demo_ptr, cfa_ptr, 
         scalar = tl.load(score_ptr + frame, inside, other=0.)
     if LAYERS:
         label = tl.load(labels_ptr + i, inside, other=0)
+    if CFA:
+        channel = tl.load(cfa_ptr + source, inside, other=0)
+        sample = tl.load(values_ptr + i, inside, other=0.)
     covered = tl.zeros((BLOCK,), dtype=tl.float64)
     for dy in tl.static_range(2):
         wy = fy if dy == 1 else 1. - fy
@@ -113,8 +117,8 @@ def _scatter(x_ptr, y_ptr, valid_ptr, values_ptr, score_ptr, demo_ptr, cfa_ptr, 
                 weighted = weight * scalar
             add = keep & (weighted != 0.)
             if CFA:
-                dest = index * 3 + tl.load(cfa_ptr + source, inside, other=0)
-                tl.atomic_add(accum_ptr + dest, weighted * tl.load(values_ptr + i, inside, other=0.), add)
+                dest = index * 3 + channel
+                tl.atomic_add(accum_ptr + dest, weighted * sample, add)
                 tl.atomic_add(weight_ptr + dest, weighted, add)
             else:
                 for c in tl.static_range(C):
@@ -129,15 +133,36 @@ def _scatter(x_ptr, y_ptr, valid_ptr, values_ptr, score_ptr, demo_ptr, cfa_ptr, 
             if LAYERS:
                 tl.atomic_add(globe_ptr + index, weighted, add & (label == GLOBE))
                 tl.atomic_add(ring_ptr + index, weighted, add & ((label == NEAR) | (label == FAR)))
+            if BINS:
+                # Fourier weighting's rank bins: the same corner with each bin's destination weight map.
+                for s in range(0, slots):
+                    row = frame * slots + s
+                    slot = tl.load(bin_slot_ptr + row, inside, other=-1)
+                    use = keep & (slot >= 0)
+                    binned = weight * tl.load(bin_map_ptr + row.to(tl.int64) * plane + index, use, other=0.)
+                    put = use & (binned != 0.)
+                    base = tl.maximum(slot, 0).to(tl.int64) * bin_stride
+                    if CFA:
+                        tl.atomic_add(bin_accum_ptr + base + dest, binned * sample, put)
+                        tl.atomic_add(bin_weight_ptr + base + dest, binned, put)
+                    else:
+                        for c in tl.static_range(C):
+                            value = tl.load(values_ptr + i * C + c, inside, other=0.)
+                            tl.atomic_add(bin_accum_ptr + base + index * C + c, binned * value, put)
+                            tl.atomic_add(bin_weight_ptr + base + index * C + c, binned, put)
     tl.atomic_add(covered_ptr + frame, covered, inside)
 
 
 def scatter(x, y, valid, values, score, sums, *, demo=None, cfa=None, labels=None, layer_sums=None,
-            layer_codes=(0, 0, 0)):
+            layer_codes=(0, 0, 0), bins=None):
     """Accumulate frames (B, h, w) at mapped coordinates into resident sums.
 
     ``values`` is (B, hw, C); ``score`` (B,) per frame or (B, hw) in destination
     geometry; ``sums`` = (accum, weight, demosaic_accum, demosaic_weight).
+    ``bins`` = (slots (B, S) int32, maps (B, S, hw) float64, bin_accum, bin_weight)
+    also adds each frame into up to S rank-bin sums (slot -1: none): bin k of
+    ``bin_accum``/``bin_weight`` (k, ...) like ``accum``/``weight`` gets the frame
+    weighted by its destination map instead of ``score``, from the same corners.
     Returns the bilinear coverage of each frame.
     """
     h, w = x.shape[-2:]
@@ -150,15 +175,23 @@ def scatter(x, y, valid, values, score, sums, *, demo=None, cfa=None, labels=Non
     accum, weight, demo_accum, demo_weight = sums
     dummy = covered
     globe, ring = layer_sums if layer_sums is not None else (dummy, dummy)
+    if bins is None:
+        bin_slots, bin_maps, bin_accum, bin_weight, slots, stride = dummy, dummy, dummy, dummy, 0, 0
+    else:
+        bin_slots, bin_maps, bin_accum, bin_weight = bins
+        bin_slots, bin_maps = bin_slots.to(torch.int32).contiguous(), bin_maps.contiguous()
+        slots, stride = bin_slots.shape[1], bin_accum[0].numel()
     total, block = x.numel(), 256
     _scatter[(triton.cdiv(total, block),)](
         x, y, valid, values.contiguous(), score.contiguous(),
         dummy if demo is None else demo.contiguous(), dummy if cfa is None else cfa,
         dummy if labels is None else labels.contiguous(),
         accum, weight, dummy if demo_accum is None else demo_accum, dummy if demo_weight is None else demo_weight,
-        globe, ring, covered, total, h * w, H=h, W=w, C=channels, SCORE_MAP=score.ndim == 2,
+        globe, ring, covered, bin_slots, bin_maps, bin_accum, bin_weight, slots, stride,
+        total, h * w, H=h, W=w, C=channels, SCORE_MAP=score.ndim == 2,
         CFA=cfa is not None, DEMO=demo is not None, LAYERS=labels is not None,
-        GLOBE=layer_codes[0], NEAR=layer_codes[1], FAR=layer_codes[2], BLOCK=block, enable_fp_fusion=False)
+        GLOBE=layer_codes[0], NEAR=layer_codes[1], FAR=layer_codes[2], BINS=bins is not None, BLOCK=block,
+        enable_fp_fusion=False)
     return covered
 
 

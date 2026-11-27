@@ -280,6 +280,26 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
         """Per-source-pixel layer labels for the fused scatter (None without layers)."""
         return None, (0, 0, 0), None
 
+    # Bytes of staged rank-bin weight maps per fused scatter call.
+    BIN_TABLE = 1 << 28
+
+    def _bin_table(self, frame_bins, slots):
+        """Fused scatter's rank-bin tables for frames' [(accumulator, weight map)] lists."""
+        index = np.full((len(frame_bins), slots), -1, dtype=np.int32)
+        zero = None
+        rows = []
+        for f, entries in enumerate(frame_bins):
+            for s, (k, weight) in enumerate(entries):
+                index[f, s] = k
+                rows.append(self.tensor(weight).reshape(-1))
+            if len(entries) < slots:
+                if zero is None:
+                    zero = torch.zeros(self.h*self.w, dtype=torch.float64, device=self.device)
+                rows.extend([zero] * (slots - len(entries)))
+        maps = torch.stack(rows).view(len(frame_bins), slots, -1)
+        return (torch.as_tensor(index, device=self.device), maps,
+                self.bin_accum.view(len(self.bin_accum), -1), self.bin_weight.view(len(self.bin_weight), -1))
+
     def enable_bins(self, bin_accum, bin_weight):
         """Resident Fourier-weighting rank-bin sums, (accumulators, ...) like ``accum``/``weight``."""
         self.bin_accum, self.bin_weight = self.tensor(bin_accum), self.tensor(bin_weight)
@@ -317,21 +337,29 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
             score = score.reshape(n) if score.numel() == n else score.reshape(n, -1)
             x, y, valid = (a.reshape(-1, self.h, self.w).expand(n, self.h, self.w) for a in (x, y, valid))
             labels, codes, layer_sums = self.layer_labels()
+            labels = None if labels is None else labels.reshape(-1, self.h*self.w).expand(n, -1)
             values = values.reshape(n, self.h*self.w, -1)
-            covered = self.fused.scatter(
-                x, y, valid, values, score,
-                (self.accum.view(-1), self.weight.view(-1),
-                 None if self.demosaic_accum is None else self.demosaic_accum.view(-1),
-                 None if self.demosaic_weight is None else self.demosaic_weight.view(-1)),
-                demo=None if demo is None else demo.reshape(n, -1, 3), cfa=self.channels,
-                labels=None if labels is None else labels.reshape(n, -1), layer_sums=layer_sums,
-                layer_codes=codes)
-            for k, (positions, weights) in members.items():
-                chosen = torch.as_tensor(positions, device=self.device)
-                self.fused.scatter(
-                    x[chosen], y[chosen], valid[chosen], values[chosen],
-                    torch.stack([self.tensor(m).reshape(-1) for m in weights]),
-                    (self.bin_accum[k].view(-1), self.bin_weight[k].view(-1), None, None), cfa=self.channels)
+            demo = None if demo is None else demo.reshape(n, -1, 3)
+            frame_bins = ((bins if batch else [bins]) if bins and self.bin_accum is not None else None)
+            slots = max((len(b) for b in frame_bins or ()), default=0)
+            # One pass adds each sample to the main sums and to every rank bin its frame falls in.
+            # The bin weight maps (frames, slots, h*w) are staged in bounded chunks of frames.
+            chunk = max(1, self.BIN_TABLE // max(1, slots*self.h*self.w*8)) if slots else n
+            covered = []
+            for begin in range(0, n, chunk):
+                part = slice(begin, min(n, begin + chunk))
+                table = None
+                if slots:
+                    table = self._bin_table(frame_bins[part], slots)
+                covered.append(self.fused.scatter(
+                    x[part], y[part], valid[part], values[part], score[part],
+                    (self.accum.view(-1), self.weight.view(-1),
+                     None if self.demosaic_accum is None else self.demosaic_accum.view(-1),
+                     None if self.demosaic_weight is None else self.demosaic_weight.view(-1)),
+                    demo=None if demo is None else demo[part], cfa=self.channels,
+                    labels=None if labels is None else labels[part], layer_sums=layer_sums,
+                    layer_codes=codes, bins=table))
+            covered = torch.cat(covered)
             return (covered > 0).tolist() if batch else bool(covered[0] > 0)
         corners = list(self.corners(x, y, valid))
         covered = self._scatter_corners(corners, values, demo, score, lead,

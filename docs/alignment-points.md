@@ -172,14 +172,21 @@ fitted rate 0.0105 °/s):
 |---|---|---|
 | CPU float64 | 768 s | — |
 | CUDA, float64 registration | 26 s | 1.9e-14 of peak |
-| CUDA, float32 registration | 20 s | 0.005 ADU rms where fully covered; 1.2e-3 of peak worst |
+| CUDA, float32 registration | 17–19 s | 0.005 ADU rms where fully covered; 1.2e-3 of peak worst |
 
 The whole capture (54,004 of 59,878 frames stacked, fitted rate 0.0116 °/s)
-takes 228 s on CUDA; the CPU path would take about four hours. The 0.005 ADU
+takes 180 s on CUDA; the CPU path would take about four hours. The 0.005 ADU
 float32 difference compares with 0.34 ADU of high-pass texture and noise on
-the disc. Float32 saves little here because these frames are small: the GPU is
-about half busy, and the accumulation scatters (one per Fourier rank bin a
-group's frames fall in) take about a third of the stacking time. Previews copy
+the disc. Float32 saves little here because these frames are small and the GPU
+is about half busy.
+
+The motion accumulator adds each frame to the main sums and to every Fourier
+rank bin it falls in from one fused scatter (`triton_warp.scatter` with
+``bins``): each sample's bilinear corners are found once, and each bin applies
+its own destination weight map. Separate scatters per bin had re-read and
+re-mapped the group for every bin; fusing them cut an 8-frame group with three
+bins per frame from 5.3 to 3.0 ms and this whole capture from 228 to 180 s,
+with stacks unchanged to 1e-15. Previews copy
 only the main sums back; the rank-bin sums (up to 32 accumulator pairs, about
 150 MB per preview on this capture) are copied only for checkpoints and the
 final image.
