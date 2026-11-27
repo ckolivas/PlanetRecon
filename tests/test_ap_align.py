@@ -300,18 +300,25 @@ def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, f
         cfg = points_config()
         preprocess_source(source, cfg)
         cpu = stack_source(source, cfg)
-        target, name = ((TorchBackend, 'backproject_tensors') if failure_stage == 'backprojection'
-                        else (TorchAlignmentPoints, 'displacement'))
-        original = getattr(target, name)
+        from planetrecon.backends.torch_ap import fused_kernels
         calls = 0
 
-        def failure(self, *args):
-            nonlocal calls
-            calls += 1
-            if calls == 3:
-                raise RuntimeError('injected CUDA failure')
-            return original(self, *args)
-        monkeypatch.setattr(target, name, failure)
+        def failing(original):
+            def failure(*args):
+                nonlocal calls
+                calls += 1
+                if calls == 3:
+                    raise RuntimeError('injected CUDA failure')
+                return original(*args)
+            return failure
+        if failure_stage == 'backprojection':
+            # Grouped stacking resamples with the fused kernel, else the torch group pull.
+            kernels = fused_kernels()
+            if kernels is not None:
+                monkeypatch.setattr(kernels, 'pull', failing(kernels.pull))
+            monkeypatch.setattr(TorchBackend, 'backproject_group', failing(TorchBackend.backproject_group))
+        else:
+            monkeypatch.setattr(TorchAlignmentPoints, 'displacements', failing(TorchAlignmentPoints.displacements))
         fallback = stack_source(source, replace(cfg, device='gpu'))
     assert calls >= 3
     assert fallback.backend == 'cpu' and any('injected CUDA' in w for w in fallback.warnings)

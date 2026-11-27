@@ -156,33 +156,43 @@ def centroid(plane, cy, cx, sigma, half, parity=None, *, origin=(0, 0), shape=No
     return iy + y0, ix + x0
 
 
-def _crops(plane, centres, halves):
-    """[(window, origin) or None]: each centroid window of ``plane`` around (row, column) ``centres``.
+def _crops(planes, centres, halves):
+    """Per plane, [(window, origin) or None]: each centroid window around its (row, column) ``centres``.
 
-    A device tensor plane is copied to the host once for all windows, so the
-    centroids need only the frame's registration plane where it already is.
+    ``planes`` and ``centres`` are parallel lists (one entry per frame). Device
+    tensor windows of every frame are copied to the host together, so the
+    centroids need only each frame's registration plane where it already is.
     """
-    h, w = plane.shape[:2]
     boxes = []
-    for (cy, cx), half in zip(centres, halves):
-        iy, ix = int(round(cy)), int(round(cx))
-        inside = iy - half >= 0 and ix - half >= 0 and iy + half < h and ix + half < w
-        boxes.append((iy - half, ix - half, 2 * half + 1) if inside else None)
-    if not hasattr(plane, 'cpu'):
-        return [None if b is None else (plane, (0, 0)) for b in boxes]
-    import torch
-    used = [b for b in boxes if b is not None]
-    if not used:
-        return [None] * len(boxes)
-    flat = torch.cat([plane[y:y + n, x:x + n].reshape(-1) for y, x, n in used]).double().cpu().numpy()
+    for plane, frame_centres in zip(planes, centres):
+        h, w = plane.shape[:2]
+        frame = []
+        for (cy, cx), half in zip(frame_centres, halves):
+            iy, ix = int(round(cy)), int(round(cx))
+            inside = iy - half >= 0 and ix - half >= 0 and iy + half < h and ix + half < w
+            frame.append((iy - half, ix - half, 2 * half + 1) if inside else None)
+        boxes.append(frame)
+    device = [k for k, plane in enumerate(planes) if hasattr(plane, 'cpu')]
+    parts = [planes[k][y:y + n, x:x + n].reshape(-1) for k in device for y, x, n in
+             (b for b in boxes[k] if b is not None)]
+    flat = None
+    if parts:
+        import torch
+        flat = torch.cat(parts).double().cpu().numpy()
     out, start = [], 0
-    for b in boxes:
-        if b is None:
-            out.append(None)
-            continue
-        y, x, n = b
-        out.append((flat[start:start + n * n].reshape(n, n), (y, x)))
-        start += n * n
+    for plane, frame in zip(planes, boxes):
+        on_device = hasattr(plane, 'cpu')
+        windows = []
+        for b in frame:
+            if b is None:
+                windows.append(None)
+            elif not on_device:
+                windows.append((plane, (0, 0)))
+            else:
+                y, x, n = b
+                windows.append((flat[start:start + n * n].reshape(n, n), (y, x)))
+                start += n * n
+        out.append(windows)
     return out
 
 
@@ -525,15 +535,24 @@ class MoonStack:
 
     def contribute(self, index, calibrated, plane, shift):
         """Per-moon (window, weight, own tilt followed) of one frame; windows leaving the frame are None."""
-        t = self.times[index] - self.t_out
-        predicted, measured = [], []
-        for moon in self.moons:
-            ry, rx = moon.relative(t)
-            predicted.append((ry + shift[1], rx + shift[0]))
-        crops = _crops(plane, predicted, [moon.half for moon in self.moons])
+        return self.contribute_many([(index, calibrated, plane, shift)])[0]
+
+    def contribute_many(self, frames):
+        """``contribute`` for [(index, calibrated, plane, shift)], copying device windows together."""
+        predicted = []
+        for index, _, _, shift in frames:
+            t = self.times[index] - self.t_out
+            rel = [moon.relative(t) for moon in self.moons]
+            predicted.append([(ry + shift[1], rx + shift[0]) for ry, rx in rel])
+        crops = _crops([plane for _, _, plane, _ in frames], predicted, [moon.half for moon in self.moons])
+        return [self._follow(calibrated, plane.shape[:2], frame_predicted, frame_crops)
+                for (_, calibrated, plane, _), frame_predicted, frame_crops in zip(frames, predicted, crops)]
+
+    def _follow(self, calibrated, shape, predicted, crops):
+        measured = []
         for moon, (py, px), crop in zip(self.moons, predicted, crops):
             got = None if crop is None else centroid(crop[0], py, px, moon.sigma, moon.half, origin=crop[1],
-                                                     shape=plane.shape[:2])
+                                                     shape=shape)
             deviation = None
             if got is not None:
                 limit = OUTLIER_SIGMA * (moon.detail.get('seeing_jitter_px', 0.) ** 2

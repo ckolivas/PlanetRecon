@@ -81,6 +81,56 @@ class ReconstructionResult:
         )
 
 
+def _deferred(name):
+    def get(self):
+        self.form()
+        return self.__dict__['_' + name]
+
+    def put(self, value):
+        self.__dict__['_' + name] = value
+    return property(get, put)
+
+
+class DeferredResult(ReconstructionResult):
+    """An intermediate result whose arrays and provenance are formed on first access.
+
+    ``form(result)`` sets image, coverage and validity (and may add provenance);
+    hooks added with ``then`` run once after it, in order. Other fields are
+    available without forming it. A producer forms a result that consumers keep
+    before its inputs change.
+    """
+    image = _deferred('image')
+    coverage = _deferred('coverage')
+    validity = _deferred('validity')
+    layer_coverage = _deferred('layer_coverage')
+    provenance = _deferred('provenance')
+
+    def __init__(self, form, **fields):
+        self.__dict__['_pending'] = [form]
+        super().__init__(image=None, coverage=None, validity=None, **fields)
+
+    @property
+    def formed(self):
+        return not self.__dict__['_pending']
+
+    def then(self, hook):
+        if self.formed:
+            hook(self)
+        else:
+            self.__dict__['_pending'].append(hook)
+
+    def form(self):
+        if self.__dict__.get('_forming'):
+            return  # Hooks may read fields of the result they are forming.
+        self.__dict__['_forming'] = True
+        try:
+            pending = self.__dict__['_pending']
+            while pending:
+                pending.pop(0)(self)
+        finally:
+            self.__dict__['_forming'] = False
+
+
 def save_snapshot(path: Path, result: ReconstructionResult) -> None:
     """Atomically publish a full-resolution scientific snapshot, never a display."""
     path = Path(path)

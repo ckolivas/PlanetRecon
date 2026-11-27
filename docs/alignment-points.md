@@ -325,16 +325,35 @@ Further checks:
 ## Cost and progress
 
 With CUDA the whole per-frame path stays on the device: registration-plane
-demosaic, global correlation (only the peak stencil is copied back), proxy
+demosaic, global correlation (only the peak stencils are copied back), proxy
 filtering, point correlations, field solve, local quality, backprojection and
-the weighted sums. Sums are merged into the authoritative CPU accumulators at
-the end of every batch, and Fourier weighting's rank-bin sums (two full-frame
-sums per bin) every 1024 frames, before a checkpoint and at the end; if CUDA
-fails, unmerged frames are recomputed on CPU. Each frame is uploaded once, as
-its raw samples when there is no calibration. The global shifts measured while
-ranking local quality are reused for stacking. Frames are read on a background
-thread ahead of each pass, and the reference averages read their frames in
-capture order.
+the weighted sums. Frames go through it in groups (up to 8, fewer for large
+frames or a CUDA memory budget; `cuda_execution.frame_group`): one upload,
+batched point correlations and field solves with one copy of the correlation
+peaks, and the moons' centroid windows of the whole group copied together.
+Local-quality ranking measures the same groups.
+
+Two fused Triton kernels (`backends/triton_stack.py`) do the resampling and the
+sums. The backprojection forms each sample's four corner weights from the
+dense field and, for Bayer frames, routes the one raw sample per corner to its
+colour and site weight, without index or weight tensors. The accumulation adds
+a whole group to every slot it touches (the ordinary stack and, with Fourier
+weighting, each rank bin's half) in one pass, computing each frame's per-pixel
+weight from its points' footprints as it goes (the same terms as the weight
+maps, which are never stored). Each slot is then read and written once per
+group rather than once per frame, which was most of the stacking time. Without
+Triton the same sums are formed with torch.
+
+Sums are merged into the authoritative CPU accumulators every 1024 frames,
+before a checkpoint, at the end, and the ordinary sums whenever a preview is
+formed; if CUDA fails, unmerged frames are recomputed on CPU. Progress events
+form their image only if the receiver reads it or keeps the result (the GUI
+does for a requested snapshot), so ordinary progress costs no preview. Each
+frame is uploaded once, as its raw samples when there is no calibration. The
+global correlation uses half spectra of the real frames. The global shifts
+measured while ranking local quality are reused for stacking. Frames are read
+on a background thread ahead of each pass, and the reference averages read
+their frames in capture order.
 
 The setup phases report progress: **Building alignment reference** (two passes
 over up to 3000 frames) and **Ranking frames by local quality** (every
@@ -364,3 +383,10 @@ The whole capture (58,848 frames, 53,062 stacked) went from about 90 minutes to
 15.5 minutes plus cache validation: reference 38 s, ranking 172 s (3.2 ms per
 frame), moons 7 s and stacking 713 s (13.4 ms per frame, GPU-bound at about 90%
 utilisation with reads served ahead of the work).
+
+Grouping frames, the fused kernels, deferred previews and half-spectrum
+correlation then brought the whole capture to 7.7 minutes: reference 32 s,
+ranking 128 s (2.4 ms per frame), moons 7 s, stacking 293 s (5.3 ms per frame,
+now limited by CPU work: moon centroids and per-frame checks). The image moved
+by 8.5e-7 of its peak rms; the SNR estimate and every moon's gain and size are
+unchanged.

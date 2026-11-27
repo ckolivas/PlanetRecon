@@ -32,6 +32,23 @@ def sample(image, y, x, *, nearest=False):
     return result
 
 
+def sample_batch(images, y, x):
+    """``sample`` of each of images (B, h, w) at its own coordinates y, x (broadcasting to (B, ...))."""
+    B, h, w = images.shape
+    shape = torch.broadcast_shapes(y.shape, x.shape)
+    iy, ix = torch.floor(y).long(), torch.floor(x).long()
+    fy, fx = y-iy, x-ix
+    flat = images.reshape(B, -1)
+    result = torch.zeros(shape, dtype=images.dtype, device=images.device)
+    for dy, wy in ((0, 1-fy), (1, fy)):
+        for dx, wx in ((0, 1-fx), (1, fx)):
+            sy, sx = iy+dy, ix+dx
+            weight = wy*wx*((sy >= 0) & (sy < h) & (sx >= 0) & (sx < w))
+            index = (sy.clamp(0, h-1)*w + sx.clamp(0, w-1)).expand(shape).reshape(B, -1)
+            result += torch.gather(flat, 1, index).reshape(shape)*weight
+    return result
+
+
 @lru_cache(maxsize=64)
 def _gaussian_kernel(sigma, device, dtype=torch.float64):
     radius = int(4. * sigma + .5)
@@ -120,55 +137,78 @@ class TorchAlignmentPoints:
         self.matcher = matcher
 
     def _ncc(self, tiles):
-        """Normalised correlations of (n, span, span) tiles, in their precision.
+        """Normalised correlations of (..., n, span, span) tiles, in their precision.
 
         The Hann window sums use its separability (rows, then columns).
         """
         n, dtype = len(self.centres), tiles.dtype
-        num = F.conv2d(tiles[None], self.weighted.to(dtype)[:, None], groups=n)[0]
+        lead, span = tiles.shape[:-3], tiles.shape[-1]
+        flat = tiles.reshape(-1, span, span)
+        groups = len(flat)
+        weighted = self.weighted.to(dtype).repeat(groups // n, 1, 1)
+        num = F.conv2d(flat[None], weighted[:, None], groups=groups)[0]
         hann = self.hann.to(dtype)
 
         def window_sum(image):
             rows = F.conv2d(image[:, None], hann.view(1, 1, 1, -1))
             return F.conv2d(rows, hann.view(1, 1, -1, 1))[:, 0]
-        s1, s2 = window_sum(tiles), window_sum(tiles * tiles)
+        s1, s2 = window_sum(flat), window_sum(flat * flat)
         var = (s2 - s1 * s1 / self.window.sum().to(dtype)).clamp_min(1e-12)
-        return num / (var.sqrt() * self.norm.to(dtype)[:, None, None])
+        norm = self.norm.to(dtype).repeat(groups // n)
+        return (num / (var.sqrt() * norm[:, None, None])).reshape(*lead, n, *num.shape[-2:])
+
+    def peak_fits_batch(self, frames, shifts):
+        """Offsets (B, n, 2), information (B, n, 2, 2) and acceptance (B, n) of frames (B, h, w)
+        with global shifts (B, 2), with the correlations on the device in registration precision."""
+        frames = torch.as_tensor(frames, device=self.device)
+        proxies = gaussian_proxy(frames.to(precision.REGISTRATION))
+        s = torch.as_tensor(np.asarray(shifts, dtype=np.float64), device=self.device)
+        # Only the search tiles are resampled: the same samples as shifting each whole proxy.
+        tiles = sample_batch(proxies, self.rows[None] + s[:, 1, None, None, None],
+                             self.cols[None] + s[:, 0, None, None, None])
+        ncc = self._ncc(tiles).double().cpu().numpy()
+        B, n = ncc.shape[:2]
+        # Peak decisions are tiny (B x n x 13 x 13); reuse the CPU reference logic.
+        offset, H, ok, _ = ap_align._peak_fit(ncc.reshape(B * n, *ncc.shape[2:]))
+        return offset.reshape(B, n, 2), H.reshape(B, n, 2, 2), ok.reshape(B, n)
 
     def peak_fits(self, frame, global_shift):
         """``AlignmentPoints.peak_fits`` with the correlations on the device, in registration precision."""
-        proxy = gaussian_proxy(torch.as_tensor(frame, device=self.device).to(precision.REGISTRATION))
-        # Only the search tiles are resampled: the same samples as shifting the whole proxy.
-        tiles = sample(proxy, self.rows + float(global_shift[1]), self.cols + float(global_shift[0]))
-        # Peak decisions are tiny (n x 13 x 13); reuse the CPU reference logic.
-        offset, H, ok, _ = ap_align._peak_fit(self._ncc(tiles).double().cpu().numpy())
-        return offset, H, ok
+        offset, H, ok = self.peak_fits_batch(torch.as_tensor(frame, device=self.device)[None], [global_shift])
+        return offset[0], H[0], ok[0]
 
-    def displacement(self, frame, global_shift):
-        gx, gy = float(global_shift[0]), float(global_shift[1])
+    def displacements(self, frames, shifts):
+        """Dense (x, y) fields (B, 2, h, w) of frames (B, h, w) with global shifts (B, 2) (x, y)."""
+        shifts = np.asarray(shifts, dtype=np.float64).reshape(-1, 2)
+        B = len(shifts)
+        g = torch.as_tensor(shifts, device=self.device)[:, :, None, None]
         if not len(self.centres):
-            return torch.stack([torch.full(self.shape, gx, device=self.device, dtype=torch.float64),
-                                torch.full(self.shape, gy, device=self.device, dtype=torch.float64)])
-        offset, H, ok = self.peak_fits(frame, global_shift)
-        self.matcher.accepted.append(float(ok.mean()))
-        H = ap_align.trusted(H, self.matcher.trust)
+            return g.expand(B, 2, *self.shape).clone()
+        offset, H, ok = self.peak_fits_batch(frames, shifts)
+        self.matcher.accepted.extend(float(v) for v in ok.mean(axis=1))
+        n = len(self.centres)
+        if self.matcher.trust is not None:
+            H = ap_align.trusted(H.reshape(B * n, 2, 2), np.tile(self.matcher.trust, (B, 1, 1))).reshape(B, n, 2, 2)
+        trace = H[..., 0, 0] + H[..., 1, 1]
+        lam = ap_align.PRIOR * np.array([float(np.median(t[k])) if k.any() else 1. for t, k in zip(trace, ok)])
         H_t = torch.as_tensor(H, device=self.device, dtype=torch.float64)
         d = torch.as_tensor(offset, device=self.device, dtype=torch.float64)
-        Hd = torch.einsum('nij,nj->ni', H_t, d)
-        A = torch.einsum('ky,kx,kij->yxij', self.wy, self.wx, H_t)
-        b = torch.einsum('ky,kx,ki->yxi', self.wy, self.wx, Hd)
-        trace = (H[:, 0, 0] + H[:, 1, 1])[ok]
-        lam = ap_align.PRIOR * (float(np.median(trace)) if len(trace) else 1.)
+        Hd = torch.einsum('bnij,bnj->bni', H_t, d)
+        # Coarse-grid sums over points as matrix products: (gy, n) @ (n, gx) for every frame and entry.
+        wyT = self.wy.T
+        A = (wyT @ (H_t.permute(0, 2, 3, 1)[..., None] * self.wx)).permute(0, 3, 4, 1, 2)
+        b = (wyT @ (Hd.permute(0, 2, 1)[..., None] * self.wx)).permute(0, 2, 3, 1)
+        lam = torch.as_tensor(lam, device=self.device)[:, None, None]
         A[..., 0, 0] += lam
         A[..., 1, 1] += lam
         det = A[..., 0, 0] * A[..., 1, 1] - A[..., 0, 1] * A[..., 1, 0]
         u = torch.stack([(A[..., 1, 1] * b[..., 0] - A[..., 0, 1] * b[..., 1]) / det,
-                         (A[..., 0, 0] * b[..., 1] - A[..., 1, 0] * b[..., 0]) / det])
+                         (A[..., 0, 0] * b[..., 1] - A[..., 1, 0] * b[..., 0]) / det], 1)
         # Coarse samples include both detector edges, so align_corners maps exactly.
-        field = F.interpolate(u[None], size=self.shape, mode='bilinear', align_corners=True)[0]
-        field[0] += gx
-        field[1] += gy
-        return field
+        return F.interpolate(u, size=self.shape, mode='bilinear', align_corners=True) + g
+
+    def displacement(self, frame, global_shift):
+        return self.displacements(torch.as_tensor(frame, device=self.device)[None], [global_shift])[0]
 
 
 def device_template(reference, indices, read_plane, correlate, max_shift, *, should_cancel=None, progress=None):
@@ -205,68 +245,83 @@ def device_template(reference, indices, read_plane, correlate, max_shift, *, sho
     return torch.where(support > 0, anchored / support.clamp_min(1e-300), ref).cpu().numpy()
 
 
-class DeviceAccumulator:
-    """Weighted sums kept on the GPU, then merged into CPU sums.
+def fused_kernels():
+    """The fused Triton stacking kernels, or None (the torch equivalents are used)."""
+    try:
+        from planetrecon.backends import triton_stack
+    except ImportError:
+        return None
+    return triton_stack
 
-    The CPU arrays stay authoritative for checkpoints and fallback. The main
-    sums merge after every batch, for previews; the rank-bin sums of Fourier
-    weighting (two full-frame sums per bin) merge only every ``BIN_FRAMES``
-    frames, before a checkpoint and at the end. ``pending`` lists the capture
-    indices whose main sums have not been merged, ``bin_pending`` those whose
-    bin sums have not.
+
+class DeviceSums:
+    """Weighted sums of grouped alignment-point frames kept on the GPU, merged into CPU sums.
+
+    Slots 0..n_bins-1 are Fourier weighting's rank-bin sums and slot n_bins the
+    ordinary stack; each holds (h*w, 2C) float64: C signal channels, then their
+    C weights. Frames arrive in groups as contributions (G, h*w, 2C) with pairs
+    (frame in group, slot, alignment points, outside weight, score). A pair's
+    per-pixel weight is its points' blended footprints (``blend``: wy (h, K),
+    wx (K, w) in blend precision, scale and rest (h*w,) float64) as in
+    ``LocalSelection``. The CPU arrays stay authoritative for checkpoints and
+    fallback: the sums merge every ``BIN_FRAMES`` frames, before a checkpoint
+    and at the end, and the ordinary sums also when a preview is formed. ``pending`` lists the capture indices whose ordinary sums have not
+    been merged, ``bin_pending`` those whose bin sums have not.
     """
     BIN_FRAMES = 1024
 
-    def __init__(self):
-        self.sums = None
-        self.bin_sums = {}
-        self.pending = []
-        self.bin_pending = []
+    def __init__(self, shape, channels, n_bins, blend, *, device='cuda:0'):
+        h, w = shape
+        self.shape, self.channels, self.main = (h, w), channels, n_bins
+        self.sums = torch.zeros((n_bins + 1, h * w, 2 * channels), dtype=torch.float64, device=device)
+        self.blend = blend
+        self.kernels = fused_kernels()
+        self.pending, self.bin_pending, self.touched = [], [], set()
 
-    def add(self, index, weight, add, wt, demo, support, bins=None):
-        """``bins``: optional [(bin, per-pixel weight)] for Fourier weighting's rank-bin sums."""
-        if not torch.is_tensor(weight):
-            weight = torch.tensor(float(weight), device=add.device, dtype=torch.float64)
-        scale = weight[..., None] if weight.ndim == 2 and add.ndim == 3 else weight
-        parts = [(scale, add), (scale, wt)]
-        if demo is not None:
-            parts += [(scale, demo), (weight[..., None] if weight.ndim else weight, support[..., None])]
-        if self.sums is None:
-            self.sums = [a * b for a, b in parts]
+    def add(self, indices, contributions, pairs):
+        """Add one group's (G, h*w, 2C) ``contributions`` for capture ``indices`` along ``pairs``."""
+        wy, wx, scale, rest = self.blend
+        if self.kernels is not None:
+            self.kernels.accumulate(self.sums, contributions, wy, wx, scale, rest, pairs)
         else:
-            for total, (a, b) in zip(self.sums, parts):
-                total.addcmul_(a, b)
-        for b, m in bins or ():
-            m = m[..., None] if add.ndim == 3 else m
-            if b in self.bin_sums:
-                self.bin_sums[b][0].addcmul_(m, add)
-                self.bin_sums[b][1].addcmul_(m, wt)
-            else:
-                self.bin_sums[b] = [m * add, m * wt]
-        self.pending.append(int(index))
-        if bins:
-            self.bin_pending.append(int(index))
+            for f, slot, points, outside, score in pairs:
+                chosen = torch.zeros(wy.shape[1], dtype=wy.dtype, device=wy.device)
+                chosen[torch.as_tensor(np.asarray(points, dtype=np.int64), device=wy.device)] = 1
+                weight = ((wy * chosen) @ wx).reshape(-1).to(torch.float64) * scale + outside * rest
+                self.sums[slot].addcmul_((score * weight)[:, None], contributions[f])
+        self.pending.extend(int(i) for i in indices)
+        binned = {pair[0] for pair in pairs if pair[1] != self.main}
+        self.bin_pending.extend(int(indices[f]) for f in sorted(binned))
+        self.touched.update(pair[1] for pair in pairs if pair[1] != self.main)
 
-    def flush(self, *targets, bins=None, everything=True):
-        """Add the device sums into ``targets`` (accum, weight[, demosaic_accum, demosaic_weight]) and,
-        when ``everything`` or enough frames are waiting, the rank-bin sums into ``bins`` (bin_accum, bin_weight)."""
-        if self.sums is not None:
-            for total, target in zip(self.sums, targets):
-                target += total.cpu().numpy()
-        self.sums = None
+    def _merge(self, slot, accum, weight):
+        values = self.sums[slot].cpu().numpy()
+        accum += values[:, :self.channels].reshape(accum.shape)
+        weight += values[:, self.channels:].reshape(weight.shape)
+        self.sums[slot].zero_()
+
+    def flush_main(self, accum, weight):
+        """Add the ordinary sums into (accum, weight), e.g. for a preview."""
+        if self.pending:
+            self._merge(self.main, accum, weight)
         self.pending = []
+
+    def flush(self, accum, weight, bins=None, everything=True):
+        """When ``everything`` or ``BIN_FRAMES`` frames are waiting, add the ordinary sums into
+        (accum, weight) and the rank-bin sums into ``bins`` (bin_accum, bin_weight)."""
+        if everything or len(self.pending) >= self.BIN_FRAMES:
+            self.flush_main(accum, weight)
         if everything or len(self.bin_pending) >= self.BIN_FRAMES:
-            for b, (total, total_weight) in self.bin_sums.items():
-                bins[0][b] += total.cpu().numpy()
-                bins[1][b] += total_weight.cpu().numpy()
-            self.bin_sums = {}
-            self.bin_pending = []
+            for slot in sorted(self.touched):
+                self._merge(slot, bins[0][slot], bins[1][slot])
+            self.touched, self.bin_pending = set(), []
 
     def discard(self):
         """(frames with no merged sums, frames whose bin sums alone are unmerged); clears both."""
         pending = self.pending
         bin_only = sorted(set(self.bin_pending) - set(pending))
-        self.sums, self.bin_sums, self.pending, self.bin_pending = None, {}, [], []
+        self.sums.zero_()
+        self.pending, self.bin_pending, self.touched = [], [], set()
         return pending, bin_only
 
 

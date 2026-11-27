@@ -314,6 +314,11 @@ class AlignmentPoints:
         self._check_cancel()
         return self._device().displacement(frame, global_shift)
 
+    def displacements_tensor(self, frames, global_shifts):
+        """CUDA fields (B, 2, h, w) of frames (B, h, w), kept on the device."""
+        self._check_cancel()
+        return self._device().displacements(frames, global_shifts)
+
     def _device(self):
         if self._cuda is None:
             from planetrecon.backends.torch_ap import TorchAlignmentPoints
@@ -531,6 +536,30 @@ class LocalSelection:
             result.append((b, weight))
         return result
 
+    def pairs(self, index, main):
+        """Weight terms of one frame for ``torch_ap.DeviceSums``: [(slot, points, outside)], the
+        ordinary stack in slot ``main`` and, with rank bins, each bin's half 2 b + h. A term weighs
+        the blended footprints of its points plus, when ``outside``, the weight outside the points."""
+        from planetrecon.pipeline import fourier_weights
+        k = self.row.get(int(index))
+        chosen = np.flatnonzero(self.chosen[k]) if k is not None else np.zeros(0, np.int64)
+        terms = [(main, chosen, float(self.global_mask[index]))]
+        if self.bins is None:
+            return terms
+        local = self.bins[k] if k is not None else np.full(self.wy.shape[0], -1)
+        outside = int(self.global_bins[index]) if self.global_mask[index] else -1
+        for b in sorted(set(local[local >= 0].tolist()) | ({outside} if outside >= 0 else set())):
+            terms.append((2 * b + fourier_weights.half(index), np.flatnonzero(local == b), float(b == outside)))
+        return terms
+
+    def blend_tensors(self, device='cuda:0'):
+        """(wy (h, K), wx (K, w)) in blend precision and (scale, rest) (h*w,) float64, on the device."""
+        import torch
+        from planetrecon.backends import precision
+        as_device = lambda a, dtype: torch.as_tensor(np.ascontiguousarray(a), device=device, dtype=dtype)
+        return (as_device(self.wy.T, precision.BLEND), as_device(self.wx, precision.BLEND),
+                as_device(self.scale.ravel(), torch.float64), as_device(self.rest.ravel(), torch.float64))
+
     def bin_weights_tensor(self, index, device='cuda:0'):
         """Device equivalent of ``bin_weights``."""
         k = self.row.get(int(index))
@@ -568,26 +597,37 @@ def assign_bins(order, chosen, n_bins, global_mask, global_scores):
 
 
 def select_locally(matcher, frames, read_plane, correlate, reference, count, global_mask, should_cancel=None,
-                   use_cuda=False, progress=None, n_bins=0, global_scores=None, plan=None):
+                   use_cuda=False, progress=None, n_bins=0, global_scores=None, plan=None, measure_group=None,
+                   group=1):
     """Measure local quality for ``frames`` and keep each AP's best ``count``.
 
     With ``n_bins``, each point's chosen frames are also split into equal-count
     local-quality rank bins, best first; ``global_scores`` (capture length)
     ranks the frames of ``global_mask`` the same way for use outside the points.
+    ``measure_group(indices)``, when given, returns the global shifts and point
+    scores of ``group`` frames at a time (e.g. together on the device).
     """
     quality = LocalQuality(matcher, use_cuda=use_cuda)
     if plan is not None:
         plan(frames)
     scores = np.zeros((len(frames), len(matcher.centres)))
     shifts = []
-    for k, index in enumerate(frames):
+    step = max(1, int(group)) if measure_group is not None else 1
+    for start in range(0, len(frames), step):
         if should_cancel is not None and should_cancel():
             raise InterruptedError('cancelled while measuring local quality')
-        if progress is not None and (k % 50 == 0 or k == len(frames) - 1):
-            progress('Ranking frames by local quality', k + 1, len(frames))
-        plane = read_plane(int(index))
+        chunk = frames[start:start + step]
+        if progress is not None and (start // 50 != (start + len(chunk)) // 50 or start + len(chunk) == len(frames)
+                                     or start == 0):
+            progress('Ranking frames by local quality', start + len(chunk), len(frames))
+        if measure_group is not None:
+            found, measured = measure_group([int(index) for index in chunk])
+            shifts.extend(tuple(shift) for shift in found)
+            scores[start:start + len(chunk)] = measured
+            continue
+        plane = read_plane(int(chunk[0]))
         shifts.append(tuple(correlate(reference, plane)))
-        scores[k] = quality.measure(plane, shifts[-1])
+        scores[start] = quality.measure(plane, shifts[-1])
     count = max(1, min(int(count), len(frames)))
     order = np.argsort(-scores, axis=0, kind='stable')[:count]
     chosen = np.zeros(scores.shape, dtype=bool)

@@ -260,7 +260,9 @@ def _worker_run(
                     / max(float(info.get("n_total", 1)), 1.0),
                     "n_used": result.n_used,
                     "backend": result.backend,
-                    "device_report": result.provenance.get("device_report", {}),
+                    # Translation stacks report the device in ``info`` so progress need not form the result.
+                    "device_report": (info["device_report"] if "device_report" in info
+                                      else result.provenance.get("device_report", {})),
                     "warnings": result.warnings,
                 },
             )

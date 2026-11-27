@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import time
 from typing import Callable
 from dataclasses import replace
@@ -23,7 +24,7 @@ from planetrecon.detector import (
 from planetrecon.io.source import FrameSource
 from planetrecon.rank import laplacian_score
 from planetrecon.reconstruction import ReconstructionConfig
-from planetrecon.result import ReconstructionResult
+from planetrecon.result import DeferredResult, ReconstructionResult
 from planetrecon.pipeline.provenance import capture_provenance
 from planetrecon.pipeline.colour import complete_bayer_rgb
 
@@ -94,10 +95,16 @@ def stack_source(
             if result.stage == 'setup':
                 on_event(result, info)
                 return
-            if full_scale is not None:
-                normalise_result(result, config.normalise_percent, full_scale)
-            if cpu_report is not None:
-                result.provenance['cpu_memory_budget'] = cpu_report
+
+            def finish(result):
+                if full_scale is not None:
+                    normalise_result(result, config.normalise_percent, full_scale)
+                if cpu_report is not None:
+                    result.provenance['cpu_memory_budget'] = cpu_report
+            if isinstance(result, DeferredResult):
+                result.then(finish)
+            else:
+                finish(result)
             if on_event is not None:
                 on_event(result, info)
         result = _stack_source(source, config, calibration=calibration, on_event=event if on_event else None,
@@ -438,11 +445,28 @@ def _stack_source(
                                        'skipped': 'every screened frame is selected'}
         elif local_matcher.layers:
             try:
+                def rank_group(indices):
+                    """Global shifts and point scores of frames registered together on CUDA."""
+                    import torch
+                    from planetrecon.backends import precision
+                    from planetrecon.backends.torch_ap import local_quality_batch
+                    raws = [reader.read_raw(index) for index in indices]
+                    images = (torch.as_tensor(np.stack(raws), device='cuda:0').to(torch.float64) if calibration is None
+                              else torch.as_tensor(np.stack([apply_calibration(raw, calibration)[0] for raw in raws]),
+                                                   device='cuda:0', dtype=torch.float64))
+                    planes = torch.stack([backend.registration_plane(image, color) for image in images])
+                    found = backend.phase_correlations(reference, planes)
+                    centres = (local_matcher.centres.astype(float)[None]
+                               + np.array([[float(dy), float(dx)] for dx, dy in found])[:, None, :])
+                    return found, local_quality_batch(planes.to(precision.REGISTRATION), centres, local_matcher.size / 4)
+                cuda_ranking = backend.name == 'cuda'
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
                                                  reference, count, selection.accepted.copy(), should_cancel,
-                                                 use_cuda=backend.name == 'cuda', progress=setup_progress,
+                                                 use_cuda=cuda_ranking, progress=setup_progress,
                                                  n_bins=rank_bins if n_bins else 0,
-                                                 global_scores=selection.measurements[:, 0], plan=reader.expect)
+                                                 global_scores=selection.measurements[:, 0], plan=reader.expect,
+                                                 measure_group=rank_group if cuda_ranking else None,
+                                                 group=_group_frames(h * w, 6 if rgb else 2, memory_report))
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
@@ -461,8 +485,20 @@ def _stack_source(
             }
         snapshot_provenance['registration'] += ' + alignment points'
         if backend.name == 'cuda':
-            from planetrecon.backends.torch_ap import DeviceAccumulator
-            device_sums = DeviceAccumulator()
+            from planetrecon.backends.torch_ap import DeviceSums
+            if local_selection is not None:
+                blend = local_selection.blend_tensors()
+            else:
+                # Every screened frame is selected: each frame weighs its score everywhere.
+                import torch
+                zeros = lambda *size: torch.zeros(size, dtype=torch.float64, device='cuda:0')
+                blend = zeros(h, 1), zeros(1, w), zeros(h * w), torch.ones(h * w, dtype=torch.float64, device='cuda:0')
+            device_sums = DeviceSums((h, w), 3 if rgb else 1, n_bins, blend)
+            group_frames = _group_frames(h * w, 6 if rgb else 2, memory_report)
+            detail['cuda_execution'].update(
+                frame_group=group_frames,
+                accumulation=('fused Triton backprojection and slot sums (footprints computed per pixel)'
+                              if device_sums.kernels is not None else 'torch backprojection and per-term sums'))
 
     moon_stack = None
     moon_state = None  # Checkpointed moon definitions; None when moons were not looked for.
@@ -530,16 +566,24 @@ def _stack_source(
             pending_moons[int(index)] = (moon_stack.contribute(int(index), calibrated, plane, global_shift), score)
 
     def emit(stage: str, incomplete: bool) -> None:
+        """Report progress. The result's image, coverage and provenance are formed only if the
+        consumer reads them (or keeps the result), so progress alone costs no image."""
         nonlocal seq
         if on_event is None:
             return
-        cov = weight.copy()
-        image = _normalise_stack(accum, weight) if moon_stack is None else moon_stack.composite(
-            _normalise_stack(accum, weight))
-        result = ReconstructionResult(
-            image=image,
-            coverage=cov,
-            validity=cov > 0,
+
+        def form(result):
+            if device_sums is not None and device_sums.pending:
+                try:
+                    device_sums.flush_main(accum, weight)
+                except RuntimeError as exc:
+                    cpu_fallback(exc)
+            cov = weight.copy()
+            result.image = _normalise_stack(accum, weight) if moon_stack is None else moon_stack.composite(
+                _normalise_stack(accum, weight))
+            result.coverage, result.validity = cov, cov > 0
+        result = DeferredResult(
+            form,
             units=units,
             channel_order=channel_order,
             backend=backend.name,
@@ -559,38 +603,82 @@ def _stack_source(
             },
             warnings=list(warnings),
         )
-        complete_bayer_rgb(result)
+        result.then(complete_bayer_rgb)
         seq += 1
-        on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n, "backend": backend.name})
+        held = sys.getrefcount(result)
+        on_event(result, {"seq": seq, "n_used": n_used, "n_processed": n_used + n_rejected, "n_total": n,
+                          "backend": backend.name, "device_report": dict(report.__dict__)})
+        if not result.formed and sys.getrefcount(result) > held:
+            result.form()  # The consumer kept it: form it while the sums are those it reports.
 
-    def device_frame(index, raw, calibrated):
-        """Alignment points on CUDA: plane, registration and contributions stay on the device."""
+    def device_group(chunk):
+        """Alignment points on CUDA for a group of (index, raw): planes, matching, backprojection and
+        weights stay on the device. Returns (indices used, (indices, contributions, pairs) or None)."""
         import torch
-        # One upload per frame; uncalibrated frames go up as their (smaller) raw samples.
-        image = (torch.as_tensor(raw, device='cuda:0').to(torch.float64) if calibration is None
-                 else torch.as_tensor(calibrated, device='cuda:0', dtype=torch.float64))
-        plane = backend.registration_plane(image, color)
-        # Local quality already registered this frame against the same reference.
-        shift = local_selection.shifts.get(int(index)) if local_selection is not None else None
-        if shift is None:
-            shift = backend.phase_correlation(reference, plane)
-        if not np.all(np.isfinite(shift)) or abs(shift[0]) > config.max_shift_px or abs(shift[1]) > config.max_shift_px:
-            return None
-        score = selection.measurements[index, 0]
-        if not np.isfinite(score):
-            return None
-        pending_quality[int(index)] = max(score, 1e-12)
-        score = max(score, 1e-12) if config.quality_weighting else 1.
-        # The registration plane is the moons' measurement plane; only their windows leave the device.
-        moon_contributions(index, calibrated, plane, shift, score)
-        if local_matcher.use_cuda is False:
-            local_matcher.use_cuda = True
-        field = local_matcher.displacement_tensor(plane, shift)
-        projected = backend.backproject_tensors(image, field, color)
-        bins = [(2*b + fourier_weights.half(index), score * m) for b, m in local_selection.bin_weights_tensor(index)] if n_bins else None
-        if local_selection is not None:
-            score = score * local_selection.weights_tensor(index)
-        return (score, *projected, bins)
+        kept = []
+        for index, raw in chunk:
+            index = int(index)
+            if not selection.accepted[index]:
+                continue
+            if not np.all(np.isfinite(raw)) or (config.reject_saturated and _saturated(raw, bit_depth)):
+                continue
+            calibrated, cal_info = apply_calibration(raw, calibration)
+            if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
+                continue
+            if not np.isfinite(selection.measurements[index, 0]):
+                continue
+            kept.append((index, raw, calibrated))
+        if not kept:
+            return set(), None
+        local_matcher._check_cancel()
+        # One upload per group; uncalibrated frames go up as their (smaller) raw samples.
+        images = torch.as_tensor(np.stack([raw if calibration is None else calibrated for _, raw, calibrated in kept]),
+                                 device='cuda:0').to(torch.float64)
+        planes = torch.stack([backend.registration_plane(image, color) for image in images])
+        shifts, good = [], []
+        for k, (index, _, _) in enumerate(kept):
+            # Local quality already registered this frame against the same reference.
+            shift = local_selection.shifts.get(index) if local_selection is not None else None
+            if shift is None:
+                shift = backend.phase_correlation(reference, planes[k])
+            if np.all(np.isfinite(shift)) and abs(shift[0]) <= config.max_shift_px and abs(shift[1]) <= config.max_shift_px:
+                good.append(k)
+                shifts.append((float(shift[0]), float(shift[1])))
+        if not good:
+            return set(), None
+        if len(good) < len(kept):
+            kept = [kept[k] for k in good]
+            select = torch.as_tensor(good, device='cuda:0')
+            images, planes = images[select], planes[select]
+        scores = []
+        for index, _, _ in kept:
+            score = max(selection.measurements[index, 0], 1e-12)
+            pending_quality[index] = score
+            scores.append(score if config.quality_weighting else 1.)
+        if moon_stack is not None:
+            # The registration planes are the moons' measurement planes; only their windows leave the device.
+            frames = [(index, calibrated, planes[k], shift) for k, ((index, _, calibrated), shift)
+                      in enumerate(zip(kept, shifts))]
+            for (index, _, _, _), score, contribution in zip(frames, scores, moon_stack.contribute_many(frames)):
+                if local_selection is not None:
+                    # Outside the alignment points the global frame selection applies.
+                    score = score * float(local_selection.global_mask[index])
+                if score > 0:
+                    pending_moons[index] = (contribution, score)
+        fields = local_matcher.displacements_tensor(planes, shifts)
+        if device_sums.kernels is not None:
+            from planetrecon.detector import BAYER_PATTERNS
+            labels = ([["RGB".index(c) for c in row] for row in BAYER_PATTERNS[color]] if bayer else None)
+            contributions = device_sums.kernels.pull(images, fields, labels)
+        else:
+            contributions = backend.backproject_group(images, fields, color)
+        pairs = []
+        for f, ((index, _, _), score) in enumerate(zip(kept, scores)):
+            terms = (local_selection.pairs(index, device_sums.main) if local_selection is not None
+                     else [(device_sums.main, np.zeros(0, np.int64), 1.)])
+            pairs.extend((f, slot, points, outside, score) for slot, points, outside in terms)
+        indices = [index for index, _, _ in kept]
+        return set(indices), (indices, contributions.reshape(len(kept), h * w, -1), pairs)
 
     def process_frame(item):
         nonlocal reference, reference_index
@@ -602,14 +690,6 @@ def _stack_source(
         calibrated, cal_info = apply_calibration(raw, calibration)
         if not np.all(np.isfinite(calibrated)) or (config.reject_saturated and cal_info["saturated"]):
             return None
-        if device_sums is not None and backend.name == 'cuda':
-            try:
-                return device_frame(index, raw, calibrated)
-            except RuntimeError as exc:
-                if hasattr(local_matcher, 'release_cuda'):
-                    local_matcher.release_cuda()
-                local_matcher.use_cuda = False
-                cpu_fallback(exc)
         demosaiced = (demosaic(calibrated)
                       if colour_registration and backend.name != 'cuda' else None)
         plane = (_alignment_plane(demosaiced,'RGB') if demosaiced is not None
@@ -732,6 +812,26 @@ def _stack_source(
                                  should_cancel=should_cancel)
         last_checkpoint, dirty = [time.monotonic()], [False]
 
+        def record(index, projected):
+            """Count one consumed frame in capture order; ``projected`` is its CPU contributions,
+            True when the device sums already hold it, or None when it was rejected."""
+            nonlocal n_used, n_rejected
+            # Screening exclusions may have been skipped while filling
+            # the work batch. Account for exactly the consumed prefix.
+            n_rejected += int(index) - (n_used + n_rejected)
+            quality = pending_quality.pop(int(index), np.nan)
+            moon_frame = pending_moons.pop(int(index), None)
+            if projected is None or projected is False:
+                n_rejected += 1
+                return
+            if projected is not True:
+                accumulate(projected)
+            if frame_quality is not None:
+                frame_quality[int(index)] = quality
+            if moon_frame is not None:
+                moon_stack.add(*moon_frame)
+            n_used += 1
+
         def save_checkpoint():
             resume.save(state_checkpoint, state_identity, {
                 "accum": accum, "weight": weight, "reference": reference,
@@ -750,27 +850,39 @@ def _stack_source(
                 break
             dirty[0] = True
             try:
-                for index, projected in zip(indices, frame_results(zip(indices, batch))):
-                    if pool.cancelled():
-                        cancelled = True
-                        break
-                    # Screening exclusions may have been skipped while filling
-                    # the work batch. Account for exactly the consumed prefix.
-                    n_rejected += int(index) - (n_used + n_rejected)
-                    quality = pending_quality.pop(int(index), np.nan)
-                    moon_frame = pending_moons.pop(int(index), None)
-                    if projected is None:
-                        n_rejected += 1
-                        continue
-                    if device_sums is not None and not isinstance(projected[1], np.ndarray):
-                        device_sums.add(index, *projected)
-                    else:
-                        accumulate(projected)
-                    if frame_quality is not None:
-                        frame_quality[int(index)] = quality
-                    if moon_frame is not None:
-                        moon_stack.add(*moon_frame)
-                    n_used += 1
+                if device_sums is not None and backend.name == 'cuda':
+                    items = list(zip(indices, batch))
+                    for start in range(0, len(items), group_frames):
+                        if pool.cancelled():
+                            cancelled = True
+                            break
+                        chunk = items[start:start + group_frames]
+                        if backend.name != 'cuda':  # A CUDA failure earlier in this batch.
+                            for index, raw in chunk:
+                                record(index, process_frame((index, raw)))
+                            continue
+                        try:
+                            used, payload = device_group(chunk)
+                            if payload is not None:
+                                device_sums.add(*payload)
+                        except RuntimeError as exc:
+                            for index, _ in chunk:
+                                pending_quality.pop(int(index), None)
+                                pending_moons.pop(int(index), None)
+                            local_matcher.release_cuda()
+                            local_matcher.use_cuda = False
+                            cpu_fallback(exc)
+                            for index, raw in chunk:
+                                record(index, process_frame((index, raw)))
+                            continue
+                        for index, _ in chunk:
+                            record(index, int(index) in used)
+                else:
+                    for index, projected in zip(indices, frame_results(zip(indices, batch))):
+                        if pool.cancelled():
+                            cancelled = True
+                            break
+                        record(index, projected)
             except InterruptedError:
                 if not pool.cancelled():
                     raise
@@ -843,6 +955,22 @@ def _stack_source(
     complete_bayer_rgb(result)
     emit(result.stage, incomplete=result.incomplete)
     return result
+
+
+GROUP_FRAMES = 8  # Most frames matched, resampled and accumulated together on CUDA.
+GROUP_BUDGET_BYTES = 1 << 30
+
+
+def _group_frames(pixels, contribution_channels, memory_report):
+    """Frames per CUDA group: their working set (raw frame, registration plane, proxy, fields,
+    contributions and resampling terms) within GROUP_BUDGET_BYTES, or an eighth of a CUDA
+    allocation budget."""
+    per_frame = pixels * (8 + 8 + 12 + 16 + 8 * contribution_channels + 32)
+    budget = GROUP_BUDGET_BYTES
+    limit = (memory_report or {}).get('effective_bytes')
+    if limit:
+        budget = min(budget, int(limit) // 8)
+    return int(max(1, min(GROUP_FRAMES, budget // per_frame)))
 
 
 def _stack_quality(source, calibration, config, frame_quality, screened_selection, local_selection, fourier=False):
