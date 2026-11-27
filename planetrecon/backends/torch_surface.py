@@ -162,6 +162,54 @@ class TorchSurfaceTracker:
         return self.matcher.batch(template, mask, count, energy, proxy, usable=usable)
 
 
+class TorchFieldTracker:
+    """Device camera-drift tracking under field rotation, for one run's anchor.
+
+    A field inside the frame follows geometry_stack's CPU tracking: the phase
+    correlation (align.phase_correlation_shift) of each frame with the anchor
+    predicted at its pose. A cropped field follows field_align.field_displacement:
+    masked matching on the support observed in both, away from the sampled limb.
+    Predictions and support are float64; the masked matching runs in ``dtype``.
+    The phase correlation locates its peak on a float32 surface and fits it from
+    exact float64 correlations (TorchBackend.phase_correlation_pairs).
+    """
+
+    def __init__(self, warp, backend, reference, reference_pose, radius, *, cropped, static,
+                 dtype=torch.float64):
+        self.warp, self.backend = warp, backend
+        self.reference_pose, self.radius = reference_pose, float(radius)
+        self.cropped, self.static, self.dtype = bool(cropped), bool(static), dtype
+        self.reference = torch.as_tensor(np.asarray(reference, dtype=np.float64), device=warp.device)
+        if self.cropped:
+            self.matcher = MaskedMatcher(self.reference.shape, warp.device, dtype, distinct=False)
+
+    def displacement(self, frame, pose):
+        """Drift (dx, dy) of one frame at its pose; None when a cropped field cannot constrain it."""
+        frame = frame if torch.is_tensor(frame) else torch.as_tensor(np.asarray(frame, dtype=np.float64))
+        return self.displacements(frame.to(self.warp.device)[None], [pose])[0]
+
+    def displacements(self, frames, poses):
+        """Drift for a batch of frames (leading axis) at their poses."""
+        poses = list(poses)
+        frames = frames.to(self.dtype)
+        if not self.cropped:
+            predicted = (self.reference.expand(len(poses), -1, -1) if self.static else
+                         self.warp.render_tensor(self.reference, poses, self.reference_pose))
+            return self.backend.phase_correlation_pairs(predicted, frames)
+        projected = self.warp.render_tensor(torch.stack((self.reference, torch.ones_like(self.reference)), -1),
+                                            poses, self.reference_pose)
+        predicted, support = projected[..., 0], projected[..., 1]
+        P = self.warp.poses(poses, poses)
+        radial = torch.hypot(self.warp.x - P([p.cx for p in poses]), self.warp.y - P([p.cy for p in poses]))
+        # The sampled limb changes under interpolation even with no true drift: keep its
+        # smoothing footprint out of the evidence, as well as the rotated padding.
+        mask = _eroded((support >= 1. - 1e-12) & (radial < self.radius))
+        template, count, energy = masked_templates(predicted.to(self.dtype), mask)
+        count, energy = (v.double().cpu().numpy() for v in (count, energy))
+        usable = (count >= 32) & (energy > 1e-12)
+        return self.matcher.batch(template, mask, count, energy, _gaussian(frames, 1.5), usable=usable)
+
+
 def _eroded(observed, size=15):
     """minimum_filter(size, mode='constant', cval=0): erosion with an unobserved border (last two axes)."""
     r = size // 2
@@ -202,8 +250,10 @@ class MaskedMatcher:
 
     MEMORY = 1 << 29   # bytes of correlation workspace per chunk of frames
 
-    def __init__(self, shape, device='cuda:0', dtype=torch.float64):
+    def __init__(self, shape, device='cuda:0', dtype=torch.float64, *, distinct=True):
         self.device, self.dtype = device, dtype
+        # MaskedRegistration's distinct_peaks: only separate maxima compete with the peak.
+        self.distinct = distinct
         self.shape = tuple(shape)
         h, w = self.shape
         self.full = (2 * h - 1, 2 * w - 1)
@@ -288,9 +338,11 @@ class MaskedMatcher:
         best = flat.argmax(1)
         peak = flat.gather(1, best[:, None])[:, 0]
         wy, wx = best // size_x, best % size_x
-        # Distinct maxima only (plateaus included), outside a 7x7 exclusion box.
-        local = F.max_pool2d(scores[:, None], 3, stride=1, padding=1)[:, 0]
-        competitors = torch.where(scores < local, -torch.inf, scores)
+        # Distinct maxima only (plateaus included) when asked, outside a 7x7 exclusion box.
+        competitors = scores
+        if self.distinct:
+            local = F.max_pool2d(scores[:, None], 3, stride=1, padding=1)[:, 0]
+            competitors = torch.where(scores < local, -torch.inf, scores)
         box = (((torch.arange(size_y, device=self.device)[:, None] - wy[:, None, None]).abs() <= 3)
                & ((torch.arange(size_x, device=self.device)[None, :] - wx[:, None, None]).abs() <= 3))
         rival = torch.where(box, -torch.inf, competitors).flatten(1).max(1).values

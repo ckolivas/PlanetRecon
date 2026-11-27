@@ -36,6 +36,11 @@ class SceneModel(ABC):
 class FieldOnlyModel(SceneModel):
     """Sky-to-detector attitude. No surface motion."""
 
+    # The globe models' switches, so device warps share one field-rotation path.
+    globe = None
+    apply_field = True
+    apply_surface = False
+
     def src_to_ref(self, x, y, src: FramePose, ref: FramePose, gain: bool = False):
         sx, sy = detector_to_sky(x, y, src.cx, src.cy)
         rx, ry = field_rotate_sky(sx, sy, ref.field_angle_rad - src.field_angle_rad)

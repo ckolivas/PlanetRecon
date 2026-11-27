@@ -220,14 +220,14 @@ def luminance(images, labels):
 
 
 @triton.jit
-def _stencil(image_ptr, filtered_ptr, peak_ptr, out_ptr, P, W, H, blocks, BLOCK: tl.constexpr):
+def _stencil(image_ptr, filtered_ptr, peak_ptr, out_ptr, P, W, H, blocks, reference_stride, BLOCK: tl.constexpr):
     b = tl.program_id(0)
     block = tl.program_id(1)
     p = block * BLOCK + tl.arange(0, BLOCK)
     inside = p < P
     y = p // W
     x = p - y * W
-    reference = tl.load(filtered_ptr + p, inside, other=0.)
+    reference = tl.load(filtered_ptr + b.to(tl.int64) * reference_stride + p, inside, other=0.)
     py = tl.load(peak_ptr + 2 * b)
     px = tl.load(peak_ptr + 2 * b + 1)
     for dy in tl.static_range(-1, 2):
@@ -241,12 +241,12 @@ def _stencil(image_ptr, filtered_ptr, peak_ptr, out_ptr, P, W, H, blocks, BLOCK:
 def stencil(images, filtered, peaks):
     """Correlations at the 3 x 3 lags around each frame's integer ``peaks`` (B, 2) (row, column): (B, 3, 3)
     float64, sum over pixels p of images[b, p + lag] x filtered[p] (indices wrap), summed per block then
-    across blocks."""
+    across blocks. ``filtered`` is one (h, w) reference, or one per frame (B, h, w)."""
     images = images.to(torch.float64).contiguous()
     B, h, w = images.shape
     P = h * w
     blocks = triton.cdiv(P, 1024)
     partial = torch.empty((B, blocks, 9), dtype=torch.float64, device=images.device)
-    _stencil[(B, blocks)](images, filtered.contiguous(), peaks.to(torch.int32).contiguous(), partial,
-                          P, w, h, blocks, BLOCK=1024)
+    _stencil[(B, blocks)](images, filtered.to(torch.float64).contiguous(), peaks.to(torch.int32).contiguous(),
+                          partial, P, w, h, blocks, P if filtered.ndim == 3 else 0, BLOCK=1024)
     return partial.sum(1).reshape(B, 3, 3)

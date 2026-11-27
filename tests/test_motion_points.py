@@ -117,40 +117,76 @@ def test_surface_alignment_points_correct_seeing_with_local_quality_and_resume(t
             stack_source(src, replace(cfg, ap_size=48), preprocessing=selection, resume_from=state)
 
 
-def test_field_alignment_points_correct_seeing_against_derotated_truth(tmp_path):
-    from planetrecon.io.ser import SERSource, write_ser
-    from planetrecon.pipeline.baseline import stack_source
-    rate, n = .03, 8
+FIELD_RATE = .03
+
+
+def field_rotated(t):
+    """A textured disc turned by the field about the detector centre (the model's sign convention)."""
     y, x = np.indices((128, 128), dtype=float)
     texture = gaussian_filter(np.random.default_rng(2).normal(size=(128, 128)), 1.5)
     disc = gaussian_filter((np.hypot(x + .5 - 64, y + .5 - 64) < 44)*(300 + 150*texture/texture.std()), .7)
+    a, sx, sy = FIELD_RATE*t, x + .5 - 64, 64 - y - .5
+    u, v = np.cos(a)*sx + np.sin(a)*sy, -np.sin(a)*sx + np.cos(a)*sy
+    return map_coordinates(disc, [64 - v - .5, u + 64 - .5], order=3, mode='constant')
 
-    def rotated(t):
-        # Field rotation about the centre with the model's sign convention.
-        a, sx, sy = rate*t, x + .5 - 64, 64 - y - .5
-        u, v = np.cos(a)*sx + np.sin(a)*sy, -np.sin(a)*sx + np.cos(a)*sy
-        return map_coordinates(disc, [64 - v - .5, u + 64 - .5], order=3, mode='constant')
+
+def field_seeing_capture(tmp_path, n=8, colour='mono'):
+    """Field rotation with smooth seeing; returns the capture and a field-mode points config."""
+    from planetrecon.detector import cfa_labels
+    from planetrecon.io.ser import NAME_TO_COLOR, write_ser
+    y, x = np.indices((128, 128), dtype=float)
     frames = []
     for i in range(n):
         # Paired opposite seeing fields keep the mean geometry undistorted.
         ux, uy = smooth_field((128, 128), 60 + i//2, 1.5, sigma=10)
         sign = 1 if i % 2 == 0 else -1
-        frames.append(map_coordinates(rotated(i), [y + sign*uy, x + sign*ux], order=3, mode='constant'))
-    path = write_ser(tmp_path/'field.ser', np.clip(np.stack(frames)*10, 0, 65535).astype('u2'),
-                     timestamps=np.arange(n)*10000000)
-    cfg = replace(points_config(), geometry_mode='field', field_rate_rad_s=rate, surface_rate_rad_s=None,
+        frames.append(map_coordinates(field_rotated(i), [y + sign*uy, x + sign*ux], order=3, mode='constant'))
+    frames = np.stack(frames)*10
+    if colour != 'mono':
+        labels = cfa_labels(128, 128, colour)
+        frames *= np.where(labels == 'R', .8, np.where(labels == 'B', .6, 1.))
+    path = write_ser(tmp_path/'field.ser', np.clip(frames, 0, 65535).astype('u2'),
+                     color_id=NAME_TO_COLOR[colour], timestamps=np.arange(n)*10000000)
+    cfg = replace(points_config(), geometry_mode='field', field_rate_rad_s=FIELD_RATE, surface_rate_rad_s=None,
                   equatorial_radius_px=None, stack_percent=100, quality_weighting=False)
+    return path, cfg
+
+
+def test_field_alignment_points_correct_seeing_against_derotated_truth(tmp_path):
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.baseline import stack_source
+    path, cfg = field_seeing_capture(tmp_path)
     with SERSource(path) as src:
         selection = selected(src, cfg)
         points = stack_source(src, cfg, preprocessing=selection)
         ordinary = stack_source(src, replace(cfg, local_alignment=False), preprocessing=selection)
-    assert points.provenance['local_alignment']['points'] > 2 and points.n_used == ordinary.n_used == n
-    truth = 10*rotated(float(points.reference_epoch))
+    assert points.provenance['local_alignment']['points'] > 2 and points.n_used == ordinary.n_used == 8
+    truth = 10*field_rotated(float(points.reference_epoch))
+    y, x = np.indices((128, 128), dtype=float)
     roi = np.hypot(x + .5 - 64, y + .5 - 64) < 36
 
     def error(result):
         return np.sqrt(np.mean((result.image[roi] - truth[roi])**2))
     assert error(points) < .92*error(ordinary)
+
+
+@pytest.mark.parametrize('colour', ['mono', 'RGGB'])
+def test_cuda_field_alignment_point_stack_matches_cpu(tmp_path, colour):
+    torch = pytest.importorskip('torch')
+    if not torch.cuda.is_available():
+        pytest.skip('CUDA unavailable')
+    from planetrecon.io.ser import SERSource
+    from planetrecon.pipeline.baseline import stack_source
+    path, cfg = field_seeing_capture(tmp_path, colour=colour)
+    with SERSource(path) as src:
+        selection = selected(src, cfg)
+        cpu = stack_source(src, cfg, preprocessing=selection)
+        gpu = stack_source(src, replace(cfg, device='gpu'), preprocessing=selection)
+    execution = gpu.provenance['geometry_execution']
+    assert gpu.backend == 'cuda' and execution['drift_matching'] == execution['projection_and_accumulation'] == 'cuda'
+    assert gpu.n_used == cpu.n_used == 8
+    np.testing.assert_allclose(gpu.image, cpu.image, rtol=1e-7, atol=1e-6*cpu.image.max())
+    np.testing.assert_allclose(gpu.coverage, cpu.coverage, rtol=1e-7, atol=1e-9)
 
 
 def saturn_seeing_capture(tmp_path, n=8):
@@ -253,7 +289,7 @@ def test_cuda_surface_alignment_point_stack_matches_cpu(tmp_path, colour):
 
 
 @pytest.mark.registration_precision
-@pytest.mark.parametrize('kind', ['surface', 'saturn'])
+@pytest.mark.parametrize('kind', ['surface', 'saturn', 'field'])
 def test_float32_registration_stays_close_to_float64(tmp_path, kind):
     """Production device registration (float32) moves stacks far less than their noise."""
     torch = pytest.importorskip('torch')
@@ -265,6 +301,8 @@ def test_float32_registration_stays_close_to_float64(tmp_path, kind):
     assert precision.REGISTRATION == torch.float32
     if kind == 'surface':
         path, cfg = seeing_capture(tmp_path), points_config()
+    elif kind == 'field':
+        path, cfg = field_seeing_capture(tmp_path)
     else:
         path, cfg = saturn_seeing_capture(tmp_path)
     with SERSource(path) as src:

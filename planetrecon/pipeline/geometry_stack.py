@@ -13,7 +13,8 @@ from planetrecon.calibration import Calibration, apply_calibration
 from planetrecon.detector import PreparedBilinearDemosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
 from planetrecon.geometry.coords import detector_xy_grids
 from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
-from planetrecon.geometry.model import SceneModel, OblateGlobeModel, select_scene_model, render_observed
+from planetrecon.geometry.model import (SceneModel, FieldOnlyModel, OblateGlobeModel, select_scene_model,
+                                       render_observed)
 from planetrecon.geometry.pose import FramePose, build_frame_poses, globe_for_config, source_times_s, unwrap_angles
 from planetrecon.geometry.rings import RingParams
 from planetrecon.geometry.saturn import LAYER_GLOBE, LAYER_FAR_RING, LAYER_NEAR_RING, MoonTrack, SaturnSceneModel, fit_saturn_geometry
@@ -449,12 +450,8 @@ def stack_source_geometry(
     if state_checkpoint is not None:
         from planetrecon import resume
         resume.validate_destination(state_checkpoint, source, config)
-    cuda_geometry = config.geometry_mode in ('surface', 'combined', 'saturn')
-    backend, report = select_backend(config.device if cuda_geometry else 'cpu', threads=config.threads)
+    backend, report = select_backend(config.device, threads=config.threads)
     report.requested = config.device
-    if not cuda_geometry and config.device != "cpu":
-        report.fallback = True
-        report.reason = "geometry_cpu_only: field-only operators run on CPU float64"
     meta = source.metadata()
     color = source.color_mode()
     n = source.n_frames()
@@ -642,6 +639,14 @@ def stack_source_geometry(
             else:
                 diagnostics['registration'] = ('fixed centre (Saturn detector tracks)' if model.moon is not None
                                                else 'fixed centre (Saturn moving layers)')
+            field_tracker = None
+            if renderer is not None and isinstance(model, FieldOnlyModel):
+                # Device drift tracking under field rotation; same decisions as the CPU paths below.
+                # Like globe and ring drift it matches in float64: drift is a whole-frame shift.
+                from planetrecon.backends.torch_surface import TorchFieldTracker
+                field_tracker = TorchFieldTracker(renderer.__self__, backend, anchor_plane, anchor_pose,
+                                                  diagnostics['radius'], cropped=track_field,
+                                                  static=static_attitude)
             if track_field or track_surface or ring_registration is not None:
                 # Part of resume identity: older sums used independent axis peak fits.
                 diagnostics['registration_peak'] = 'joint two-dimensional quadratic'
@@ -666,8 +671,9 @@ def stack_source_geometry(
                     feature = 'exposed rings'
                 elif track_field:
                     from planetrecon.pipeline.field_align import field_displacement
-                    displacement = field_displacement(anchor_plane, plane, pose, anchor_pose,
-                                                      diagnostics['radius'])
+                    displacement = (field_tracker.displacement(plane, pose) if field_tracker is not None else
+                                    field_displacement(anchor_plane, plane, pose, anchor_pose,
+                                                       diagnostics['radius']))
                     feature = 'shared observed field'
                 else:
                     from planetrecon.pipeline.globe_align import surface_displacement
@@ -717,7 +723,7 @@ def stack_source_geometry(
     # share each kernel launch; every decision is still made per frame.
     gpu_planes = None
     group = 1
-    if (surface_tracker is not None and track_surface) or ring_on_device:
+    if (surface_tracker is not None and track_surface) or ring_on_device or field_tracker is not None:
         from planetrecon.backends.torch_surface import TorchPlanes
         gpu_planes = TorchPlanes((h, w), color)
         group = FRAME_GROUP
@@ -742,6 +748,8 @@ def stack_source_geometry(
             if ring_registration is not None:
                 found = (ring_registration.displacements(chosen) if diagnostics['field_rate_rad_s'] == 0 else
                          ring_registration.displacements_at_poses(chosen, frame_poses, anchor_pose))
+            elif field_tracker is not None:
+                found = field_tracker.displacements(chosen, frame_poses)
             else:
                 found = surface_tracker.displacements(chosen, frame_poses)
             for k, displacement in zip(todo, found):
@@ -959,14 +967,14 @@ def stack_source_geometry(
         snapshot_provenance['resumed_from_frame'] = next_index
 
     execution_history = list(dict.fromkeys([*execution_history, backend.name]))
+    device_drift = ring_on_device or surface_tracker is not None or field_tracker is not None
     snapshot_provenance['execution_history'] = execution_history
     snapshot_provenance['geometry_execution'] = {
         'projection_and_accumulation': backend.name,
         'geometry_estimation': 'cpu',
-        'drift_matching': 'cuda' if ring_on_device or surface_tracker is not None else 'cpu',
+        'drift_matching': 'cuda' if device_drift else 'cpu',
         'ring_reference_warps_and_correlations': backend.name if ring_registration is not None else 'unused',
-        'drift_peak_acceptance': 'cuda with cpu subpixel solve' if ring_on_device or surface_tracker is not None
-                                 else 'cpu',
+        'drift_peak_acceptance': 'cuda with cpu subpixel solve' if device_drift else 'cpu',
         'alignment_point_correlations': backend.name if config.local_alignment else 'unused',
         'local_reference_prediction': backend.name if config.local_alignment else 'unused',
         'local_residual_inversion': backend.name if config.local_alignment else 'unused',
@@ -986,14 +994,15 @@ def stack_source_geometry(
         if n_bins:
             gpu_accumulator.enable_bins(bin_accum, bin_weight)
 
-    def sync_sums():
+    def sync_sums(bins=True):
+        """Copy the device sums to the host; previews leave the rank-bin sums on the device."""
         nonlocal accum, weight, demosaic_accum, demosaic_weight, globe_weight, ring_weight, bin_accum, bin_weight
         if gpu_accumulator is not None:
             sums = gpu_accumulator.download()
             accum, weight, demosaic_accum, demosaic_weight = sums[:4]
             if isinstance(model, SaturnSceneModel):
                 globe_weight,ring_weight = sums[4:]
-            if n_bins:
+            if n_bins and bins:
                 bin_accum, bin_weight = gpu_accumulator.download_bins()
 
     def frame_bins(index, score, device):
@@ -1007,7 +1016,7 @@ def stack_source_geometry(
         nonlocal seq
         if on_event is None:
             return
-        sync_sums()
+        sync_sums(bins=False)  # The preview is the plain weighted mean.
         cov = weight.copy()
         image = _normalise_stack(accum, weight)
         result = ReconstructionResult(

@@ -52,10 +52,31 @@ class TorchBackend(Backend):
         the neighbouring lag while one is higher, and fitted as before. The displacements are those
         of the float64 surface (to about 1e-12 px), at float32 transform cost.
         """
-        from planetrecon.pipeline.align import peak_offsets
         img = torch.as_tensor(frames, device='cuda:0', dtype=torch.float64)
         img = img - img.mean((-2, -1), keepdim=True)
-        spectrum, filt, filtered = self._terms(reference)
+        return self._located(img, *self._terms(reference))
+
+    def phase_correlation_pairs(self, references, frames) -> list[tuple[float, float]]:
+        """``align.phase_correlation_shift(references[b], frames[b])`` for each frame of a batch.
+
+        Each frame has its own reference (B, h, w), e.g. an anchor predicted at the frame's pose.
+        The correlation is located as in ``phase_correlations``: float32 transforms, then the 3 x 3
+        neighbourhood of each peak formed exactly in float64.
+        """
+        from planetrecon.pipeline.align import correlation_filter
+        img = torch.as_tensor(frames, device='cuda:0', dtype=torch.float64)
+        img = img - img.mean((-2, -1), keepdim=True)
+        ref = torch.as_tensor(references, device='cuda:0', dtype=torch.float64)
+        ref = ref - ref.mean((-2, -1), keepdim=True)
+        shape = tuple(img.shape[-2:])
+        filt = torch.as_tensor(correlation_filter(shape)[:, :shape[1]//2+1], device='cuda:0')
+        spectrum = torch.fft.rfft2(ref)
+        filtered = torch.fft.irfft2(spectrum * filt, s=shape)
+        return self._located(img, torch.conj(spectrum).to(torch.complex64), filt.to(torch.float32), filtered)
+
+    def _located(self, img, spectrum, filt, filtered):
+        """Displacements of zero-mean frames from a coarse float32 surface and exact float64 stencils."""
+        from planetrecon.pipeline.align import peak_offsets
         shape = tuple(img.shape[-2:])
         coarse = torch.fft.irfft2(torch.fft.rfft2(img.to(torch.float32)) * spectrum * filt, s=shape)
         flat = torch.argmax(coarse.reshape(len(img), -1), 1)
@@ -70,7 +91,8 @@ class TorchBackend(Backend):
             if not len(moving):
                 break
             peaks[moving] = (peaks[moving] + np.stack([best[moving] // 3 - 1, best[moving] % 3 - 1], 1)) % shape
-            values[moving] = self._stencil(img[moving], filtered,
+            chosen = torch.as_tensor(moving, device='cuda:0')
+            values[moving] = self._stencil(img[chosen], filtered if filtered.ndim == 2 else filtered[chosen],
                                            torch.as_tensor(peaks[moving], device='cuda:0')).cpu().numpy()
         return [peak_offsets(int(py), int(px), shape, v[:, 1], v[1, :]) for (py, px), v in zip(peaks, values)]
 
@@ -82,9 +104,10 @@ class TorchBackend(Backend):
             return kernels.stencil(img, filtered, peaks)
         out = torch.empty((len(img), 3, 3), dtype=torch.float64, device=img.device)
         for b, (py, px) in enumerate(peaks.tolist()):
+            reference = filtered if filtered.ndim == 2 else filtered[b]
             for i in range(3):
                 for j in range(3):
-                    out[b, i, j] = (torch.roll(img[b], (-(py + i - 1), -(px + j - 1)), (0, 1)) * filtered).sum()
+                    out[b, i, j] = (torch.roll(img[b], (-(py + i - 1), -(px + j - 1)), (0, 1)) * reference).sum()
         return out
 
     def shift(self, image: np.ndarray, shift_xy: tuple[float, float]) -> np.ndarray:

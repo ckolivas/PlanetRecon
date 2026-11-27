@@ -151,9 +151,42 @@ its interpolation-loss gate) runs the same way, matching the CPU to about
 7e-12 px at about 11 ms per frame, against 52 ms when only the correlations
 ran on the GPU.
 
+Field derotation (Field motion model) runs on CUDA the same way; it used to
+run entirely on the CPU. The field tracker (`torch_surface.TorchFieldTracker`)
+follows the CPU's two drift paths. A field inside the frame uses the phase
+correlation of each frame with the anchor predicted at its pose, with one
+reference per frame (`TorchBackend.phase_correlation_pairs`: a float32 surface
+locates each peak, then the 3x3 neighbourhood is formed exactly in float64). A
+cropped field uses masked matching on the support both frames observe, away from
+the sampled limb (`field_align.field_displacement`; `MaskedMatcher` with
+distinct peaks off). Projection, alignment points, local quality and
+accumulation share the globe warp, which treats the field-only model as a globe
+that does not spin. Geometry estimation (the field rate from four sample frames)
+stays on the CPU.
+
+Measured on 2021-09-13-1137_3-L-Sat (RGGB, 264x368), using every 20th frame
+(2,994 frames over the 600 s capture; Field + AP, 100%, Fourier weighting,
+fitted rate 0.0105 °/s):
+
+| path | time | stack vs CPU |
+|---|---|---|
+| CPU float64 | 768 s | — |
+| CUDA, float64 registration | 26 s | 1.9e-14 of peak |
+| CUDA, float32 registration | 20 s | 0.005 ADU rms where fully covered; 1.2e-3 of peak worst |
+
+The whole capture (54,004 of 59,878 frames stacked, fitted rate 0.0116 °/s)
+takes 228 s on CUDA; the CPU path would take about four hours. The 0.005 ADU
+float32 difference compares with 0.34 ADU of high-pass texture and noise on
+the disc. Float32 saves little here because these frames are small: the GPU is
+about half busy, and the accumulation scatters (one per Fourier rank bin a
+group's frames fall in) take about a third of the stacking time. Previews copy
+only the main sums back; the rank-bin sums (up to 32 accumulator pairs, about
+150 MB per preview on this capture) are copied only for checkpoints and the
+final image.
+
 ### Grouped device execution
 
-Once a run tracks drift on CUDA (Surface, Combined, Saturn), frames move
+Once a run tracks drift on CUDA (Field, Surface, Combined, Saturn), frames move
 through drift tracking, alignment points and accumulation in groups of eight
 (`geometry_stack.FRAME_GROUP`), so one kernel launch and one small host
 transfer serve the whole group. The reference build, its refinement,
@@ -199,7 +232,7 @@ matters or saves nothing: geometry coordinates (the pull and scatter weights
 come from float64 positions), peak fits and the field solve, raw frames and
 every accumulated sum.
 
-Camera-drift tracking also stays float64. In float32, Jupiter's globe drift moved
+Camera-drift tracking (globe, ring and field) also stays float64. In float32, Jupiter's globe drift moved
 by 7e-3 px median and up to 0.06 px (Saturn's ring drift by up to 3e-3 px)
 for under 1 ms per frame, and drift is a whole-frame shift.
 

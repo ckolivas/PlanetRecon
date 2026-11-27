@@ -131,19 +131,18 @@ def test_manual_field_center_allows_constant_capture_without_disc():
     np.testing.assert_allclose(result.image, 25.)
 
 
-@pytest.mark.parametrize("device", ["auto", "gpu"])
-def test_geometry_reports_cpu_without_cuda_probe(monkeypatch, device):
+def test_cpu_field_geometry_does_not_probe_cuda(monkeypatch):
     import planetrecon.backends.base as backends
     def forbidden():
         pytest.fail("CPU geometry must not probe unused CUDA operators")
     monkeypatch.setattr(backends, "probe_torch_cuda", forbidden)
     source = ArraySource(texture()[None], bit_depth=32)
-    result = stack_source(source, replace(config(field_rate_rad_s=0.), device=device))
+    result = stack_source(source, replace(config(field_rate_rad_s=0.), device="cpu"))
     assert result.backend == "cpu"
     assert result.precision == "float64"
     report = result.provenance["device_report"]
-    assert report["requested"] == device and report["selected"] == "cpu"
-    assert report["fallback"]
+    assert report["requested"] == "cpu" and report["selected"] == "cpu"
+    assert not report["fallback"]
 
 
 def test_cancel_before_pose_sampling_reads_no_frames():
