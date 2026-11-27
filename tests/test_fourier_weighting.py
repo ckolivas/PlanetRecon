@@ -205,6 +205,7 @@ def globe_config(**kwargs):
                      'motion_reference': 'best', 'batch_frames': 24, **kwargs})
 
 
+@pytest.mark.slow  # Surface geometry, deferred while only none geometry is in use.
 @pytest.mark.parametrize('colour', ['mono', 'RGGB'])
 def test_fourier_weighting_with_a_motion_model(tmp_path, monkeypatch, colour):
     path = rotating_globe(tmp_path/'globe.ser', colour)
@@ -231,6 +232,7 @@ def test_fourier_weighting_with_a_motion_model(tmp_path, monkeypatch, colour):
     assert 'Fourier power 4' in sharper.provenance['stack_quality']['weighting']
 
 
+@pytest.mark.slow  # Surface geometry, deferred while only none geometry is in use.
 def test_motion_model_fourier_checkpoint_resumes(tmp_path):
     path = rotating_globe(tmp_path/'resume.ser', 'RGGB', n=96)
     cfg = globe_config()

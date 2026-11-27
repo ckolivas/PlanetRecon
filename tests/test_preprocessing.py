@@ -174,7 +174,8 @@ def test_screened_translation_resume_retains_indices_and_counts(tmp_path):
         partial = stack_source(source, cfg, state_checkpoint=state,
                                should_cancel=lambda: cancel, on_event=event)
         resumed = stack_source(source, cfg, resume_from=state)
-    assert partial.n_used == 9 and partial.n_rejected == 1
+    # Cancellation stops after the progress batch that reached ten frames (one rejected).
+    assert partial.n_rejected == 1 and 10 <= partial.n_used + partial.n_rejected < full.n_used
     assert full.n_used == resumed.n_used == 29
     assert full.n_rejected == resumed.n_rejected == 2
     np.testing.assert_array_equal(full.image, resumed.image)

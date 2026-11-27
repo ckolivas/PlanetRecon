@@ -332,7 +332,11 @@ python3 -m planetrecon q2 --family eval --out out --no-generate --eval-workers 2
 `pytest tests -q` is the default CPU suite: unit tests and bounded integration.
 It does not run `@pytest.mark.slow` convergence jobs, scientific seed families,
 or hardware/GPU tests. Pass `--run-slow` / `--run-scientific` / `--run-hardware`
-to opt in. Do not put expensive simulations in the default suite.
+to opt in. Do not put expensive simulations in the default suite. While only
+none geometry is in use, the long surface-geometry Fourier-weighting stacks are
+`slow` tests, and the known geometry-mode failures listed in
+`tests/conftest.py` (`KNOWN_FAILURES`, each with its reason) are skipped;
+`--run-known-failures` runs them.
 
 `python3 -m planetrecon evidence` verifies the archived bundle's checksums and
 writes `results/manifests/` without modifying or relabelling archived R9 tables.

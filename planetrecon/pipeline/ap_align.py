@@ -197,6 +197,8 @@ class AlignmentPoints:
         self.templates = np.asarray(templates, dtype=np.float64).reshape(-1, size, size)[keep]
         self.window = window
         self.weighted = self.templates * window
+        self._spectra = None  # Conjugate window and template spectra at search-tile size, formed on first use.
+        self._upsample = None  # Linear interpolation from the coarse field grid to pixels, formed on first use.
         self.norm = np.sqrt((self.templates ** 2 * window).sum(axis=(1, 2)))
         self.gy = _grid(h, FIELD_STEP)
         self.gx = _grid(w, FIELD_STEP)
@@ -230,20 +232,31 @@ class AlignmentPoints:
             raise InterruptedError('cancelled during alignment point registration')
 
     def _ncc(self, image):
+        """Normalised correlations (n, 2R+1, 2R+1) of every point's search tile with its template.
+
+        Each tile spans the template plus the search range, so its circular
+        correlation at tile size holds every lag without wrapping: the window
+        sums and the template products for all points are batched FFTs.
+        """
+        from scipy import fft
         size, R = self.size, self.search
-        half = size // 2
-        span = size + 2 * R
-        out = np.empty((len(self.centres), 2 * R + 1, 2 * R + 1))
-        wsum = self.window.sum()
-        for k, (y, x) in enumerate(self.centres):
-            tile = image[y - half - R:y - half - R + span, x - half - R:x - half - R + span]
-            cand = np.lib.stride_tricks.sliding_window_view(tile, (size, size))
-            s1 = np.einsum('ijxy,xy->ij', cand, self.window)
-            s2 = np.einsum('ijxy,ijxy,xy->ij', cand, cand, self.window)
-            num = np.einsum('ijxy,xy->ij', cand, self.weighted[k])
-            var = np.maximum(s2 - s1 * s1 / wsum, 1e-12)
-            out[k] = num / (np.sqrt(var) * max(self.norm[k], 1e-15))
-        return out
+        half, span, lags = size // 2, size + 2 * R, 2 * R + 1
+        if self._spectra is None:
+            self._spectra = (np.conj(fft.rfft2(self.window, s=(span, span))),
+                             np.conj(fft.rfft2(self.weighted, s=(span, span))))
+        window, templates = self._spectra
+        offsets = np.arange(span)
+        rows = (self.centres[:, 0] - half - R)[:, None, None] + offsets[None, :, None]
+        cols = (self.centres[:, 1] - half - R)[:, None, None] + offsets[None, None, :]
+        tiles = np.asarray(image, dtype=np.float64)[rows, cols]
+        spectrum = fft.rfft2(tiles)
+
+        def lagged(product):
+            return fft.irfft2(product, s=(span, span))[:, :lags, :lags]
+        s1, s2 = lagged(spectrum * window), lagged(fft.rfft2(tiles * tiles) * window)
+        num = lagged(spectrum * templates)
+        var = np.maximum(s2 - s1 * s1 / self.window.sum(), 1e-12)
+        return num / (np.sqrt(var) * np.maximum(self.norm, 1e-15)[:, None, None])
 
     def peak_fits(self, frame, global_shift):
         """(offset, information, accepted) of every point for one frame, before any trust."""
@@ -299,11 +312,15 @@ class AlignmentPoints:
         det = A[..., 0, 0] * A[..., 1, 1] - A[..., 0, 1] * A[..., 1, 0]
         ux = (A[..., 1, 1] * b[..., 0] - A[..., 0, 1] * b[..., 1]) / det
         uy = (A[..., 0, 0] * b[..., 1] - A[..., 1, 0] * b[..., 0]) / det
-        h, w = self.shape
-        yy, xx = np.arange(h, dtype=float), np.arange(w, dtype=float)
+        if self._upsample is None:
+            h, w = self.shape
+            self._upsample = (_interpolation(np.arange(h, dtype=float), self.gy),
+                              _interpolation(np.arange(w, dtype=float), self.gx))
+        (jy, ty), (jx, tx) = self._upsample
+
         def upsample(u):
-            rows = np.stack([np.interp(xx, self.gx, line) for line in u])
-            return np.stack([np.interp(yy, self.gy, column) for column in rows.T], axis=1)
+            rows = u[:, jx] * (1 - tx) + u[:, jx + 1] * tx
+            return rows[jy] * (1 - ty)[:, None] + rows[jy + 1] * ty[:, None]
         return upsample(ux) + global_shift[0], upsample(uy) + global_shift[1]
 
     def displacement(self, frame, global_shift):
@@ -348,6 +365,15 @@ class AlignmentPoints:
 
     def acceptance(self):
         return float(np.mean(self.accepted)) if self.accepted else None
+
+
+def _interpolation(x, grid):
+    """Left grid indices and fractions giving ``np.interp(x, grid, v)`` as
+    ``v[j] * (1 - t) + v[j + 1] * t``: linear between grid points, clamped outside."""
+    x = np.clip(x, grid[0], grid[-1])
+    j = np.clip(np.searchsorted(grid, x, side='right') - 1, 0, len(grid) - 2)
+    gap = grid[j + 1] - grid[j]
+    return j, np.divide(x - grid[j], gap, out=np.ones_like(x), where=gap > 0)  # np.interp takes the right value.
 
 
 def calibration_indices(indices):

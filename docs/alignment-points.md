@@ -65,6 +65,13 @@ reference resampling; peak decisions use the shared CPU code. At float64 CPU and
 CUDA fields agree to 1e-9 px in the tests; production CUDA matching runs in
 float32 (see Mixed precision). Checkpoints bind the point size.
 
+On the CPU, each point's search tile spans its template plus the search range,
+so the window sums and template products at every lag come from one batched
+circular FFT correlation per frame (all points together, with the window and
+template spectra formed once), 2-4x faster than direct sums and equal to about
+1e-15; the field is upsampled by gathering each pixel's two neighbouring coarse
+samples per axis.
+
 ## With a motion model (Field, Surface, Combined, Saturn)
 
 Alignment points combine with every motion model. Field (whole-image rotation,
