@@ -224,6 +224,7 @@ def test_cuda_failure_during_matching_keeps_cpu_local_alignment(tmp_path, monkey
 
             def registration_plane(self, *args):
                 raise RuntimeError('simulated CUDA alignment point memory failure')
+            registration_planes = registration_plane  # The grouped setup passes.
         backend = FakeCUDA(threads=2)
         monkeypatch.setattr(baseline, 'select_backend', lambda *args, **kwargs:
                             (backend, DeviceReport('gpu', 'cuda', ['cpu', 'gpu'], False)))

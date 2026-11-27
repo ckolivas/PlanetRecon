@@ -289,7 +289,7 @@ def test_float32_device_registration_stays_close_to_the_cpu(tmp_path, color_id):
 
 @pytest.mark.hardware
 @pytest.mark.parametrize('color_id', [0, 8])
-@pytest.mark.parametrize('failure_stage', ['matching', 'backprojection'])
+@pytest.mark.parametrize('failure_stage', ['reference', 'matching', 'backprojection'])
 def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, failure_stage):
     torch = pytest.importorskip('torch')
     if not torch.cuda.is_available():
@@ -301,17 +301,23 @@ def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, f
         preprocess_source(source, cfg)
         cpu = stack_source(source, cfg)
         from planetrecon.backends.torch_ap import fused_kernels
+        import planetrecon.backends.torch_ap as torch_ap
         calls = 0
+        # The grouped reference makes one matching call; the next is the stack's.
+        fail_at = {'reference': 2, 'matching': 2, 'backprojection': 3}[failure_stage]
 
         def failing(original):
             def failure(*args):
                 nonlocal calls
                 calls += 1
-                if calls == 3:
+                if calls == fail_at:
                     raise RuntimeError('injected CUDA failure')
                 return original(*args)
             return failure
-        if failure_stage == 'backprojection':
+        if failure_stage == 'reference':
+            # The second grouped reference pass: the CPU rebuilds the whole reference.
+            monkeypatch.setattr(torch_ap, 'pulled_sums', failing(torch_ap.pulled_sums))
+        elif failure_stage == 'backprojection':
             # Grouped stacking resamples with the fused kernel, else the torch group pull.
             kernels = fused_kernels()
             if kernels is not None:
@@ -320,7 +326,7 @@ def test_midrun_cuda_failure_continues_on_cpu(tmp_path, monkeypatch, color_id, f
         else:
             monkeypatch.setattr(TorchAlignmentPoints, 'displacements', failing(TorchAlignmentPoints.displacements))
         fallback = stack_source(source, replace(cfg, device='gpu'))
-    assert calls >= 3
+    assert calls >= fail_at
     assert fallback.backend == 'cpu' and any('injected CUDA' in w for w in fallback.warnings)
     assert fallback.n_used == cpu.n_used
     np.testing.assert_allclose(fallback.image, cpu.image, rtol=1e-7, atol=1e-7*cpu.image.max())

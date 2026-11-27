@@ -254,6 +254,54 @@ def device_template(reference, indices, read_plane, correlate, max_shift, *, sho
         total.add_(sample(frame, yy + shift[1], xx + shift[0]))
         weight.add_(sample(ones, yy + shift[1], xx + shift[0]))
         used += 1
+    return _anchored_template(reference, ref, total, weight, used, correlate, max_shift)
+
+
+def pulled_sums(groups):
+    """Sums (total, weight) as (h, w) device tensors (None without groups) of planes (B, h, w) pulled by fields (B, 2, h, w) (x, y),
+    over (planes, fields) groups: the pulled planes and their bilinear support."""
+    kernels = fused_kernels()
+    total = weight = None
+    for planes, fields in groups:
+        if kernels is not None:
+            pulled = kernels.pull(planes, fields).sum(0)  # (h, w, 2): signal, then support.
+            signal, support = pulled[..., 0], pulled[..., 1]
+        else:
+            h, w = planes.shape[-2:]
+            yy = torch.arange(h, device=planes.device, dtype=torch.float64)[:, None]
+            xx = torch.arange(w, device=planes.device, dtype=torch.float64)[None, :]
+            y, x = yy + fields[:, 1], xx + fields[:, 0]
+            signal = sample_batch(planes.to(torch.float64), y, x).sum(0)
+            support = sample_batch(torch.ones_like(planes, dtype=torch.float64), y, x).sum(0)
+        if total is None:
+            total, weight = signal, support
+        else:
+            total, weight = total + signal, weight + support
+    return total, weight
+
+
+def device_template_groups(reference, groups, correlate, max_shift):
+    """``device_template`` of (indices, planes, global shifts) groups aligned to ``reference``."""
+    ref = torch.tensor(np.asarray(reference, dtype=np.float64), device='cuda:0')
+    h, w = ref.shape
+    used = [0]
+
+    def fields():
+        for indices, planes, shifts in groups:
+            used[0] += len(indices)
+            s = torch.as_tensor(np.asarray(shifts, dtype=np.float64), device=planes.device)
+            yield planes, s[:, :, None, None].expand(len(s), 2, h, w)
+    total, weight = pulled_sums(fields())
+    if total is None:
+        total = weight = torch.zeros_like(ref)
+    return _anchored_template(reference, ref, total, weight, used[0], correlate, max_shift)
+
+
+def _anchored_template(reference, ref, total, weight, used, correlate, max_shift):
+    """The aligned mean re-centred on the reference frame's origin (as ``local_align.build_template``)."""
+    h, w = ref.shape
+    yy, xx = torch.meshgrid(torch.arange(h, device=ref.device, dtype=torch.float64),
+                            torch.arange(w, device=ref.device, dtype=torch.float64), indexing='ij')
     if used < 4:
         raise ValueError('Local alignment needs four valid aligned template frames; use global alignment.')
     template = torch.where(weight > 0, total / weight.clamp_min(1e-300), ref)
@@ -285,7 +333,7 @@ class PinnedStage:
         """Arrays of one shape and dtype copied into the buffer and uploaded together: (N, ...) on the device."""
         arrays = [np.asarray(a) for a in arrays]
         shape, size = arrays[0].shape, arrays[0].size
-        dtype = torch.from_numpy(np.ascontiguousarray(arrays[0][:0]).reshape(-1)).dtype
+        dtype = torch.from_numpy(np.empty(0, dtype=arrays[0].dtype)).dtype
         total = size * len(arrays)
         buffer, done = self.buffers.get(key, (None, None))
         if buffer is None or buffer.dtype != dtype or buffer.numel() < total:

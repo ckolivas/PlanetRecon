@@ -260,6 +260,18 @@ class AlignmentPoints:
         for plane, shift in samples:
             self._check_cancel()
             fits.append(self.peak_fits(plane, shift))
+        self._calibrate(fits)
+
+    def calibrate_groups(self, groups):
+        """``calibrate`` from (indices, device planes, global shifts) groups, matched on CUDA together."""
+        fits = []
+        for _, planes, shifts in groups:
+            self._check_cancel()
+            if len(self.centres):
+                fits.extend(zip(*self._device().peak_fits_batch(planes, shifts)))
+        self._calibrate(fits)
+
+    def _calibrate(self, fits):
         if not len(self.centres) or not fits:
             return
         offsets, information, ok = (np.stack(a) for a in zip(*fits))
@@ -338,41 +350,89 @@ class AlignmentPoints:
         return float(np.mean(self.accepted)) if self.accepted else None
 
 
+def calibration_indices(indices):
+    """Up to CALIBRATION_FRAMES of ``indices``, spread evenly."""
+    indices = np.asarray(indices)
+    if len(indices) > CALIBRATION_FRAMES:
+        indices = indices[np.linspace(0, len(indices) - 1, CALIBRATION_FRAMES).round().astype(int)]
+    return indices
+
+
+def _within(shift, max_shift):
+    return bool(np.isfinite(shift).all()) and max(abs(v) for v in shift) <= max_shift
+
+
 def calibration_samples(indices, read_plane, correlate, reference, max_shift, *, plan=None):
     """(plane, global shift) of up to CALIBRATION_FRAMES of ``indices``, spread evenly.
 
     ``plan`` (optional) is told the reading order before the reads, e.g. to read ahead.
     """
-    indices = np.asarray(indices)
-    if len(indices) > CALIBRATION_FRAMES:
-        indices = indices[np.linspace(0, len(indices) - 1, CALIBRATION_FRAMES).round().astype(int)]
+    indices = calibration_indices(indices)
     if plan is not None:
         plan(indices)
     for index in indices:
         plane = read_plane(int(index))
         shift = correlate(reference, plane)
-        if np.isfinite(shift).all() and max(abs(v) for v in shift) <= max_shift:
+        if _within(shift, max_shift):
             yield plane, shift
 
 
+class FrameGroups:
+    """Frames read, registered and globally aligned on CUDA in groups.
+
+    ``planes(indices)`` returns their registration planes (B, h, w) float64 on
+    the device; ``backend`` correlates them against a reference together.
+    ``plan`` (optional) is told each reading order first, e.g. to read ahead.
+    """
+
+    def __init__(self, planes, backend, size, *, plan=None, should_cancel=None):
+        self.planes, self.backend, self.size = planes, backend, max(1, int(size))
+        self.plan, self.should_cancel = plan, should_cancel
+
+    def aligned(self, reference, indices, max_shift, *, progress=None, message='cancelled'):
+        """(indices, planes, global shifts) of each group, keeping frames whose shift is finite and within
+        ``max_shift``; ``progress(n)`` after each group of the n frames read so far."""
+        import torch
+        indices = np.asarray(indices, dtype=np.int64)
+        if self.plan is not None:
+            self.plan(indices)
+        for start in range(0, len(indices), self.size):
+            if self.should_cancel is not None and self.should_cancel():
+                raise InterruptedError(message)
+            chunk = indices[start:start + self.size]
+            planes = self.planes(chunk)
+            shifts = self.backend.phase_correlations(reference, planes)
+            if progress is not None:
+                progress(start + len(chunk))
+            keep = [k for k, shift in enumerate(shifts) if _within(shift, max_shift)]
+            if len(keep) < len(chunk):
+                planes = planes[torch.as_tensor(keep, device=planes.device, dtype=torch.long)]
+            if keep:
+                yield chunk[keep], planes, [shifts[k] for k in keep]
+
+
 def refined_reference(reference, indices, read_plane, correlate, max_shift, *, size, use_cuda=False,
-                      should_cancel=None, progress=None, plan=None):
+                      should_cancel=None, progress=None, plan=None, groups=None):
     """Average many frames twice: globally aligned, then locally aligned to that mean.
 
     A low-noise reference limits imprinting its noise on the matches. With CUDA,
     ``read_plane`` may return device tensors; the result is a NumPy array.
     The averages read the frames in capture order; ``plan`` (optional) is told
-    each reading order first, e.g. to read ahead.
+    each reading order first, e.g. to read ahead. ``groups`` (a ``FrameGroups``,
+    CUDA only) reads, registers and aligns the frames in groups instead.
     """
     from planetrecon.pipeline.local_align import build_template, pull
     total_steps = 2 * len(indices)
     ordered = np.sort(np.asarray(indices))
     plan = plan or (lambda order: None)
-    plan(ordered)
 
     def report(step):
         if progress is not None and (step % 25 == 0 or step == total_steps):
             progress('Building alignment reference', step, total_steps)
+    if groups is not None:
+        return _grouped_reference(reference, indices, ordered, groups, correlate, max_shift, size=size,
+                                  should_cancel=should_cancel, progress=progress)
+    plan(ordered)
     if use_cuda:
         from planetrecon.backends.torch_ap import device_template
         template = device_template(reference, ordered, read_plane, correlate, max_shift,
@@ -418,12 +478,41 @@ def refined_reference(reference, indices, read_plane, correlate, max_shift, *, s
         report(step)
         plane = read_plane(int(index))
         shift = correlate(template, plane)
-        if not np.isfinite(shift).all() or max(abs(v) for v in shift) > max_shift:
+        if not _within(shift, max_shift):
             continue
         add(plane, matcher.displacement_tensor(plane, shift) if use_cuda else matcher.displacement(plane, shift))
     if use_cuda:
         total, weight = total.cpu().numpy(), weight.cpu().numpy()
     return np.divide(total, weight, out=template.copy(), where=weight > .5)
+
+
+def _grouped_reference(reference, indices, ordered, groups, correlate, max_shift, *, size, should_cancel, progress):
+    """``refined_reference`` with each pass's frames read, registered, aligned and pulled in CUDA groups."""
+    from planetrecon.backends.torch_ap import device_template_groups, pulled_sums
+    total_steps = 2 * len(indices)
+    message = 'cancelled while building the alignment reference'
+
+    def report(offset):
+        def at(n):
+            if progress is not None:
+                progress('Building alignment reference', offset + n, total_steps)
+        return at
+    template = device_template_groups(reference, groups.aligned(reference, ordered, max_shift, progress=report(0),
+                                                                message=message), correlate, max_shift)
+    matcher = AlignmentPoints(template, size=size, use_cuda=True, should_cancel=should_cancel)
+    if not len(matcher.centres):
+        return template
+    # Every later correlation is against the template: prepare it once.
+    template = groups.backend.prepare_reference(template)
+    matcher.calibrate_groups(groups.aligned(template, calibration_indices(indices), max_shift, message=message))
+    total, weight = pulled_sums(
+        (planes, matcher.displacements_tensor(planes, shifts))
+        for _, planes, shifts in groups.aligned(template, ordered, max_shift, progress=report(len(indices)),
+                                                message=message))
+    if total is None:
+        return np.array(template)
+    total, weight = total.cpu().numpy(), weight.cpu().numpy()
+    return np.divide(total, weight, out=np.array(template), where=weight > .5)
 
 
 class LocalQuality:

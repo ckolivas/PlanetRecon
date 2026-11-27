@@ -166,3 +166,40 @@ def test_two_stage_correlation_keeps_float64_displacements(shape):
         found = gpu.phase_correlations(reference, torch.as_tensor(frames, device='cuda'))
         np.testing.assert_allclose(found, expected, atol=1e-10)
     np.testing.assert_allclose(gpu.phase_correlation(gpu.prepare_reference(ref), frames[2]), expected[2], atol=1e-10)
+
+
+@pytest.mark.parametrize('group', [1, 4, 32])
+def test_grouped_reference_matches_frame_by_frame_references(group):
+    torch = cuda()
+    from planetrecon.backends.cpu import CPUBackend
+    from planetrecon.backends.torch_accel import TorchBackend
+    from planetrecon.pipeline.ap_align import FrameGroups, refined_reference
+    from tests.test_ap_align import planet, warp
+    rng = np.random.default_rng(15)
+    ref = planet()
+    yy, xx = np.indices(ref.shape, dtype=float)
+    frames = []
+    for k in range(13):
+        fx, fy = (1.2 * np.sin(xx / 40 + k) * np.cos(yy / 50), .9 * np.cos(xx / 60 - k))
+        frames.append(warp(ref, fx, fy, tuple(rng.normal(0, 2, 2))) + rng.normal(0, 1, ref.shape))
+    frames[5] = warp(ref, 0, 0, (40., 0.))  # Beyond max_shift: dropped from every pass.
+    frames = np.stack(frames)
+    indices = np.array([7, 2, 11, 0, 5, 9, 3, 12, 1, 8, 4, 10, 6])
+    cpu = CPUBackend(threads=2)
+    expected = refined_reference(cpu.prepare_reference(frames[7]), indices, lambda i: frames[i], cpu.phase_correlation,
+                                 12., size=48)
+    gpu = TorchBackend()
+    per_frame = refined_reference(gpu.prepare_reference(frames[7]), indices, lambda i: frames[i],
+                                  gpu.phase_correlation, 12., size=48, use_cuda=True)
+    reads = []
+
+    def planes(chunk):
+        reads.extend(chunk.tolist())
+        return torch.as_tensor(frames[chunk], device='cuda')
+    groups = FrameGroups(planes, gpu, group)
+    grouped = refined_reference(gpu.prepare_reference(frames[7]), indices, None, gpu.phase_correlation, 12.,
+                                size=48, use_cuda=True, groups=groups)
+    # Two averages in capture order, with the calibration frames between them.
+    assert reads[:13] == reads[-13:] == sorted(indices.tolist()) and len(reads) == 39
+    np.testing.assert_allclose(grouped, per_frame, rtol=0, atol=1e-9 * ref.max())
+    np.testing.assert_allclose(grouped, expected, rtol=0, atol=1e-4 * ref.max())

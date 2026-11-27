@@ -336,8 +336,12 @@ packed into non-blocking uploads too. The CPU then fits the peaks, launches
 the field solve, resampling and sums, and measures the moons' centroids
 (vectorised over the group's frames) while the GPU works. Uncalibrated integer
 frames need no CPU copy or finiteness pass, and their saturation test is the
-same count made on the device. Local-quality ranking measures the same groups,
-with non-blocking uploads as well.
+same count made on the device. Local-quality ranking and the reference build
+(both averages and both direction-trust calibrations) read, register and
+globally align frames in the same groups (`ap_align.FrameGroups`), with
+non-blocking uploads as well; the reference averages resample each group with
+the fused pull kernel, and the second average and its calibration correlate
+against the first average prepared once.
 
 The Bayer registration plane (bilinear-demosaic luminance) is one fused Triton
 pass that sums each pixel's neighbouring CFA samples by colour in int32 for
@@ -421,3 +425,7 @@ The fused registration plane and the two-stage correlation then took ranking to
 56 s (1.05 ms per frame) and stacking to 168 s, and the whole capture to 4.4
 minutes (reference 30 s). The image moved by 7e-7 of its peak rms (near-tied
 local-quality ranks can swap); the SNR estimate and the moons are unchanged.
+
+Grouping the reference build (both averages and both direction-trust
+calibrations) took it from 30 s to 9.2 s (1.35 ms per read frame), about 4.0
+minutes for the whole capture. The image moved by 4e-7 of its peak rms.

@@ -380,8 +380,9 @@ def _stack_source(
     local_matcher = None
     local_selection = None
     if config.local_alignment:
-        from planetrecon.pipeline.ap_align import (REFERENCE_FRAMES, AlignmentPoints, calibration_samples,
-                                                   refined_reference, select_locally)
+        from planetrecon.pipeline.ap_align import (REFERENCE_FRAMES, AlignmentPoints, FrameGroups,
+                                                   calibration_indices, calibration_samples, refined_reference,
+                                                   select_locally)
         from planetrecon.pipeline.local_align import cpu_backproject
         accepted = np.flatnonzero(selection.accepted)
         order = np.argsort(-selection.measurements[accepted, 0], kind='stable')
@@ -400,12 +401,32 @@ def _stack_source(
             if backend.name == 'cuda':
                 return backend.registration_plane(calibrated, color)
             return alignment_plane(calibrated, color)
+        setup_group = _group_frames(h * w, 6 if rgb else 2, memory_report)
+        group_stage, group_count = None, [0]
+
+        def group_planes(indices):
+            """Registration planes (B, h, w) of frames uploaded together without blocking (CUDA)."""
+            nonlocal group_stage
+            if group_stage is None:
+                from planetrecon.backends.torch_ap import PinnedStage
+                group_stage = PinnedStage()
+            group_count[0] += 1
+            raws = [reader.read_raw(index) for index in indices]
+            # Uncalibrated integer frames go up as they are read.
+            images = group_stage.upload_stack(('frames', group_count[0] % 2), raws if calibration is None else
+                                              [apply_calibration(raw, calibration)[0] for raw in raws])
+            return backend.registration_planes(images, color)
+
+        def frame_groups():
+            if backend.name != 'cuda':
+                return None
+            return FrameGroups(group_planes, backend, setup_group, plan=reader.expect, should_cancel=should_cancel)
         if resume_from is None:
             try:
                 reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
                                               config.max_shift_px, size=config.ap_size,
                                               use_cuda=backend.name == 'cuda', should_cancel=should_cancel,
-                                              progress=setup_progress, plan=reader.expect)
+                                              progress=setup_progress, plan=reader.expect, groups=frame_groups())
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 reference = refined_reference(reference, candidates, read_plane, backend.phase_correlation,
@@ -417,6 +438,12 @@ def _stack_source(
         local_matcher = AlignmentPoints(reference, size=config.ap_size, should_cancel=should_cancel)
         if local_matcher.layers:
             def calibrate():
+                groups = frame_groups()
+                if groups is not None:
+                    local_matcher.calibrate_groups(groups.aligned(
+                        reference, calibration_indices(np.flatnonzero(selection.accepted)), config.max_shift_px,
+                        message='cancelled during alignment point registration'))
+                    return
                 local_matcher.calibrate(calibration_samples(np.flatnonzero(selection.accepted), read_plane,
                                                             backend.phase_correlation, reference,
                                                             config.max_shift_px, plan=reader.expect))
@@ -445,23 +472,14 @@ def _stack_source(
                                        'skipped': 'every screened frame is selected'}
         elif local_matcher.layers:
             try:
-                from planetrecon.backends.torch_ap import PinnedStage
-                rank_stage, rank_groups = PinnedStage(), [0]
-
                 def rank_group(indices):
                     """Global shifts and point scores of frames registered together on CUDA."""
                     from planetrecon.backends import precision
                     from planetrecon.backends.torch_ap import local_quality_batch
-                    rank_groups[0] += 1
-                    parity = rank_groups[0] % 2
-                    raws = [reader.read_raw(index) for index in indices]
-                    # Non-blocking uploads; uncalibrated integer frames go up as they are read.
-                    images = rank_stage.upload_stack(('frames', parity), raws if calibration is None else
-                                                     [apply_calibration(raw, calibration)[0] for raw in raws])
-                    planes = backend.registration_planes(images, color)
+                    planes = group_planes(indices)
                     found = backend.phase_correlations(reference, planes)
-                    centres = rank_stage.upload(('centres', parity), local_matcher.centres.astype(float)[None]
-                                                + np.array([[float(dy), float(dx)] for dx, dy in found])[:, None, :])
+                    centres = group_stage.upload(('centres', group_count[0] % 2), local_matcher.centres.astype(float)[None]
+                                                 + np.array([[float(dy), float(dx)] for dx, dy in found])[:, None, :])
                     return found, local_quality_batch(planes.to(precision.REGISTRATION), centres, local_matcher.size / 4)
                 cuda_ranking = backend.name == 'cuda'
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
@@ -470,7 +488,7 @@ def _stack_source(
                                                  n_bins=rank_bins if n_bins else 0,
                                                  global_scores=selection.measurements[:, 0], plan=reader.expect,
                                                  measure_group=rank_group if cuda_ranking else None,
-                                                 group=_group_frames(h * w, 6 if rgb else 2, memory_report))
+                                                 group=setup_group)
             except RuntimeError as exc:
                 cpu_fallback(exc)
                 local_selection = select_locally(local_matcher, screened, read_plane, backend.phase_correlation,
