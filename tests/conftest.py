@@ -8,10 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from planetrecon.runtime import apply_thread_limits
+from planetrecon.runtime import apply_thread_limits, default_thread_count
 
 # Default suite is CPU-backed; device-probe regressions use simulated devices.
-apply_thread_limits()
+# Parallel workers (pytest-xdist, ``-n``) share the default thread budget.
+_workers = int(os.environ.get('PYTEST_XDIST_WORKER_COUNT', '1') or 1)
+apply_thread_limits(None if _workers <= 1 else max(1, default_thread_count() // _workers))
 
 
 @pytest.fixture(autouse=True)

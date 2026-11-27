@@ -317,7 +317,7 @@ python3 -m planetrecon stack --path capture.ser --geometry saturn \
   --out out/stack-saturn
 python3 -m planetrecon gui --path capture.ser
 python3 -m planetrecon ser capture.ser
-python3 -m pytest tests -q
+python3 -m pytest tests -q -n 8
 python3 -m pytest tests -q --run-slow
 python3 -m planetrecon generate --seed 1001 --dr0 8 --out out
 python3 -m planetrecon validate-dev --out out
@@ -337,6 +337,12 @@ none geometry is in use, the long surface-geometry Fourier-weighting stacks are
 `slow` tests, and the known geometry-mode failures listed in
 `tests/conftest.py` (`KNOWN_FAILURES`, each with its reason) are skipped;
 `--run-known-failures` runs them.
+
+`-n 8` (pytest-xdist, in the `dev` extra) runs the suite in eight worker
+processes that share the default thread budget (`tests/conftest.py`); on a
+32-thread machine it takes about 1.5 minutes instead of 6. Avoid `-n auto` on a
+many-core machine: each worker opens its own CUDA context, and 32 of them
+exhaust a 12 GB GPU.
 
 `python3 -m planetrecon evidence` verifies the archived bundle's checksums and
 writes `results/manifests/` without modifying or relabelling archived R9 tables.
