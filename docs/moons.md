@@ -85,6 +85,22 @@ drift (px per minute, y then x), seeing jitter, centroid noise and how it was me
 the tilt shared with neighbours, the gain k, its output position, and how many frames
 followed its measured tilt or its prediction alone.
 
+`moons.positions_px` lists each stacked moon's output position (pixel indices, y then x)
+and planet-registered FWHM as soon as the moons are found, so progress previews carry them
+before any frame is stacked.
+
+## Preview arrows
+
+The Result, Coverage and Validity views point a green arrow, labelled `moon N`, at each
+stacked moon (the **Moons** toggle beside Predicted motion). Arrows appear on progress
+previews as soon as the moons are found, and on any result whose provenance lists them.
+Each arrow approaches from the side away from the planet (the brightness-weighted centre of
+what stands above the sky). It turns in 30-degree steps until the whole arrow fits in the
+frame, and stops 1.5 FWHM (at least 2% of the image's shorter side) short of the moon so
+its light stays visible. The Input view shows a single frame, where moons are not at their
+output positions, so it has no moon arrows. When moon stacking was skipped (planet
+rotation models), the preview notes why.
+
 ## Validation
 
 2026-11-21-1018_9-CK-IR642-Sat, all 57,145 frames selected at 85% quality range with

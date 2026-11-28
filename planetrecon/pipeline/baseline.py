@@ -576,7 +576,12 @@ def _stack_source(
         snapshot_provenance['moons'] = {
             'enabled': True, 'version': moon_module.VERSION, 'method': moon_module.METHOD,
             'time_unit': 's' if real_time else 'frame', **moon_summary,
-            'stacked': len(moon_stack.moons) if moon_stack is not None else 0}
+            'stacked': len(moon_stack.moons) if moon_stack is not None else 0,
+            # Output positions (pixel indices, y then x) known before stacking, so progress
+            # previews can point to the moons too.
+            'positions_px': [] if moon_stack is None else [
+                {'output_position_px': [round(m.y, 3), round(m.x, 3)],
+                 'planet_registered_fwhm_px': m.detail.get('planet_registered_fwhm_px')} for m in moon_stack.moons]}
 
     def moon_contributions(index, calibrated, plane, global_shift, score):
         if moon_stack is None:

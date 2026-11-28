@@ -27,6 +27,37 @@ from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.runtime import apply_thread_limits, detected_thread_count
 
 
+def _draw_arrow(painter, points, colour, head, label):
+    """An outlined polyline arrow from ``points[0]`` to its head at ``points[-1]``, labelled at the tail."""
+    path = QPainterPath(points[0])
+    for p in points[1:]:
+        path.lineTo(p)
+    tip, back = points[-1], points[max(0, len(points) - 4)]
+    dx, dy = tip.x() - back.x(), tip.y() - back.y()
+    length = max(float(np.hypot(dx, dy)), 1e-9)
+    ux, uy = dx / length, dy / length
+    base = QPointF(tip.x() - head * ux, tip.y() - head * uy)
+    wing = QPointF(-uy * head * .5, ux * head * .5)
+    triangle = QPolygonF([tip, base + wing, base - wing])
+    for pen_colour, width in ((QColor(0, 0, 0, 200), 5.), (colour, 2.5)):
+        painter.setPen(QPen(pen_colour, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawPath(path)
+        painter.setBrush(pen_colour)
+        painter.drawPolygon(triangle)
+    # Label beyond the tail, away from the head and the arc.
+    tail, after = points[0], points[min(3, len(points) - 1)]
+    tx, ty = tail.x() - after.x(), tail.y() - after.y()
+    norm = max(float(np.hypot(tx, ty)), 1e-9)
+    metrics = painter.fontMetrics()
+    width, height = metrics.horizontalAdvance(label), metrics.ascent()
+    anchor = QPointF(tail.x() + 8. * tx / norm, tail.y() + 8. * ty / norm + height / 2)
+    if tx < 0:
+        anchor.setX(anchor.x() - width)
+    painter.setPen(colour)
+    painter.drawText(anchor, label)
+
+
 def _to_qimage(image, black=None, white=None, validity=None):
     arr = np.asarray(image, dtype=np.float64)
     valid = np.isfinite(arr)
@@ -299,6 +330,13 @@ class MainWindow:
                                      'them against the capture before stacking with a motion model.')
         self.motion_check.toggled.connect(self._draw)
         toolbar.addWidget(self.motion_check)
+        self.moons_check = QCheckBox('Moons')
+        self.moons_check.setChecked(True)
+        self.moons_check.setToolTip('Point green arrows at the moons the stack found and stacked on their own '
+                                    'positions (Stack moons separately). Shown on the result as soon as the moons '
+                                    'are found.')
+        self.moons_check.toggled.connect(self._draw)
+        toolbar.addWidget(self.moons_check)
         body.addLayout(toolbar)
         class ResultCanvas(QScrollArea):
             def resizeEvent(self, event):
@@ -1287,7 +1325,7 @@ class MainWindow:
         else:
             scale = float(self.zoom.currentText().rstrip('%')) / 100
             pixmap = pixmap.scaled(max(1, int(q.width()*scale)), max(1, int(q.height()*scale)))
-        motion = self._paint_motion(pixmap, arr.shape)
+        motion = ' '.join(filter(None, [self._paint_motion(pixmap, arr.shape), self._paint_moons(pixmap, arr)]))
         self.image_label.setPixmap(pixmap)
         self.image_label.resize(pixmap.size())
         valid = np.isfinite(arr)
@@ -1328,38 +1366,34 @@ class MainWindow:
         head = max(8., .03 * min(pixmap.width(), pixmap.height()))
         for arrow in arrows:
             colour = QColor(255, 176, 0) if arrow.kind == 'surface' else QColor(0, 220, 255)
-            points = [point(x, y) for x, y in arrow.points]
-            path = QPainterPath(points[0])
-            for p in points[1:]:
-                path.lineTo(p)
-            tip, back = points[-1], points[max(0, len(points) - 4)]
-            dx, dy = tip.x() - back.x(), tip.y() - back.y()
-            length = max(float(np.hypot(dx, dy)), 1e-9)
-            ux, uy = dx / length, dy / length
-            base = QPointF(tip.x() - head * ux, tip.y() - head * uy)
-            wing = QPointF(-uy * head * .5, ux * head * .5)
-            triangle = QPolygonF([tip, base + wing, base - wing])
-            for pen_colour, width in ((QColor(0, 0, 0, 200), 5.), (colour, 2.5)):
-                painter.setPen(QPen(pen_colour, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-                painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawPath(path)
-                painter.setBrush(pen_colour)
-                painter.drawPolygon(triangle)
-            # Label beyond the tail, away from the head and the arc.
-            tail, after = points[0], points[min(3, len(points) - 1)]
-            tx, ty = tail.x() - after.x(), tail.y() - after.y()
-            norm = max(float(np.hypot(tx, ty)), 1e-9)
-            metrics = painter.fontMetrics()
-            width, height = metrics.horizontalAdvance(arrow.label), metrics.ascent()
-            anchor = QPointF(tail.x() + 8. * tx / norm, tail.y() + 8. * ty / norm + height / 2)
-            if tx < 0:
-                anchor.setX(anchor.x() - width)
-            painter.setPen(colour)
-            painter.drawText(anchor, arrow.label)
+            _draw_arrow(painter, [point(x, y) for x, y in arrow.points], colour, head, arrow.label)
         painter.end()
         described = ', '.join(f'{a.label} ({"amber" if a.kind == "surface" else "cyan"})' for a in arrows)
         return ' '.join(filter(None, [f'Predicted motion: {described}; check against the capture.'
                                       if arrows else '', *notes]))
+
+    def _paint_moons(self, pixmap, arr):
+        """Point to the moons the displayed stack found and stacked separately; returns a note."""
+        if (not self.moons_check.isChecked() or self.view.currentText() == 'Input'
+                or self.preview is None):
+            return ''
+        from planetrecon.gui.moon_markers import moon_markers
+        stride = self.preview.spatial_stride
+        markers, notes = moon_markers(self.preview.provenance, self.preview.image, stride)
+        if markers:
+            shape = arr.shape
+            sx, sy = pixmap.width() / shape[1], pixmap.height() / shape[0]
+
+            def point(x, y):
+                return QPointF(((x - .5) / stride + .5) * sx, ((y - .5) / stride + .5) * sy)
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            head = max(7., .022 * min(pixmap.width(), pixmap.height()))
+            for marker in markers:
+                _draw_arrow(painter, [point(x, y) for x, y in marker.points], QColor(120, 255, 120), head,
+                            marker.label)
+            painter.end()
+        return ' '.join(notes)
 
     def _export_options(self):
         encoding = self.encoding.currentText()
