@@ -9,7 +9,7 @@ from scipy.ndimage import gaussian_filter, map_coordinates, shift
 from scipy.optimize import least_squares
 
 from planetrecon.calibration import apply_calibration
-from planetrecon.geometry.fit import fit_disc_ellipse
+from planetrecon.geometry.fit import fit_disc_ellipse, fit_globe_disc
 from planetrecon.geometry.pose import source_times_s
 from planetrecon.pipeline.align import phase_correlation_shift
 from planetrecon.pipeline.preprocess import measurement_plane
@@ -21,7 +21,8 @@ SATURN_VIEW_DEPENDENT_KEYS = ('sub_obs_lat_rad', 'surface_rate_rad_s',
 
 
 # v3: no free translation in the spin fit; a known spin sense picks the pole branch.
-MOTION_METHOD = 'projected spherical texture motion v3'
+# v4: globe centre and radius from the limb, not brightness moments or silhouette width.
+MOTION_METHOD = 'projected spherical texture motion v4'
 
 
 def without_assumed_saturn_view(estimate):
@@ -140,7 +141,7 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
         report['notes'].append(str(exc))
         return report
     report['time_origin'] = time_origin
-    averages, sample_times, centres = [], [], []
+    averages, sample_times, centres, discs = [], [], [], []
     def read_plane(index):
         if should_cancel and should_cancel():
             raise InterruptedError('geometry discovery cancelled')
@@ -179,11 +180,14 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
                 dx, dy = phase_correlation_shift(anchor, plane)
                 total += shift(plane, (-dy, -dx), order=1, prefilter=False, mode='nearest')
         average = total / len(chosen)
-        disc = fit_disc_ellipse(average)
+        # The limb, not the brightness centroid: phase, belts and limb darkening pull
+        # the centroid sideways, and a misplaced globe smears its limb when derotated.
+        disc = fit_disc_ellipse(average) if saturn_target else fit_globe_disc(average)
         if not disc['ok']:
             report['notes'].append('No stable disc centre could be fitted.')
             return report
         averages.append(average)
+        discs.append(disc)
         centres.append((disc['cx']-.5, disc['cy']-.5))
         sample_times.append(float(np.mean(times[chosen])) + .5*config.exposure_s)
     stats = selection.summary['statistics']
@@ -206,6 +210,8 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
         suggestions['pole_pa_rad'] = pa
         report['orientation_origin'] = 'silhouette (major axis assumed equatorial)'
         report['notes'].append('Initial pole assumes the stable silhouette major axis is equatorial; phase can bias or interchange the axes.')
+    report['centre_origin'] = ('limb edges' if all(d.get('method') == 'limb edges' for d in discs)
+                               else 'brightness moments')
     suggestions.update(field_center_x=float(np.mean(centres, axis=0)[0])*scale+.5*bin_scale,
                        field_center_y=float(np.mean(centres, axis=0)[1])*scale+.5*bin_scale)
     if saturn_target:
@@ -283,9 +289,13 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     if width/height > 1.35 and config.equatorial_radius_px is None:
         report['notes'].append('Rings or strong phase: supply the globe radius to estimate surface rotation.')
         return report
-    radius_px = config.equatorial_radius_px or width/2
+    limbs = [disc['semi_major'] for disc in discs if disc.get('method') == 'limb edges']
+    # The silhouette's thresholded width includes seeing's glow beyond the limb.
+    measured = float(np.median(limbs))*scale if len(limbs) == len(discs) else width/2
+    radius_px = config.equatorial_radius_px or measured
     if config.equatorial_radius_px is None:
         suggestions['equatorial_radius_px'] = float(radius_px)
+        report['radius_origin'] = 'limb edges' if len(limbs) == len(discs) else 'silhouette width'
     radius = radius_px / scale
     fits = []
     for i in (0, 1):

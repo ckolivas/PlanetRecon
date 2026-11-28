@@ -10,7 +10,7 @@ from planetrecon.geometry.coords import detector_to_sky, detector_xy_grids, sky_
 from planetrecon.geometry.fit import fit_disc_ellipse
 from planetrecon.geometry.globe import (GlobeParams, body_to_obs_matrix, body_to_sky, field_rotate_sky, globe_hit,
                                         render_globe_texture)
-from planetrecon.geometry.limb import ld_ratio
+from planetrecon.geometry.limb import LIMB_TAPER_MU, ld_ratio
 from planetrecon.geometry.model import FieldOnlyModel, OblateGlobeModel, SceneModel
 from planetrecon.geometry.pose import FramePose
 from planetrecon.geometry.rings import (
@@ -30,7 +30,6 @@ LAYER_FAR_RING = 1
 LAYER_GLOBE = 2
 LAYER_NEAR_RING = 3
 LAYER_MOON = 4
-LIMB_TAPER_MU = 0.4
 # Ring material, and the spokes on it, turn with Saturn's rotation (spokes were
 # measured to follow it within 1%). Light fixed to the viewing or lighting
 # geometry does not move: the globe's silhouette across the rings and its shadow

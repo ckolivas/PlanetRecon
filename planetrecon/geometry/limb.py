@@ -20,6 +20,12 @@ FIT_LATITUDE_BAND_RAD = np.radians(2.)
 FIT_MIN_PIXELS = 500
 FIT_MIN_BAND_PIXELS = 20
 MAX_POWER = 3.
+# Seeing blurs a globe's light across its limb. Spin may only move light that is
+# clearly on the globe: a hard boundary splits the blurred limb into moved and
+# unmoved parts that no longer join, leaving a notch (a dark arc after sharpening)
+# at both limbs along the equator. The spin displacement fades in with
+# smoothstep((mu/LIMB_TAPER_MU)^2) at both the source and reference positions.
+LIMB_TAPER_MU = 0.4
 
 
 def ld_ratio(mu_to, mu_from, power):
@@ -63,3 +69,16 @@ def fit_limb_darkening(plane, globe, cx, cy, field_angle_rad=0., rings=None):
     power = float(np.sum(dx * dy) / denominator)
     rms = float(np.sqrt(np.mean((dy - power * dx) ** 2)))
     return {'power': float(np.clip(power, 0., MAX_POWER)), 'pixels': int(len(lx)), 'rms': rms, 'origin': 'fitted'}
+
+
+def limb_blend(mu_src, mu_ref, use, taper=LIMB_TAPER_MU):
+    """Weight of the spin displacement: 0 at and beyond either limb, 1 once mu >= taper.
+
+    mu is proportional to sqrt(distance inside the projected limb); squaring it before
+    smoothstep keeps the displacement's first derivative continuous there.
+    """
+    blend = np.ones(np.shape(mu_src))
+    for mu in (mu_src, mu_ref):
+        u = np.clip(np.where(use, mu, 0.) / taper, 0., 1.)**2
+        blend *= u*u*(3.-2.*u)
+    return blend

@@ -55,6 +55,127 @@ def fit_disc_ellipse(image: np.ndarray) -> dict:
     }
 
 
+
+def _conic_ellipse(x, y):
+    """Least-squares ellipse through points: centre, semi-axes and major-axis angle, or None."""
+    scale = max(float(np.ptp(x)), float(np.ptp(y)), 1e-9)
+    ox, oy = float(np.mean(x)), float(np.mean(y))
+    u, v = (x - ox) / scale, (y - oy) / scale
+    design = np.c_[u*u, u*v, v*v, u, v]
+    try:
+        a, b, c, d, e = np.linalg.lstsq(design, np.ones_like(u), rcond=None)[0]
+        u0, v0 = np.linalg.solve([[2*a, b], [b, 2*c]], [-d, -e])
+    except np.linalg.LinAlgError:
+        return None
+    level = 1 - .5*(d*u0 + e*v0)  # Conic value 1 - F(centre), with F = 1 on the points.
+    values, vectors = np.linalg.eigh([[a, b/2], [b/2, c]])
+    if not (values[0] > 0 and level > 0):
+        return None
+    semi = np.sqrt(level / values) * scale  # Ascending eigenvalues: major axis first.
+    pa = float(np.arctan2(vectors[1, 0], vectors[0, 0]))
+    pa = (pa + np.pi/2) % np.pi - np.pi/2
+    return ox + u0*scale, oy + v0*scale, float(semi[0]), float(semi[1]), pa
+
+
+def fit_limb_ellipse(image: np.ndarray, *, rays: int = 180) -> dict:
+    """Geometric limb ellipse: the steepest outward edge along rays, fitted robustly.
+
+    ``fit_disc_ellipse`` weights by brightness, so belts, zones, limb darkening and
+    phase pull its centre towards the brighter side (3 px on a 2021 Jupiter stack),
+    and its moment semi-axes fall well inside a limb-darkened limb. Motion models
+    need the limb itself: light there must stay where the globe ends. Weak edges
+    (a soft terminator, the frame border) and outliers are excluded; the result
+    keeps ``fit_disc_ellipse``'s pixel-edge coordinates. Seeing blur moves a
+    limb-darkened limb's steepest edge inwards evenly (about 1 px at sigma 2.5 px),
+    so the centre is unbiased and the radius slightly small. Phase moves the
+    terminator side's edge inwards by R(1 - cos phase): 0.7 px at Jupiter's 5°.
+    """
+    from scipy.ndimage import gaussian_filter
+    moments = fit_disc_ellipse(image)
+    if not moments["ok"]:
+        return moments
+    img = np.asarray(image, dtype=np.float64)
+    if img.ndim == 3:
+        img = 0.5 * img[..., 1] + 0.25 * img[..., 0] + 0.25 * img[..., 2]
+    h, w = img.shape
+    cx, cy = moments["cx"] - .5, moments["cy"] - .5
+    reach = float(np.sqrt(moments["n_pix"] / np.pi))  # The quarter-brightness outline's radius.
+    if reach < 6:
+        return {**moments, "ok": False, "degeneracy": ("small_disc",)}
+    # Smoothing grows with the disc so single noisy frames keep the limb as the strongest
+    # edge; the search stays near the outline, away from belt edges inside the disc.
+    img = gaussian_filter(np.where(np.isfinite(img), img, 0.), max(1., reach/80))
+    angles = np.linspace(0, 2*np.pi, rays, endpoint=False)
+    step = .25
+    radii = np.arange(.75*reach, 1.3*reach, step)
+    fit = None
+    for _ in range(2):  # Rays from the moment centre, then again from the fitted centre.
+        ys = cy + np.sin(angles)[:, None] * radii
+        xs = cx + np.cos(angles)[:, None] * radii
+        # Each ray ends at the frame. Its edge must lie inside with sky beyond
+        # (3 px), so a limb cut by the frame border never counts.
+        within = (xs >= 0) & (xs <= w-1) & (ys >= 0) & (ys <= h-1)
+        ends = np.where(within.all(axis=1), len(radii), np.argmin(within, axis=1))
+        profiles = map_coordinates(img, (ys, xs), order=1, mode="nearest")
+        slope = -np.gradient(profiles, step, axis=1)
+        slope[np.arange(len(radii))[None, :] >= ends[:, None]] = -np.inf
+        k = np.clip(np.argmax(slope, axis=1), 1, len(radii) - 2)
+        inside = k < ends - 3/step
+        rows = np.arange(rays)
+        s0, s1, s2 = (np.where(inside, slope[rows, k+j], 0.) for j in (-1, 0, 1))
+        curve = s0 - 2*s1 + s2
+        offset = np.where(inside & (curve < 0),
+                          np.clip(.5*(s0 - s2) / np.where(inside & (curve < 0), curve, -1), -.5, .5), 0.)
+        edge = radii[k] + offset*step
+        strength = np.where(inside, s1, 0.)
+        keep = inside & (strength > .5*np.median(strength[inside])) if inside.any() else inside
+        x, y = cx + np.cos(angles)*edge, cy + np.sin(angles)*edge
+        for _ in range(4):
+            if keep.sum() < max(12, rays // 3):
+                return {**moments, "ok": False, "degeneracy": ("unconstrained_limb",)}
+            fit = _conic_ellipse(x[keep], y[keep])
+            if fit is None:
+                return {**moments, "ok": False, "degeneracy": ("unconstrained_limb",)}
+            ex, ey, a, b, pa = fit
+            # Radial distance of each edge point from the fitted ellipse along its own ray.
+            ca, sa = np.cos(np.arctan2(y-ey, x-ex) - pa), np.sin(np.arctan2(y-ey, x-ex) - pa)
+            residual = np.hypot(x-ex, y-ey) - a*b/np.hypot(b*ca, a*sa)
+            spread = 1.4826*np.median(abs(residual[keep] - np.median(residual[keep])))
+            refined = keep & (abs(residual) <= max(3*spread, 1.5))
+            if np.array_equal(refined, keep):
+                break
+            keep = refined
+        cx, cy = ex, ey
+    ex, ey, a, b, pa = fit
+    rms = float(np.sqrt(np.mean(residual[keep]**2)))
+    if rms > max(1.5, .02*a):
+        return {**moments, "ok": False, "degeneracy": ("irregular_limb",)}
+    return {
+        "ok": True,
+        "cx": float(ex + .5),
+        "cy": float(ey + .5),
+        "radius": a,
+        "semi_major": a,
+        "semi_minor": b,
+        "pa_rad": pa,
+        "flattening": max(0., 1 - b/a),
+        "n_pix": moments["n_pix"],
+        "n_edges": int(keep.sum()),
+        "edge_rms_px": rms,
+        "degeneracy": (),
+    }
+
+
+def fit_globe_disc(image: np.ndarray) -> dict:
+    """The geometric limb ellipse when it is constrained, otherwise the moment ellipse."""
+    limb = fit_limb_ellipse(image)
+    if limb["ok"]:
+        return {**limb, "method": "limb edges"}
+    moments = fit_disc_ellipse(image)
+    return {**moments, "method": "brightness moments",
+            "degeneracy": tuple(dict.fromkeys([*moments["degeneracy"], *limb["degeneracy"]]))
+            if moments["ok"] else moments["degeneracy"]}
+
 def estimate_field_angle(
     reference: np.ndarray,
     frame: np.ndarray,

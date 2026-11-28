@@ -467,8 +467,21 @@ automatic values clear when a later preprocessing pass cannot estimate it.
 Accepted frames also supply three averages aligned to the highest-quality
 retained frame (up to 32 frames each, plus the reference if outside those groups,
 reduced to at most 256 pixels per side) for a small-angle projected-sphere
-motion fit. Each later average is first centred on its fitted limb, which spin
-does not move; depth-dependent surface drift and image roll are then fit jointly
+motion fit. The globe centre and equatorial radius come from each average's
+limb: the steepest outward edge along 180 rays, then a robust ellipse fit
+(`fit_limb_ellipse`). Rays end at the frame edge, and weak or outlying edges are
+dropped. Brightness-weighted moments are used only when the limb is too small or
+too poorly constrained (Saturn keeps its own globe and ring fits). The centroid
+is pulled towards the brighter side by belts, limb darkening and phase. On the
+2021-09-13 Jupiter capture (phase about 5°, terminator near one equatorial end)
+it sat 4.3 px from the limb's centre. Surface derotation then moved limb light on
+one side as globe and left the other side's globe light still, which doubled the
+limb at both equatorial ends. The silhouette's thresholded width also overstated
+the radius by 2.5 px. Seeing blur moves a limb-darkened limb's steepest edge
+inwards evenly (about 1 px), and phase moves the terminator side's edge inwards
+by R(1 - cos phase) (0.7 px on that Jupiter capture).
+
+Each later average is first centred on its fitted limb, which spin does not move; depth-dependent surface drift and image roll are then fit jointly
 with SciPy's robust least-squares solver. No free translation is fitted: inside
 the texture mask (radius 0.85) projected drift is nearly a uniform shift, so a
 translation trades against it. On a 2021 Jupiter capture that made the two

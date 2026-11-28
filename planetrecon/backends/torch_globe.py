@@ -97,6 +97,8 @@ class TorchGlobeWarp:
         """Mapped x, y and valid; with ``gain`` also each sample's limb-darkening gain
         (None when the model applies none)."""
         g = self.model.globe
+        if limb_taper is None:
+            limb_taper = getattr(self.model, 'limb_taper_mu', None)
         P = self.poses(src, ref)
         explicit = x is not None
         x, y = (self.x,self.y) if x is None else (x,y)
@@ -267,7 +269,11 @@ class TorchGlobeAccumulator(TorchGlobeWarp):
                                             device=self.device).flatten()
 
     def sample_map(self, pose, ref, sample_xy=None, gain=False):
+        """Where samples are deposited: limb-tapered (see ``model.deposition_model``)."""
         coords = {} if sample_xy is None else {'x':self.tensor(sample_xy[0]),'y':self.tensor(sample_xy[1])}
+        taper = getattr(self.model, 'deposit_limb_taper_mu', None)
+        if taper:
+            coords['limb_taper'] = taper
         return self.map(pose,ref,gain=gain,**coords)
 
     def sample_corners(self, pose, ref, sample_xy=None):

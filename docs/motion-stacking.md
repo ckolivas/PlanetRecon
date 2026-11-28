@@ -79,6 +79,31 @@ limb-darkened globes with only zonal belts and frames weighted late, the
 compensation reduces the error where spin moves light 22x (Saturn) to 67x
 (Surface), and the fit recovers p within 0.001.
 
+**Limb taper (all globes).** Seeing blurs a globe's light several pixels
+across its limb. A hard globe boundary split that blurred profile: light inside
+moved with the spin, light outside stayed put. The moved part was dragged
+inwards by up to R sin(delta) times the spin angle (delta is the angle in from
+the limb), leaving a bright rind and an abrupt step at the model limb. Sharpening
+turns that step into a thin dark arc, strongest at both ends of the equator where
+spin moves light most. On the 2021-09-13 Jupiter capture (surface or surface +
+field) it sat a few pixels inside both equatorial limbs. A globe centre biased
+4.3 px along the equator by phase (see preprocessing) made it worse on one side.
+
+Samples are now deposited with the spin displacement faded in by
+smoothstep((mu/0.4)^2) at both the source and reference positions, the taper
+Saturn already used (`limb.LIMB_TAPER_MU`). Light newly visible, about to be
+hidden, or blurred across the limb keeps field alignment; the limb-darkening
+gain fades the same way. Tracking predictions and alignment-point references keep
+the exact map, which leaves newly visible longitudes unsupported. Tapering
+predictions as well biased drift tracking by up to 0.5 px. On a synthetic blurred
+limb-darkened sphere (spin 0.3 rad at the capture's ends), the mean error just
+inside the equatorial limbs fell from +16 to -3 (interior RMS 0.49 either way).
+On a 1-in-20 subsample of the Jupiter capture the arc is gone with and without
+alignment points, matching a stack with zero spin. A narrower taper (mu 0.25)
+left a faint arc. Within mu < 0.4 (the outer 8% of the radius), features are only
+partly derotated: at most about 3 px of residual motion at the ends of a
+10-minute Jupiter capture, where limb darkening and blur already dominate.
+
 **Ring motion (Saturn).** Ring material turns with the planet. Spokes form
 near synchronous orbit and follow the planet's rotation: one tracked through
 the sharpened stacks of 2026-10-14 (12:05-12:28 UT) moved at 0.561 degrees per

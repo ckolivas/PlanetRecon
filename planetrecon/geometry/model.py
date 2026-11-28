@@ -8,7 +8,7 @@ import numpy as np
 
 from planetrecon.geometry.coords import detector_to_sky, detector_xy_grids, sky_to_detector
 from planetrecon.geometry.globe import GlobeParams, body_to_sky, field_rotate_sky, sky_to_body
-from planetrecon.geometry.limb import ld_ratio
+from planetrecon.geometry.limb import LIMB_TAPER_MU, ld_ratio, limb_blend
 from planetrecon.geometry.pose import FramePose
 from planetrecon.geometry.warp import bilinear_sample
 from planetrecon.operators import adjoint_relative_error
@@ -53,7 +53,16 @@ class OblateGlobeModel(SceneModel):
     """Rigid oblate globe. Surface rotation changes visible longitude; field is optional.
 
     ``ld_power`` (see ``limb``) compensates limb darkening as globe light moves.
+
+    The map is exact by default: predictions for tracking need the true surface
+    correspondence, with newly visible longitudes unsupported. Depositing samples
+    uses ``deposition_model``: its spin displacement fades out towards both limbs
+    (``limb.LIMB_TAPER_MU``), so blurred light across a limb is never split into
+    moved and unmoved parts that leave a dark arc along the equator.
     """
+
+    limb_taper_mu = None
+    deposit_limb_taper_mu = LIMB_TAPER_MU
 
     def __init__(self, globe: GlobeParams, *, apply_field: bool = True, apply_surface: bool = True,
                  ld_power: float = 0.):
@@ -87,14 +96,37 @@ class OblateGlobeModel(SceneModel):
             det_sx, det_sy = rx_g, ry_g
             bg_sx, bg_sy = sky_x, sky_y
         use_globe = on_globe & vis_ref
-        out_sx = np.where(use_globe, det_sx, bg_sx)
-        out_sy = np.where(use_globe, det_sy, bg_sy)
-        dx, dy = sky_to_detector(out_sx, out_sy, ref.cx, ref.cy)
-        valid = np.isfinite(dx) & np.isfinite(dy) & np.where(on_globe, vis_ref, True)
+        if self.limb_taper_mu:
+            # Light newly visible, about to be hidden or blurred across the limb keeps
+            # the field alignment; spin moves it only well inside both limbs.
+            blend = limb_blend(mu_src, mu_ref, use_globe, self.limb_taper_mu)
+            out_sx = bg_sx + blend*np.where(blend > 0, det_sx - bg_sx, 0.)
+            out_sy = bg_sy + blend*np.where(blend > 0, det_sy - bg_sy, 0.)
+            dx, dy = sky_to_detector(out_sx, out_sy, ref.cx, ref.cy)
+            valid = np.isfinite(dx) & np.isfinite(dy)
+        else:
+            blend = use_globe.astype(float)
+            out_sx = np.where(use_globe, det_sx, bg_sx)
+            out_sy = np.where(use_globe, det_sy, bg_sy)
+            dx, dy = sky_to_detector(out_sx, out_sy, ref.cx, ref.cy)
+            valid = np.isfinite(dx) & np.isfinite(dy) & np.where(on_globe, vis_ref, True)
         if not gain:
             return dx, dy, valid
-        ratio = ld_ratio(mu_ref, mu_src, self.ld_power) if self.ld_power else np.ones(np.shape(dx))
-        return dx, dy, valid, np.where(use_globe, ratio, 1.)
+        if not self.ld_power:
+            return dx, dy, valid, np.ones(np.shape(dx))
+        ratio = ld_ratio(np.where(use_globe, mu_ref, 1.), np.where(use_globe, mu_src, 1.), self.ld_power)
+        return dx, dy, valid, 1. + blend*np.where(blend > 0, ratio - 1., 0.)
+
+
+def deposition_model(model: SceneModel) -> SceneModel:
+    """The map that deposits samples into the stack: limb-tapered where the model defines it."""
+    taper = getattr(model, 'deposit_limb_taper_mu', None)
+    if not taper or getattr(model, 'limb_taper_mu', None) == taper:
+        return model
+    import copy
+    deposit = copy.copy(model)
+    deposit.limb_taper_mu = taper
+    return deposit
 
 
 def select_scene_model(

@@ -12,9 +12,9 @@ from planetrecon.backends.base import select_backend
 from planetrecon.calibration import Calibration, apply_calibration
 from planetrecon.detector import PreparedBilinearDemosaic, cfa_labels, channel_mask, extract_green_proxy, is_bayer
 from planetrecon.geometry.coords import detector_xy_grids
-from planetrecon.geometry.fit import estimate_field_angle, fit_disc_ellipse, sequence_degeneracy
+from planetrecon.geometry.fit import estimate_field_angle, fit_globe_disc, sequence_degeneracy
 from planetrecon.geometry.model import (SceneModel, FieldOnlyModel, OblateGlobeModel, select_scene_model,
-                                       render_observed)
+                                       render_observed, deposition_model)
 from planetrecon.geometry.pose import FramePose, build_frame_poses, globe_for_config, source_times_s, unwrap_angles
 from planetrecon.geometry.rings import RingParams
 from planetrecon.geometry.saturn import LAYER_GLOBE, LAYER_FAR_RING, LAYER_NEAR_RING, MoonTrack, SaturnSceneModel, fit_saturn_geometry
@@ -134,7 +134,7 @@ def prepare_geometry(
         disc = saturn_fit
         degeneracy = list(saturn_fit.get("degeneracy") or ())
     else:
-        disc = fit_disc_ellipse(planes[anchor])
+        disc = fit_globe_disc(planes[anchor])
         degeneracy = list(sequence_degeneracy(planes))
     cx = config.field_center_x
     cy = config.field_center_y
@@ -407,6 +407,15 @@ def prepare_geometry(
     warnings = (_warn_exposure(config, radius, float(field_rate), surface_rate,
                                None if rings is None else rings.outer_radius_px)
                 if time_origin != "inferred" else [])
+    if (config.geometry_mode in ('surface', 'combined') and centre_origin == 'user'
+            and disc.get('method') == 'limb edges'):
+        offset = float(np.hypot(cx - disc['cx'], cy - disc['cy']))
+        diagnostics['limb_centre_offset_px'] = offset
+        if offset > 1.:
+            # Globe light beside a misplaced limb moves (or stays) wrongly: a doubled limb.
+            warnings.append(f"globe_centre_off_limb: the globe centre is {offset:.1f} px from the reference "
+                            f"limb's centre ({disc['cx']:.2f}, {disc['cy']:.2f}); surface derotation doubles "
+                            "the limb. Run Preprocess again or enter the limb centre")
     if diagnostics['timestamp_duplicate_intervals']:
         warnings.append('timestamp_ties: frames with equal recorded timestamps are retained at the same time; zero intervals are excluded from rate estimation')
     if time_origin == "inferred":
@@ -583,6 +592,11 @@ def stack_source_geometry(
                 viewing_record=viewing_record,
             )
             diagnostics['motion_reference'] = reference_plan
+            deposit_model = deposition_model(model)
+            if deposit_model is not model:
+                diagnostics['limb_taper'] = {'mu': deposit_model.limb_taper_mu, 'applies_to': 'sample deposition',
+                    'policy': 'spin displacement fades in with smoothstep((mu/taper)^2) inside both limbs; '
+                              'tracking predictions use the exact map'}
             if diagnostics.get('unavailable_motion'):
                 raise _UnresolvedMotion('Motion compensation cannot run: ' + '; '.join(diagnostics['unavailable_motion'])
                                  + '. Correct the geometry or choose Motion model None for ordinary stacking.')
@@ -1213,7 +1227,7 @@ def stack_source_geometry(
                     n_rejected += 1
                 continue
             sx,sy = (xg,yg) if sample_xy is None else sample_xy
-            xd, yd, valid, gain = model.src_to_ref(sx, sy, pose, ref_pose, gain=True)
+            xd, yd, valid, gain = deposit_model.src_to_ref(sx, sy, pose, ref_pose, gain=True)
             # Limb-darkening compensation scales each moved sample (geometry.limb).
             calibrated = calibrated * (gain[..., None] if calibrated.ndim == 3 else gain)
             if demo is not None:
