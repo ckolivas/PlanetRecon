@@ -114,6 +114,7 @@ class TorchSaturnWarp(TorchGlobeWarp):
         mapped_info = ((self.classify(src,x,y,motion_only=True) if x is not None or info is None else info)
                        if needs_mask else None)
         out_x,out_y,valid,*rest = super().map(src,ref,limb_taper=LIMB_TAPER_MU,x=x,y=y,gain=gain)
+        out_x, out_y, rest = self.front_ring(src, ref, out_x, out_y, rest, x, y)
         if mapped_info is not None:
             valid &= ~mapped_info['invalid']
         if info is not None and needs_mask:
@@ -121,6 +122,25 @@ class TorchSaturnWarp(TorchGlobeWarp):
         if self.model.ring_motion:
             out_x, out_y = self.ring_motion(src, ref, out_x, out_y, x, y)
         return (out_x,out_y,valid,*rest)
+
+    def front_ring(self, src, ref, out_x, out_y, rest, x=None, y=None):
+        """Return the near ring in front of the globe to field alignment (SaturnSceneModel.src_to_ref)."""
+        model, g = self.model, self.model.globe
+        P = self.poses(src, ref)
+        if model.edge_on or not model.apply_surface or all(
+                g.surface_rate_rad_s*(s.t_s-r.t_s) == 0 for s, r in zip(P.srcs, P.refs)):
+            return out_x, out_y, rest
+        x, y = (self.x,self.y) if x is None else (x,y)
+        sx, sy = x-P([p.cx for p in P.srcs]), P([p.cy for p in P.srcs])-y
+        angle = P.angles([r.field_angle_rad-s.field_angle_rad if model.apply_field else 0.
+                          for s, r in zip(P.srcs, P.refs)])
+        fx, fy = self.rotate(sx, sy, angle)
+        fx, fy = fx+P([r.cx for r in P.refs]), P([r.cy for r in P.refs])-fy
+        if model.apply_field:
+            sx, sy = self.rotate(sx, sy, P.angles([-p.field_angle_rad for p in P.srcs]))
+        keep = 1.-model.front_ring_cover(sx, sy)
+        rest = [1.+keep*(gain-1.) for gain in rest]
+        return fx+keep*(out_x-fx), fy+keep*(out_y-fy), rest
 
     def ring_motion(self, src, ref, out_x, out_y, x=None, y=None):
         """Add the rings' turn with the planet (SaturnSceneModel.src_to_ref) to mapped coordinates."""

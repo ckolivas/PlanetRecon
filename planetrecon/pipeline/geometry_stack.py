@@ -375,7 +375,8 @@ def prepare_geometry(
     if isinstance(model, SaturnSceneModel):
         # This changes which observations enter each sum. Include it in the
         # checkpoint geometry identity so old masked sums cannot be resumed.
-        diagnostics['ring_globe_overlap_policy'] = 'continuous globe motion with smooth limb taper v3'
+        diagnostics['ring_globe_overlap_policy'] = ('near ring over the globe keeps ring alignment; globe spin '
+                                                    'fades in 3-9 px beyond its edges; smooth limb taper v4')
         diagnostics['saturn_boundary_policy'] = 'unclipped footprints; product of squared-mu smoothsteps at both limbs, mu=0.4'
         if model.ring_motion:
             from planetrecon.geometry.saturn import RING_MOTION_CLEAR_PX, RING_MOTION_EDGE_PX
@@ -415,7 +416,7 @@ def prepare_geometry(
     if getattr(model, "edge_on", False):
         warnings.append("edge_on_rings: ring plane is degenerate; ring samples are masked")
     if isinstance(model, SaturnSceneModel) and not model.edge_on:
-        warnings.append("ring_globe_overlap: rings in front of the globe use globe motion, fading to field alignment near the limb; ring and globe light are not separated")
+        warnings.append("ring_globe_overlap: the ring in front of the globe keeps ring alignment (globe spin fades in beyond its edges); ring and globe light are not separated")
     if "spin_unconstrained" in degeneracy_t and config.geometry_mode in ("surface", "combined", "saturn"):
         if requested_surface_rate is None:
             warnings.append("spin_unconstrained: surface rate was not supplied and was not estimated; motion compensation cannot run")

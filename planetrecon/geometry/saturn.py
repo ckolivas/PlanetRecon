@@ -43,6 +43,11 @@ RING_MOTION_EDGE_PX = (4.0, 12.0)
 # fade to this many times the frame's in-plane shift so a frame several minutes
 # from the output epoch cannot fold the rings into a seam at the globe's limb.
 RING_MOTION_FADE_PER_SHIFT = 6.0
+# Where the near ring crosses the globe the light is mostly ring, whose
+# axisymmetric structure does not move with the globe's spin; it keeps ring
+# (field) alignment. Globe spin fades back in between these sky distances (px)
+# beyond the ring's edges, so the ring edges' blurred light stays with the ring.
+RING_FRONT_EDGE_PX = (3.0, 9.0)
 
 
 def _smoothstep(u):
@@ -156,10 +161,13 @@ class SaturnSceneModel(SceneModel):
         self.low_opening = (not self.edge_on) and n_z < 0.2
         self.transmission = 0.0 if self.edge_on else ring_transmission(globe, rings)
         self.ring_motion = bool(ring_motion) and not self.edge_on
-        if self.ring_motion:
+        if not self.edge_on:
             # Observer depth of the ring plane at sky (x, y): z = plane[0] x + plane[1] y.
             self.ring_plane = (-float(n[0] / n[2]), -float(n[1] / n[2]))
             self.ring_body = body_to_obs_matrix(globe.pole_pa_rad, globe.sub_obs_lat_rad, 0.0).T
+            # Sky length of a unit ring radius where the near ring crosses the disc.
+            self.ring_foreshortening = n_z
+        if self.ring_motion:
             # Directions whose rays from a ring point must clear the globe for the
             # point's light to move: toward the observer and (if set) toward the Sun.
             # Body axes with z stretched by a/c, where the globe is a sphere of radius a.
@@ -197,6 +205,22 @@ class SaturnSceneModel(SceneModel):
             weight = weight * _smoothstep((clear - lo) / span)
         return weight
 
+    def front_ring_cover(self, sx, sy):
+        """Share (0..1) of ring alignment at field-free sky offsets where the near ring crosses
+        the globe (1 on the ring, fading beyond its edges); numpy or torch. Zero for edge-on rings."""
+        if self.edge_on:
+            return 0.0 * sx
+        rt, (px, py) = self.ring_body, self.ring_plane
+        z = px * sx + py * sy
+        xb = rt[0, 0] * sx + rt[0, 1] * sy + rt[0, 2] * z
+        yb = rt[1, 0] * sx + rt[1, 1] * sy + rt[1, 2] * z
+        r = (xb * xb + yb * yb) ** 0.5
+        beyond = ((self.rings.inner_radius_px - r).clip(0.0, None)
+                  + (r - self.rings.outer_radius_px).clip(0.0, None)) * self.ring_foreshortening
+        lo, hi = RING_FRONT_EDGE_PX
+        # Only the near half lies in front of the disc; the far half is hidden behind it.
+        return (1.0 - _smoothstep((beyond - lo) / (hi - lo))) * (z >= 0)
+
     def ring_turn_chord(self, t_src: float, t_ref: float) -> float:
         """In-plane distance a ring point moves between the two times, per unit ring radius."""
         g = self.globe
@@ -229,7 +253,7 @@ class SaturnSceneModel(SceneModel):
         return info
 
     def reconstruction_labels(self, info: dict) -> np.ndarray:
-        """Assign observed ring/globe composites to globe motion inside the disc.
+        """Assign observed ring/globe composites to the globe layer inside the disc.
 
         Physical front/back labels remain available for rendering. Stacking
         retains the measured composite brightness without attempting to unmix
@@ -286,6 +310,9 @@ class SaturnSceneModel(SceneModel):
         # derivative continuous there, avoiding an edge after sharpening.
         dx = fx + blend*np.where(blend > 0, gx-fx, 0.)
         dy = fy + blend*np.where(blend > 0, gy-fy, 0.)
+        # The near ring in front of the globe keeps ring alignment, not the globe's spin.
+        keep = 1. - self.front_ring_cover(sx, sy)
+        dx, dy = fx + keep*(dx - fx), fy + keep*(dy - fy)
         if self.ring_motion:
             # Ring points turn about the pole; zero weight on and near the globe.
             weight = self.ring_motion_weight(sx, sy, self.ring_turn_chord(src.t_s, ref.t_s))
@@ -301,7 +328,7 @@ class SaturnSceneModel(SceneModel):
         if not self.ld_power:
             return dx, dy, valid, np.ones(np.shape(dx))
         ratio = ld_ratio(np.asarray(mu_ref, dtype=np.float64), np.asarray(info['mu'], dtype=np.float64), self.ld_power)
-        return dx, dy, valid, 1. + blend*np.where(blend > 0, ratio - 1., 0.)
+        return dx, dy, valid, 1. + keep*(blend*np.where(blend > 0, ratio - 1., 0.))
 
 
 def fit_saturn_geometry(image: np.ndarray) -> dict:

@@ -47,7 +47,8 @@ def test_exposed_far_ring_is_classified_by_depth():
     assert not np.any(info["near_ring"] & (info["t_ring"] < 0))
 
 
-def test_overlap_uses_globe_motion_and_retains_observed_samples():
+def test_near_ring_over_the_globe_keeps_ring_alignment_and_observed_samples():
+    """The ring in front of the globe does not move with the globe's spin; the rest of the disc does."""
     model = setup(spin=1.2)
     x, y = detector_xy_grids(48, 64)
     source = FramePose(1., .2, 32., 24.)
@@ -56,17 +57,21 @@ def test_overlap_uses_globe_motion_and_retains_observed_samples():
     overlap = info["near_ring"] & info["on_globe"]
     xd, yd, valid = model.src_to_ref(x, y, source, reference)
     gx, gy, gv = model.globe_model.src_to_ref(x, y, source, reference)
-    assert overlap.any() and valid[overlap].any()
-    from planetrecon.geometry.globe import body_to_sky
+    fx, fy, _ = model.field_model.src_to_ref(x, y, source, reference)
+    assert overlap.any() and valid[overlap].all()
+    np.testing.assert_allclose(xd[overlap], fx[overlap], atol=1e-12)
+    np.testing.assert_allclose(yd[overlap], fy[overlap], atol=1e-12)
+    from planetrecon.geometry.coords import detector_to_sky
+    from planetrecon.geometry.globe import body_to_sky, field_rotate_sky
     _,_,_,mu_ref = body_to_sky(info['lon'],info['lat'],model.globe,reference.t_s)
-    interior = overlap & (info['mu'] >= .4) & (mu_ref >= .4)
-    assert interior.any()
-    np.testing.assert_allclose(xd[interior],gx[interior],atol=1e-12)
-    np.testing.assert_allclose(yd[interior],gy[interior],atol=1e-12)
+    sx, sy = field_rotate_sky(*detector_to_sky(x, y, source.cx, source.cy), -source.field_angle_rad)
+    clear = info['on_globe'] & (model.front_ring_cover(sx, sy) == 0) & (info['mu'] >= .4) & (mu_ref >= .4)
+    assert clear.any()
+    np.testing.assert_allclose(xd[clear],gx[clear],atol=1e-12)
+    np.testing.assert_allclose(yd[clear],gy[clear],atol=1e-12)
+    assert np.abs(gx - fx)[clear].max() > 1.  # Spin moves the disc clear of the ring.
     target = model.classify_detector(gx, gy, reference)
     occluded = (info["labels"] == LAYER_GLOBE) & gv & target["near_ring"] & target["on_globe"]
-    regions = model.reconstruction_regions(info)
-    target_regions = model.reconstruction_regions(target)
     assert occluded.any()
     assert valid[occluded].all()  # Shadows describe light, not missing observations.
 

@@ -136,6 +136,16 @@ Saturn with alignment points took about 6 minutes per half on the RTX 5070,
 against about 2 minutes for None; grouped device execution (below) has since
 cut the whole capture from 581 s to 218 s.
 
+Where the near ring crosses in front of the globe, the light is mostly ring,
+and ring structure does not move with the globe's spin. That region keeps ring
+(field) alignment, and spin fades back in 3–9 px beyond the ring's edges over
+the disc (`saturn.RING_FRONT_EDGE_PX`). It used to follow the globe's spin and
+then fade to field alignment at the limb. On 2021-09-13-1137_3-L-Sat, a 600 s
+capture where the disc's surface moves up to about 6 px, that dragged the front
+ring with the globe and left a seam along the limb across the ring, which
+sharpening turned into ringing. The globe's zonal bands seen through the ring
+change little under spin.
+
 With CUDA the Surface path runs on the device: registration planes (green
 proxy, demosaic, luminance), camera-drift tracking (predicted reference,
 support and visibility mask, erosion, masked correlation and the distinct-peak
