@@ -26,7 +26,7 @@ def edit(controls, key, value):
 def test_one_button_restores_all_calculated_values_and_disables_itself(gui):
     _, win = gui
     c = win.controls
-    c.fields['geometry_mode'].setCurrentText('saturn')
+    c.fields['geometry_mode'].setCurrentIndex(c.fields['geometry_mode'].findData('saturn'))
     win._set_preprocessing(report(), replace_manual=True)
     calculated = dict(c.calculated_geometry)
     assert not hasattr(c, 'measured_pole_button')
@@ -112,3 +112,16 @@ def test_calculated_viewing_latitude_can_replace_later_manual_override(gui):
     win.controls.calculated_values_button.click()
     assert win.controls.configuration().sub_obs_lat_rad is None
     assert not win.controls.calculated_values_button.isEnabled()
+
+
+def test_motion_models_say_what_they_compensate(gui):
+    """Saturn includes field rotation; the labels must say so while the config keeps its values."""
+    from planetrecon.gui.controls import MOTION_MODELS
+    _, win = gui
+    chooser = win.controls.fields['geometry_mode']
+    assert [chooser.itemData(i) for i in range(chooser.count())] == ['none', 'field', 'surface', 'combined', 'saturn']
+    assert [chooser.itemText(i) for i in range(chooser.count())] == list(MOTION_MODELS.values())
+    for mode in ('field', 'combined', 'saturn'):
+        assert 'field rotation' in MOTION_MODELS[mode].lower()
+    chooser.setCurrentIndex(chooser.findData('saturn'))
+    assert win.controls.configuration().geometry_mode == 'saturn'

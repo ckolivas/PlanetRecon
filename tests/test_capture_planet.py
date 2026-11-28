@@ -59,7 +59,7 @@ def test_unresolved_jupiter_preprocessing_can_start_surface_job(monkeypatch):
         raise ValueError('worker reached')
     monkeypatch.setattr(gui, 'start_stack_job', start)
     try:
-        win.controls.fields['geometry_mode'].setCurrentText('surface')
+        win.controls.fields['geometry_mode'].setCurrentIndex(win.controls.fields['geometry_mode'].findData('surface'))
         estimate = {'status': 'unresolved', 'suggestions': {},
                     'notes': ['Surface rotation is unresolved; no surface-rate prefill.']}
         win.preprocessing_info = {'status': 'ready', 'geometry_estimate': estimate}

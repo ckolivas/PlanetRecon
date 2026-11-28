@@ -92,7 +92,7 @@ def test_cuda_budget_control_preserves_mib_units(gui):
 def test_config_controls_preserve_units_and_optional_state(gui):
     _, win = gui
     fields = win.controls.fields
-    fields['geometry_mode'].setCurrentText('saturn')
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('saturn'))
     for key, text in dict(sub_obs_lat_rad='-20', field_rate_rad_s='1.2', equatorial_radius_px='12',
                           ring_inner_radius_px='16', ring_outer_radius_px='26', gain_e_per_adu='2.5',
                           moon_x='12', moon_y='20', moon_radius_px='3', moon_vy_px_s='-.3').items():
@@ -106,7 +106,7 @@ def test_config_controls_preserve_units_and_optional_state(gui):
     assert cfg.equatorial_radius_px == 12 and cfg.ring_inner_radius_px == 16
     assert cfg.ring_outer_radius_px == 26 and cfg.moon_radius_px == 3
     fields['ring_inner_radius_px'].setText('bad text')
-    fields['geometry_mode'].setCurrentText('none')
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('none'))
     cfg = win.controls.configuration()
     assert cfg.ring_inner_radius_px is None and cfg.moon_y is None
 
@@ -374,7 +374,7 @@ def test_gui_saturn_geometry_and_layer_export(gui, tmp_path):
         lambda lon,lat:50.,ring_tex=lambda r,a:100.)
     win.path = write_ser(tmp_path/'saturn.ser', np.stack([frame.astype(np.uint16)]*2))
     f = win.controls.fields
-    f['geometry_mode'].setCurrentText('saturn')
+    f['geometry_mode'].setCurrentIndex(f['geometry_mode'].findData('saturn'))
     for key, val in dict(equatorial_radius_px=12, flattening=.1, sub_obs_lat_rad=np.degrees(.4),
         ring_inner_radius_px=16, ring_outer_radius_px=26, field_rate_rad_s=0,
         surface_rate_rad_s=0, field_center_x=32, field_center_y=24, cadence_s=.1).items():
@@ -512,7 +512,7 @@ def test_new_runs_snapshot_every_processing_control(gui, tmp_path, monkeypatch):
     assert calls[-1][2] == {'inspect_only': True, 'auto_output_epoch': False, 'cache_validation': None, 'verify_cache': True}
     win._finish_job()
     win.device.setCurrentText('gpu')
-    win.controls.fields['geometry_mode'].setCurrentText('none')
+    win.controls.fields['geometry_mode'].setCurrentIndex(win.controls.fields['geometry_mode'].findData('none'))
     win.controls.fields['max_ram_bytes'].clear()
     win.controls.fields['max_vram_bytes'].setText('64.5')
     win._run()
@@ -712,7 +712,7 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
     monkeypatch.setattr(module, 'start_stack_job', start)
     win.path = tmp_path/'saturn.ser'
     fields = win.controls.fields
-    fields['geometry_mode'].setCurrentText('saturn')
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('saturn'))
     win._start(inspect_only=False)
     assert not calls and win.job is None
     assert win.controls.currentIndex() == 2
@@ -736,7 +736,7 @@ def test_saturn_stack_lists_geometry_still_missing_after_preparation(gui, tmp_pa
     assert calls[-1][1] == {'emit_previews': False, 'cache_validation': None} and calls[-1][0].sub_obs_lat_rad == pytest.approx(np.radians(-12))
     win._finish_job()
     # Ordinary Saturn stacking never needs these physical parameters.
-    fields['geometry_mode'].setCurrentText('none')
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('none'))
     fields['sub_obs_lat_rad'].clear()
     fields['equatorial_radius_px'].clear()
     win._start(inspect_only=False)
@@ -754,7 +754,7 @@ def test_surface_run_requires_rate_but_preprocessing_remains_available(gui, tmp_
     monkeypatch.setattr(module, 'start_stack_job', start)
     win.path = tmp_path/'input.ser'
     fields = win.controls.fields
-    fields['geometry_mode'].setCurrentText('surface')
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('surface'))
     win._start(inspect_only=False)
     assert not calls and win.job is None
     assert 'Surface rotation rate' in win.error.text()

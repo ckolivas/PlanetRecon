@@ -216,7 +216,7 @@ def test_entering_saturn_clears_assumed_view_and_dependent_auto_rates(manual_lat
             controls.fields['sub_obs_lat_rad'].textEdited.emit(manual_latitude)
         controls.fields['pole_pa_rad'].setText('20')
         controls.fields['pole_pa_rad'].textEdited.emit('20')
-        controls.fields['geometry_mode'].setCurrentText('saturn')
+        controls.fields['geometry_mode'].setCurrentIndex(controls.fields['geometry_mode'].findData('saturn'))
         cfg = controls.configuration()
         assert cfg.sub_obs_lat_rad == (None if manual_latitude is None else pytest.approx(np.radians(float(manual_latitude))))
         assert cfg.surface_rate_rad_s is None and cfg.field_rate_rad_s is None

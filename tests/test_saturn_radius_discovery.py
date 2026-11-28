@@ -230,7 +230,7 @@ def test_gui_preprocess_none_then_switch_to_saturn_and_run(tmp_path, monkeypatch
         assert window.preprocessing_info['geometry_estimate']['saturn_geometry']['status'] == 'estimated'
         # The inactive tab retains estimates without enabling rings in a None run.
         assert window.controls.configuration().ring_inner_radius_px is None
-        window.controls.fields['geometry_mode'].setCurrentText('saturn')
+        window.controls.fields['geometry_mode'].setCurrentIndex(window.controls.fields['geometry_mode'].findData('saturn'))
         window._run()
         window._poll()  # Validate the cache before dispatching reconstruction.
         assert not window.error.text()

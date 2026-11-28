@@ -12,6 +12,16 @@ from PySide6.QtWidgets import (
 from planetrecon.gui.help import CONTROL_HELP
 
 
+
+# Motion models (config ``geometry_mode``) and what each compensates.
+MOTION_MODELS = {
+    'none': 'None',
+    'field': 'Field rotation',
+    'surface': 'Globe spin',
+    'combined': 'Globe spin + field rotation',
+    'saturn': 'Saturn: globe spin, rings + field rotation',
+}
+
 class ConfigControls(QTabWidget):
     def __init__(self, config, *, dialog_directory=None, remember_directory=None):
         super().__init__()
@@ -94,7 +104,9 @@ class ConfigControls(QTabWidget):
         cal.addRow(QLabel('Blank gain preserves ADU / approximate noise.'))
         geo = self._tab('Geometry')
         self.geometry_estimate_text = 'Preprocess applies calculated geometry. Manual edits apply until the next Preprocess or Use calculated values.'
-        self._choice(geo, 'geometry_mode', 'Motion model', ['none', 'field', 'surface', 'combined', 'saturn'])
+        self._choice(geo, 'geometry_mode', 'Motion model', list(MOTION_MODELS))
+        for index, label in enumerate(MOTION_MODELS.values()):
+            self.fields['geometry_mode'].setItemText(index, label)
         self.motion_model_label = geo.labelForField(self.fields['geometry_mode'])
         self._choice(geo, 'motion_reference', 'Automatic motion reference', ['midpoint', 'best'])
         self.fields['motion_reference'].setItemText(0, 'Good frames near capture midpoint')

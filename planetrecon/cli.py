@@ -199,7 +199,9 @@ def main(argv: list[str] | None = None) -> int:
         "--geometry",
         choices=("none", "field", "surface", "combined", "saturn"),
         default="none",
-        help="none=translation; field/surface/combined/saturn use declared geometry",
+        help="none=translation; field=field rotation; surface=globe spin; combined=globe spin and field "
+             "rotation; saturn=globe spin, rings and field rotation (--surface-rate-deg-s 0 for rings and "
+             "field rotation alone)",
     )
     st.add_argument("--field-rate-deg-s", type=float, default=None)
     st.add_argument("--surface-rate-deg-s", type=float, default=None)
