@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from dataclasses import replace
+
+from planetrecon.reconstruction import ReconstructionConfig
 
 from test_w14 import gui
 
@@ -270,3 +273,34 @@ def test_silhouette_pole_keeps_the_configured_branch(configured):
     axis = (pole - report['silhouette_axis_rad']) % np.pi
     assert min(axis, np.pi - axis) < 1e-9
     assert np.cos(pole - config.pole_pa_rad) >= 0
+
+
+def test_reversed_spin_sense_takes_the_other_pole_end_without_preprocessing_again():
+    """A spin-sense pole branch is a measurement plus a sign: reversing the preset only flips it."""
+    from planetrecon.pipeline.preprocess_cache import GEOMETRY_KEYS, cache_report
+    from planetrecon.geometry.discovery import MOTION_METHOD
+    from planetrecon.pipeline.preprocess import screen_source
+    analysed = ReconstructionConfig(geometry_mode='combined', rotation_planet='jupiter', sub_obs_lat_rad=0.)
+    selection = screen_source(oblate_capture(), analysed)
+    selection.summary['geometry_analysis_config'] = {key: getattr(analysed, key) for key in GEOMETRY_KEYS}
+    selection.summary['geometry_estimate'] = {'method': MOTION_METHOD, 'spin_sense': 1, 'suggestions': {
+        'pole_pa_rad': -2.1, 'surface_rate_rad_s': 1.7e-4, 'field_center_x': 20.}}
+    same = cache_report(selection, config=analysed)['geometry_estimate']
+    assert same['suggestions']['pole_pa_rad'] == -2.1
+    reversed_ = cache_report(selection, config=replace(analysed, reverse_rotation=True))['geometry_estimate']
+    assert reversed_.get('applicable', True)
+    assert reversed_['suggestions']['pole_pa_rad'] == pytest.approx(-2.1 + np.pi)
+    assert reversed_['suggestions']['surface_rate_rad_s'] == -1.7e-4
+    assert reversed_['suggestions']['field_center_x'] == 20.
+
+
+def test_estimates_from_the_translation_fit_are_refreshed():
+    from planetrecon.pipeline.preprocess_cache import GEOMETRY_KEYS, cache_report
+    from planetrecon.pipeline.preprocess import screen_source
+    config = ReconstructionConfig(geometry_mode='combined')
+    selection = screen_source(oblate_capture(), config)
+    selection.summary['geometry_analysis_config'] = {key: getattr(config, key) for key in GEOMETRY_KEYS}
+    selection.summary['geometry_estimate'] = {'method': 'projected spherical texture motion v2',
+                                              'suggestions': {'pole_pa_rad': .9}}
+    estimate = cache_report(selection, config=config)['geometry_estimate']
+    assert estimate['applicable'] is False and 'estimator changed' in estimate['notes'][0]

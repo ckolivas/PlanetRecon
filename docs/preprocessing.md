@@ -467,12 +467,27 @@ automatic values clear when a later preprocessing pass cannot estimate it.
 Accepted frames also supply three averages aligned to the highest-quality
 retained frame (up to 32 frames each, plus the reference if outside those groups,
 reduced to at most 256 pixels per side) for a small-angle projected-sphere
-motion fit. Translation, depth-dependent surface drift and image roll are fit
-jointly with SciPy's robust least-squares solver. Consistent, significant motion
-in both time intervals can supply signed surface and field rates and a pole
-orientation. Timestamps or a supplied cadence are required for rates per second.
-Unknown observer latitude uses an explicitly labelled equator-on approximation.
-The pole direction is an image-coordinate convention, not physical north.
+motion fit. Each later average is first centred on its fitted limb, which spin
+does not move; depth-dependent surface drift and image roll are then fit jointly
+with SciPy's robust least-squares solver. No free translation is fitted: inside
+the texture mask (radius 0.85) projected drift is nearly a uniform shift, so a
+translation trades against it. On a 2021 Jupiter capture that made the two
+intervals disagree (2.1x the true spin, unresolved). With the limb fixing the
+centre, they agree within 7% and match the Jupiter preset within 5%.
+Consistent, significant motion in both time intervals can supply signed surface
+and field rates and a pole orientation. Timestamps or a supplied cadence are
+required for rates per second. Unknown observer latitude uses an explicitly
+labelled equator-on approximation. The pole direction is an image-coordinate
+convention, not physical north.
+
+The measured drift fixes the spin axis and the direction its texture moves.
+When the spin sense is known (a planet preset, reversed or not, or an explicit
+nonzero rate), it picks the pole end that makes that drift; the GUI then keeps
+the preset or explicit rate. Otherwise the configured pole keeps its branch and
+the surface-rate suggestion carries the sign. Changing only the spin sense later
+(reversing the preset or the rate's sign) flips the cached pole by 180° and the
+rate's sign without preprocessing again. Caches from an older estimator version
+ask for Preprocess to run again.
 
 A stable mildly oval silhouette supplies an initial pole-axis hypothesis when
 surface motion is unresolved; this assumes its major axis is equatorial and

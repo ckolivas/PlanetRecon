@@ -177,6 +177,19 @@ def effective_selection(selection, report, config):
                   'transparency_compensation': view.summary['transparency_compensation']}
 
 
+def _with_spin_sense(estimate, config):
+    """A measured drift with the opposite spin sense (reversed preset, rate sign) is the other pole end."""
+    sense, spin = estimate.get('spin_sense'), config.effective_surface_rate()
+    if not sense or not spin or np.sign(spin) == sense:
+        return estimate
+    suggestions = dict(estimate.get('suggestions', {}))
+    if 'pole_pa_rad' in suggestions:
+        suggestions['pole_pa_rad'] = float((suggestions['pole_pa_rad'] + 2*np.pi) % (2*np.pi) - np.pi)
+    if 'surface_rate_rad_s' in suggestions:
+        suggestions['surface_rate_rad_s'] = -suggestions['surface_rate_rad_s']
+    return {**estimate, 'suggestions': suggestions, 'spin_sense': -sense}
+
+
 def cache_report(selection, path=None, config=None, source=None):
     estimate = selection.summary.get('geometry_estimate', {})
     if config is not None:
@@ -208,6 +221,7 @@ def cache_report(selection, path=None, config=None, source=None):
         else:
             if assumed:
                 estimate = {**estimate, 'suggestions': {**assumed, **estimate.get('suggestions', {})}}
+            estimate = _with_spin_sense(estimate, config)
         if (config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {})
                 and estimate.get('saturn_geometry', {}).get('status') != 'estimated'):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},
@@ -216,6 +230,12 @@ def cache_report(selection, path=None, config=None, source=None):
             and 'motion_reference' not in selection.summary.get('geometry_analysis_config', {})):
         estimate = {'suggestions': {}, 'applicable': False,
                     'notes': ['Motion reference selection changed; run Preprocess to refresh geometry. Quality/shape exclusions remain valid.']}
+    method = estimate.get('method', '')
+    if method.startswith('projected spherical texture motion'):
+        from planetrecon.geometry.discovery import MOTION_METHOD
+        if method != MOTION_METHOD:
+            estimate = {'suggestions': {}, 'applicable': False,
+                        'notes': ['Surface motion estimator changed; run Preprocess to refresh geometry. Quality/shape exclusions remain valid.']}
     if 'saturn_geometry' in estimate:
         from planetrecon.geometry.saturn_fit import SATURN_FIT_VERSION
         if estimate['saturn_geometry'].get('estimator_version') != SATURN_FIT_VERSION:

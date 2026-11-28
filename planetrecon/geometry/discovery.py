@@ -20,6 +20,10 @@ SATURN_VIEW_DEPENDENT_KEYS = ('sub_obs_lat_rad', 'surface_rate_rad_s',
                              'field_rate_rad_s', 'pole_pa_rad')
 
 
+# v3: no free translation in the spin fit; a known spin sense picks the pole branch.
+MOTION_METHOD = 'projected spherical texture motion v3'
+
+
 def without_assumed_saturn_view(estimate):
     """An inferred equator-on globe view is not a signed Saturn ring opening.
 
@@ -38,11 +42,16 @@ def without_assumed_saturn_view(estimate):
 
 
 def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
-    """Return surface displacement (x,y), CCW roll and nuisance translation.
+    """Return surface displacement (x,y) and CCW roll of ``moving`` relative to ``reference``.
 
     Coordinates are detector x-right/y-down. In GlobeParams' convention a
     positive surface rate at PA=0 moves texture to the left. The surface
     displacement coefficients are radius * projected angular displacement.
+
+    Both averages are centred on their fitted limbs, which spin does not move.
+    A free translation is not fitted: inside the texture mask the projected
+    spin (displacement proportional to depth) is nearly a uniform shift, so a
+    translation would trade against it and leave the spin unconstrained.
     """
     y, x = np.indices(reference.shape, dtype=float)
     x -= center[0]
@@ -69,17 +78,14 @@ def fit_projected_motion(reference, moving, center, radius, should_cancel=None):
     def residual(p):
         if should_cancel and should_cancel():
             raise InterruptedError('geometry discovery cancelled')
-        a, b, roll, tx, ty = p
-        return map_coordinates(mov, (yy + b*depth - roll*u + ty,
-                                     xx + a*depth + roll*v + tx),
+        a, b, roll = p
+        return map_coordinates(mov, (yy + b*depth - roll*u, xx + a*depth + roll*v),
                                order=3, mode='nearest') - target
-    dx, dy = phase_correlation_shift(reference, moving)
-    initial = [0., 0., 0., np.clip(dx, -7, 7), np.clip(dy, -7, 7)]
-    bounds = np.array([.3*radius, .3*radius, .15, 8., 8.])
-    fit = least_squares(residual, initial, bounds=(-bounds, bounds),
+    bounds = np.array([.3*radius, .3*radius, .15])
+    fit = least_squares(residual, np.zeros(3), bounds=(-bounds, bounds),
                         loss='soft_l1', f_scale=.25, max_nfev=80,
                         ftol=1e-5, xtol=1e-5, gtol=1e-5,
-                        x_scale=[radius, radius, 1, 1, 1])
+                        x_scale=[radius, radius, 1])
     if not fit.success or np.any(abs(fit.x) > .98*bounds):
         return None
     singular = np.linalg.svd(fit.jac, compute_uv=False)
@@ -119,7 +125,7 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     config = replace(config, exposure_s=exposure['value_s'])
     saturn_target = config.geometry_mode == 'saturn' or config.rotation_planet == 'saturn'
     shape = estimate_flattening(selection, config)
-    report = {'method': 'projected spherical texture motion v2', 'suggestions': dict(shape['suggestions']),
+    report = {'method': MOTION_METHOD, 'suggestions': dict(shape['suggestions']),
               'status': 'unresolved', 'notes': [], 'sample_indices': []}
     report['exposure'] = exposure
     report['flattening_estimate'] = {k: v for k, v in shape.items() if k != 'suggestions'}
@@ -319,7 +325,17 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
         known_field = config.field_angle0_rad
         if time_origin != 'inferred' and config.field_rate_rad_s is not None:
             known_field += config.field_rate_rad_s * (sample_times[1]-config.reference_epoch_s)
-        if np.cos(pa - (config.pole_pa_rad-known_field)) < 0:
+        # The measured drift fixes the spin axis and the drift's direction. A known
+        # spin sense (planet preset or explicit rate) then identifies the pole
+        # branch; otherwise keep the configured branch and report a signed rate.
+        spin = config.effective_surface_rate()
+        if spin:
+            if np.sign(spin) * float(surface @ np.array([np.cos(pa), np.sin(pa)])) > 0:
+                pa += np.pi
+            report['spin_sense'] = int(np.sign(spin))
+            report['pole_branch'] = 'spin sense of the ' + (
+                'explicit surface rate' if config.surface_rate_rad_s is not None else 'planet preset')
+        elif np.cos(pa - (config.pole_pa_rad-known_field)) < 0:
             pa += np.pi
         signed_rate = -float(surface @ np.array([np.cos(pa), np.sin(pa)])) / radius
         report['surface_direction'] = ('left' if surface[0] < 0 else 'right') + (' / up' if surface[1] < 0 else ' / down')

@@ -227,3 +227,41 @@ def test_entering_saturn_clears_assumed_view_and_dependent_auto_rates(manual_lat
     finally:
         controls.close()
         app.processEvents()
+
+
+def banded(lon, lat):
+    """Jupiter-like belts: strong latitude structure that spin does not move, faint drifting spots."""
+    return 100 + 30*np.sin(9*lat) + 12*np.cos(14*lat) + 4*np.sin(15*lon+3*lat)*np.cos(5*lat) + 3*np.cos(23*lon-11*lat)
+
+
+def test_banded_globe_spin_is_not_traded_for_translation():
+    """Inside the texture mask spin is nearly a uniform shift; a free translation inflated it (1.8x here)."""
+    globe = GlobeParams(80, pole_pa_rad=.9, surface_rate_rad_s=.002, sub_obs_lat_rad=0.)
+    times = np.linspace(0, 60, 36)
+    rng = np.random.default_rng(3)
+    frames = np.stack([render_globe_texture(224, 256, 128, 112, .0008*t, globe, t, banded) + rng.normal(0, 1, (224, 256))
+                       for t in times])
+    source = ArraySource(frames, timestamps=times)
+    cfg = ReconstructionConfig(device='cpu', threads=2, equatorial_radius_px=80, sub_obs_lat_rad=0.)
+    result = discover_geometry(source, cfg, screen_source(source, cfg))
+    assert result['surface_resolved'] and result['roll_resolved']
+    assert result['projected_surface_rad_per_time_unit'] == pytest.approx(.002, rel=.12)
+    assert result['suggestions']['surface_rate_rad_s'] == pytest.approx(.002, rel=.12)
+    assert result['suggestions']['pole_pa_rad'] == pytest.approx(.9, abs=.1)
+    assert result['suggestions']['field_rate_rad_s'] == pytest.approx(.0008, rel=.15)
+
+
+@pytest.mark.parametrize('configured_pole', [0., np.pi])
+@pytest.mark.parametrize('values, flipped', [
+    ({'rotation_planet': 'mars'}, True),
+    ({'rotation_planet': 'mars', 'reverse_rotation': True}, False),
+    ({'surface_rate_rad_s': -.001}, False),
+    ({'surface_rate_rad_s': .001}, True),
+])
+def test_known_spin_sense_chooses_the_pole_branch(values, flipped, configured_pole):
+    """The GUI keeps a preset's (or explicit) rate, so the measured drift must pick the matching pole end."""
+    result = estimate(recording(pa=.4, spin=-.002), sub_obs_lat_rad=0., pole_pa_rad=configured_pole, **values)
+    assert result['surface_resolved'] and 'spin sense' in result['pole_branch']
+    pole = result['suggestions']['pole_pa_rad']
+    assert np.cos(pole - (.4 + np.pi*flipped)) > np.cos(.16)
+    assert np.sign(result['suggestions']['surface_rate_rad_s']) == (1 if flipped else -1)
