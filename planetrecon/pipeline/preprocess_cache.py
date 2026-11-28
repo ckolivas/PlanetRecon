@@ -14,12 +14,16 @@ from planetrecon.calibration import load_calibration
 from planetrecon.pipeline.preprocess import (N_MEASUREMENTS, FrameSelection, relative_brightness, screen_source,
                                              quality_range_counts, transparency_compensated)
 from planetrecon.pipeline.provenance import capture_provenance
+from planetrecon.reconstruction import ReconstructionConfig
 from planetrecon.pipeline.capture_hash import HASH_METHOD, LEGACY_HASH_METHOD, pixel_hash
 
 SCHEMA = 'planetrecon-preprocessing-1'
 GEOMETRY_KEYS = ('cadence_s', 'exposure_s', 'field_angle0_rad', 'field_rate_rad_s',
                  'reference_epoch_s', 'equatorial_radius_px', 'sub_obs_lat_rad', 'pole_pa_rad', 'rotation_planet',
                  'motion_reference', 'reference_index')
+# Analysis inputs usually prefilled from an earlier estimate. Cleared later, they are
+# suggested again rather than making the estimate stale; a different value is stale.
+ASSUMED_GEOMETRY = ('equatorial_radius_px', 'field_rate_rad_s')
 
 
 def _file_stamp(path):
@@ -180,20 +184,30 @@ def cache_report(selection, path=None, config=None, source=None):
             from planetrecon.geometry.discovery import without_assumed_saturn_view
             estimate = without_assumed_saturn_view(estimate)
         original = selection.summary.get('geometry_analysis_config', {})
+        defaults = ReconstructionConfig()
+        assumed = {}
         for key, value in original.items():
+            if key == 'pole_pa_rad':
+                # The configured pole only chooses which end of the measured axis is north;
+                # any pole (a north/south flip included) leaves the estimate valid.
+                continue
             current = getattr(config, key)
             suggested = estimate.get('suggestions', {}).get(key, value)
             def same(a, b):
                 return (math.isclose(a, b, rel_tol=1e-8, abs_tol=1e-10)
                         if isinstance(a, (int, float)) and isinstance(b, (int, float)) else a == b)
-            if key == 'pole_pa_rad' and isinstance(current, (int, float)) and isinstance(suggested, (int, float)):
-                # A pole flipped by 180° (north/south) keeps the measured axis.
-                turned = (current - suggested - math.pi) % (2*math.pi)
-                if min(turned, 2*math.pi - turned) < 1e-8:
-                    continue
-            if not same(current, value) and not same(current, suggested):
-                estimate = {'suggestions': {}, 'applicable': False, 'notes': ['Geometry settings changed; run Preprocess to refresh geometry estimates. Quality/shape exclusions remain valid.']}
-                break
+            if same(current, value) or same(current, suggested):
+                continue
+            if key in ASSUMED_GEOMETRY and value is not None and same(current, getattr(defaults, key)):
+                # Cleared since analysis (e.g. a reloaded capture): the estimate assumed this
+                # value, so it remains valid and suggests the value again.
+                assumed[key] = value
+                continue
+            estimate = {'suggestions': {}, 'applicable': False, 'notes': ['Geometry settings changed; run Preprocess to refresh geometry estimates. Quality/shape exclusions remain valid.']}
+            break
+        else:
+            if assumed:
+                estimate = {**estimate, 'suggestions': {**assumed, **estimate.get('suggestions', {})}}
         if (config.geometry_mode == 'saturn' and 'flattening' in estimate.get('suggestions', {})
                 and estimate.get('saturn_geometry', {}).get('status') != 'estimated'):
             estimate = {**estimate, 'suggestions': {k: v for k, v in estimate['suggestions'].items() if k != 'flattening'},

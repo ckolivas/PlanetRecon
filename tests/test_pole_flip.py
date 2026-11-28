@@ -213,7 +213,7 @@ def oblate_capture(n=24):
 
 
 def test_a_flipped_pole_keeps_the_cached_geometry_estimate():
-    """A north/south flip is not a geometry change that needs preprocessing again."""
+    """The pole only chooses north/south: no pole makes the cached estimate stale."""
     from dataclasses import replace
     from planetrecon.geometry.discovery import discover_geometry
     from planetrecon.pipeline.preprocess import screen_source
@@ -225,9 +225,34 @@ def test_a_flipped_pole_keeps_the_cached_geometry_estimate():
     selection.summary['geometry_estimate'] = discover_geometry(source, base, selection)
     selection.summary['geometry_analysis_config'] = {key: getattr(base, key) for key in GEOMETRY_KEYS}
     pole = selection.summary['geometry_estimate']['suggestions']['pole_pa_rad']
-    for angle, applicable in ((pole, True), (pole + np.pi, True), (pole - np.pi, True), (pole + .3, False)):
+    for angle in (pole, pole + np.pi, pole - np.pi, pole + .3, 0.):
         estimate = cache_report(selection, config=replace(base, pole_pa_rad=angle))['geometry_estimate']
-        assert estimate.get('applicable', True) is applicable, angle
+        assert estimate.get('applicable', True), angle
+
+
+def test_cleared_analysis_inputs_are_suggested_again_after_reload():
+    """A capture reopened with cleared Geometry keeps the estimate its analysis assumed."""
+    from dataclasses import replace
+    from planetrecon.geometry.discovery import discover_geometry
+    from planetrecon.pipeline.preprocess import screen_source
+    from planetrecon.pipeline.preprocess_cache import GEOMETRY_KEYS, cache_report
+    from planetrecon.reconstruction import ReconstructionConfig
+    source = oblate_capture()
+    # Analysed with a prefilled radius, field rate and flipped pole (as Stack's preprocessing is).
+    analysed = ReconstructionConfig(device='cpu', threads=2, geometry_mode='combined', rotation_planet='jupiter',
+                                    equatorial_radius_px=33., field_rate_rad_s=1e-4, pole_pa_rad=np.deg2rad(232.))
+    selection = screen_source(source, analysed)
+    selection.summary['geometry_estimate'] = discover_geometry(source, analysed, selection)
+    selection.summary['geometry_analysis_config'] = {key: getattr(analysed, key) for key in GEOMETRY_KEYS}
+    assert 'equatorial_radius_px' not in selection.summary['geometry_estimate']['suggestions']
+    cleared = replace(analysed, equatorial_radius_px=None, field_rate_rad_s=None, pole_pa_rad=0.)
+    estimate = cache_report(selection, config=cleared)['geometry_estimate']
+    assert estimate.get('applicable', True)
+    assert estimate['suggestions']['equatorial_radius_px'] == 33.
+    assert estimate['suggestions']['field_rate_rad_s'] == pytest.approx(1e-4)
+    # A different explicit value is a real change: the estimate assumed another radius.
+    estimate = cache_report(selection, config=replace(cleared, equatorial_radius_px=40.))['geometry_estimate']
+    assert estimate['applicable'] is False
 
 
 @pytest.mark.parametrize('configured', [0., 180., 250., -100.])
