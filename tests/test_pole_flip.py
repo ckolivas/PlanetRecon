@@ -149,3 +149,99 @@ def test_calculated_values_clear_flip_and_preserve_unmeasured_overrides(gui):
     assert not controls.pole_flipped
     assert controls.fields['field_rate_rad_s'].text() == '0.5'
     assert controls.geometry_manual == {'field_rate_rad_s'}
+
+
+def _preprocessed(pole_deg):
+    """The worker's completed-preprocessing payload (jobs._worker_run) with a pole estimate."""
+    from planetrecon.io.source import ArraySource
+    from planetrecon.jobs import input_frame_preview
+    from test_midpoint_epoch import ready
+    info = ready(60.)
+    info['geometry_estimate'] = {'suggestions': {'pole_pa_rad': np.deg2rad(pole_deg)},
+                                 'orientation_origin': 'silhouette (major axis assumed equatorial)'}
+    source = ArraySource(np.ones((2, 8, 8)), bit_depth=16, timestamps=np.arange(2.))
+    return {**input_frame_preview(source), 'source_metadata': source.metadata().as_dict(),
+            'capture_timing': info['timing'], 'preprocessing_cache': info, 'preprocessing_completed': True}
+
+
+def test_preprocessing_started_by_stack_keeps_the_pole_flip(gui, tmp_path, monkeypatch):
+    """Stack preprocesses first when geometry needs it; that must not undo a manual flip."""
+    from planetrecon.jobs import JobEvent
+    _, window = gui
+    configs = []
+    def start(path, cfg, **kwargs):
+        configs.append((cfg, kwargs))
+        return SimpleNamespace(snapshot_request=threading.Event(), close=lambda: None, poll=lambda: [])
+    monkeypatch.setattr('planetrecon.gui.app.start_stack_job', start)
+    window.path = tmp_path/'input.ser'
+    fields = window.controls.fields
+    fields['geometry_mode'].setCurrentIndex(fields['geometry_mode'].findData('surface'))
+    for key, value in {'sub_obs_lat_rad': 0., 'surface_rate_rad_s': 1., 'field_center_x': 4.,
+                       'field_center_y': 4., 'equatorial_radius_px': 3.}.items():
+        fields[key].setText(str(value))
+    window.controls.prefill_geometry({'suggestions': {'pole_pa_rad': np.deg2rad(52.89)}})
+    window.controls.flip_pole_button.click()
+    # The Stack sequence's preprocessing stage completes with a fresh (unflipped) estimate.
+    window.run_stage = 'preprocess'
+    window.job = SimpleNamespace(close=lambda: None)
+    window._complete_event(JobEvent('job', 1, 'completed', _preprocessed(52.85)))
+    assert not window.error.text(), window.error.text()
+    assert window.controls.pole_flipped
+    assert window.controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(232.89))
+    stack, options = configs[-1]
+    assert not options.get('preprocess_only') and not options.get('inspect_only')
+    assert stack.pole_pa_rad == pytest.approx(np.deg2rad(232.89))
+    # Preprocess on request still restores the calculated geometry.
+    window._finish_job()
+    window.job = SimpleNamespace(close=lambda: None)
+    window._complete_event(JobEvent('job', 2, 'completed', _preprocessed(52.85)))
+    assert not window.controls.pole_flipped
+    assert window.controls.configuration().pole_pa_rad == pytest.approx(np.deg2rad(52.85))
+
+
+def oblate_capture(n=24):
+    """A textured, tilted oblate disc: preprocessing measures a silhouette pole axis."""
+    from planetrecon.io.source import ArraySource
+    y, x = np.indices((96, 112), dtype=float)
+    a, b, tilt = 34., 31., np.deg2rad(30.)
+    u = (x+.5-56)*np.cos(tilt) - (48-y-.5)*np.sin(tilt)
+    v = (x+.5-56)*np.sin(tilt) + (48-y-.5)*np.cos(tilt)
+    disc = ((u/a)**2 + (v/b)**2 < 1) * (500 + 50*np.cos(u/3))
+    rng = np.random.default_rng(3)
+    frames = np.stack([disc + rng.normal(0, 2, disc.shape) for _ in range(n)])
+    return ArraySource(frames, bit_depth=16, timestamps=np.arange(float(n)))
+
+
+def test_a_flipped_pole_keeps_the_cached_geometry_estimate():
+    """A north/south flip is not a geometry change that needs preprocessing again."""
+    from dataclasses import replace
+    from planetrecon.geometry.discovery import discover_geometry
+    from planetrecon.pipeline.preprocess import screen_source
+    from planetrecon.pipeline.preprocess_cache import GEOMETRY_KEYS, cache_report
+    from planetrecon.reconstruction import ReconstructionConfig
+    source = oblate_capture()
+    base = ReconstructionConfig(device='cpu', threads=2, geometry_mode='surface', rotation_planet='jupiter')
+    selection = screen_source(source, base)
+    selection.summary['geometry_estimate'] = discover_geometry(source, base, selection)
+    selection.summary['geometry_analysis_config'] = {key: getattr(base, key) for key in GEOMETRY_KEYS}
+    pole = selection.summary['geometry_estimate']['suggestions']['pole_pa_rad']
+    for angle, applicable in ((pole, True), (pole + np.pi, True), (pole - np.pi, True), (pole + .3, False)):
+        estimate = cache_report(selection, config=replace(base, pole_pa_rad=angle))['geometry_estimate']
+        assert estimate.get('applicable', True) is applicable, angle
+
+
+@pytest.mark.parametrize('configured', [0., 180., 250., -100.])
+def test_silhouette_pole_keeps_the_configured_branch(configured):
+    """The silhouette gives an axis, not a direction: re-estimating keeps a chosen (flipped) pole."""
+    from planetrecon.geometry.discovery import discover_geometry
+    from planetrecon.pipeline.preprocess import screen_source
+    from planetrecon.reconstruction import ReconstructionConfig
+    source = oblate_capture()
+    config = ReconstructionConfig(device='cpu', threads=2, pole_pa_rad=np.deg2rad(configured))
+    selection = screen_source(source, config)
+    report = discover_geometry(source, config, selection)
+    assert report['orientation_origin'].startswith('silhouette')
+    pole = report['suggestions']['pole_pa_rad']
+    axis = (pole - report['silhouette_axis_rad']) % np.pi
+    assert min(axis, np.pi - axis) < 1e-9
+    assert np.cos(pole - config.pole_pa_rad) >= 0

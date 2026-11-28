@@ -830,8 +830,7 @@ class MainWindow:
             f'Automatic: {exposure:.6g} s' if exposure is not None else 'No recorded exposure')
 
         if 'preprocessing_cache' in payload:
-            self._set_preprocessing(payload['preprocessing_cache'],
-                                    replace_manual=payload.get('preprocessing_completed', False))
+            self._set_preprocessing(payload['preprocessing_cache'], replace_manual=self._fresh_preprocessing(payload))
         self.input_max = payload.get('input_max')
         samples = np.asarray(self.input_image)[np.isfinite(self.input_image)]
         black = float(np.percentile(samples, 1)) if samples.size else 0.
@@ -997,6 +996,14 @@ class MainWindow:
             self.controls.clear_geometry_estimate()
             self._refresh_preprocessing()
 
+    def _fresh_preprocessing(self, payload):
+        """Whether completed preprocessing replaces manual geometry: only when Preprocess was asked for.
+
+        Stack and Batch preprocess first when the cache or geometry needs it; that
+        run keeps manual values (such as a pole flip) for the stack it precedes.
+        """
+        return bool(payload.get('preprocessing_completed', False)) and self.run_stage is None
+
     def _set_preprocessing(self, info, *, replace_manual=False):
         # Stack snapshots contain only the compact report. Retain the plot from
         # inspection/preprocessing only while its validated cache identity matches.
@@ -1135,7 +1142,7 @@ class MainWindow:
                                         else 'Input preview loaded. Preprocess to refresh frame quality, or Stack to process.')
                 elif 'preprocessing_cache' in event.payload:
                     self._set_preprocessing(event.payload['preprocessing_cache'],
-                        replace_manual=event.payload.get('preprocessing_completed', False))
+                        replace_manual=self._fresh_preprocessing(event.payload))
                     self.status.setText('Frame quality ready. Choose settings, then Stack.')
                 else:
                     self._accept_result(event.payload)

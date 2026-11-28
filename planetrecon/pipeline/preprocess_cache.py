@@ -186,6 +186,11 @@ def cache_report(selection, path=None, config=None, source=None):
             def same(a, b):
                 return (math.isclose(a, b, rel_tol=1e-8, abs_tol=1e-10)
                         if isinstance(a, (int, float)) and isinstance(b, (int, float)) else a == b)
+            if key == 'pole_pa_rad' and isinstance(current, (int, float)) and isinstance(suggested, (int, float)):
+                # A pole flipped by 180° (north/south) keeps the measured axis.
+                turned = (current - suggested - math.pi) % (2*math.pi)
+                if min(turned, 2*math.pi - turned) < 1e-8:
+                    continue
             if not same(current, value) and not same(current, suggested):
                 estimate = {'suggestions': {}, 'applicable': False, 'notes': ['Geometry settings changed; run Preprocess to refresh geometry estimates. Quality/shape exclusions remain valid.']}
                 break

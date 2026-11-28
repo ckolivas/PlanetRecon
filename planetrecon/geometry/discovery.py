@@ -193,7 +193,11 @@ def _discover_geometry(source, config, selection, calibration=None, should_cance
     # This is only an initial pole-axis hypothesis. Surface tracking supersedes
     # it when resolved; a crescent can exchange the major and polar axes.
     if abs(axis) > .9 and (1.02 < width/height < 1.35 or saturn_target):
-        suggestions['pole_pa_rad'] = report['silhouette_axis_rad'] + config.field_angle0_rad
+        pa = report['silhouette_axis_rad'] + config.field_angle0_rad
+        # An axis has no direction: keep the configured pole's branch (e.g. a manual flip).
+        if np.cos(pa - config.pole_pa_rad) < 0:
+            pa = float((pa + 2*np.pi) % (2*np.pi) - np.pi)
+        suggestions['pole_pa_rad'] = pa
         report['orientation_origin'] = 'silhouette (major axis assumed equatorial)'
         report['notes'].append('Initial pole assumes the stable silhouette major axis is equatorial; phase can bias or interchange the axes.')
     suggestions.update(field_center_x=float(np.mean(centres, axis=0)[0])*scale+.5*bin_scale,
